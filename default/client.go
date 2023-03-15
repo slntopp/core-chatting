@@ -14,6 +14,12 @@ type DefaultClient struct {
 	Storage schema.StorageClient
 }
 
+func NewDefaultClient(st schema.StorageClient) DefaultClient {
+	return DefaultClient{
+		Storage: st,
+	}
+}
+
 func (p *DefaultClient) GetChats(account string) ([]Chat, error) {
 	return p.Storage.GetChats(account)
 }
@@ -27,7 +33,7 @@ func (p *DefaultClient) CreateChat(account string, chat Chat) (Chat, error) {
 		return chat, fmt.Errorf("id must be unset")
 	}
 
-	err := p.Storage.SaveChat(&chat)
+	err := p.Storage.SaveChat(account, chat)
 	return chat, err
 }
 
@@ -45,7 +51,7 @@ func (p *DefaultClient) UpdateChat(account string, chat Chat) (Chat, error) {
 		return curr, fmt.Errorf("must be admin")
 	}
 
-	err = p.Storage.SaveChat(&chat)
+	err = p.Storage.SaveChat(account, chat)
 	return chat, err
 }
 

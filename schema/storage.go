@@ -14,8 +14,8 @@ type StorageClient interface {
 	GetChats(account string) ([]Chat, error)
 	// Must retrieve requested Chat and set the ROLE or return error if NoAccess
 	GetChat(account, chat string) (Chat, error)
-	// Must store or update the Chat
-	SaveChat(chat *Chat) error
+	// Must store or update the Chat if account has enough access rights
+	SaveChat(account string, chat Chat) error
 	// Must delete or mark the Chat and all it's Messages as deleted
 	DeleteChat(chat Chat) error
 

@@ -1,0 +1,68 @@
+syntax = "proto3";
+package cc;
+
+option go_package = "github.com/slntopp/core-chatting/cc";
+
+message Empty {}
+
+enum Role {
+    NOACCESS = 0;
+    USER = 1;
+    OWNER = 2;
+    ADMIN = 3;
+}
+
+message Chat {
+    string uuid = 1;
+
+    repeated string users = 2;
+    repeated string admins = 3;
+
+    repeated string gateways = 4;
+
+    Role role = 5;
+}
+message Chats {
+    repeated Chat chats = 1;
+}
+
+service ChatsAPI {
+    rpc Create(Chat) returns (Chat);
+    rpc Update(Chat) returns (Chat);
+
+    rpc List(Empty) returns (Chats);
+
+    rpc Delete(Chat) returns (Chat);
+}
+
+enum Kind {
+    DEFAULT = 0;
+    ADMIN_ONLY = 1;
+}
+
+message Attachment {
+    string type = 1;
+    bytes content = 2;
+}
+
+message Message {
+    string uuid = 1;
+    Kind kind = 2;
+
+    string sender = 3;
+    string content = 4;
+
+    repeated Attachment attachments = 5;
+    repeated string gateways = 6;
+
+    optional string chat = 7; // Required for Send, Update and Delete requests
+}
+message Messages {
+    repeated Messages messages = 1;
+}
+
+service MessagesAPI {
+    rpc Send(Message) returns (Message);
+    rpc Get(Chat) returns (Messages);
+    rpc Delete(Message) returns (Message);
+}

@@ -7,13 +7,13 @@ import (
 	"github.com/bufbuild/connect-go"
 )
 
-var _requestor_error = errors.New("Requestor is anonymous or invalid")
+var errRequestorInvalid = errors.New("Requestor is anonymous or invalid")
 
 func Requestor(key any, ctx context.Context) (r string, err error) {
-	err = connect.NewError(connect.CodeUnauthenticated, _requestor_error)
+	err = connect.NewError(connect.CodeUnauthenticated, errRequestorInvalid)
 
 	v := ctx.Value(key)
-	if v != nil {
+	if v == nil {
 		return
 	}
 

@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/slntopp/core-chatting/cc"
-	"github.com/slntopp/core-chatting/schema"
+	"github.com/slntopp/core-chatting/storage"
 )
 
 type Chat struct {
@@ -16,7 +17,13 @@ type Chat struct {
 type InMemoryStorage struct {
 	Chats map[string]Chat
 
-	schema.UnimplementedStorageClient
+	storage.UnimplementedStorageClient
+}
+
+func New() *InMemoryStorage {
+	return &InMemoryStorage{
+		Chats: make(map[string]Chat),
+	}
 }
 
 var counter = 0
@@ -28,6 +35,23 @@ func In[T comparable](o T, a []T) bool {
 		}
 	}
 	return false
+}
+
+func (s *InMemoryStorage) GetChat(acc string, chat_id string) (res *cc.Chat, err error) {
+	chat, ok := s.Chats[chat_id]
+	if !ok {
+		return nil, connect.NewError(connect.CodeNotFound, nil)
+	}
+
+	if acc == "admin" || In(acc, chat.Chat.Admins) {
+		chat.Chat.Role = cc.Role_ADMIN
+	} else if In(acc, chat.Chat.Users) {
+		chat.Chat.Role = cc.Role_USER
+	} else {
+		return nil, connect.NewError(connect.CodePermissionDenied, nil)
+	}
+
+	return chat.Chat, nil
 }
 
 func (s *InMemoryStorage) GetChats(acc string) (res []*cc.Chat, err error) {
@@ -48,9 +72,9 @@ func (s *InMemoryStorage) SaveChat(acc string, chat *cc.Chat) error {
 	var msgs []*cc.Message
 	if chat.GetUuid() != "" {
 		if chat, ok := s.Chats[chat.Uuid]; !ok {
-			return errors.New("not found")
+			return connect.NewError(connect.CodeNotFound, errors.New("not found"))
 		} else if !In(acc, chat.Chat.Admins) {
-			return errors.New("not enough access rights")
+			return connect.NewError(connect.CodePermissionDenied, errors.New("not enough access rights"))
 		} else {
 			msgs = chat.Messages
 		}
@@ -64,5 +88,30 @@ func (s *InMemoryStorage) SaveChat(acc string, chat *cc.Chat) error {
 		Messages: msgs,
 	}
 
+	return nil
+}
+
+func (s *InMemoryStorage) DeleteChat(chat *cc.Chat) error {
+	delete(s.Chats, chat.GetUuid())
+	return nil
+}
+
+func (s *InMemoryStorage) GetMessages(chat *cc.Chat) ([]*cc.Message, error) {
+	c, ok := s.Chats[chat.GetUuid()]
+	if !ok {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("not found"))
+	}
+
+	return c.Messages, nil
+}
+
+func (s *InMemoryStorage) SaveMessage(chat *cc.Chat, msg *cc.Message) error {
+	c, ok := s.Chats[chat.GetUuid()]
+	if !ok {
+		return connect.NewError(connect.CodeNotFound, errors.New("not found"))
+	}
+
+	c.Messages = append(c.Messages, msg)
+	s.Chats[chat.GetUuid()] = c
 	return nil
 }

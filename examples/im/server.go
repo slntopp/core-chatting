@@ -35,10 +35,14 @@ func NewAuthInterceptor() connect.UnaryInterceptorFunc {
 }
 
 func main() {
-	srv := server.NewChatsAPIServer(AccountType, im.New())
+	im := im.New()
+	cht_srv := server.NewChatsAPIServer(AccountType, im)
+	msg_srv := server.NewMessagesAPIServer(AccountType, im)
 
 	mux := http.NewServeMux()
-	path, handler := ccconnect.NewChatsAPIHandler(srv, connect.WithInterceptors(NewAuthInterceptor()))
+	path, handler := ccconnect.NewChatsAPIHandler(cht_srv, connect.WithInterceptors(NewAuthInterceptor()))
+	mux.Handle(path, handler)
+	path, handler = ccconnect.NewMessagesAPIHandler(msg_srv, connect.WithInterceptors(NewAuthInterceptor()))
 	mux.Handle(path, handler)
 
 	http.ListenAndServe(":8000", h2c.NewHandler(mux, &http2.Server{}))

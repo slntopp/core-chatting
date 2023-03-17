@@ -57,10 +57,13 @@ message Message {
 
   optional string chat = 7; // Required for Send, Update and Delete requests
 }
-message Messages { repeated Messages messages = 1; }
+message Messages { repeated Message messages = 1; }
 
 service MessagesAPI {
-  rpc Send(Message) returns (Message);
   rpc Get(Chat) returns (Messages);
+
+  rpc Send(Message) returns (Message);
+  rpc Update(Message) returns (Message);
+  
   rpc Delete(Message) returns (Message);
 }

@@ -8,7 +8,6 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/slntopp/core-chatting/cc/ccconnect"
-	client "github.com/slntopp/core-chatting/default"
 	"github.com/slntopp/core-chatting/server"
 	"github.com/slntopp/core-chatting/storage/im"
 	"golang.org/x/net/http2"
@@ -36,10 +35,7 @@ func NewAuthInterceptor() connect.UnaryInterceptorFunc {
 }
 
 func main() {
-	srv := &server.ChatsAPIServer{
-		AccountKey: AccountType,
-		Client:     client.NewDefaultClient(&im.InMemoryStorage{}),
-	}
+	srv := server.NewChatsAPIServer(AccountType, im.New())
 
 	mux := http.NewServeMux()
 	path, handler := ccconnect.NewChatsAPIHandler(srv, connect.WithInterceptors(NewAuthInterceptor()))

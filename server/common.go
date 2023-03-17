@@ -4,13 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/bufbuild/connect-go"
+	c "github.com/bufbuild/connect-go"
 )
 
-var errRequestorInvalid = errors.New("Requestor is anonymous or invalid")
-
 func Requestor(key any, ctx context.Context) (r string, err error) {
-	err = connect.NewError(connect.CodeUnauthenticated, errRequestorInvalid)
+	err = NewError(c.CodeUnauthenticated, "Requestor is anonymous or invalid")
 
 	v := ctx.Value(key)
 	if v == nil {
@@ -22,4 +20,8 @@ func Requestor(key any, ctx context.Context) (r string, err error) {
 		return
 	}
 	return r, nil
+}
+
+func NewError(code c.Code, s string) error {
+	return c.NewError(code, errors.New(s))
 }

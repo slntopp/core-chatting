@@ -6,6 +6,7 @@ require (
 	github.com/arangodb/go-driver v1.6.0
 	github.com/bufbuild/connect-go v1.5.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/rs/cors v1.9.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.16.0
 	go.uber.org/zap v1.24.0

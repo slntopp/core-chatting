@@ -64,6 +64,21 @@ func (c *ChatsController) Update(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 	return chat, nil
 }
 
+func (c *ChatsController) Get(ctx context.Context, uuid string) (*cc.Chat, error) {
+	log := c.log.Named("Get")
+	log.Debug("Req received")
+
+	var chat cc.Chat
+
+	_, err := c.col.ReadDocument(ctx, uuid, &chat)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &chat, nil
+}
+
 const getChatsQuery = `
 FOR c in Chats
 	RETURN c

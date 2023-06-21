@@ -8,6 +8,12 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+const NOCLOUD_ACCOUNT_CLAIM = "account"
+
+type ContextKey string
+
+const ChatAccount = ContextKey("account")
+
 func NewLogger() (log *zap.Logger) {
 	viper.SetDefault("LOG_LEVEL", int(zap.DebugLevel))
 	level := viper.GetInt("LOG_LEVEL")

@@ -120,3 +120,37 @@ func (c *ChatsController) Delete(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 
 	return chat, nil
 }
+
+const getChatMessages = `
+FOR m in Messages
+	FILTER m.chat == @chat
+	RETURN m
+`
+
+func (c *ChatsController) GetMessages(ctx context.Context, chat *cc.Chat) ([]*cc.Message, error) {
+	log := c.log.Named("List")
+	log.Debug("Req received")
+
+	cur, err := c.db.Query(ctx, getChatMessages, map[string]interface{}{
+		"chat": chat.GetUuid(),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var messages []*cc.Message
+
+	for cur.HasMore() {
+		var message cc.Message
+
+		_, err := cur.ReadDocument(ctx, &message)
+		if err != nil {
+			return nil, err
+		}
+
+		messages = append(messages, &message)
+	}
+
+	return messages, nil
+}

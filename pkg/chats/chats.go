@@ -3,9 +3,10 @@ package chats
 import (
 	"context"
 
-	"github.com/bufbuild/connect-go"
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/graph"
+
+	"github.com/bufbuild/connect-go"
 	"go.uber.org/zap"
 )
 

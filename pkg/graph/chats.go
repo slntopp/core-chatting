@@ -3,8 +3,9 @@ package graph
 import (
 	"context"
 
-	"github.com/arangodb/go-driver"
 	"github.com/slntopp/core-chatting/cc"
+
+	"github.com/arangodb/go-driver"
 	"go.uber.org/zap"
 )
 

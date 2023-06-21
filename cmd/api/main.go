@@ -4,19 +4,20 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/bufbuild/connect-go"
-	"github.com/rs/cors"
 	cc "github.com/slntopp/core-chatting/cc/ccconnect"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
-
+	
 	"github.com/slntopp/core-chatting/pkg/chats"
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/core/auth"
 	"github.com/slntopp/core-chatting/pkg/graph"
 	"github.com/slntopp/core-chatting/pkg/messages"
+
+	"github.com/bufbuild/connect-go"
+	"github.com/rs/cors"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 var (

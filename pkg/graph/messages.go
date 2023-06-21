@@ -31,13 +31,47 @@ func NewMessagesController(logger *zap.Logger, db driver.Database) *MessagesCont
 }
 
 func (c *MessagesController) Send(ctx context.Context, msg *cc.Message) (*cc.Message, error) {
-	return nil, nil
+	log := c.log.Named("Create")
+	log.Debug("Req received")
+
+	document, err := c.col.CreateDocument(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	msg.Uuid = document.Key
+
+	_, err = c.col.UpdateDocument(ctx, msg.GetUuid(), msg)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return msg, nil
 }
 
 func (c *MessagesController) Update(ctx context.Context, msg *cc.Message) (*cc.Message, error) {
-	return nil, nil
+	log := c.log.Named("Update")
+	log.Debug("Req received")
+
+	_, err := c.col.UpdateDocument(ctx, msg.GetUuid(), msg)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return msg, nil
 }
 
 func (c *MessagesController) Delete(ctx context.Context, msg *cc.Message) (*cc.Message, error) {
-	return nil, nil
+	log := c.log.Named("Delete")
+	log.Debug("Req received")
+
+	_, err := c.col.RemoveDocument(ctx, msg.GetUuid())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return msg, nil
 }

@@ -24,7 +24,9 @@ message Chat {
 
   optional string topic = 6;
 }
-message Chats { repeated Chat chats = 1; }
+message Chats {
+  repeated Chat chats = 1;
+}
 
 service ChatsAPI {
   rpc Create(Chat) returns (Chat);
@@ -57,13 +59,35 @@ message Message {
 
   optional string chat = 7; // Required for Send, Update and Delete requests
 }
-message Messages { repeated Message messages = 1; }
+message Messages {
+  repeated Message messages = 1;
+}
 
 service MessagesAPI {
   rpc Get(Chat) returns (Messages);
 
   rpc Send(Message) returns (Message);
   rpc Update(Message) returns (Message);
-  
+
   rpc Delete(Message) returns (Message);
+}
+
+message Defaults {
+  repeated string gateways = 1;
+  repeated string admins = 2;
+}
+
+message User {
+  string uuid = 1;
+  string title = 2;
+}
+
+message Users {
+  repeated User users = 1;
+}
+
+service UsersAPI {
+  rpc FetchDefaults(Empty) returns (Defaults);
+
+  rpc Resolve(Empty) returns (Users);
 }

@@ -25,6 +25,8 @@ const (
 	ChatsAPIName = "cc.ChatsAPI"
 	// MessagesAPIName is the fully-qualified name of the MessagesAPI service.
 	MessagesAPIName = "cc.MessagesAPI"
+	// UsersAPIName is the fully-qualified name of the UsersAPI service.
+	UsersAPIName = "cc.UsersAPI"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -51,6 +53,10 @@ const (
 	MessagesAPIUpdateProcedure = "/cc.MessagesAPI/Update"
 	// MessagesAPIDeleteProcedure is the fully-qualified name of the MessagesAPI's Delete RPC.
 	MessagesAPIDeleteProcedure = "/cc.MessagesAPI/Delete"
+	// UsersAPIFetchDefaultsProcedure is the fully-qualified name of the UsersAPI's FetchDefaults RPC.
+	UsersAPIFetchDefaultsProcedure = "/cc.UsersAPI/FetchDefaults"
+	// UsersAPIResolveProcedure is the fully-qualified name of the UsersAPI's Resolve RPC.
+	UsersAPIResolveProcedure = "/cc.UsersAPI/Resolve"
 )
 
 // ChatsAPIClient is a client for the cc.ChatsAPI service.
@@ -303,4 +309,86 @@ func (UnimplementedMessagesAPIHandler) Update(context.Context, *connect_go.Reque
 
 func (UnimplementedMessagesAPIHandler) Delete(context.Context, *connect_go.Request[cc.Message]) (*connect_go.Response[cc.Message], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.MessagesAPI.Delete is not implemented"))
+}
+
+// UsersAPIClient is a client for the cc.UsersAPI service.
+type UsersAPIClient interface {
+	FetchDefaults(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Defaults], error)
+	Resolve(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Users], error)
+}
+
+// NewUsersAPIClient constructs a client for the cc.UsersAPI service. By default, it uses the
+// Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewUsersAPIClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) UsersAPIClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	return &usersAPIClient{
+		fetchDefaults: connect_go.NewClient[cc.Empty, cc.Defaults](
+			httpClient,
+			baseURL+UsersAPIFetchDefaultsProcedure,
+			opts...,
+		),
+		resolve: connect_go.NewClient[cc.Empty, cc.Users](
+			httpClient,
+			baseURL+UsersAPIResolveProcedure,
+			opts...,
+		),
+	}
+}
+
+// usersAPIClient implements UsersAPIClient.
+type usersAPIClient struct {
+	fetchDefaults *connect_go.Client[cc.Empty, cc.Defaults]
+	resolve       *connect_go.Client[cc.Empty, cc.Users]
+}
+
+// FetchDefaults calls cc.UsersAPI.FetchDefaults.
+func (c *usersAPIClient) FetchDefaults(ctx context.Context, req *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Defaults], error) {
+	return c.fetchDefaults.CallUnary(ctx, req)
+}
+
+// Resolve calls cc.UsersAPI.Resolve.
+func (c *usersAPIClient) Resolve(ctx context.Context, req *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Users], error) {
+	return c.resolve.CallUnary(ctx, req)
+}
+
+// UsersAPIHandler is an implementation of the cc.UsersAPI service.
+type UsersAPIHandler interface {
+	FetchDefaults(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Defaults], error)
+	Resolve(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Users], error)
+}
+
+// NewUsersAPIHandler builds an HTTP handler from the service implementation. It returns the path on
+// which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewUsersAPIHandler(svc UsersAPIHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	mux := http.NewServeMux()
+	mux.Handle(UsersAPIFetchDefaultsProcedure, connect_go.NewUnaryHandler(
+		UsersAPIFetchDefaultsProcedure,
+		svc.FetchDefaults,
+		opts...,
+	))
+	mux.Handle(UsersAPIResolveProcedure, connect_go.NewUnaryHandler(
+		UsersAPIResolveProcedure,
+		svc.Resolve,
+		opts...,
+	))
+	return "/cc.UsersAPI/", mux
+}
+
+// UnimplementedUsersAPIHandler returns CodeUnimplemented from all methods.
+type UnimplementedUsersAPIHandler struct{}
+
+func (UnimplementedUsersAPIHandler) FetchDefaults(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Defaults], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.UsersAPI.FetchDefaults is not implemented"))
+}
+
+func (UnimplementedUsersAPIHandler) Resolve(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Users], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.UsersAPI.Resolve is not implemented"))
 }

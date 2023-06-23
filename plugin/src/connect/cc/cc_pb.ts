@@ -348,3 +348,126 @@ export class Messages extends Message$1<Messages> {
   }
 }
 
+/**
+ * @generated from message cc.Defaults
+ */
+export class Defaults extends Message$1<Defaults> {
+  /**
+   * @generated from field: repeated string gateways = 1;
+   */
+  gateways: string[] = [];
+
+  /**
+   * @generated from field: repeated string admins = 2;
+   */
+  admins: string[] = [];
+
+  constructor(data?: PartialMessage<Defaults>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "cc.Defaults";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "gateways", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 2, name: "admins", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Defaults {
+    return new Defaults().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Defaults {
+    return new Defaults().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Defaults {
+    return new Defaults().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: Defaults | PlainMessage<Defaults> | undefined, b: Defaults | PlainMessage<Defaults> | undefined): boolean {
+    return proto3.util.equals(Defaults, a, b);
+  }
+}
+
+/**
+ * @generated from message cc.User
+ */
+export class User extends Message$1<User> {
+  /**
+   * @generated from field: string uuid = 1;
+   */
+  uuid = "";
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title = "";
+
+  constructor(data?: PartialMessage<User>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "cc.User";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "uuid", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): User {
+    return new User().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): User {
+    return new User().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): User {
+    return new User().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: User | PlainMessage<User> | undefined, b: User | PlainMessage<User> | undefined): boolean {
+    return proto3.util.equals(User, a, b);
+  }
+}
+
+/**
+ * @generated from message cc.Users
+ */
+export class Users extends Message$1<Users> {
+  /**
+   * @generated from field: repeated cc.User users = 1;
+   */
+  users: User[] = [];
+
+  constructor(data?: PartialMessage<Users>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "cc.Users";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "users", kind: "message", T: User, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Users {
+    return new Users().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Users {
+    return new Users().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Users {
+    return new Users().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: Users | PlainMessage<Users> | undefined, b: Users | PlainMessage<Users> | undefined): boolean {
+    return proto3.util.equals(Users, a, b);
+  }
+}
+

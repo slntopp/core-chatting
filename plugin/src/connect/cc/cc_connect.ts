@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, Chats, Empty, Message, Messages } from "./cc_pb.js";
+import { Chat, Chats, Defaults, Empty, Message, Messages, Users } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -91,6 +91,33 @@ export const MessagesAPI = {
       name: "Delete",
       I: Message,
       O: Message,
+      kind: MethodKind.Unary,
+    },
+  }
+} as const;
+
+/**
+ * @generated from service cc.UsersAPI
+ */
+export const UsersAPI = {
+  typeName: "cc.UsersAPI",
+  methods: {
+    /**
+     * @generated from rpc cc.UsersAPI.FetchDefaults
+     */
+    fetchDefaults: {
+      name: "FetchDefaults",
+      I: Empty,
+      O: Defaults,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.UsersAPI.Resolve
+     */
+    resolve: {
+      name: "Resolve",
+      I: Empty,
+      O: Users,
       kind: MethodKind.Unary,
     },
   }

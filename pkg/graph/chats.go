@@ -78,7 +78,7 @@ func (c *ChatsController) Get(ctx context.Context, uuid, requestor string) (*cc.
 	log := c.log.Named("Get")
 	log.Debug("Req received")
 
-	cur, err := c.db.Query(ctx, listChatsQuery, map[string]interface{}{
+	cur, err := c.db.Query(ctx, getChatQuery, map[string]interface{}{
 		"chat":      driver.NewDocumentID(CHATS_COLLECTION, uuid),
 		"requestor": requestor,
 	})
@@ -173,7 +173,7 @@ FOR m in @@messages
 
 func (c *ChatsController) GetMessages(ctx context.Context, chat *cc.Chat, is_admin bool) ([]*cc.Message, error) {
 	log := c.log.Named("List")
-	log.Debug("Req received")
+	log.Debug("Request received", zap.String("chat", chat.GetUuid()), zap.Bool("is_admin", is_admin))
 
 	bind_vars := map[string]interface{}{
 		"chat":      chat.GetUuid(),

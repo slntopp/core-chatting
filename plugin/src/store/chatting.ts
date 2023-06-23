@@ -41,6 +41,8 @@ export const useCcStore = defineStore('cc', () => {
         chat = await chats_c.create(chat)
 
         chats.value.set(chat.uuid, chat)
+
+        return chat
     }
 
     function fetch_defaults(): Promise<Defaults> {

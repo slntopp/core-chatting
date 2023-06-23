@@ -117,9 +117,9 @@ function submit() {
             return
         }
 
-        await store.create_chat(chat.value as Chat);
+        let result = await store.create_chat(chat.value as Chat);
 
-        // router.push({ name: 'Chat', params: { uuid: result.uuid } })
+        router.push({ name: 'Chat', params: { uuid: result.uuid } })
     })
 }
 </script>

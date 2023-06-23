@@ -74,8 +74,10 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 		return nil, err
 	}
 
-	if requestor != req.Msg.GetSender() {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no access to chat"))
+	req.Msg.Sender = requestor
+	// if requestor != req.Msg.GetSender() {
+	// 	return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no access to chat"))
+	// }
 
 	is_user := In(requestor, chat.GetUsers())
 	is_admin := In(requestor, chat.GetAdmins())

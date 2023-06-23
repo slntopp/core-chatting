@@ -6,3 +6,9 @@ plugins:
   - name: connect-go
     out: .
     opt: paths=source_relative
+  - name: es
+    out: plugin/src/connect
+    opt: target=ts
+  - name: connect-es
+    out: plugin/src/connect
+    opt: target=ts

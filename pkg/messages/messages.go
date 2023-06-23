@@ -94,6 +94,19 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no access to chat"))
 	}
 
+	chat, err := s.chatCtrl.Get(ctx, req.Msg.GetChat(), requestor)
+	if err != nil {
+		return nil, err
+	}
+
+	if chat.Role < cc.Role_USER {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
+	}
+
+	if req.Msg.Kind == cc.Kind_ADMIN_ONLY && chat.Role != cc.Role_ADMIN {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("can't send admin only message"))
+	}
+
 	req.Msg.Edited = time.Now().UnixMilli()
 
 	message, err := s.msgCtrl.Update(ctx, req.Msg)

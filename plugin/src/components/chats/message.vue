@@ -74,7 +74,6 @@ function sender(): string {
 }
 
 function avatar() {
-    console.log('avatar called', sender())
     return h(NAvatar, { round: true, size: 64 }, () => h('span', { style: { fontSize: '1.5rem' } }, sender()[0]))
 }
 
@@ -95,13 +94,12 @@ hljs.registerLanguage('markdown', markdown)
 marked.use({
     async: false, gfm: true,
     breaks: true, mangle: false,
+    headerIds: false, headerPrefix: '',
 })
 marked.use(mangle)
 
 const renderer = new Renderer()
 renderer.code = (code, language) => {
-    console.log(language, code)
-
     if (!language) language = 'plaintext'
 
     return `<div class="code"><code>${hljs.highlight(code, { language }).value}</code></div>`

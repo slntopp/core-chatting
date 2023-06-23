@@ -4,7 +4,7 @@
             <chat-header style="height: 5vh" />
         </template>
 
-        <n-scrollbar style="height: 80vh; max-width: 80%;" v-if="messages.length > 0">
+        <n-scrollbar style="height: 80vh; max-width: 80%;" v-if="messages.length > 0" ref="scrollbar">
             <n-list-item v-for="message in messages">
                 <message-view :message="message" />
             </n-list-item>
@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, h, ref, computed, watch } from 'vue';
+import { defineAsyncComponent, h, ref, computed, watch, nextTick } from 'vue';
 import {
     NSpace, NButton, NIcon, NTooltip,
     NAvatar, NText, NInput, NAlert,
@@ -79,6 +79,7 @@ const route = useRoute();
 const router = useRouter();
 
 const store = useCcStore()
+const scrollbar = ref()
 
 const chat = computed(() => {
     return store.chats.get(route.params.uuid as string)
@@ -138,13 +139,28 @@ async function handle_send(kind = Kind.DEFAULT) {
     await get_messages()
 }
 
+function scrollToBottom() {
+    setTimeout(() => {
+        if (!scrollbar.value) {
+            console.warn('scrollbar not ready')
+            return
+        }
+
+        nextTick(() => {
+            scrollbar.value.scrollTo({ top: scrollbar.value.$el.parentNode.scrollHeight * 3, behavior: "smooth" })
+        })
+    }, 500)
+}
+
 async function load_chat() {
     store.resolve([...chat.value!.users, ...chat.value!.admins])
-    get_messages()
+    await get_messages()
 }
 
 watch(chat, load_chat)
 load_chat()
+
+watch(messages, scrollToBottom)
 </script>
 
 <style>

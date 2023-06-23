@@ -2,8 +2,8 @@
     <n-layout-sider>
         <n-scrollbar style="height: 90vh">
             <n-list hoverable clickable>
-                <template #header>
-                    <n-space justify="center">
+                <template #header >
+                    <n-space justify="center" align="center" style="height: 5vh">
                         <n-button ghost type="success" @click="router.push({ name: 'Start Chat' })">
                             <template #icon>
                                 <n-icon :component="ChatbubbleEllipsesOutline" />
@@ -60,7 +60,9 @@ function chatListItem(props: ChatListItemProps) {
     let members = users.concat( admins )
     let avatar_title = members.map(el => el[0]).join(',')
 
-    return h(NListItem, {}, () => h(
+    return h(NListItem, {
+        "onClick": () => router.push({ name: 'Chat', params: { uuid: props.uuid } })
+    }, () => h(
         NSpace, {justify: "start"}, () => [
             h(NAvatar, {round: true, size: "large"}, () => avatar_title),
             h(NSpace, {vertical: true}, () => [

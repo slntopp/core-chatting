@@ -25,6 +25,11 @@ const routes = [
             path: 'start',
             name: 'Start Chat',
             component: () => import("../views/Dashboard/Chats/Start.vue"),
+          },
+          {
+            path: ':uuid',
+            name: 'Chat',
+            component: () => import("../views/Dashboard/Chats/Chat.vue"),
           }
         ]
       }

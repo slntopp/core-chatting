@@ -7,7 +7,7 @@ import { createConnectTransport } from "@bufbuild/connect-web";
 import { useAppStore } from "./app";
 
 import {
-    Empty, Chat, Defaults, Users, User
+    Empty, Chat, Defaults, Users, User, Messages, Message
 } from "../connect/cc/cc_pb"
 import {
     ChatsAPI, MessagesAPI, UsersAPI
@@ -48,19 +48,28 @@ export const useCcStore = defineStore('cc', () => {
     }
 
     const users = ref<Map<string, User>>(new Map())
-    async function resolve(): Promise<Users> {
-        let result = await users_c.resolve(new Users())
-
-        for(let user of result.users) {
+    async function resolve(req_users: string[] = []): Promise<Users> {
+        let result = await users_c.resolve(new Users({ users: req_users.map((uuid) => new User({ uuid }))}))
+        console.debug('Got Users', result.users)
+        
+        for (let user of result.users) {
             users.value.set(user.uuid, user)
         }
 
         return result
     }
 
+    function get_messages(chat: Chat): Promise<Messages> {
+        return messages_c.get(chat)
+    }
+    function send_message(message: Message): Promise<Empty> {
+        return messages_c.send(message)
+    }
+
     return {
         users,
         chats, list_chats, create_chat,
+        get_messages, send_message,
 
         fetch_defaults, resolve
     }

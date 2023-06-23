@@ -139,7 +139,7 @@ func (c *ChatsController) List(ctx context.Context, requestor string) ([]*cc.Cha
 const deleteChatMessages = `
 FOR m in @@messages
 	FILTER m.chat == @chat
-	REMOVE m IN Messages
+	REMOVE m IN @@messages
 `
 
 func (c *ChatsController) Delete(ctx context.Context, chat *cc.Chat) (*cc.Chat, error) {

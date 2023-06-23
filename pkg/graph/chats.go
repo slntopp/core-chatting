@@ -80,7 +80,7 @@ func (c *ChatsController) Get(ctx context.Context, uuid string) (*cc.Chat, error
 }
 
 const getChatsQuery = `
-FOR c in Chats
+FOR c in @@chats
 	RETURN c
 `
 
@@ -88,7 +88,9 @@ func (c *ChatsController) List(ctx context.Context) ([]*cc.Chat, error) {
 	log := c.log.Named("List")
 	log.Debug("Req received")
 
-	cur, err := c.db.Query(ctx, getChatsQuery, map[string]interface{}{})
+	cur, err := c.db.Query(ctx, getChatsQuery, map[string]interface{}{
+		"@chats": CHATS_COLLECTION,
+	})
 
 	if err != nil {
 		return nil, err
@@ -111,7 +113,7 @@ func (c *ChatsController) List(ctx context.Context) ([]*cc.Chat, error) {
 }
 
 const deleteChatMessages = `
-FOR m in Messages
+FOR m in @@messages
 	FILTER m.chat == @chat
 	REMOVE m IN Messages
 `
@@ -127,7 +129,8 @@ func (c *ChatsController) Delete(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 	}
 
 	_, err = c.db.Query(ctx, deleteChatMessages, map[string]interface{}{
-		"chat": chat.GetUuid(),
+		"chat":      chat.GetUuid(),
+		"@messages": MESSAGES_COLLECTION,
 	})
 
 	if err != nil {
@@ -138,7 +141,7 @@ func (c *ChatsController) Delete(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 }
 
 const getChatMessages = `
-FOR m in Messages
+FOR m in @@messages
 	FILTER m.chat == @chat
 	RETURN m
 `
@@ -148,7 +151,8 @@ func (c *ChatsController) GetMessages(ctx context.Context, chat *cc.Chat) ([]*cc
 	log.Debug("Req received")
 
 	cur, err := c.db.Query(ctx, getChatMessages, map[string]interface{}{
-		"chat": chat.GetUuid(),
+		"chat":      chat.GetUuid(),
+		"@messages": MESSAGES_COLLECTION,
 	})
 
 	if err != nil {

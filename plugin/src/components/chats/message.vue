@@ -140,13 +140,13 @@ function timestamp() {
     result += getRelativeTime(Number(message.edited ? message.edited : message.sent))
 
     let tooltip = [
-        h(NDivider, { titlePlacement: 'left' }, 'Sent'),
+        h(NDivider, { titlePlacement: 'left' }, () => 'Sent'),
         h(NText, {}, () => new Date(Number(message.sent)).toString())
     ]
 
     if (message.edited) {
         tooltip.push(
-            h(NDivider, { titlePlacement: 'left' }, 'Edited'),
+            h(NDivider, { titlePlacement: 'left' }, () => 'Edited'),
             h(NText, {}, () => new Date(Number(message.edited)).toString())
         )
     }

@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import { PropType, defineAsyncComponent, h, computed } from 'vue';
 import {
-    NAvatar, NGrid, NCode,
+    NAvatar, NGrid,
     NGi, NIcon, NSpace,
     NText, NH2, useThemeVars
 } from 'naive-ui'

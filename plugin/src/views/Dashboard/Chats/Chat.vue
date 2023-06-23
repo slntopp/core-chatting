@@ -6,6 +6,7 @@
 
         <n-scrollbar style="height: 80vh; max-width: 80%;" v-if="messages.length > 0" ref="scrollbar">
             <n-list-item v-for="message in messages">
+                <!-- @vue-ignore -->
                 <message-view :message="message" />
             </n-list-item>
         </n-scrollbar>
@@ -151,7 +152,7 @@ async function handle_send(kind = Kind.DEFAULT) {
     } else {
         current_message.value.chat = route.params.uuid as string
         await store.send_message(current_message.value as Message)
-        
+
         get_messages()
     }
 
@@ -217,6 +218,7 @@ kbd {
     padding: 2px 4px;
     white-space: nowrap;
 }
+
 textarea {
     overflow-wrap: anywhere;
 }

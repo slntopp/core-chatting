@@ -170,7 +170,7 @@ function scrollToBottom() {
         }
 
         nextTick(() => {
-            scrollbar.value.scrollTo({ top: scrollbar.value.$el.parentNode.scrollHeight * 3, behavior: "smooth" })
+            scrollbar.value.scrollTo({ top: Number.MAX_SAFE_INTEGER, behavior: "smooth" })
         })
     }, 500)
 }

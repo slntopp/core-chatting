@@ -143,18 +143,22 @@ async function handle_send(kind = Kind.DEFAULT) {
 
     current_message.value.kind = kind
     if (updating.value) {
-        await store.update_message(current_message.value as Message)
+        let msg = await store.update_message(current_message.value as Message)
         updating.value = false
+
+        let idx = messages.value.findIndex(el => el.uuid == msg.uuid)
+        messages.value.splice(idx, 1, msg)
     } else {
         current_message.value.chat = route.params.uuid as string
         await store.send_message(current_message.value as Message)
+        
+        get_messages()
     }
 
 
     current_message.value = new Message({
         content: '',
     })
-    await get_messages()
 }
 
 function scrollToBottom() {

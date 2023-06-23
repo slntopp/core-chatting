@@ -75,7 +75,7 @@ export const useCcStore = defineStore('cc', () => {
     function send_message(message: Message): Promise<Empty> {
         return messages_c.send(message)
     }
-    function update_message(message: Message): Promise<Empty> {
+    function update_message(message: Message): Promise<Message> {
         return messages_c.update(message)
     }
 

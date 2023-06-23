@@ -55,6 +55,7 @@ func (c *MessagesController) Update(ctx context.Context, msg *cc.Message) (*cc.M
 	log := c.log.Named("Update")
 	log.Debug("Req received")
 
+	// @gorobot-nz TODO: Message kind is not updated
 	_, err := c.col.UpdateDocument(ctx, msg.GetUuid(), msg)
 
 	if err != nil {

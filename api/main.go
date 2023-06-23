@@ -1,11 +1,11 @@
-package api
+package main
 
 import (
 	"fmt"
 	"net/http"
 
 	cc "github.com/slntopp/core-chatting/cc/ccconnect"
-	
+
 	"github.com/slntopp/core-chatting/pkg/chats"
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/core/auth"

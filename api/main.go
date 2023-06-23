@@ -68,7 +68,7 @@ func main() {
 	interceptors := connect.WithInterceptors(auth.NewUserInterceptor(log, SIGNING_KEY))
 
 	chatServer := chats.NewChatsServer(log, chatCtrl)
-	path, handler := cc.NewChatsAPIHandler(chatServer)
+	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)
 	mux.Handle(path, handler)
 
 	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrs)

@@ -112,11 +112,14 @@ export const UsersAPI = {
       kind: MethodKind.Unary,
     },
     /**
+     * Resolves given Users data by their UUIDs
+     * And returns all accessible Users for Requestor
+     *
      * @generated from rpc cc.UsersAPI.Resolve
      */
     resolve: {
       name: "Resolve",
-      I: Empty,
+      I: Users,
       O: Users,
       kind: MethodKind.Unary,
     },

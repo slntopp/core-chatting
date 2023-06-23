@@ -1,50 +1,121 @@
 <template>
-    <n-space vertical justify="start">
-        <n-space justify="start">
-            <n-button round quaternary @click="router.push({ name: 'Empty Chat' })">
-                <template #icon>
-                    <n-icon :component="CloseSharp" />
-                </template>
-            </n-button>
-        </n-space>
+    <n-space justify="start">
+        <n-button round quaternary @click="router.push({ name: 'Empty Chat' })">
+            <template #icon>
+                <n-icon :component="CloseSharp" />
+            </template>
+        </n-button>
+    </n-space>
 
-        <n-space justify="start" style="padding-left: 16px">
-            <n-form :model="chat" ref="form" label-placement="left">
+    <n-space vertical justify="start" style="padding-left: 16px">
+        <n-space justify="start">
+            <n-form :model="chat" ref="form" :rules="rules" label-placement="left">
                 <n-form-item label="Topic">
-                    <n-input v-model="chat.topic" clearable placeholder="What are we chatting about?" />
+                    <n-input v-model:value="chat.topic" clearable placeholder="What are we chatting about?" />
                 </n-form-item>
 
                 <n-form-item label="Members">
-                    <n-select v-model:value="chat.users" multiple :options="options" filterable />
+                    <n-select v-model:value="chat.users" multiple :options="members_options" filterable />
+                </n-form-item>
+
+                <n-form-item label="Admins">
+                    <n-select v-model:value="chat.admins" multiple :options="admins_options" filterable />
+                </n-form-item>
+
+                <n-form-item label="Gateways">
+                    <n-select v-model:value="chat.gateways" multiple :options="gateways_options" filterable />
                 </n-form-item>
             </n-form>
+        </n-space>
+
+        <n-space justify="start">
+            <n-button ghost type="success" @click="submit">
+                Start Chat
+            </n-button>
         </n-space>
     </n-space>
 </template>
 
 <script setup lang="ts">
 import { ref, defineAsyncComponent } from 'vue';
-import { 
+import {
     NSpace, NButton, NIcon,
     NForm, NFormItem, NInput,
-    SelectOption
- } from 'naive-ui';
+    SelectOption, NSelect, FormInst
+} from 'naive-ui';
 
 import { useRouter } from 'vue-router';
 
 import { Chat, Role } from '../../../connect/cc/cc_pb.ts';
+import { useCcStore } from '../../../store/chatting.ts';
 
 const CloseSharp = defineAsyncComponent(() => import('@vicons/ionicons5/CloseSharp'));
 
 const router = useRouter();
 
-const form = ref()
-const chat = ref<Chat>({
-    role: Role.ROLE_OWNER,
-})
+const form = ref<FormInst>()
+const rules = {
+    members: {
+        required: true
+    }
+}
 
-const options = ref<SelectOption[]>()
-async function get_users() {
+const chat = ref<Chat>(new Chat({
+    uuid: '', topic: '', users: [],
+    admins: [], gateways: [],
+    role: Role.OWNER,
+}))
 
+const store = useCcStore();
+
+const members_options = ref<SelectOption[]>()
+async function resolve() {
+    let result = await store.resolve();
+    console.debug("Resolve", result)
+
+    members_options.value = result.users.map(user => {
+        return {
+            label: user.title,
+            value: user.uuid,
+        }
+    })
+
+}
+resolve()
+
+const admins_options = ref<SelectOption[]>()
+const gateways_options = ref<SelectOption[]>()
+async function fetch_defaults() {
+    let result = await store.fetch_defaults();
+    console.debug("Defaults", result)
+
+    admins_options.value = result.admins.map(admin => {
+        return {
+            label: admin.title,
+            value: admin.uuid,
+        }
+    })
+
+    gateways_options.value = result.gateways.map(gateway => {
+        return {
+            label: gateway,
+            value: gateway,
+        }
+    })
+    chat.value.gateways = result.gateways
+}
+fetch_defaults()
+
+function submit() {
+    form.value!.validate(async (errs) => {
+        if (errs) {
+            console.error("Errors", errs)
+            return
+        }
+
+        await store.create_chat(chat.value as Chat);
+
+        // router.push({ name: 'Chat', params: { uuid: result.uuid } })
+    })
 }
 </script>

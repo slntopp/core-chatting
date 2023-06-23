@@ -7,10 +7,10 @@ import { createConnectTransport } from "@bufbuild/connect-web";
 import { useAppStore } from "./app";
 
 import {
-    Empty, Chat, Chats
+    Empty, Chat, Defaults, Users
 } from "../connect/cc/cc_pb"
-import { 
-    ChatsAPI, MessagesAPI
+import {
+    ChatsAPI, MessagesAPI, UsersAPI
 } from "../connect/cc/cc_connect"
 
 export const useCcStore = defineStore('cc', () => {
@@ -20,13 +20,14 @@ export const useCcStore = defineStore('cc', () => {
         baseUrl: 'http://localhost:8080',
         interceptors: [
             (next) => async (req) => {
-              req.header.set("Authorization", `Bearer ${app.conf?.token}`);
-              return next(req);
+                req.header.set("Authorization", `Bearer ${app.conf?.token}`);
+                return next(req);
             },
-          ],
+        ],
     })
     const chats_c = createPromiseClient(ChatsAPI, transport);
     const messages_c = createPromiseClient(MessagesAPI, transport);
+    const users_c = createPromiseClient(UsersAPI, transport);
 
     const chats = ref<Map<string, Chat>>(new Map())
 
@@ -42,8 +43,17 @@ export const useCcStore = defineStore('cc', () => {
         chats.value.set(chat.uuid, chat)
     }
 
+    function fetch_defaults(): Promise<Defaults> {
+        return users_c.fetchDefaults(new Empty())
+    }
+    function resolve(): Promise<Users> {
+        return users_c.resolve(new Users())
+    }
+
     return {
-        chats, list_chats, create_chat
+        chats, list_chats, create_chat,
+
+        fetch_defaults, resolve
     }
 })
 

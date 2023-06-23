@@ -21,6 +21,15 @@ type ContextKey string
 
 const ChatAccount = ContextKey("account")
 
+func In[T comparable](o T, a []T) bool {
+	for _, el := range a {
+		if el == o {
+			return true
+		}
+	}
+	return false
+}
+
 func NewLogger() (log *zap.Logger) {
 	viper.SetDefault("LOG_LEVEL", int(zap.DebugLevel))
 	level := viper.GetInt("LOG_LEVEL")

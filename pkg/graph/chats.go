@@ -82,15 +82,17 @@ func (c *ChatsController) Get(ctx context.Context, uuid string) (*cc.Chat, error
 
 const getChatsQuery = `
 FOR c in @@chats
+	FILTER @admin in c.admins
 	RETURN c
 `
 
-func (c *ChatsController) List(ctx context.Context) ([]*cc.Chat, error) {
+func (c *ChatsController) List(ctx context.Context, requestor string) ([]*cc.Chat, error) {
 	log := c.log.Named("List")
 	log.Debug("Req received")
 
 	cur, err := c.db.Query(ctx, getChatsQuery, map[string]interface{}{
 		"@chats": CHATS_COLLECTION,
+		"admin":  requestor,
 	})
 
 	if err != nil {

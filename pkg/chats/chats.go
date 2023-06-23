@@ -2,6 +2,8 @@ package chats
 
 import (
 	"context"
+	"errors"
+	"github.com/slntopp/core-chatting/pkg/core"
 
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/graph"
@@ -24,6 +26,12 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 	log := s.log.Named("Create")
 	log.Debug("Request received", zap.Any("req", req.Msg))
 
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	if !core.In(requestor, req.Msg.Admins) {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
+	}
+
 	chat, err := s.ctrl.Create(ctx, req.Msg)
 	if err != nil {
 		return nil, err
@@ -37,6 +45,12 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 func (s *ChatsServer) Update(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
 	log := s.log.Named("Create")
 	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	if !core.In(requestor, req.Msg.Admins) {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
+	}
 
 	chat, err := s.ctrl.Update(ctx, req.Msg)
 	if err != nil {
@@ -52,7 +66,9 @@ func (s *ChatsServer) List(ctx context.Context, req *connect.Request[cc.Empty]) 
 	log := s.log.Named("Create")
 	log.Debug("Request received", zap.Any("req", req.Msg))
 
-	chats, err := s.ctrl.List(ctx)
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	chats, err := s.ctrl.List(ctx, requestor)
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +83,12 @@ func (s *ChatsServer) List(ctx context.Context, req *connect.Request[cc.Empty]) 
 func (s *ChatsServer) Delete(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
 	log := s.log.Named("Create")
 	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	if !core.In(requestor, req.Msg.Admins) {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
+	}
 
 	chat, err := s.ctrl.Delete(ctx, req.Msg)
 	if err != nil {

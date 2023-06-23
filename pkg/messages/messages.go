@@ -23,15 +23,6 @@ func NewMessagesServer(logger *zap.Logger, chatCtrl *graph.ChatsController, msgC
 	return &MessagesServer{log: logger.Named("MessagesServer"), chatCtrl: chatCtrl, msgCtrl: msgCtrl}
 }
 
-func In[T comparable](o T, a []T) bool {
-	for _, el := range a {
-		if el == o {
-			return true
-		}
-	}
-	return false
-}
-
 func (s *MessagesServer) Get(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Messages], error) {
 	log := s.log.Named("Get")
 	log.Debug("Request received", zap.Any("req", req.Msg))
@@ -43,8 +34,8 @@ func (s *MessagesServer) Get(ctx context.Context, req *connect.Request[cc.Chat])
 		return nil, err
 	}
 
-	is_user := In(requestor, chat.GetUsers())
-	is_admin := In(requestor, chat.GetAdmins())
+	is_user := core.In(requestor, chat.GetUsers())
+	is_admin := core.In(requestor, chat.GetAdmins())
 
 	if !is_user && !is_admin {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no access to chat"))
@@ -79,8 +70,8 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 	// 	return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no access to chat"))
 	// }
 
-	is_user := In(requestor, chat.GetUsers())
-	is_admin := In(requestor, chat.GetAdmins())
+	is_user := core.In(requestor, chat.GetUsers())
+	is_admin := core.In(requestor, chat.GetAdmins())
 
 	if req.Msg.Kind == cc.Kind_ADMIN_ONLY && !is_admin {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("can't send admin only message"))
@@ -136,7 +127,7 @@ func (s *MessagesServer) Delete(ctx context.Context, req *connect.Request[cc.Mes
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no access to chat"))
 	}
 
-	if !In(requestor, chat.GetUsers()) {
+	if !core.In(requestor, chat.GetUsers()) {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no access to chat"))
 	}
 

@@ -48,6 +48,12 @@ export const useCcStore = defineStore('cc', () => {
         return chat
     }
 
+    async function delete_chat(chat: Chat) {
+        await chats_c.delete(chat)
+
+        chats.value.delete(chat.uuid)
+    }
+
     function fetch_defaults(): Promise<Defaults> {
         return users_c.fetchDefaults(new Empty())
     }
@@ -77,7 +83,7 @@ export const useCcStore = defineStore('cc', () => {
     return {
         users, load_me, me,
 
-        chats, list_chats, create_chat,
+        chats, list_chats, create_chat, delete_chat,
         get_messages, send_message,
 
         fetch_defaults, resolve

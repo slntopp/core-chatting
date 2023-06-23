@@ -79,7 +79,16 @@ function chatHeader() {
                 type: 'info', size: 'small',
                 ghost: true, round: true,
                 onClick: get_messages,
-            }, () => 'Refresh')
+            }, () => 'Refresh'),
+            h(NDivider, { vertical: true }),
+            h(NButton, {
+                type: 'error', size: 'small',
+                ghost: true, round: true,
+                onClick: async () => {
+                    await store.delete_chat(chat.value! as Chat)
+                    router.push({ name: 'Empty Chat' })
+                },
+            }, () => 'Delete')
         ]
     )
 }

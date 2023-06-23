@@ -119,6 +119,7 @@ div.code {
     padding: 8px;
     background-color: black;
     border-radius: 6px;
-    white-space: pre;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 </style>

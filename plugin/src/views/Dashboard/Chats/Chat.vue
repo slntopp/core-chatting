@@ -29,7 +29,7 @@
                             <n-input type="textarea" size="small" :autosize="{
                                 minRows: 2,
                                 maxRows: 5
-                            }" style="min-width: 50vw;" placeholder="Type your message"
+                            }" style="min-width: 50vw; max-width: 60vw;" placeholder="Type your message"
                                 v-model:value="current_message.content"
                                 @keypress.ctrl.enter.exact="e => { e.preventDefault(); handle_send() }"
                                 @keypress.ctrl.shift.enter.exact="e => { e.preventDefault(); handle_send(Kind.ADMIN_ONLY) }"
@@ -216,5 +216,8 @@ kbd {
     line-height: 1;
     padding: 2px 4px;
     white-space: nowrap;
+}
+textarea {
+    overflow-wrap: anywhere;
 }
 </style>

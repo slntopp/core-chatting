@@ -44,7 +44,7 @@ func (s *UsersServer) Resolve(ctx context.Context, req *connect.Request[cc.Users
 
 	requestor := ctx.Value(core.ChatAccount).(string)
 
-	res, err := s.ctrl.Resolve(ctx, []string{requestor})
+	res, err := s.ctrl.Resolve(ctx, []string{requestor, "0"})
 	if err != nil {
 		return nil, err
 	}

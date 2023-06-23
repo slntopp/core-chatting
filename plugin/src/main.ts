@@ -1,4 +1,6 @@
 import { createApp } from 'vue'
+import 'highlight.js/styles/base16/classic-dark.css'
+
 import App from './App.vue'
 
 import router  from './router'

@@ -13,6 +13,11 @@
     "@bufbuild/connect-web": "^0.10.1",
     "@bufbuild/protobuf": "^1.2.1",
     "@vicons/ionicons5": "^0.12.0",
+    "dompurify": "^3.0.2",
+    "highlight.js": "^11.8.0",
+    "marked": "^5.0.0",
+    "marked-highlight": "^2.0.1",
+    "marked-mangle": "^1.0.1",
     "naive-ui": "^2.34.4",
     "pinia": "^2.1.4",
     "vfonts": "^0.0.3",
@@ -21,6 +26,8 @@
     "vue-router": "^4.2.2"
   },
   "devDependencies": {
+    "@types/dompurify": "^3.0.2",
+    "@types/marked": "^5.0.0",
     "@vitejs/plugin-vue": "^4.1.0",
     "typescript": "^5.0.2",
     "vite": "^4.3.9",

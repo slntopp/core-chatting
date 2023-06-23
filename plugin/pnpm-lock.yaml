@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -17,6 +17,21 @@ dependencies:
   '@vicons/ionicons5':
     specifier: ^0.12.0
     version: 0.12.0
+  dompurify:
+    specifier: ^3.0.2
+    version: 3.0.3
+  highlight.js:
+    specifier: ^11.8.0
+    version: 11.8.0
+  marked:
+    specifier: ^5.0.0
+    version: 5.1.0
+  marked-highlight:
+    specifier: ^2.0.1
+    version: 2.0.1(marked@5.1.0)
+  marked-mangle:
+    specifier: ^1.0.1
+    version: 1.0.1(marked@5.1.0)
   naive-ui:
     specifier: ^2.34.4
     version: 2.34.4(vue@3.3.4)
@@ -37,6 +52,12 @@ dependencies:
     version: 4.2.2(vue@3.3.4)
 
 devDependencies:
+  '@types/dompurify':
+    specifier: ^3.0.2
+    version: 3.0.2
+  '@types/marked':
+    specifier: ^5.0.0
+    version: 5.0.0
   '@vitejs/plugin-vue':
     specifier: ^4.1.0
     version: 4.2.3(vite@4.3.9)(vue@3.3.4)
@@ -333,6 +354,12 @@ packages:
     engines: {node: '>=10.13.0'}
     dev: false
 
+  /@types/dompurify@3.0.2:
+    resolution: {integrity: sha512-YBL4ziFebbbfQfH5mlC+QTJsvh0oJUrWbmxKMyEdL7emlHJqGR2Qb34TEFKj+VCayBvjKy3xczMFNhugThUsfQ==}
+    dependencies:
+      '@types/trusted-types': 2.0.3
+    dev: true
+
   /@types/katex@0.14.0:
     resolution: {integrity: sha512-+2FW2CcT0K3P+JMR8YG846bmDwplKUTsWgT2ENwdQ1UdVfRk3GQrh6Mi4sTopy30gI8Uau5CEqHTDZ6YvWIUPA==}
     dev: false
@@ -346,6 +373,14 @@ packages:
   /@types/lodash@4.14.195:
     resolution: {integrity: sha512-Hwx9EUgdwf2GLarOjQp5ZH8ZmblzcbTBC2wtQWNKARBSxM9ezRIAUpeDTgoQRAFB0+8CNWXVA9+MaSOzOF3nPg==}
     dev: false
+
+  /@types/marked@5.0.0:
+    resolution: {integrity: sha512-YcZe50jhltsCq7rc9MNZC/4QB/OnA2Pd6hrOSTOFajtabN+38slqgDDCeE/0F83SjkKBQcsZUj7VLWR0H5cKRA==}
+    dev: true
+
+  /@types/trusted-types@2.0.3:
+    resolution: {integrity: sha512-NfQ4gyz38SL8sDNrSixxU2Os1a5xcdFxipAFxYEuLUlvU2uDwS4NUpsImcf1//SlWItCVMMLiylsxbmNMToV/g==}
+    dev: true
 
   /@vicons/ionicons5@0.12.0:
     resolution: {integrity: sha512-Iy1EUVRpX0WWxeu1VIReR1zsZLMc4fqpt223czR+Rpnrwu7pt46nbnC2ycO7ItI/uqDLJxnbcMC7FujKs9IfFA==}
@@ -598,6 +633,10 @@ packages:
       domelementtype: 2.3.0
     dev: false
 
+  /dompurify@3.0.3:
+    resolution: {integrity: sha512-axQ9zieHLnAnHh0sfAamKYiqXMJAVwu+LM/alQ7WDagoWessyWvMSFyW65CqF3owufNu8HBcE4cM2Vflu7YWcQ==}
+    dev: false
+
   /domutils@3.1.0:
     resolution: {integrity: sha512-H78uMmQtI2AhgDJjWeQmHwJJ2bLPD3GMmO7Zja/ZZh84wkm+4ut+IUnUdRa8uCGX88DiVx1j6FRe1XfxEgjEZA==}
     dependencies:
@@ -686,6 +725,28 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
+
+  /marked-highlight@2.0.1(marked@5.1.0):
+    resolution: {integrity: sha512-LDUfR/zDvD+dJ+lQOWHkxvBLNxiXcaN8pBtwJ/i4pI0bkDC/Ef6Mz1qUrAuHXfnpdr2rabdMpVFhqFuU+5Mskg==}
+    peerDependencies:
+      marked: ^4 || ^5
+    dependencies:
+      marked: 5.1.0
+    dev: false
+
+  /marked-mangle@1.0.1(marked@5.1.0):
+    resolution: {integrity: sha512-ZmWErsTkfE78OFgrpry2XGh+lYNRePfGy7bGh20l4rWHsH+bciKth1IHQXO9B6Ov5dHmY0jAswvgDxtcxGcFQQ==}
+    peerDependencies:
+      marked: ^4 || ^5
+    dependencies:
+      marked: 5.1.0
+    dev: false
+
+  /marked@5.1.0:
+    resolution: {integrity: sha512-z3/nBe7aTI8JDszlYLk7dDVNpngjw0o1ZJtrA9kIfkkHcIF+xH7mO23aISl4WxP83elU+MFROgahqdpd05lMEQ==}
+    engines: {node: '>= 18'}
+    hasBin: true
+    dev: false
 
   /mdn-data@2.0.28:
     resolution: {integrity: sha512-aylIc7Z9y4yzHYAJNuESG3hfhC+0Ibp/MAMiaOZgNv4pmEdFyfZhhhny4MNiAfWdBQ1RQ2mfDWmM1x8SvGyp8g==}

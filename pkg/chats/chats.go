@@ -47,11 +47,16 @@ func (s *ChatsServer) Update(ctx context.Context, req *connect.Request[cc.Chat])
 
 	requestor := ctx.Value(core.ChatAccount).(string)
 
-	if !core.In(requestor, req.Msg.Admins) {
+	chat, err := s.ctrl.Get(ctx, req.Msg.Uuid, requestor)
+	if err != nil {
+		return nil, err
+	}
+
+	if chat.Role < cc.Role_OWNER {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
 	}
 
-	chat, err := s.ctrl.Update(ctx, req.Msg)
+	chat, err = s.ctrl.Update(ctx, req.Msg)
 	if err != nil {
 		return nil, err
 	}
@@ -85,11 +90,16 @@ func (s *ChatsServer) Delete(ctx context.Context, req *connect.Request[cc.Chat])
 
 	requestor := ctx.Value(core.ChatAccount).(string)
 
-	if !core.In(requestor, req.Msg.Admins) {
+	chat, err := s.ctrl.Get(ctx, req.Msg.Uuid, requestor)
+	if err != nil {
+		return nil, err
+	}
+
+	if chat.Role < cc.Role_OWNER {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
 	}
 
-	chat, err := s.ctrl.Delete(ctx, req.Msg)
+	chat, err = s.ctrl.Delete(ctx, req.Msg)
 	if err != nil {
 		return nil, err
 	}

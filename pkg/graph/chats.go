@@ -65,14 +65,32 @@ func (c *ChatsController) Update(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 	return chat, nil
 }
 
-func (c *ChatsController) Get(ctx context.Context, uuid string) (*cc.Chat, error) {
+const getChatQuery = `
+LET chat = Document(@chat)
+LET role = @requestor in chat.admins ? 3 : (chat.owner == @requestor ? 2 : 1)
+
+RETURN MERGE(chat, {
+  role: role
+})
+`
+
+func (c *ChatsController) Get(ctx context.Context, uuid, requestor string) (*cc.Chat, error) {
 	log := c.log.Named("Get")
 	log.Debug("Req received")
 
+	cur, err := c.db.Query(ctx, listChatsQuery, map[string]interface{}{
+		"chat":      driver.NewDocumentID(CHATS_COLLECTION, uuid),
+		"requestor": requestor,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close()
+
 	var chat cc.Chat
 
-	_, err := c.col.ReadDocument(ctx, uuid, &chat)
-
+	_, err = cur.ReadDocument(ctx, &chat)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +98,7 @@ func (c *ChatsController) Get(ctx context.Context, uuid string) (*cc.Chat, error
 	return &chat, nil
 }
 
-const getChatsQuery = `
+const listChatsQuery = `
 FOR c in @@chats
 FILTER @requestor in c.admins || @requestor in c.users
 	LET role = @requestor in c.admins ? 3 : (c.owner == @requestor ? 2 : 1)
@@ -93,7 +111,7 @@ func (c *ChatsController) List(ctx context.Context, requestor string) ([]*cc.Cha
 	log := c.log.Named("List")
 	log.Debug("Req received")
 
-	cur, err := c.db.Query(ctx, getChatsQuery, map[string]interface{}{
+	cur, err := c.db.Query(ctx, listChatsQuery, map[string]interface{}{
 		"@chats":    CHATS_COLLECTION,
 		"requestor": requestor,
 	})

@@ -29,9 +29,7 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 
 	requestor := ctx.Value(core.ChatAccount).(string)
 
-	if !core.In(requestor, req.Msg.Admins) {
-		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
-	}
+	req.Msg.Owner = requestor
 
 	chat, err := s.ctrl.Create(ctx, req.Msg)
 	if err != nil {

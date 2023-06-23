@@ -38,11 +38,19 @@ func (s *MessagesServer) Get(ctx context.Context, req *connect.Request[cc.Chat])
 
 	requestor := ctx.Value(core.ChatAccount).(string)
 
-	if !In(requestor, req.Msg.GetUsers()) {
+	chat, err := s.chatCtrl.Get(ctx, req.Msg.GetUuid())
+	if err != nil {
+		return nil, err
+	}
+
+	is_user := In(requestor, chat.GetUsers())
+	is_admin := In(requestor, chat.GetAdmins())
+
+	if !is_user && !is_admin {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no access to chat"))
 	}
 
-	messages, err := s.chatCtrl.GetMessages(ctx, req.Msg)
+	messages, err := s.chatCtrl.GetMessages(ctx, req.Msg, is_admin)
 	if err != nil {
 		return nil, err
 	}

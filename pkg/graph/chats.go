@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/slntopp/core-chatting/cc"
 
@@ -143,17 +144,28 @@ func (c *ChatsController) Delete(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 const getChatMessages = `
 FOR m in @@messages
 	FILTER m.chat == @chat
+	%s
 	RETURN m
 `
 
-func (c *ChatsController) GetMessages(ctx context.Context, chat *cc.Chat) ([]*cc.Message, error) {
+func (c *ChatsController) GetMessages(ctx context.Context, chat *cc.Chat, is_admin bool) ([]*cc.Message, error) {
 	log := c.log.Named("List")
 	log.Debug("Req received")
 
-	cur, err := c.db.Query(ctx, getChatMessages, map[string]interface{}{
+	bind_vars := map[string]interface{}{
 		"chat":      chat.GetUuid(),
 		"@messages": MESSAGES_COLLECTION,
-	})
+	}
+
+	extra_filter := ""
+	if !is_admin {
+		extra_filter = "FILTER m.kind != @admin_only"
+		bind_vars["admin_only"] = cc.Kind_ADMIN_ONLY
+	}
+
+	query := fmt.Sprintf(getChatMessages, extra_filter)
+
+	cur, err := c.db.Query(ctx, query, bind_vars)
 
 	if err != nil {
 		return nil, err

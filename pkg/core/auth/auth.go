@@ -25,7 +25,7 @@ func NewUserInterceptor() connect.UnaryInterceptorFunc {
 				return nil, connect.NewError(connect.CodeUnauthenticated, err)
 			}
 
-			acc := claims[core.NOCLOUD_ACCOUNT_CLAIM]
+			acc := claims[core.JWT_ACCOUNT_CLAIM]
 			ctx = context.WithValue(ctx, core.ChatAccount, acc.(string))
 
 			return next(ctx, req)

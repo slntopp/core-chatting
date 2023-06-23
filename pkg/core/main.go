@@ -8,7 +8,14 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-const NOCLOUD_ACCOUNT_CLAIM = "account"
+var JWT_ACCOUNT_CLAIM string
+
+func init() {
+	viper.AutomaticEnv()
+	viper.SetDefault("JWT_ACCOUNT_CLAIM", "account")
+
+	JWT_ACCOUNT_CLAIM = viper.GetString("JWT_ACCOUNT_CLAIM")
+}
 
 type ContextKey string
 

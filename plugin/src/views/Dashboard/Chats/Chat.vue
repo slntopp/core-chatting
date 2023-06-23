@@ -4,14 +4,14 @@
             <chat-header style="height: 5vh" />
         </template>
 
-        <n-scrollbar style="height: 80vh">
+        <n-scrollbar style="height: 80vh; max-width: 80%;">
             <n-list-item v-for="message in messages">
-                <message-view :message="message" style="max-width: 80%;" />
+                <message-view :message="message" />
             </n-list-item>
         </n-scrollbar>
 
-        <template #footer style="min-height: 15vh">
-            <n-space>
+        <template #footer>
+            <n-space style="min-height: 10vh" align="end">
                 <n-avatar round size="medium">Me</n-avatar>
 
                 <n-input type="textarea" size="small" :autosize="{

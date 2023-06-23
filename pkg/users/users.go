@@ -44,7 +44,12 @@ func (s *UsersServer) Resolve(ctx context.Context, req *connect.Request[cc.Users
 
 	requestor := ctx.Value(core.ChatAccount).(string)
 
-	res, err := s.ctrl.Resolve(ctx, []string{requestor, "0"})
+	uuids := []string{requestor, "0"}
+	for _, user := range req.Msg.GetUsers() {
+		uuids = append(uuids, user.GetUuid())
+	}
+
+	res, err := s.ctrl.Resolve(ctx, uuids)
 	if err != nil {
 		return nil, err
 	}

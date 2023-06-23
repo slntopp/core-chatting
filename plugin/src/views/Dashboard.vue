@@ -10,7 +10,11 @@
 </template>
 
 <script setup lang="ts">
-import { NLayout,  NLayoutHeader, } from 'naive-ui';
+import { NLayout, NLayoutHeader, } from 'naive-ui';
 import CcNav from '../components/core/nav.vue';
+
+import { useCcStore } from '../store/chatting';
+
+useCcStore().load_me()
 
 </script>

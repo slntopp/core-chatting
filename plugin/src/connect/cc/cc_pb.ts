@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message as Message$1, proto3 } from "@bufbuild/protobuf";
+import { Message as Message$1, proto3, protoInt64 } from "@bufbuild/protobuf";
 
 /**
  * @generated from enum cc.Role
@@ -283,6 +283,16 @@ export class Message extends Message$1<Message> {
    */
   chat?: string;
 
+  /**
+   * @generated from field: int64 sent = 8;
+   */
+  sent = protoInt64.zero;
+
+  /**
+   * @generated from field: int64 edited = 9;
+   */
+  edited = protoInt64.zero;
+
   constructor(data?: PartialMessage<Message>) {
     super();
     proto3.util.initPartial(data, this);
@@ -298,6 +308,8 @@ export class Message extends Message$1<Message> {
     { no: 5, name: "attachments", kind: "message", T: Attachment, repeated: true },
     { no: 6, name: "gateways", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 7, name: "chat", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 8, name: "sent", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 9, name: "edited", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Message {

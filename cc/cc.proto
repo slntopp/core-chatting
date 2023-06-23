@@ -59,6 +59,9 @@ message Message {
   repeated string gateways = 6;
 
   optional string chat = 7; // Required for Send, Update and Delete requests
+
+  int64 sent = 8;
+  int64 edited = 9;
 }
 message Messages {
   repeated Message messages = 1;

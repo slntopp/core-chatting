@@ -3,6 +3,7 @@ package messages
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
@@ -71,6 +72,8 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("can't send admin only message"))
 	}
 
+	req.Msg.Sent = time.Now().UnixMilli()
+
 	message, err := s.msgCtrl.Send(ctx, req.Msg)
 	if err != nil {
 		return nil, err
@@ -90,6 +93,8 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 	if requestor != req.Msg.GetSender() {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no access to chat"))
 	}
+
+	req.Msg.Edited = time.Now().UnixMilli()
 
 	message, err := s.msgCtrl.Update(ctx, req.Msg)
 	if err != nil {

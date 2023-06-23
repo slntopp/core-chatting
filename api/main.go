@@ -11,6 +11,7 @@ import (
 	"github.com/slntopp/core-chatting/pkg/core/auth"
 	"github.com/slntopp/core-chatting/pkg/graph"
 	"github.com/slntopp/core-chatting/pkg/messages"
+	"github.com/slntopp/core-chatting/pkg/users"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rs/cors"
@@ -23,10 +24,14 @@ import (
 var (
 	log *zap.Logger
 
-	port         string
+	port string
+
 	arangodbHost string
 	arangodbCred string
 	dbName       string
+	usersCol     string
+
+	SIGNING_KEY []byte
 )
 
 func init() {
@@ -37,12 +42,18 @@ func init() {
 	viper.SetDefault("DB_HOST", "localhost:8529")
 	viper.SetDefault("DB_CRED", "root:openSesame")
 	viper.SetDefault("DB_NAME", "name")
+	viper.SetDefault("USERS_COL", "Accounts")
+
+	viper.SetDefault("SIGNING_KEY", "secret")
 
 	port = viper.GetString("PORT")
 
 	arangodbHost = viper.GetString("DB_HOST")
 	arangodbCred = viper.GetString("DB_CRED")
 	dbName = viper.GetString("DB_NAME")
+	usersCol = viper.GetString("USERS_COL")
+
+	SIGNING_KEY = []byte(viper.GetString("SIGNING_KEY"))
 }
 
 func main() {
@@ -50,10 +61,11 @@ func main() {
 
 	chatCtrl := graph.NewChatsController(log, db)
 	msgCtrs := graph.NewMessagesController(log, db)
+	usersCtrl := graph.NewUsersController(log, db, usersCol)
 
 	mux := http.NewServeMux()
 
-	interceptors := connect.WithInterceptors(auth.NewUserInterceptor())
+	interceptors := connect.WithInterceptors(auth.NewUserInterceptor(log, SIGNING_KEY))
 
 	chatServer := chats.NewChatsServer(log, chatCtrl)
 	path, handler := cc.NewChatsAPIHandler(chatServer)
@@ -61,6 +73,10 @@ func main() {
 
 	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrs)
 	path, handler = cc.NewMessagesAPIHandler(messagesServer, interceptors)
+	mux.Handle(path, handler)
+
+	usersServer := users.NewUsersServer(log, usersCtrl)
+	path, handler = cc.NewUsersAPIHandler(usersServer, interceptors)
 	mux.Handle(path, handler)
 
 	host := fmt.Sprintf("0.0.0.0:%s", port)

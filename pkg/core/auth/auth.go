@@ -3,23 +3,30 @@ package auth
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/golang-jwt/jwt"
 	"github.com/slntopp/core-chatting/pkg/core"
+	"go.uber.org/zap"
 )
 
-var SIGNING_KEY []byte
-
-func NewUserInterceptor() connect.UnaryInterceptorFunc {
+func NewUserInterceptor(log *zap.Logger, signing_key []byte) connect.UnaryInterceptorFunc {
 	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
 		return connect.UnaryFunc(func(
 			ctx context.Context,
 			req connect.AnyRequest,
 		) (connect.AnyResponse, error) {
-			token := req.Header().Get("bearer")
+			header := req.Header().Get("Authorization")
+			log.Debug("Authorization Header", zap.String("header", header))
 
-			claims, err := validateToken(token)
+			segments := strings.Split(header, " ")
+			if len(segments) != 2 {
+				return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid token"))
+			}
+
+			log.Debug("Validating Token", zap.String("token", segments[1]))
+			claims, err := validateToken(signing_key, segments[1])
 
 			if err != nil {
 				return nil, connect.NewError(connect.CodeUnauthenticated, err)
@@ -34,12 +41,12 @@ func NewUserInterceptor() connect.UnaryInterceptorFunc {
 	return connect.UnaryInterceptorFunc(interceptor)
 }
 
-func validateToken(tokenString string) (jwt.MapClaims, error) {
+func validateToken(signing_key []byte, tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, nil
 		}
-		return SIGNING_KEY, nil
+		return signing_key, nil
 	})
 
 	if err != nil {

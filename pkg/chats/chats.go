@@ -3,6 +3,7 @@ package chats
 import (
 	"context"
 	"errors"
+
 	"github.com/slntopp/core-chatting/pkg/core"
 
 	"github.com/slntopp/core-chatting/cc"

@@ -17,12 +17,13 @@ message Chat {
 
   repeated string users = 2;
   repeated string admins = 3;
+  string owner = 4;
 
-  repeated string gateways = 4;
+  repeated string gateways = 5;
 
-  Role role = 5;
+  Role role = 6;
 
-  optional string topic = 6;
+  optional string topic = 7;
 }
 message Chats {
   repeated Chat chats = 1;

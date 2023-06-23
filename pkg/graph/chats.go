@@ -82,8 +82,11 @@ func (c *ChatsController) Get(ctx context.Context, uuid string) (*cc.Chat, error
 
 const getChatsQuery = `
 FOR c in @@chats
-	FILTER @admin in c.admins
-	RETURN c
+FILTER @requestor in c.admins || @requestor in c.users
+	LET role = @requestor in c.admins ? 3 : (c.owner == @requestor ? 2 : 1)
+	RETURN MERGE(c, {
+	  role: role
+	})
 `
 
 func (c *ChatsController) List(ctx context.Context, requestor string) ([]*cc.Chat, error) {
@@ -91,8 +94,8 @@ func (c *ChatsController) List(ctx context.Context, requestor string) ([]*cc.Cha
 	log.Debug("Req received")
 
 	cur, err := c.db.Query(ctx, getChatsQuery, map[string]interface{}{
-		"@chats": CHATS_COLLECTION,
-		"admin":  requestor,
+		"@chats":    CHATS_COLLECTION,
+		"requestor": requestor,
 	})
 
 	if err != nil {

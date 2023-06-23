@@ -109,17 +109,22 @@ export class Chat extends Message$1<Chat> {
   admins: string[] = [];
 
   /**
-   * @generated from field: repeated string gateways = 4;
+   * @generated from field: string owner = 4;
+   */
+  owner = "";
+
+  /**
+   * @generated from field: repeated string gateways = 5;
    */
   gateways: string[] = [];
 
   /**
-   * @generated from field: cc.Role role = 5;
+   * @generated from field: cc.Role role = 6;
    */
   role = Role.NOACCESS;
 
   /**
-   * @generated from field: optional string topic = 6;
+   * @generated from field: optional string topic = 7;
    */
   topic?: string;
 
@@ -134,9 +139,10 @@ export class Chat extends Message$1<Chat> {
     { no: 1, name: "uuid", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "users", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 3, name: "admins", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 4, name: "gateways", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 5, name: "role", kind: "enum", T: proto3.getEnumType(Role) },
-    { no: 6, name: "topic", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 4, name: "owner", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "gateways", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 6, name: "role", kind: "enum", T: proto3.getEnumType(Role) },
+    { no: 7, name: "topic", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Chat {

@@ -10,6 +10,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { NAlert, NSpace } from 'naive-ui';
 
 import { useAppStore, PluginConf } from "../store/app.ts";
+import { useCcStore } from '../store/chatting';
 
 const route = useRoute()
 const router = useRouter()
@@ -50,6 +51,8 @@ function handler() {
     console.debug('Entrypoint data(object):', data)
 
     store.conf = data
+
+    useCcStore().load_me()
 
     router.push('/dashboard')
 

@@ -80,7 +80,7 @@ message User {
 
 message Defaults {
   repeated string gateways = 1;
-  repeated User admins = 2;
+  repeated string admins = 2;
 }
 
 message Users {
@@ -88,6 +88,7 @@ message Users {
 }
 
 service UsersAPI {
+  rpc Me(Empty) returns (User);
   rpc FetchDefaults(Empty) returns (Defaults);
 
   // Resolves given Users data by their UUIDs

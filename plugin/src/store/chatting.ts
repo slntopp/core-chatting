@@ -30,6 +30,9 @@ export const useCcStore = defineStore('cc', () => {
     const users_c = createPromiseClient(UsersAPI, transport);
 
     const chats = ref<Map<string, Chat>>(new Map())
+    const users = ref<Map<string, User>>(new Map())
+
+    const me = ref<User>(new User())
 
     async function list_chats() {
         let result = await chats_c.list(new Empty())
@@ -49,11 +52,10 @@ export const useCcStore = defineStore('cc', () => {
         return users_c.fetchDefaults(new Empty())
     }
 
-    const users = ref<Map<string, User>>(new Map())
     async function resolve(req_users: string[] = []): Promise<Users> {
-        let result = await users_c.resolve(new Users({ users: req_users.map((uuid) => new User({ uuid }))}))
+        let result = await users_c.resolve(new Users({ users: req_users.map((uuid) => new User({ uuid })) }))
         console.debug('Got Users', result.users)
-        
+
         for (let user of result.users) {
             users.value.set(user.uuid, user)
         }
@@ -68,8 +70,13 @@ export const useCcStore = defineStore('cc', () => {
         return messages_c.send(message)
     }
 
+    async function load_me() {
+        me.value = await users_c.me(new Empty())
+    }
+
     return {
-        users,
+        users, load_me, me,
+
         chats, list_chats, create_chat,
         get_messages, send_message,
 

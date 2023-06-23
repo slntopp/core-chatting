@@ -407,9 +407,9 @@ export class Defaults extends Message$1<Defaults> {
   gateways: string[] = [];
 
   /**
-   * @generated from field: repeated cc.User admins = 2;
+   * @generated from field: repeated string admins = 2;
    */
-  admins: User[] = [];
+  admins: string[] = [];
 
   constructor(data?: PartialMessage<Defaults>) {
     super();
@@ -420,7 +420,7 @@ export class Defaults extends Message$1<Defaults> {
   static readonly typeName = "cc.Defaults";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "gateways", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 2, name: "admins", kind: "message", T: User, repeated: true },
+    { no: 2, name: "admins", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Defaults {

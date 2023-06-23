@@ -53,6 +53,8 @@ const (
 	MessagesAPIUpdateProcedure = "/cc.MessagesAPI/Update"
 	// MessagesAPIDeleteProcedure is the fully-qualified name of the MessagesAPI's Delete RPC.
 	MessagesAPIDeleteProcedure = "/cc.MessagesAPI/Delete"
+	// UsersAPIMeProcedure is the fully-qualified name of the UsersAPI's Me RPC.
+	UsersAPIMeProcedure = "/cc.UsersAPI/Me"
 	// UsersAPIFetchDefaultsProcedure is the fully-qualified name of the UsersAPI's FetchDefaults RPC.
 	UsersAPIFetchDefaultsProcedure = "/cc.UsersAPI/FetchDefaults"
 	// UsersAPIResolveProcedure is the fully-qualified name of the UsersAPI's Resolve RPC.
@@ -313,6 +315,7 @@ func (UnimplementedMessagesAPIHandler) Delete(context.Context, *connect_go.Reque
 
 // UsersAPIClient is a client for the cc.UsersAPI service.
 type UsersAPIClient interface {
+	Me(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.User], error)
 	FetchDefaults(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Defaults], error)
 	// Resolves given Users data by their UUIDs
 	// And returns all accessible Users for Requestor
@@ -329,6 +332,11 @@ type UsersAPIClient interface {
 func NewUsersAPIClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) UsersAPIClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &usersAPIClient{
+		me: connect_go.NewClient[cc.Empty, cc.User](
+			httpClient,
+			baseURL+UsersAPIMeProcedure,
+			opts...,
+		),
 		fetchDefaults: connect_go.NewClient[cc.Empty, cc.Defaults](
 			httpClient,
 			baseURL+UsersAPIFetchDefaultsProcedure,
@@ -344,8 +352,14 @@ func NewUsersAPIClient(httpClient connect_go.HTTPClient, baseURL string, opts ..
 
 // usersAPIClient implements UsersAPIClient.
 type usersAPIClient struct {
+	me            *connect_go.Client[cc.Empty, cc.User]
 	fetchDefaults *connect_go.Client[cc.Empty, cc.Defaults]
 	resolve       *connect_go.Client[cc.Users, cc.Users]
+}
+
+// Me calls cc.UsersAPI.Me.
+func (c *usersAPIClient) Me(ctx context.Context, req *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.User], error) {
+	return c.me.CallUnary(ctx, req)
 }
 
 // FetchDefaults calls cc.UsersAPI.FetchDefaults.
@@ -360,6 +374,7 @@ func (c *usersAPIClient) Resolve(ctx context.Context, req *connect_go.Request[cc
 
 // UsersAPIHandler is an implementation of the cc.UsersAPI service.
 type UsersAPIHandler interface {
+	Me(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.User], error)
 	FetchDefaults(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Defaults], error)
 	// Resolves given Users data by their UUIDs
 	// And returns all accessible Users for Requestor
@@ -373,6 +388,11 @@ type UsersAPIHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewUsersAPIHandler(svc UsersAPIHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
+	mux.Handle(UsersAPIMeProcedure, connect_go.NewUnaryHandler(
+		UsersAPIMeProcedure,
+		svc.Me,
+		opts...,
+	))
 	mux.Handle(UsersAPIFetchDefaultsProcedure, connect_go.NewUnaryHandler(
 		UsersAPIFetchDefaultsProcedure,
 		svc.FetchDefaults,
@@ -388,6 +408,10 @@ func NewUsersAPIHandler(svc UsersAPIHandler, opts ...connect_go.HandlerOption) (
 
 // UnimplementedUsersAPIHandler returns CodeUnimplemented from all methods.
 type UnimplementedUsersAPIHandler struct{}
+
+func (UnimplementedUsersAPIHandler) Me(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.User], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.UsersAPI.Me is not implemented"))
+}
 
 func (UnimplementedUsersAPIHandler) FetchDefaults(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Defaults], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.UsersAPI.FetchDefaults is not implemented"))

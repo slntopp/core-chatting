@@ -30,6 +30,16 @@ func In[T comparable](o T, a []T) bool {
 	return false
 }
 
+func Unique[T comparable](a []T) []T {
+	var b []T
+	for _, el := range a {
+		if !In(el, b) {
+			b = append(b, el)
+		}
+	}
+	return b
+}
+
 func NewLogger() (log *zap.Logger) {
 	viper.SetDefault("LOG_LEVEL", int(zap.DebugLevel))
 	level := viper.GetInt("LOG_LEVEL")

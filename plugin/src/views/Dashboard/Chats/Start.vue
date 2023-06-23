@@ -56,6 +56,7 @@ import { useCcStore } from '../../../store/chatting.ts';
 const CloseSharp = defineAsyncComponent(() => import('@vicons/ionicons5/CloseSharp'));
 
 const router = useRouter();
+const store = useCcStore();
 
 const form = ref<FormInst>()
 const rules = {
@@ -65,48 +66,42 @@ const rules = {
 }
 
 const chat = ref<Chat>(new Chat({
-    uuid: '', topic: '', users: [],
+    uuid: '', topic: '', users: [store.me.uuid],
     admins: [], gateways: [],
     role: Role.OWNER,
 }))
 
-const store = useCcStore();
-
-const members_options = ref<SelectOption[]>()
-async function resolve() {
-    let result = await store.resolve();
-    console.debug("Resolve", result)
-
-    members_options.value = result.users.map(user => {
-        return {
-            label: user.title,
-            value: user.uuid,
-        }
-    })
-
-}
-resolve()
-
 const admins_options = ref<SelectOption[]>()
 const gateways_options = ref<SelectOption[]>()
+const members_options = ref<SelectOption[]>()
 async function fetch_defaults() {
-    let result = await store.fetch_defaults();
-    console.debug("Defaults", result)
+    let result = await store.resolve();
 
-    admins_options.value = result.admins.map(admin => {
+    let defaults = await store.fetch_defaults();
+    console.debug("Defaults", defaults)
+
+    admins_options.value = defaults.admins.map(admin => {
         return {
-            label: admin.title,
-            value: admin.uuid,
+            label: store.users.get(admin)?.title ?? 'Unknown',
+            value: admin,
         }
     })
 
-    gateways_options.value = result.gateways.map(gateway => {
+    gateways_options.value = defaults.gateways.map(gateway => {
         return {
             label: gateway,
             value: gateway,
         }
     })
-    chat.value.gateways = result.gateways
+    chat.value.gateways = defaults.gateways
+
+    members_options.value = result.users.map(user => {
+        return {
+            label: user.title,
+            value: user.uuid,
+            disabled: defaults.admins.includes(user.uuid),
+        }
+    })
 }
 fetch_defaults()
 

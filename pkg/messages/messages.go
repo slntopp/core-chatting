@@ -76,9 +76,15 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 
 	if requestor != req.Msg.GetSender() {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no access to chat"))
+
+	is_user := In(requestor, chat.GetUsers())
+	is_admin := In(requestor, chat.GetAdmins())
+
+	if req.Msg.Kind == cc.Kind_ADMIN_ONLY && !is_admin {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("can't send admin only message"))
 	}
 
-	if !In(requestor, chat.GetUsers()) {
+	if !is_user && !is_admin {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no access to chat"))
 	}
 

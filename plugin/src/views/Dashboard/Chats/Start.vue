@@ -1,14 +1,18 @@
 <template>
-    <n-space justify="start">
+    <n-space justify="start" align="center">
         <n-button round quaternary @click="router.push({ name: 'Empty Chat' })">
             <template #icon>
                 <n-icon :component="CloseSharp" />
             </template>
         </n-button>
+
+        <n-text>
+            Start a new chat
+        </n-text>
     </n-space>
 
-    <n-space vertical justify="start" style="padding-left: 16px">
-        <n-space justify="start">
+    <n-space vertical justify="start" style="padding-left: 16px; padding-top: 10%; min-width: 50vw;">
+        <n-space justify="space-around" style="width: 80%;">
             <n-form :model="chat" ref="form" :rules="rules" label-placement="left">
                 <n-form-item label="Topic">
                     <n-input v-model:value="chat.topic" clearable placeholder="What are we chatting about?" />
@@ -28,7 +32,7 @@
             </n-form>
         </n-space>
 
-        <n-space justify="start">
+        <n-space justify="space-around" style="width: 80%;">
             <n-button ghost type="success" @click="submit">
                 Start Chat
             </n-button>
@@ -39,7 +43,7 @@
 <script setup lang="ts">
 import { ref, defineAsyncComponent } from 'vue';
 import {
-    NSpace, NButton, NIcon,
+    NSpace, NButton, NIcon, NText,
     NForm, NFormItem, NInput,
     SelectOption, NSelect, FormInst
 } from 'naive-ui';

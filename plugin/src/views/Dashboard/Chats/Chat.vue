@@ -1,5 +1,5 @@
 <template>
-    <n-list>
+    <n-list style="padding-left: 16px">
         <template #header>
             <chat-header style="height: 5vh" />
         </template>

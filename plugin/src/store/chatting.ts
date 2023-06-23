@@ -75,6 +75,9 @@ export const useCcStore = defineStore('cc', () => {
     function send_message(message: Message): Promise<Empty> {
         return messages_c.send(message)
     }
+    function update_message(message: Message): Promise<Empty> {
+        return messages_c.update(message)
+    }
 
     async function load_me() {
         me.value = await users_c.me(new Empty())
@@ -84,7 +87,7 @@ export const useCcStore = defineStore('cc', () => {
         users, load_me, me,
 
         chats, list_chats, create_chat, delete_chat,
-        get_messages, send_message,
+        get_messages, send_message, update_message,
 
         fetch_defaults, resolve
     }

@@ -20,25 +20,32 @@
             <n-space style="min-height: 10vh" align="end">
                 <n-avatar round size="medium">Me</n-avatar>
 
-                <n-tooltip placement="top-end">
-                    <template #trigger>
+                <n-space vertical justify="center">
+                    <n-alert style="min-width: 50vw;" title="Editing" type="info" closable v-if="updating"
+                        @close="handle_stop_edit" />
+                    <n-tooltip placement="top-end">
+                        <template #trigger>
 
-                        <n-input type="textarea" size="small" :autosize="{
-                            minRows: 2,
-                            maxRows: 5
-                        }" style="min-width: 50vw;" placeholder="Type your message"
-                            v-model:value="current_message.content"
-                            @keypress.ctrl.enter.exact="e => { e.preventDefault(); handle_send() }"
-                            @keypress.ctrl.shift.enter.exact="e => { e.preventDefault(); handle_send(Kind.ADMIN_ONLY) }" />
-                    </template>
+                            <n-input type="textarea" size="small" :autosize="{
+                                minRows: 2,
+                                maxRows: 5
+                            }" style="min-width: 50vw;" placeholder="Type your message"
+                                v-model:value="current_message.content"
+                                @keypress.ctrl.enter.exact="e => { e.preventDefault(); handle_send() }"
+                                @keypress.ctrl.shift.enter.exact="e => { e.preventDefault(); handle_send(Kind.ADMIN_ONLY) }"
+                                @keyup.ctrl.up.exact="e => { e.preventDefault(); handle_begin_edit() }" />
+                        </template>
 
-                    <ul>
-                        <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to send message</li>
-                        <li v-if="chat?.role == Role.ADMIN"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Enter</kbd> to send
-                            message as Admin Note</li>
-                    </ul>
+                        <ul>
+                            <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to send message</li>
+                            <li v-if="chat?.role == Role.ADMIN"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Enter</kbd> to
+                                send
+                                message as Admin Note</li>
+                            <li><kbd>Ctrl</kbd> + <kbd>↑</kbd> to edit last message</li>
+                        </ul>
 
-                </n-tooltip>
+                    </n-tooltip>
+                </n-space>
 
                 <n-space>
                     <n-button type="success" ghost circle size="small" @click="handle_send()">
@@ -123,15 +130,26 @@ async function get_messages() {
     messages.value = res.messages
 }
 
+const updating = ref(false)
 const current_message = ref<Message>(new Message({
     chat: route.params.uuid as string,
     content: '',
 }))
 
 async function handle_send(kind = Kind.DEFAULT) {
+    if (current_message.value.content == '') {
+        return
+    }
+
     current_message.value.kind = kind
-    current_message.value.chat = route.params.uuid as string
-    await store.send_message(current_message.value as Message)
+    if (updating.value) {
+        await store.update_message(current_message.value as Message)
+        updating.value = false
+    } else {
+        current_message.value.chat = route.params.uuid as string
+        await store.send_message(current_message.value as Message)
+    }
+
 
     current_message.value = new Message({
         content: '',
@@ -161,6 +179,24 @@ watch(chat, load_chat)
 load_chat()
 
 watch(messages, scrollToBottom)
+
+function handle_begin_edit() {
+    for (let i = messages.value.length - 1; i >= 0; i--) {
+        let msg = messages.value[i]
+        if (msg.sender == store.me.uuid) {
+            updating.value = true
+            current_message.value = msg
+            break
+        }
+    }
+}
+function handle_stop_edit() {
+    updating.value = false
+    current_message.value = new Message({
+        content: '',
+    })
+}
+
 </script>
 
 <style>

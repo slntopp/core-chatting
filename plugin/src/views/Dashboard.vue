@@ -1,0 +1,16 @@
+<template>
+    <n-layout>
+        <n-layout-header>
+            <cc-nav />
+        </n-layout-header>
+        <n-layout has-sider>
+            <router-view />
+        </n-layout>
+    </n-layout>
+</template>
+
+<script setup lang="ts">
+import { NLayout,  NLayoutHeader, } from 'naive-ui';
+import CcNav from '../components/core/nav.vue';
+
+</script>

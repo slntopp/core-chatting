@@ -2,11 +2,11 @@ package pubsub
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/slntopp/core-chatting/cc"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 )
 
 type PubSub struct {
@@ -43,7 +43,7 @@ func (s *PubSub) Pub(ctx context.Context, id string, event *cc.Event) {
 		return
 	}
 
-	marshal, err := json.Marshal(event)
+	marshal, err := proto.Marshal(event)
 
 	if err != nil {
 		log.Error("Failed to marshal event", zap.Error(err))

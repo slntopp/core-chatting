@@ -2,13 +2,13 @@ package stream
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/bufbuild/connect-go"
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/graph"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 )
 
 type StreamServer struct {
@@ -57,7 +57,7 @@ start_stream:
 	var event = &cc.Event{}
 
 	for msg := range msgs {
-		err := json.Unmarshal(msg.Body, event)
+		err := proto.Unmarshal(msg.Body, event)
 		if err != nil {
 			return err
 		}

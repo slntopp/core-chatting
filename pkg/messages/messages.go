@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
+	"google.golang.org/protobuf/types/known/structpb"
 	"time"
 
 	"github.com/slntopp/core-chatting/cc"
@@ -81,6 +82,8 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 		return nil, err
 	}
 
+	go handleNotify(ctx, s.ps, message, chat, cc.EventType_MESSAGE_SEND)
+
 	resp := connect.NewResponse[cc.Message](message)
 
 	return resp, nil
@@ -116,6 +119,8 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 		return nil, err
 	}
 
+	go handleNotify(ctx, s.ps, message, chat, cc.EventType_MESSAGE_UPDATED)
+
 	resp := connect.NewResponse[cc.Message](message)
 
 	return resp, nil
@@ -145,7 +150,31 @@ func (s *MessagesServer) Delete(ctx context.Context, req *connect.Request[cc.Mes
 		return nil, err
 	}
 
+	go handleNotify(ctx, s.ps, message, chat, cc.EventType_MESSAGE_DELETED)
+
 	resp := connect.NewResponse[cc.Message](message)
 
 	return resp, nil
+}
+
+func handleNotify(ctx context.Context, ps *pubsub.PubSub, msg *cc.Message, chat *cc.Chat, eventType cc.EventType) {
+	msgpb, _ := structpb.NewValue(msg)
+
+	var event = &cc.Event{
+		Type: eventType,
+		Meta: map[string]*structpb.Value{
+			"message": msgpb,
+		},
+	}
+
+	if msg.Kind == cc.Kind_DEFAULT {
+		for _, user := range chat.Users {
+			go ps.Pub(ctx, user, event)
+		}
+	}
+
+	for _, admin := range chat.Admins {
+		go ps.Pub(ctx, admin, event)
+	}
+
 }

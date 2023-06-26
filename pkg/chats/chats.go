@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/slntopp/core-chatting/pkg/core"
 
@@ -38,6 +39,8 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 		return nil, err
 	}
 
+	go handleNotify(ctx, s.ps, chat, cc.EventType_CHAT_CREATED)
+
 	resp := connect.NewResponse[cc.Chat](chat)
 
 	return resp, nil
@@ -62,6 +65,8 @@ func (s *ChatsServer) Update(ctx context.Context, req *connect.Request[cc.Chat])
 	if err != nil {
 		return nil, err
 	}
+
+	go handleNotify(ctx, s.ps, chat, cc.EventType_CHAT_UPDATED)
 
 	resp := connect.NewResponse[cc.Chat](chat)
 
@@ -106,7 +111,29 @@ func (s *ChatsServer) Delete(ctx context.Context, req *connect.Request[cc.Chat])
 		return nil, err
 	}
 
+	go handleNotify(ctx, s.ps, chat, cc.EventType_CHAT_DELETED)
+
 	resp := connect.NewResponse[cc.Chat](chat)
 
 	return resp, nil
+}
+
+func handleNotify(ctx context.Context, ps *pubsub.PubSub, chat *cc.Chat, eventType cc.EventType) {
+	chatpb, _ := structpb.NewValue(chat)
+
+	var event = &cc.Event{
+		Type: eventType,
+		Meta: map[string]*structpb.Value{
+			"chat": chatpb,
+		},
+	}
+
+	for _, user := range chat.Users {
+		go ps.Pub(ctx, user, event)
+	}
+
+	for _, admin := range chat.Admins {
+		go ps.Pub(ctx, admin, event)
+	}
+
 }

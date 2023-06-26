@@ -2,6 +2,7 @@ package messages
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -158,7 +159,12 @@ func (s *MessagesServer) Delete(ctx context.Context, req *connect.Request[cc.Mes
 }
 
 func handleNotify(ctx context.Context, ps *pubsub.PubSub, msg *cc.Message, chat *cc.Chat, eventType cc.EventType) {
-	msgpb, _ := structpb.NewValue(msg)
+	var iMessage interface{}
+
+	marshal, _ := json.Marshal(msg)
+	json.Unmarshal(marshal, &iMessage)
+
+	msgpb, _ := structpb.NewValue(iMessage)
 
 	var event = &cc.Event{
 		Type: eventType,

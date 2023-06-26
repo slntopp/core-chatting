@@ -293,6 +293,11 @@ export class Message extends Message$1<Message> {
    */
   edited = protoInt64.zero;
 
+  /**
+   * @generated from field: bool under_review = 10;
+   */
+  underReview = false;
+
   constructor(data?: PartialMessage<Message>) {
     super();
     proto3.util.initPartial(data, this);
@@ -310,6 +315,7 @@ export class Message extends Message$1<Message> {
     { no: 7, name: "chat", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 8, name: "sent", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 9, name: "edited", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 10, name: "under_review", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Message {

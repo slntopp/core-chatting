@@ -182,7 +182,7 @@ func (c *ChatsController) GetMessages(ctx context.Context, chat *cc.Chat, is_adm
 
 	extra_filter := ""
 	if !is_admin {
-		extra_filter = "FILTER m.kind != @admin_only"
+		extra_filter = "FILTER m.kind != @admin_only\nFILTER !m.under_review"
 		bind_vars["admin_only"] = cc.Kind_ADMIN_ONLY
 	}
 

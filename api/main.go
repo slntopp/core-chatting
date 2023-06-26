@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
 	"github.com/slntopp/core-chatting/pkg/stream"
-	"net/http"
 
 	cc "github.com/slntopp/core-chatting/cc/ccconnect"
 
@@ -45,7 +46,7 @@ func init() {
 	viper.SetDefault("PORT", "8080")
 	viper.SetDefault("DB_HOST", "localhost:8529")
 	viper.SetDefault("DB_CRED", "root:openSesame")
-	viper.SetDefault("RABBITMQ_CONN", "amqp://nocloud:secret@rabbitmq:5672/")
+	viper.SetDefault("RABBITMQ_CONN", "amqp://admin:password@rabbitmq:5672/")
 	viper.SetDefault("DB_NAME", "name")
 	viper.SetDefault("USERS_COL", "Accounts")
 
@@ -79,7 +80,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	interceptors := connect.WithInterceptors(auth.NewUserInterceptor(log, SIGNING_KEY))
+	interceptors := connect.WithInterceptors(auth.NewAuthInterceptor(log, SIGNING_KEY))
 
 	chatServer := chats.NewChatsServer(log, chatCtrl, ps)
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)

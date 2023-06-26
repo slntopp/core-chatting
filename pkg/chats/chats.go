@@ -2,12 +2,9 @@ package chats
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"github.com/slntopp/core-chatting/pkg/pubsub"
-	"google.golang.org/protobuf/types/known/structpb"
-
 	"github.com/slntopp/core-chatting/pkg/core"
+	"github.com/slntopp/core-chatting/pkg/pubsub"
 
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/graph"
@@ -120,18 +117,9 @@ func (s *ChatsServer) Delete(ctx context.Context, req *connect.Request[cc.Chat])
 }
 
 func handleNotify(ctx context.Context, ps *pubsub.PubSub, chat *cc.Chat, eventType cc.EventType) {
-	var iChat interface{}
-
-	marshal, _ := json.Marshal(chat)
-	json.Unmarshal(marshal, &iChat)
-
-	chatpb, _ := structpb.NewValue(iChat)
-
 	var event = &cc.Event{
 		Type: eventType,
-		Meta: map[string]*structpb.Value{
-			"chat": chatpb,
-		},
+		Item: &cc.Event_Chat{Chat: chat},
 	}
 
 	for _, user := range chat.Users {

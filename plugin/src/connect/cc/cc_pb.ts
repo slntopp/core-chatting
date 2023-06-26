@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message as Message$1, proto3, protoInt64, Value } from "@bufbuild/protobuf";
+import { Message as Message$1, proto3, protoInt64 } from "@bufbuild/protobuf";
 
 /**
  * @generated from enum cc.Role
@@ -549,9 +549,21 @@ export class Event extends Message$1<Event> {
   type = EventType.CHAT_CREATED;
 
   /**
-   * @generated from field: map<string, google.protobuf.Value> meta = 2;
+   * @generated from oneof cc.Event.item
    */
-  meta: { [key: string]: Value } = {};
+  item: {
+    /**
+     * @generated from field: cc.Chat chat = 2;
+     */
+    value: Chat;
+    case: "chat";
+  } | {
+    /**
+     * @generated from field: cc.Message msg = 3;
+     */
+    value: Message;
+    case: "msg";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   constructor(data?: PartialMessage<Event>) {
     super();
@@ -562,7 +574,8 @@ export class Event extends Message$1<Event> {
   static readonly typeName = "cc.Event";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "type", kind: "enum", T: proto3.getEnumType(EventType) },
-    { no: 2, name: "meta", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
+    { no: 2, name: "chat", kind: "message", T: Chat, oneof: "item" },
+    { no: 3, name: "msg", kind: "message", T: Message, oneof: "item" },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Event {

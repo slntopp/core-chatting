@@ -114,7 +114,10 @@ enum EventType {
 
 message Event {
   EventType type = 1;
-  map<string, google.protobuf.Value> meta = 2;
+  oneof item {
+    Chat chat = 2;
+    Message msg = 3;
+  }
 }
 
 service StreamService {

@@ -55,7 +55,7 @@ const updateMessageQuery = `
 LET msg = DOCUMENT(@msg)
 
 LET eventKind = msg.kind ? msg.kind : 0
-LET underReview = msg.under_review ? msg.under_review : 0
+LET underReview = msg.under_review ? msg.under_review : false
 
 UPDATE msg._key WITH {
     kind: eventKind,

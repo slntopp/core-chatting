@@ -3,6 +3,7 @@ package chats
 import (
 	"context"
 	"errors"
+	"github.com/slntopp/core-chatting/pkg/pubsub"
 
 	"github.com/slntopp/core-chatting/pkg/core"
 
@@ -17,10 +18,11 @@ type ChatsServer struct {
 	log *zap.Logger
 
 	ctrl *graph.ChatsController
+	ps   *pubsub.PubSub
 }
 
-func NewChatsServer(logger *zap.Logger, ctrl *graph.ChatsController) *ChatsServer {
-	return &ChatsServer{log: logger.Named("ChatsServer"), ctrl: ctrl}
+func NewChatsServer(logger *zap.Logger, ctrl *graph.ChatsController, ps *pubsub.PubSub) *ChatsServer {
+	return &ChatsServer{log: logger.Named("ChatsServer"), ctrl: ctrl, ps: ps}
 }
 
 func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {

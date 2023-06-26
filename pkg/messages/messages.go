@@ -3,6 +3,7 @@ package messages
 import (
 	"context"
 	"errors"
+	"github.com/slntopp/core-chatting/pkg/pubsub"
 	"time"
 
 	"github.com/slntopp/core-chatting/cc"
@@ -18,10 +19,11 @@ type MessagesServer struct {
 
 	chatCtrl *graph.ChatsController
 	msgCtrl  *graph.MessagesController
+	ps       *pubsub.PubSub
 }
 
-func NewMessagesServer(logger *zap.Logger, chatCtrl *graph.ChatsController, msgCtrl *graph.MessagesController) *MessagesServer {
-	return &MessagesServer{log: logger.Named("MessagesServer"), chatCtrl: chatCtrl, msgCtrl: msgCtrl}
+func NewMessagesServer(logger *zap.Logger, chatCtrl *graph.ChatsController, msgCtrl *graph.MessagesController, ps *pubsub.PubSub) *MessagesServer {
+	return &MessagesServer{log: logger.Named("MessagesServer"), chatCtrl: chatCtrl, msgCtrl: msgCtrl, ps: ps}
 }
 
 func (s *MessagesServer) Get(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Messages], error) {

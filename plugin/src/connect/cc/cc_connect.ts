@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, Chats, Defaults, Empty, Message, Messages, User, Users } from "./cc_pb.js";
+import { Chat, Chats, Defaults, Empty, Event, Message, Messages, User, Users } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -131,6 +131,24 @@ export const UsersAPI = {
       I: Users,
       O: Users,
       kind: MethodKind.Unary,
+    },
+  }
+} as const;
+
+/**
+ * @generated from service cc.StreamService
+ */
+export const StreamService = {
+  typeName: "cc.StreamService",
+  methods: {
+    /**
+     * @generated from rpc cc.StreamService.Stream
+     */
+    stream: {
+      name: "Stream",
+      I: Empty,
+      O: Event,
+      kind: MethodKind.ServerStreaming,
     },
   }
 } as const;

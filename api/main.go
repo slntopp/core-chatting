@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/rabbitmq/amqp091-go"
+	"github.com/slntopp/core-chatting/pkg/pubsub"
+	"github.com/slntopp/core-chatting/pkg/stream"
 	"net/http"
 
 	cc "github.com/slntopp/core-chatting/cc/ccconnect"
@@ -30,6 +33,7 @@ var (
 	arangodbCred string
 	dbName       string
 	usersCol     string
+	rbmq         string
 
 	SIGNING_KEY []byte
 )
@@ -41,6 +45,7 @@ func init() {
 	viper.SetDefault("PORT", "8080")
 	viper.SetDefault("DB_HOST", "localhost:8529")
 	viper.SetDefault("DB_CRED", "root:openSesame")
+	viper.SetDefault("RABBITMQ_CONN", "amqp://nocloud:secret@rabbitmq:5672/")
 	viper.SetDefault("DB_NAME", "name")
 	viper.SetDefault("USERS_COL", "Accounts")
 
@@ -52,11 +57,20 @@ func init() {
 	arangodbCred = viper.GetString("DB_CRED")
 	dbName = viper.GetString("DB_NAME")
 	usersCol = viper.GetString("USERS_COL")
+	rbmq = viper.GetString("RABBITMQ_CONN")
 
 	SIGNING_KEY = []byte(viper.GetString("SIGNING_KEY"))
 }
 
 func main() {
+	rbmq, err := amqp091.Dial(rbmq)
+	if err != nil {
+		log.Fatal("Failed to connect to RabbitMQ", zap.Error(err))
+	}
+	defer rbmq.Close()
+
+	ps := pubsub.NewPubSub(log, rbmq)
+
 	db := graph.ConnectDb(log, arangodbHost, arangodbCred, dbName)
 
 	chatCtrl := graph.NewChatsController(log, db)
@@ -67,16 +81,20 @@ func main() {
 
 	interceptors := connect.WithInterceptors(auth.NewUserInterceptor(log, SIGNING_KEY))
 
-	chatServer := chats.NewChatsServer(log, chatCtrl)
+	chatServer := chats.NewChatsServer(log, chatCtrl, ps)
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)
 	mux.Handle(path, handler)
 
-	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrs)
+	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrs, ps)
 	path, handler = cc.NewMessagesAPIHandler(messagesServer, interceptors)
 	mux.Handle(path, handler)
 
 	usersServer := users.NewUsersServer(log, usersCtrl)
 	path, handler = cc.NewUsersAPIHandler(usersServer, interceptors)
+	mux.Handle(path, handler)
+
+	streamServer := stream.NewStreamServer(log, usersCtrl, ps)
+	path, handler = cc.NewStreamServiceHandler(streamServer, interceptors)
 	mux.Handle(path, handler)
 
 	host := fmt.Sprintf("0.0.0.0:%s", port)
@@ -91,7 +109,7 @@ func main() {
 	}).Handler(h2c.NewHandler(mux, &http2.Server{}))
 
 	log.Debug("Start server", zap.String("host", host))
-	err := http.ListenAndServe(host, handler)
+	err = http.ListenAndServe(host, handler)
 	if err != nil {
 		log.Fatal("Failed to start server", zap.Error(err))
 	}

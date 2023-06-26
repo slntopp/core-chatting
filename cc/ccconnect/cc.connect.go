@@ -27,6 +27,8 @@ const (
 	MessagesAPIName = "cc.MessagesAPI"
 	// UsersAPIName is the fully-qualified name of the UsersAPI service.
 	UsersAPIName = "cc.UsersAPI"
+	// StreamServiceName is the fully-qualified name of the StreamService service.
+	StreamServiceName = "cc.StreamService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -59,6 +61,8 @@ const (
 	UsersAPIFetchDefaultsProcedure = "/cc.UsersAPI/FetchDefaults"
 	// UsersAPIResolveProcedure is the fully-qualified name of the UsersAPI's Resolve RPC.
 	UsersAPIResolveProcedure = "/cc.UsersAPI/Resolve"
+	// StreamServiceStreamProcedure is the fully-qualified name of the StreamService's Stream RPC.
+	StreamServiceStreamProcedure = "/cc.StreamService/Stream"
 )
 
 // ChatsAPIClient is a client for the cc.ChatsAPI service.
@@ -419,4 +423,64 @@ func (UnimplementedUsersAPIHandler) FetchDefaults(context.Context, *connect_go.R
 
 func (UnimplementedUsersAPIHandler) Resolve(context.Context, *connect_go.Request[cc.Users]) (*connect_go.Response[cc.Users], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.UsersAPI.Resolve is not implemented"))
+}
+
+// StreamServiceClient is a client for the cc.StreamService service.
+type StreamServiceClient interface {
+	Stream(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.ServerStreamForClient[cc.Event], error)
+}
+
+// NewStreamServiceClient constructs a client for the cc.StreamService service. By default, it uses
+// the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewStreamServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) StreamServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	return &streamServiceClient{
+		stream: connect_go.NewClient[cc.Empty, cc.Event](
+			httpClient,
+			baseURL+StreamServiceStreamProcedure,
+			opts...,
+		),
+	}
+}
+
+// streamServiceClient implements StreamServiceClient.
+type streamServiceClient struct {
+	stream *connect_go.Client[cc.Empty, cc.Event]
+}
+
+// Stream calls cc.StreamService.Stream.
+func (c *streamServiceClient) Stream(ctx context.Context, req *connect_go.Request[cc.Empty]) (*connect_go.ServerStreamForClient[cc.Event], error) {
+	return c.stream.CallServerStream(ctx, req)
+}
+
+// StreamServiceHandler is an implementation of the cc.StreamService service.
+type StreamServiceHandler interface {
+	Stream(context.Context, *connect_go.Request[cc.Empty], *connect_go.ServerStream[cc.Event]) error
+}
+
+// NewStreamServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	mux := http.NewServeMux()
+	mux.Handle(StreamServiceStreamProcedure, connect_go.NewServerStreamHandler(
+		StreamServiceStreamProcedure,
+		svc.Stream,
+		opts...,
+	))
+	return "/cc.StreamService/", mux
+}
+
+// UnimplementedStreamServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedStreamServiceHandler struct{}
+
+func (UnimplementedStreamServiceHandler) Stream(context.Context, *connect_go.Request[cc.Empty], *connect_go.ServerStream[cc.Event]) error {
+	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.StreamService.Stream is not implemented"))
 }

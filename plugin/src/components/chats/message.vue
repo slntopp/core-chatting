@@ -10,7 +10,7 @@ import { PropType, defineAsyncComponent, h, computed, ref } from 'vue';
 import {
     NAvatar, NGrid,
     NGi, NIcon, NSpace,
-    NText, NH2, useThemeVars, NTooltip, NDivider
+    NText, NH2, useThemeVars, NTooltip, NDivider, NButton
 } from 'naive-ui'
 
 import { Message, Kind } from '../../connect/cc/cc_pb'
@@ -40,6 +40,8 @@ const { message } = defineProps({
     }
 })
 
+const emit = defineEmits(['approve'])
+
 const theme = useThemeVars()
 
 const store = useCcStore()
@@ -55,25 +57,29 @@ function avatar() {
     ]
 
     if (message.kind == Kind.ADMIN_ONLY) {
-        elements.push(h(
-            NGi,
-            {},
-            () => h(NIcon, {
-                color: theme.value.warningColor,
-                size: 24,
-                component: ClipboardOutline,
-            }),
-        ))
+        elements.push(h(NIcon, {
+            color: theme.value.warningColor,
+            size: 24,
+            component: ClipboardOutline,
+        }))
     }
 
     return h(NSpace, { vertical: true, justify: 'start', align: 'center' }, () => elements)
 }
 
 const container_style = computed(() => {
-    if (message.kind == Kind.ADMIN_ONLY)
-        return { maxWidth: '98%', backgroundColor: theme.value.warningColor + '40', padding: '12px 0 12px 12px', borderRadius: theme.value.borderRadius, border: `1px solid ${theme.value.warningColor}` }
+    let style = {
+        padding: '12px 0 12px 12px', borderRadius: theme.value.borderRadius,
+        maxWidth: '98%', border: `1px solid ${theme.value.borderColor}`,
+        backgroundColor: ''
+    }
 
-    return { maxWidth: '98%', padding: '12px 0 12px 12px', borderRadius: theme.value.borderRadius, border: `1px solid ${theme.value.borderColor}` }
+    if (message.underReview)
+        style = { ...style, backgroundColor: theme.value.infoColor + '40', border: `1px solid ${theme.value.infoColor}` }
+    else if (message.kind == Kind.ADMIN_ONLY)
+        style = { ...style, backgroundColor: theme.value.warningColor + '40', border: `1px solid ${theme.value.warningColor}` }
+
+    return style
 })
 
 {
@@ -180,6 +186,14 @@ function render(_props: any, { slots }: any) {
         ),
         timestamp()
     ]
+
+    if (message.underReview) {
+        title.push(h(NButton, {
+            size: 'small', type: 'info',
+             ghost: true, round: true,
+            onClick: () => emit('approve', true)
+        }, () => 'Approve'))
+    }
 
     if (is_sender) {
         title = title.reverse()

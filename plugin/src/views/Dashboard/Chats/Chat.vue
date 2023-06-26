@@ -7,7 +7,7 @@
         <n-scrollbar style="height: 80vh; max-width: 80%;" v-if="messages.length > 0" ref="scrollbar">
             <n-list-item v-for="message in messages">
                 <!-- @vue-ignore -->
-                <message-view :message="message" />
+                <message-view :message="message" @approve="a => handle_approve(message, a)" />
             </n-list-item>
         </n-scrollbar>
 
@@ -54,12 +54,26 @@
                             <n-icon :component="SendOutline" />
                         </template>
                     </n-button>
-                    <n-button v-if="chat?.role == Role.ADMIN" type="warning" ghost circle size="small"
-                        @click="handle_send(Kind.ADMIN_ONLY)">
-                        <template #icon>
-                            <n-icon :component="ClipboardOutline" />
+                    <n-tooltip v-if="chat?.role == Role.ADMIN">
+                        <template #trigger>
+                            <n-button type="warning" ghost circle size="small" @click="handle_send(Kind.ADMIN_ONLY)">
+                                <template #icon>
+                                    <n-icon :component="ClipboardOutline" />
+                                </template>
+                            </n-button>
                         </template>
-                    </n-button>
+                        Message will be sent as an Admin Note, thus visible only to Admins.
+                    </n-tooltip>
+                    <n-tooltip v-if="chat?.role == Role.ADMIN">
+                        <template #trigger>
+                            <n-button type="info" quaternary circle size="small" @click="handle_send(Kind.DEFAULT, true)">
+                                <template #icon>
+                                    <n-icon :component="ReviewOutline" size="32" />
+                                </template>
+                            </n-button>
+                        </template>
+                        Message will be put under moderation, thus not visible to user until one of the Admins approves it.
+                    </n-tooltip>
                 </n-space>
             </n-space>
         </template>
@@ -80,6 +94,7 @@ import { Chat, Message, Kind, Role } from '../../../connect/cc/cc_pb';
 
 const SendOutline = defineAsyncComponent(() => import('@vicons/ionicons5/SendOutline'));
 const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
+const ReviewOutline = defineAsyncComponent(() => import('../../../assets/icons/ReviewOutline.svg'));
 
 const MessageView = defineAsyncComponent(() => import('../../../components/chats/message.vue'));
 
@@ -137,12 +152,22 @@ const current_message = ref<Message>(new Message({
     content: '',
 }))
 
-async function handle_send(kind = Kind.DEFAULT) {
+async function handle_approve(msg: Message, approve: boolean) {
+    msg.underReview = !approve
+    msg = await store.update_message(msg)
+
+    let idx = messages.value.findIndex(el => el.uuid == msg.uuid)
+    messages.value.splice(idx, 1, msg)
+}
+
+async function handle_send(kind = Kind.DEFAULT, review = false) {
     if (current_message.value.content == '') {
         return
     }
 
+    current_message.value.underReview = review
     current_message.value.kind = kind
+
     if (updating.value) {
         let msg = await store.update_message(current_message.value as Message)
         updating.value = false

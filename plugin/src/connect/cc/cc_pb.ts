@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message as Message$1, proto3, protoInt64 } from "@bufbuild/protobuf";
+import { Message as Message$1, proto3, protoInt64, Value } from "@bufbuild/protobuf";
 
 /**
  * @generated from enum cc.Role
@@ -56,6 +56,50 @@ export enum Kind {
 proto3.util.setEnumType(Kind, "cc.Kind", [
   { no: 0, name: "DEFAULT" },
   { no: 1, name: "ADMIN_ONLY" },
+]);
+
+/**
+ * @generated from enum cc.EventType
+ */
+export enum EventType {
+  /**
+   * @generated from enum value: CHAT_CREATED = 0;
+   */
+  CHAT_CREATED = 0,
+
+  /**
+   * @generated from enum value: CHAT_UPDATED = 1;
+   */
+  CHAT_UPDATED = 1,
+
+  /**
+   * @generated from enum value: CHAT_DELETED = 2;
+   */
+  CHAT_DELETED = 2,
+
+  /**
+   * @generated from enum value: MESSAGE_SEND = 3;
+   */
+  MESSAGE_SEND = 3,
+
+  /**
+   * @generated from enum value: MESSAGE_UPDATED = 4;
+   */
+  MESSAGE_UPDATED = 4,
+
+  /**
+   * @generated from enum value: MESSAGE_DELETED = 5;
+   */
+  MESSAGE_DELETED = 5,
+}
+// Retrieve enum metadata with: proto3.getEnumType(EventType)
+proto3.util.setEnumType(EventType, "cc.EventType", [
+  { no: 0, name: "CHAT_CREATED" },
+  { no: 1, name: "CHAT_UPDATED" },
+  { no: 2, name: "CHAT_DELETED" },
+  { no: 3, name: "MESSAGE_SEND" },
+  { no: 4, name: "MESSAGE_UPDATED" },
+  { no: 5, name: "MESSAGE_DELETED" },
 ]);
 
 /**
@@ -486,6 +530,49 @@ export class Users extends Message$1<Users> {
 
   static equals(a: Users | PlainMessage<Users> | undefined, b: Users | PlainMessage<Users> | undefined): boolean {
     return proto3.util.equals(Users, a, b);
+  }
+}
+
+/**
+ * @generated from message cc.Event
+ */
+export class Event extends Message$1<Event> {
+  /**
+   * @generated from field: cc.EventType type = 1;
+   */
+  type = EventType.CHAT_CREATED;
+
+  /**
+   * @generated from field: map<string, google.protobuf.Value> meta = 2;
+   */
+  meta: { [key: string]: Value } = {};
+
+  constructor(data?: PartialMessage<Event>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "cc.Event";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "type", kind: "enum", T: proto3.getEnumType(EventType) },
+    { no: 2, name: "meta", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Event {
+    return new Event().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Event {
+    return new Event().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Event {
+    return new Event().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: Event | PlainMessage<Event> | undefined, b: Event | PlainMessage<Event> | undefined): boolean {
+    return proto3.util.equals(Event, a, b);
   }
 }
 

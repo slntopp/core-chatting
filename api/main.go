@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/rabbitmq/amqp091-go"
 	"net/http"
 
 	cc "github.com/slntopp/core-chatting/cc/ccconnect"
@@ -30,6 +31,7 @@ var (
 	arangodbCred string
 	dbName       string
 	usersCol     string
+	rbmq         string
 
 	SIGNING_KEY []byte
 )
@@ -41,6 +43,7 @@ func init() {
 	viper.SetDefault("PORT", "8080")
 	viper.SetDefault("DB_HOST", "localhost:8529")
 	viper.SetDefault("DB_CRED", "root:openSesame")
+	viper.SetDefault("RABBITMQ_CONN", "amqp://nocloud:secret@rabbitmq:5672/")
 	viper.SetDefault("DB_NAME", "name")
 	viper.SetDefault("USERS_COL", "Accounts")
 
@@ -52,11 +55,18 @@ func init() {
 	arangodbCred = viper.GetString("DB_CRED")
 	dbName = viper.GetString("DB_NAME")
 	usersCol = viper.GetString("USERS_COL")
+	rbmq = viper.GetString("RABBITMQ_CONN")
 
 	SIGNING_KEY = []byte(viper.GetString("SIGNING_KEY"))
 }
 
 func main() {
+	rbmq, err := amqp091.Dial(rbmq)
+	if err != nil {
+		log.Fatal("Failed to connect to RabbitMQ", zap.Error(err))
+	}
+	defer rbmq.Close()
+
 	db := graph.ConnectDb(log, arangodbHost, arangodbCred, dbName)
 
 	chatCtrl := graph.NewChatsController(log, db)

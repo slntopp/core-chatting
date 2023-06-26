@@ -3,8 +3,9 @@ package messages
 import (
 	"context"
 	"errors"
-	"github.com/slntopp/core-chatting/pkg/pubsub"
 	"time"
+
+	"github.com/slntopp/core-chatting/pkg/pubsub"
 
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
@@ -162,7 +163,7 @@ func handleNotify(ctx context.Context, ps *pubsub.PubSub, msg *cc.Message, chat 
 		Item: &cc.Event_Msg{Msg: msg},
 	}
 
-	if msg.Kind == cc.Kind_DEFAULT {
+	if msg.Kind == cc.Kind_DEFAULT && !msg.UnderReview {
 		for _, user := range chat.Users {
 			go ps.Pub(ctx, user, event)
 		}

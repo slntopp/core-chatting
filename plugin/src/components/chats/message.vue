@@ -1,19 +1,22 @@
 <template>
-    <render>
+    <render @contextmenu="show_dropdown">
         <div v-html="content()">
         </div>
     </render>
+
+    <n-dropdown placement="bottom-start" trigger="manual" :x="x" :y="y" :options="options" :show="show"
+        @clickoutside=" show = false" @select="handle_select" />
 </template>
 
 <script setup lang="ts">
-import { PropType, defineAsyncComponent, h, computed, ref } from 'vue';
+import { PropType, defineAsyncComponent, h, computed, ref, nextTick, } from 'vue';
 import {
-    NAvatar, NGrid,
-    NGi, NIcon, NSpace,
-    NText, NH2, useThemeVars, NTooltip, NDivider, NButton
+    NAvatar, NGrid, NDivider, NButton,
+    NGi, NIcon, NSpace, NDropdown,
+    NText, NH2, useThemeVars, NTooltip,
 } from 'naive-ui'
 
-import { Message, Kind } from '../../connect/cc/cc_pb'
+import { Message, Kind, Role } from '../../connect/cc/cc_pb'
 import { useCcStore } from '../../store/chatting';
 
 import hljs from 'highlight.js';
@@ -32,6 +35,9 @@ import { mangle } from 'marked-mangle'
 import DOMPurify from 'dompurify'
 
 const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
+const PencilOutline = defineAsyncComponent(() => import('@vicons/ionicons5/PencilOutline'));
+const TrashOutline = defineAsyncComponent(() => import('@vicons/ionicons5/TrashOutline'));
+const ReviewOutline = defineAsyncComponent(() => import('../../assets/icons/ReviewOutline.svg'));
 
 const { message } = defineProps({
     message: {
@@ -40,7 +46,7 @@ const { message } = defineProps({
     }
 })
 
-const emit = defineEmits(['approve'])
+const emit = defineEmits(['approve', 'convert', 'edit', 'delete'])
 
 const theme = useThemeVars()
 
@@ -49,6 +55,72 @@ const store = useCcStore()
 function sender(): string {
     return store.users.get(message.sender)?.title ?? 'Unknown'
 }
+
+const x = ref(0)
+const y = ref(0)
+const show = ref(false)
+const options = computed(() => {
+
+    let result = [
+
+    ]
+
+    const label = (text: string) => () => h('b', {}, text)
+    const icon = (component: any) => () => h(NIcon, { size: 24, component: component })
+
+    if (store.chats.get(message.chat!)?.role == Role.ADMIN) {
+        result.push({
+            label: label(message.underReview ? 'Approve' : 'Review'), key: 'approve',
+            icon: icon(ReviewOutline)
+        }, {
+            label: label(message.kind == Kind.ADMIN_ONLY ? 'Convert to Message' : 'Convert to Admin Note'),
+            key: 'convert', icon: icon(ClipboardOutline)
+        }, {
+            type: 'divider', key: 'd-pre-delete'
+        })
+    }
+
+    if (store.chats.get(message.chat!)?.role == Role.ADMIN || message.sender == store.me.uuid) {
+        result.unshift({
+            label: label('Edit'), key: 'edit',
+            icon: icon(PencilOutline)
+        }, {
+            type: 'divider', key: 'd-post-edit'
+        })
+        result.push({
+            label: label('Delete'), key: 'delete',
+            icon: icon(TrashOutline)
+        })
+    }
+
+    return result
+})
+function handle_select(key: "approve" | "convert" | "edit" | "delete") {
+    console.log(key)
+    show.value = false
+
+    switch (key) {
+        case 'approve':
+            emit('approve', message.underReview)
+            break
+        case 'convert':
+            emit('convert', message.kind == Kind.ADMIN_ONLY ? Kind.DEFAULT : Kind.ADMIN_ONLY)
+            break
+        default:
+            emit(key)
+    }
+}
+function show_dropdown(e: MouseEvent) {
+    e.preventDefault()
+    show.value = false
+
+    nextTick(() => {
+        show.value = true
+        x.value = e.clientX
+        y.value = e.clientY
+    })
+}
+
 
 function avatar() {
 
@@ -190,7 +262,7 @@ function render(_props: any, { slots }: any) {
     if (message.underReview) {
         title.push(h(NButton, {
             size: 'small', type: 'info',
-             ghost: true, round: true,
+            ghost: true, round: true,
             onClick: () => emit('approve', true)
         }, () => 'Approve'))
     }

@@ -5,9 +5,11 @@
         </template>
 
         <n-scrollbar style="height: 80vh; max-width: 80%;" v-if="messages.length > 0" ref="scrollbar">
-            <n-list-item v-for="message in messages">
+            <n-list-item v-for="message in  messages ">
                 <!-- @vue-ignore -->
-                <message-view :message="message" @approve="a => handle_approve(message, a)" />
+                <message-view :message="message" @approve="a => handle_approve(message, a)"
+                    @convert="kind => { updating = true; current_message = message; handle_send(kind, !messages.underReview) }"
+                    @delete="handle_delete(message)" @edit="() => { updating = true; current_message = message; }" />
             </n-list-item>
         </n-scrollbar>
 
@@ -30,7 +32,8 @@
                             <n-input type="textarea" size="small" :autosize="{
                                 minRows: 2,
                                 maxRows: 5
-                            }" style="min-width: 50vw; max-width: 60vw;" placeholder="Type your message"
+                            }
+                                " style="min-width: 50vw; max-width: 60vw;" placeholder="Type your message"
                                 v-model:value="current_message.content"
                                 @keypress.ctrl.enter.exact="e => { e.preventDefault(); handle_send() }"
                                 @keypress.ctrl.shift.enter.exact="e => { e.preventDefault(); handle_send(Kind.ADMIN_ONLY) }"
@@ -85,12 +88,14 @@ import { defineAsyncComponent, h, ref, computed, watch, nextTick } from 'vue';
 import {
     NSpace, NButton, NIcon, NTooltip,
     NAvatar, NText, NInput, NAlert,
-    NList, NListItem, NScrollbar, NDivider
+    NList, NListItem, NScrollbar, NDivider,
+    useNotification
 } from 'naive-ui';
 
 import { useRoute, useRouter } from 'vue-router';
 import { useCcStore } from '../../../store/chatting';
 import { Chat, Message, Kind, Role } from '../../../connect/cc/cc_pb';
+import { ConnectError } from '@bufbuild/connect';
 
 const SendOutline = defineAsyncComponent(() => import('@vicons/ionicons5/SendOutline'));
 const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
@@ -107,6 +112,8 @@ const scrollbar = ref()
 const chat = computed(() => {
     return store.chats.get(route.params.uuid as string)
 })
+
+const notify = useNotification()
 
 function chatHeader() {
     let users = chat.value!.users.map(uuid => store.users.get(uuid)?.title ?? 'Unknown')
@@ -165,26 +172,43 @@ async function handle_send(kind = Kind.DEFAULT, review = false) {
         return
     }
 
-    current_message.value.underReview = review
-    current_message.value.kind = kind
+    try {
+        current_message.value.underReview = review
+        current_message.value.kind = kind
 
-    if (updating.value) {
-        let msg = await store.update_message(current_message.value as Message)
-        updating.value = false
+        if (updating.value) {
+            let msg = await store.update_message(current_message.value as Message)
+            updating.value = false
 
-        let idx = messages.value.findIndex(el => el.uuid == msg.uuid)
-        messages.value.splice(idx, 1, msg)
-    } else {
-        current_message.value.chat = route.params.uuid as string
-        await store.send_message(current_message.value as Message)
+            let idx = messages.value.findIndex(el => el.uuid == msg.uuid)
+            messages.value.splice(idx, 1, msg)
+        } else {
+            current_message.value.chat = route.params.uuid as string
+            await store.send_message(current_message.value as Message)
+
+            get_messages()
+        }
+    } catch (e) {
+        if (e instanceof ConnectError) {
+            notify.error({
+                title: 'Error',
+                description: e.message,
+            })
+        }
 
         get_messages()
     }
 
 
+    updating.value = false
     current_message.value = new Message({
         content: '',
     })
+}
+async function handle_delete(msg: Message) {
+    await store.delete_message(msg)
+    let idx = messages.value.findIndex(el => el.uuid == msg.uuid)
+    messages.value.splice(idx, 1)
 }
 
 function scrollToBottom() {

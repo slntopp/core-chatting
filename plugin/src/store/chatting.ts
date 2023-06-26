@@ -10,7 +10,7 @@ import {
     Empty, Chat, Defaults, Users, User, Messages, Message
 } from "../connect/cc/cc_pb"
 import {
-    ChatsAPI, MessagesAPI, UsersAPI
+    ChatsAPI, MessagesAPI, StreamService, UsersAPI
 } from "../connect/cc/cc_connect"
 
 export const useCcStore = defineStore('cc', () => {
@@ -28,6 +28,7 @@ export const useCcStore = defineStore('cc', () => {
     const chats_c = createPromiseClient(ChatsAPI, transport);
     const messages_c = createPromiseClient(MessagesAPI, transport);
     const users_c = createPromiseClient(UsersAPI, transport);
+    const streaming = createPromiseClient(StreamService, transport)
 
     const chats = ref<Map<string, Chat>>(new Map())
     const users = ref<Map<string, User>>(new Map())
@@ -85,6 +86,25 @@ export const useCcStore = defineStore('cc', () => {
     async function load_me() {
         me.value = await users_c.me(new Empty())
     }
+
+    (async () => {
+        console.log("Subscribing to state updates");
+    
+        while (true) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          if (!app.conf) continue;
+    
+          try {
+            const stream = streaming.stream(new Empty())
+            console.log("Subscribed");
+            for await (const event of stream) {
+                console.debug('Received Event', event)
+            }
+          } catch (e) {
+            console.debug("Disconnected", e);
+          }
+        }
+      })();
 
     return {
         users, load_me, me,

@@ -51,12 +51,30 @@ func (c *MessagesController) Send(ctx context.Context, msg *cc.Message) (*cc.Mes
 	return msg, nil
 }
 
+const updateMessageQuery = `
+LET msg = DOCUMENT(@msg)
+
+LET eventKind = msg.kind ? msg.kind : 0
+LET underReview = msg.under_review ? msg.under_review : 0
+
+UPDATE msg._key WITH {
+    kind: eventKind,
+    content: msg.content,
+    attachments: msg.attachments,
+    gateways: msg.gateways,
+    edited: msg.edited,
+    under_review: underReview,    
+} IN @@messages
+`
+
 func (c *MessagesController) Update(ctx context.Context, msg *cc.Message) (*cc.Message, error) {
 	log := c.log.Named("Update")
 	log.Debug("Req received")
 
-	// @gorobot-nz TODO: Message kind is not updated
-	_, err := c.col.UpdateDocument(ctx, msg.GetUuid(), msg)
+	_, err := c.db.Query(ctx, updateMessageQuery, map[string]interface{}{
+		"msg":       driver.NewDocumentID(MESSAGES_COLLECTION, msg.GetUuid()),
+		"@messages": MESSAGES_COLLECTION,
+	})
 
 	if err != nil {
 		return nil, err

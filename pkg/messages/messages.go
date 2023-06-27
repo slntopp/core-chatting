@@ -95,10 +95,6 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 
 	requestor := ctx.Value(core.ChatAccount).(string)
 
-	if requestor != req.Msg.GetSender() {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no access to chat"))
-	}
-
 	chat, err := s.chatCtrl.Get(ctx, req.Msg.GetChat(), requestor)
 	if err != nil {
 		return nil, err
@@ -110,6 +106,10 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 
 	if req.Msg.Kind == cc.Kind_ADMIN_ONLY && chat.Role != cc.Role_ADMIN {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("can't send admin only message"))
+	}
+
+	if requestor != req.Msg.GetSender() && !core.In(requestor, chat.GetAdmins()) {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("you are not message sender or chat admin"))
 	}
 
 	req.Msg.Edited = time.Now().UnixMilli()
@@ -141,8 +141,8 @@ func (s *MessagesServer) Delete(ctx context.Context, req *connect.Request[cc.Mes
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
 	}
 
-	if requestor != req.Msg.GetSender() {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("not enough access to delete message"))
+	if requestor != req.Msg.GetSender() && !core.In(requestor, chat.GetAdmins()) {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("you are not message sender or chat admin"))
 	}
 
 	message, err := s.msgCtrl.Delete(ctx, req.Msg)

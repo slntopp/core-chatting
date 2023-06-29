@@ -96,8 +96,8 @@ func main() {
 	path, handler = cc.NewUsersAPIHandler(usersServer, interceptors)
 	mux.Handle(path, handler)
 
-	streamServer := stream.NewStreamServer(log, usersCtrl, ps)
-	mux.Handle("/", authInterceptor.WrapSocket(streamServer))
+	streamServer := stream.NewStreamServer(log, usersCtrl, ps, SIGNING_KEY)
+	mux.Handle("/", streamServer)
 
 	host := fmt.Sprintf("0.0.0.0:%s", port)
 

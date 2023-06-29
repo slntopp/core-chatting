@@ -7,6 +7,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
+
+	"github.com/slntopp/core-chatting/pkg/core/auth"
 	"github.com/slntopp/core-chatting/pkg/graph"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
 	"go.uber.org/zap"
@@ -19,9 +21,10 @@ type StreamServer struct {
 	upgrader websocket.Upgrader
 	ctrl     *graph.UsersController
 	ps       *pubsub.PubSub
+	key      []byte
 }
 
-func NewStreamServer(logger *zap.Logger, ctrl *graph.UsersController, ps *pubsub.PubSub) *StreamServer {
+func NewStreamServer(logger *zap.Logger, ctrl *graph.UsersController, ps *pubsub.PubSub, key []byte) *StreamServer {
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -33,18 +36,28 @@ func NewStreamServer(logger *zap.Logger, ctrl *graph.UsersController, ps *pubsub
 		ctrl:     ctrl,
 		ps:       ps,
 		upgrader: upgrader,
+		key:      key,
 	}
 }
 
 func (s *StreamServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	requestor := r.Header.Get(string(core.ChatAccount))
-
 	connection, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}
-
 	defer connection.Close()
+
+	_, tokenMessage, err := connection.ReadMessage()
+	if err != nil {
+		return
+	}
+
+	claims, err := auth.ValidateToken(s.key, string(tokenMessage))
+	if err != nil {
+		return
+	}
+
+	requestor := claims[core.JWT_ACCOUNT_CLAIM].(string)
 
 	ctx := context.Background()
 

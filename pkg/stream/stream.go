@@ -68,7 +68,10 @@ start_stream:
 
 	log.Info("Start stream", zap.String("user", requestor))
 
-	connection.WriteMessage(websocket.TextMessage, []byte("Establised connection"))
+	err = connection.WriteMessage(websocket.TextMessage, []byte("Establised connection"))
+	if err != nil {
+		return
+	}
 
 	msgs := s.ps.Sub(requestor)
 

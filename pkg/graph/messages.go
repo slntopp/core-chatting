@@ -52,18 +52,11 @@ func (c *MessagesController) Send(ctx context.Context, msg *cc.Message) (*cc.Mes
 }
 
 const updateMessageQuery = `
-LET msg = DOCUMENT(@msg)
-
-LET eventKind = msg.kind ? msg.kind : 0
-LET underReview = msg.under_review ? msg.under_review : false
-
-UPDATE msg._key WITH {
-    kind: eventKind,
-    content: msg.content,
-    attachments: msg.attachments,
-    gateways: msg.gateways,
-    edited: msg.edited,
-    under_review: underReview,    
+UPDATE @key WITH {
+    kind: @kind,
+    content: @content,
+    edited: @edited,
+    under_review: @under_review,    
 } IN @@messages
 `
 
@@ -72,8 +65,12 @@ func (c *MessagesController) Update(ctx context.Context, msg *cc.Message) (*cc.M
 	log.Debug("Req received")
 
 	_, err := c.db.Query(ctx, updateMessageQuery, map[string]interface{}{
-		"msg":       driver.NewDocumentID(MESSAGES_COLLECTION, msg.GetUuid()),
-		"@messages": MESSAGES_COLLECTION,
+		"kind":         msg.GetKind(),
+		"content":      msg.GetContent(),
+		"edited":       msg.GetEdited(),
+		"under_review": msg.GetUnderReview(),
+		"key":          msg.GetUuid(),
+		"@messages":    MESSAGES_COLLECTION,
 	})
 
 	if err != nil {

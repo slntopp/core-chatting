@@ -69,7 +69,10 @@ start_stream:
 			log.Error("Error", zap.Error(err))
 			return err
 		}
-		msg.Ack(false)
+		err = msg.Ack(false)
+		if err != nil {
+			log.Error("Failed to ack msg", zap.Error(err))
+		}
 	}
 
 	return nil

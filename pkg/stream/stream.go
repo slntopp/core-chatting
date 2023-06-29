@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/gorilla/websocket"
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/graph"
@@ -15,30 +16,41 @@ import (
 type StreamServer struct {
 	log *zap.Logger
 
-	ctrl *graph.UsersController
-	ps   *pubsub.PubSub
+	upgrader websocket.Upgrader
+	ctrl     *graph.UsersController
+	ps       *pubsub.PubSub
 }
 
 func NewStreamServer(logger *zap.Logger, ctrl *graph.UsersController, ps *pubsub.PubSub) *StreamServer {
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+
 	return &StreamServer{
-		log:  logger.Named("StreamService"),
-		ctrl: ctrl,
-		ps:   ps,
+		log:      logger.Named("StreamService"),
+		ctrl:     ctrl,
+		ps:       ps,
+		upgrader: upgrader,
 	}
 }
 
 func (s *StreamServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	requestor := r.Header.Get(string(core.ChatAccount))
 
+	connection, err := s.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return
+	}
+
+	defer connection.Close()
+
 	ctx := context.Background()
 
 	log := s.log.Named("Stream").Named(requestor)
 
 	res, err := s.ctrl.Resolve(ctx, []string{requestor})
-	if err != nil {
-		return
-	}
-
 	if err != nil {
 		return
 	}
@@ -56,6 +68,8 @@ start_stream:
 
 	log.Info("Start stream", zap.String("user", requestor))
 
+	connection.WriteMessage(websocket.TextMessage, []byte("Establised connection"))
+
 	msgs := s.ps.Sub(requestor)
 
 	var event = &cc.Event{}
@@ -68,7 +82,7 @@ start_stream:
 
 		log.Info("Receive message", zap.Any("event", event))
 
-		_, err = w.Write(msg.Body)
+		err = connection.WriteMessage(websocket.BinaryMessage, msg.Body)
 		if err != nil {
 			log.Error("Error", zap.Error(err))
 		}

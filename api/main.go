@@ -45,9 +45,9 @@ func init() {
 
 	viper.SetDefault("PORT", "8080")
 	viper.SetDefault("DB_HOST", "localhost:8529")
-	viper.SetDefault("DB_CRED", "root:openSesame")
-	viper.SetDefault("RABBITMQ_CONN", "amqp://admin:password@rabbitmq:5672/")
-	viper.SetDefault("DB_NAME", "name")
+	viper.SetDefault("DB_CRED", "root:password")
+	viper.SetDefault("RABBITMQ_CONN", "amqp://guest:guest@localhost:5672/")
+	viper.SetDefault("DB_NAME", "chats")
 	viper.SetDefault("USERS_COL", "Accounts")
 
 	viper.SetDefault("SIGNING_KEY", "secret")

@@ -82,7 +82,7 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 		return nil, err
 	}
 
-	go handleNotify(ctx, s.ps, message, chat, cc.EventType_MESSAGE_SEND)
+	go handleNotify(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_SEND)
 
 	resp := connect.NewResponse[cc.Message](message)
 
@@ -119,7 +119,7 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 		return nil, err
 	}
 
-	go handleNotify(ctx, s.ps, message, chat, cc.EventType_MESSAGE_UPDATED)
+	go handleNotify(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_UPDATED)
 
 	resp := connect.NewResponse[cc.Message](message)
 
@@ -150,14 +150,14 @@ func (s *MessagesServer) Delete(ctx context.Context, req *connect.Request[cc.Mes
 		return nil, err
 	}
 
-	go handleNotify(ctx, s.ps, message, chat, cc.EventType_MESSAGE_DELETED)
+	go handleNotify(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_DELETED)
 
 	resp := connect.NewResponse[cc.Message](message)
 
 	return resp, nil
 }
 
-func handleNotify(ctx context.Context, ps *pubsub.PubSub, msg *cc.Message, chat *cc.Chat, eventType cc.EventType) {
+func handleNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub, msg *cc.Message, chat *cc.Chat, eventType cc.EventType) {
 	var event = &cc.Event{
 		Type: eventType,
 		Item: &cc.Event_Msg{Msg: msg},

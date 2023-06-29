@@ -62,10 +62,14 @@ start_stream:
 			return err
 		}
 
+		log.Info("Receive message", zap.Any("event", event))
+
 		err = serverStream.Send(event)
 		if err != nil {
+			log.Error("Error", zap.Error(err))
 			return err
 		}
+		msg.Ack(false)
 	}
 
 	return nil

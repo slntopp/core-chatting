@@ -37,7 +37,7 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 		return nil, err
 	}
 
-	go handleNotify(ctx, s.ps, chat, cc.EventType_CHAT_CREATED)
+	go handleNotify(ctx, log, s.ps, chat, cc.EventType_CHAT_CREATED)
 
 	resp := connect.NewResponse[cc.Chat](chat)
 
@@ -64,7 +64,7 @@ func (s *ChatsServer) Update(ctx context.Context, req *connect.Request[cc.Chat])
 		return nil, err
 	}
 
-	go handleNotify(ctx, s.ps, chat, cc.EventType_CHAT_UPDATED)
+	go handleNotify(ctx, log, s.ps, chat, cc.EventType_CHAT_UPDATED)
 
 	resp := connect.NewResponse[cc.Chat](chat)
 
@@ -109,24 +109,26 @@ func (s *ChatsServer) Delete(ctx context.Context, req *connect.Request[cc.Chat])
 		return nil, err
 	}
 
-	go handleNotify(ctx, s.ps, chat, cc.EventType_CHAT_DELETED)
+	go handleNotify(ctx, log, s.ps, chat, cc.EventType_CHAT_DELETED)
 
 	resp := connect.NewResponse[cc.Chat](chat)
 
 	return resp, nil
 }
 
-func handleNotify(ctx context.Context, ps *pubsub.PubSub, chat *cc.Chat, eventType cc.EventType) {
+func handleNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub, chat *cc.Chat, eventType cc.EventType) {
 	var event = &cc.Event{
 		Type: eventType,
 		Item: &cc.Event_Chat{Chat: chat},
 	}
 
 	for _, user := range chat.Users {
+		log.Info("Send to", zap.Any("User", user))
 		go ps.Pub(ctx, user, event)
 	}
 
 	for _, admin := range chat.Admins {
+		log.Info("Send to", zap.Any("Admin", admin))
 		go ps.Pub(ctx, admin, event)
 	}
 

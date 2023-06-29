@@ -7,7 +7,7 @@ import { createConnectTransport } from "@bufbuild/connect-web";
 import { useAppStore } from "./app";
 
 import {
-    Empty, Chat, Defaults, Users, User, Messages, Message
+    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType
 } from "../connect/cc/cc_pb"
 import {
     ChatsAPI, MessagesAPI, StreamService, UsersAPI
@@ -87,30 +87,46 @@ export const useCcStore = defineStore('cc', () => {
         me.value = await users_c.me(new Empty())
     }
 
+    let msg_handler = (event: Event) => {
+        console.log('Received Message Event', event)
+    }
+
+    function set_msg_handler(handler: (event: Event) => void) {
+        msg_handler = (event: Event) => {
+            console.log('Received Message Event', event)
+            handler(event)
+        }
+    }
+
     (async () => {
         console.log("Subscribing to state updates");
-    
+
         while (true) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          if (!app.conf) continue;
-    
-          try {
-            const stream = streaming.stream(new Empty())
-            console.log("Subscribed");
-            for await (const event of stream) {
-                console.debug('Received Event', event)
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            if (!app.conf) continue;
+
+            try {
+                const stream = streaming.stream(new Empty())
+                console.log("Subscribed");
+                for await (const event of stream) {
+                    console.debug('Received Event', event)
+                    if(event.type >= EventType.MESSAGE_SEND) {
+                        msg_handler(event)
+                    }
+                }
+            } catch (e) {
+                console.debug("Disconnected", e);
             }
-          } catch (e) {
-            console.debug("Disconnected", e);
-          }
         }
-      })();
+    })();
 
     return {
         users, load_me, me,
 
         chats, list_chats, create_chat, delete_chat,
         get_messages, send_message, update_message, delete_message,
+
+        set_msg_handler,
 
         fetch_defaults, resolve
     }

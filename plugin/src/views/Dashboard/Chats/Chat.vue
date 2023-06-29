@@ -5,7 +5,7 @@
         </template>
 
         <n-scrollbar style="height: 80vh; max-width: 80%;" v-if="messages.length > 0" ref="scrollbar">
-            <n-list-item v-for="message in  messages ">
+            <n-list-item v-for="message in messages" :key="message.uuid">
                 <!-- @vue-ignore -->
                 <message-view :message="message" @approve="a => handle_approve(message, a)"
                     @convert="kind => { updating = true; current_message = message; handle_send(kind, !messages.underReview) }"
@@ -94,7 +94,7 @@ import {
 
 import { useRoute, useRouter } from 'vue-router';
 import { useCcStore } from '../../../store/chatting';
-import { Chat, Message, Kind, Role } from '../../../connect/cc/cc_pb';
+import { Chat, Message, Kind, Role, Event, EventType } from '../../../connect/cc/cc_pb';
 import { ConnectError } from '@bufbuild/connect';
 
 const SendOutline = defineAsyncComponent(() => import('@vicons/ionicons5/SendOutline'));
@@ -227,6 +227,31 @@ function scrollToBottom() {
 async function load_chat() {
     store.resolve([...chat.value!.users, ...chat.value!.admins])
     await get_messages()
+
+    store.set_msg_handler((event: Event) => {
+        let msg: Message
+        let idx: number
+
+        switch (event.type) {
+            case EventType.MESSAGE_SEND:
+                messages.value.push(event.item.value as Message)
+                break
+            case EventType.MESSAGE_UPDATED:
+                msg = event.item.value as Message
+                idx = messages.value.findIndex(el => el.uuid == msg.uuid)
+                messages.value.splice(idx, 1, msg)
+                break
+            case EventType.MESSAGE_DELETED:
+                msg = event.item.value as Message
+                idx = messages.value.findIndex(el => el.uuid == msg.uuid)
+                messages.value.splice(idx, 1)
+                break
+            default:
+                console.warn('unknown event type', event.type)
+        }
+
+        scrollToBottom()
+    })
 }
 
 watch(chat, load_chat)

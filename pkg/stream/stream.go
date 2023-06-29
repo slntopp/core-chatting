@@ -74,6 +74,8 @@ start_stream:
 		if err != nil {
 			log.Error("Failed to ack msg", zap.Error(err))
 		}
+
+		log.Debug("Processed event successfully")
 	}
 
 	return nil

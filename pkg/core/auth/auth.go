@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strings"
 
 	"github.com/bufbuild/connect-go"
@@ -78,6 +79,29 @@ func (i *interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) co
 
 		return next(ctx, shc)
 	}
+}
+
+func (i *interceptor) WrapSocket(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		header := r.Header.Get("Authorization")
+
+		segments := strings.Split(header, " ")
+		if len(segments) != 2 {
+			return
+		}
+
+		i.log.Debug("Validating Token", zap.String("token", segments[1]))
+		claims, err := validateToken(i.signing_key, segments[1])
+
+		if err != nil {
+			return
+		}
+
+		acc := claims[core.JWT_ACCOUNT_CLAIM]
+		r.Header.Set(string(core.ChatAccount), acc.(string))
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func validateToken(signing_key []byte, tokenString string) (jwt.MapClaims, error) {

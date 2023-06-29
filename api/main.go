@@ -95,8 +95,7 @@ func main() {
 	mux.Handle(path, handler)
 
 	streamServer := stream.NewStreamServer(log, usersCtrl, ps)
-	path, handler = cc.NewStreamServiceHandler(streamServer, interceptors)
-	mux.Handle(path, handler)
+	mux.Handle("/ws", streamServer)
 
 	host := fmt.Sprintf("0.0.0.0:%s", port)
 

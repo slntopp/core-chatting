@@ -2,8 +2,8 @@ package stream
 
 import (
 	"context"
+	"net/http"
 
-	"github.com/bufbuild/connect-go"
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/graph"
@@ -27,18 +27,20 @@ func NewStreamServer(logger *zap.Logger, ctrl *graph.UsersController, ps *pubsub
 	}
 }
 
-func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.Empty], serverStream *connect.ServerStream[cc.Event]) error {
-	requestor := ctx.Value(core.ChatAccount).(string)
+func (s *StreamServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestor := r.Header.Get(string(core.ChatAccount))
+
+	ctx := context.Background()
 
 	log := s.log.Named("Stream").Named(requestor)
 
 	res, err := s.ctrl.Resolve(ctx, []string{requestor})
 	if err != nil {
-		return err
+		return
 	}
 
 	if err != nil {
-		return err
+		return
 	}
 
 	for _, user := range res {
@@ -49,9 +51,10 @@ func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.Empty
 
 	log.Error("Failed to resolve user")
 
-	return nil
-
+	return
 start_stream:
+
+	log.Info("Start stream", zap.String("user", requestor))
 
 	msgs := s.ps.Sub(requestor)
 
@@ -60,21 +63,19 @@ start_stream:
 	for msg := range msgs {
 		err := proto.Unmarshal(msg.Body, event)
 		if err != nil {
-			return err
+			log.Error("Failed to unmarshal event", zap.Error(err))
 		}
 
 		log.Info("Receive message", zap.Any("event", event))
 
-		err = serverStream.Send(event)
+		_, err = w.Write(msg.Body)
 		if err != nil {
 			log.Error("Error", zap.Error(err))
-			return err
 		}
+
 		err = msg.Ack(false)
 		if err != nil {
 			log.Error("Failed to ack msg", zap.Error(err))
 		}
 	}
-
-	return nil
 }

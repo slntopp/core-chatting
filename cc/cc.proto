@@ -27,9 +27,7 @@ message Chat {
 
   optional string topic = 7;
 }
-message Chats {
-  repeated Chat chats = 1;
-}
+message Chats { repeated Chat chats = 1; }
 
 service ChatsAPI {
   rpc Create(Chat) returns (Chat);
@@ -67,9 +65,7 @@ message Message {
 
   bool under_review = 10;
 }
-message Messages {
-  repeated Message messages = 1;
-}
+message Messages { repeated Message messages = 1; }
 
 service MessagesAPI {
   rpc Get(Chat) returns (Messages);
@@ -90,9 +86,7 @@ message Defaults {
   repeated string admins = 2;
 }
 
-message Users {
-  repeated User users = 1;
-}
+message Users { repeated User users = 1; }
 
 service UsersAPI {
   rpc Me(Empty) returns (User);
@@ -120,6 +114,4 @@ message Event {
   }
 }
 
-service StreamService {
-  rpc Stream(stream Empty) returns (stream Event);
-}
+service StreamService { rpc Stream(Empty) returns (stream Event); }

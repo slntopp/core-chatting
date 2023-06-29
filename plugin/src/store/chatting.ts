@@ -2,7 +2,7 @@ import { ref } from "vue";
 import { defineStore } from "pinia";
 
 import { createPromiseClient } from "@bufbuild/connect";
-import { createConnectTransport } from "@bufbuild/connect-web";
+import { createGrpcWebTransport } from "@bufbuild/connect-web";
 
 import { useAppStore } from "./app";
 
@@ -16,7 +16,7 @@ import {
 export const useCcStore = defineStore('cc', () => {
     const app = useAppStore();
 
-    const transport = createConnectTransport({
+    const transport = createGrpcWebTransport({
         baseUrl: 'http://localhost:8080',
         interceptors: [
             (next) => async (req) => {

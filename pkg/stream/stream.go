@@ -26,7 +26,7 @@ func NewStreamServer(logger *zap.Logger, ctrl *graph.UsersController, ps *pubsub
 	}
 }
 
-func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.Empty], serverStream *connect.ServerStream[cc.Event]) error {
+func (s *StreamServer) Stream(ctx context.Context, serverStream *connect.BidiStream[cc.Empty, cc.Event]) error {
 	requestor := ctx.Value(core.ChatAccount).(string)
 
 	log := s.log.Named("Stream").Named(requestor)

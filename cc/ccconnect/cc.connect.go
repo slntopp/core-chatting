@@ -427,7 +427,7 @@ func (UnimplementedUsersAPIHandler) Resolve(context.Context, *connect_go.Request
 
 // StreamServiceClient is a client for the cc.StreamService service.
 type StreamServiceClient interface {
-	Stream(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.ServerStreamForClient[cc.Event], error)
+	Stream(context.Context) *connect_go.BidiStreamForClient[cc.Empty, cc.Event]
 }
 
 // NewStreamServiceClient constructs a client for the cc.StreamService service. By default, it uses
@@ -454,13 +454,13 @@ type streamServiceClient struct {
 }
 
 // Stream calls cc.StreamService.Stream.
-func (c *streamServiceClient) Stream(ctx context.Context, req *connect_go.Request[cc.Empty]) (*connect_go.ServerStreamForClient[cc.Event], error) {
-	return c.stream.CallServerStream(ctx, req)
+func (c *streamServiceClient) Stream(ctx context.Context) *connect_go.BidiStreamForClient[cc.Empty, cc.Event] {
+	return c.stream.CallBidiStream(ctx)
 }
 
 // StreamServiceHandler is an implementation of the cc.StreamService service.
 type StreamServiceHandler interface {
-	Stream(context.Context, *connect_go.Request[cc.Empty], *connect_go.ServerStream[cc.Event]) error
+	Stream(context.Context, *connect_go.BidiStream[cc.Empty, cc.Event]) error
 }
 
 // NewStreamServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -470,7 +470,7 @@ type StreamServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle(StreamServiceStreamProcedure, connect_go.NewServerStreamHandler(
+	mux.Handle(StreamServiceStreamProcedure, connect_go.NewBidiStreamHandler(
 		StreamServiceStreamProcedure,
 		svc.Stream,
 		opts...,
@@ -481,6 +481,6 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.Handle
 // UnimplementedStreamServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedStreamServiceHandler struct{}
 
-func (UnimplementedStreamServiceHandler) Stream(context.Context, *connect_go.Request[cc.Empty], *connect_go.ServerStream[cc.Event]) error {
+func (UnimplementedStreamServiceHandler) Stream(context.Context, *connect_go.BidiStream[cc.Empty, cc.Event]) error {
 	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.StreamService.Stream is not implemented"))
 }

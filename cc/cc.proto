@@ -121,5 +121,5 @@ message Event {
 }
 
 service StreamService {
-  rpc Stream(Empty) returns (stream Event);
+  rpc Stream(stream Empty) returns (stream Event);
 }

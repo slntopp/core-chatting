@@ -106,7 +106,6 @@ func main() {
 		AllowedHeaders:      []string{"*", "Connect-Protocol-Version"},
 		AllowCredentials:    true,
 		AllowPrivateNetwork: true,
-		Debug:               true,
 	}).Handler(h2c.NewHandler(mux, &http2.Server{}))
 
 	log.Debug("Start server", zap.String("host", host))

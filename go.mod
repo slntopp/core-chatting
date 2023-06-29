@@ -6,6 +6,8 @@ require (
 	github.com/arangodb/go-driver v1.6.0
 	github.com/bufbuild/connect-go v1.5.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/gorilla/websocket v1.5.0
+	github.com/rabbitmq/amqp091-go v1.8.1
 	github.com/rs/cors v1.9.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.16.0
@@ -23,7 +25,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/rabbitmq/amqp091-go v1.8.1 // indirect
 	github.com/spf13/afero v1.9.5 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/slntopp/core-chatting/pkg/core/auth"
 	"net/http"
 
 	"github.com/rabbitmq/amqp091-go"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/slntopp/core-chatting/pkg/chats"
 	"github.com/slntopp/core-chatting/pkg/core"
-	"github.com/slntopp/core-chatting/pkg/core/auth"
 	"github.com/slntopp/core-chatting/pkg/graph"
 	"github.com/slntopp/core-chatting/pkg/messages"
 	"github.com/slntopp/core-chatting/pkg/users"
@@ -80,7 +80,9 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	interceptors := connect.WithInterceptors(auth.NewAuthInterceptor(log, SIGNING_KEY))
+	authInterceptor := auth.NewAuthInterceptor(log, SIGNING_KEY)
+
+	interceptors := connect.WithInterceptors(authInterceptor)
 
 	chatServer := chats.NewChatsServer(log, chatCtrl, ps)
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)
@@ -95,8 +97,7 @@ func main() {
 	mux.Handle(path, handler)
 
 	streamServer := stream.NewStreamServer(log, usersCtrl, ps)
-	path, handler = cc.NewStreamServiceHandler(streamServer, interceptors)
-	mux.Handle(path, handler)
+	mux.Handle("/", authInterceptor.WrapSocket(streamServer))
 
 	host := fmt.Sprintf("0.0.0.0:%s", port)
 

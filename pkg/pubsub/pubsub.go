@@ -38,6 +38,11 @@ func (s *PubSub) Pub(ctx context.Context, id string, event *cc.Event) {
 		nil,
 	)
 
+	if q.Consumers == 0 {
+		log.Debug("No queue consumer")
+		return
+	}
+
 	if err != nil {
 		log.Error("Failed to get queue", zap.Error(err))
 		return
@@ -68,7 +73,7 @@ func (s *PubSub) Pub(ctx context.Context, id string, event *cc.Event) {
 	}
 }
 
-func (s *PubSub) Sub(id string) <-chan amqp091.Delivery {
+func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, error) {
 	log := s.log.Named(fmt.Sprintf("Sub-%s", id))
 
 	q, err := s.ch.QueueDeclare(
@@ -82,7 +87,7 @@ func (s *PubSub) Sub(id string) <-chan amqp091.Delivery {
 
 	if err != nil {
 		log.Error("Failed to get queue", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	msgs, err := s.ch.Consume(
@@ -97,8 +102,8 @@ func (s *PubSub) Sub(id string) <-chan amqp091.Delivery {
 
 	if err != nil {
 		log.Error("Failed to get consume chan", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return msgs
+	return msgs, nil
 }

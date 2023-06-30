@@ -101,7 +101,12 @@ start_stream:
 
 	log.Info("Start stream", zap.String("user", requestor))
 
-	msgs := s.ps.Sub(requestor)
+	msgs, err := s.ps.Sub(requestor)
+
+	if err != nil {
+		connection.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+		return
+	}
 
 	var event = &cc.Event{}
 

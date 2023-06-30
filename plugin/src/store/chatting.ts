@@ -120,6 +120,24 @@ export const useCcStore = defineStore('cc', () => {
     //     }
     // })();
 
+    (async () => {
+        console.log("Subscribing to state updates");
+
+        let socket = new WebSocket('ws://localhost:8080/', [app.conf?.token ?? 'nope'])
+        socket.onerror = (e) => {
+            console.error('Socket Error', e)
+        }
+        socket.onopen = (e) => {
+            console.log('Socket Open', e)
+        }
+        socket.onclose = (e) => {
+            console.log('Socket Close', e)
+        }
+        socket.onmessage = (e) => {
+            console.log('Socket Message', e)
+        }
+    })();
+
     return {
         users, load_me, me,
 

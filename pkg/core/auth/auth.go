@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"errors"
-	"net/http"
 	"strings"
 
 	"github.com/bufbuild/connect-go"
@@ -39,7 +38,7 @@ func (i *interceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 		}
 
 		i.log.Debug("Validating Token", zap.String("token", segments[1]))
-		claims, err := validateToken(i.signing_key, segments[1])
+		claims, err := ValidateToken(i.signing_key, segments[1])
 
 		if err != nil {
 			return nil, connect.NewError(connect.CodeUnauthenticated, err)
@@ -68,7 +67,7 @@ func (i *interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) co
 		}
 
 		i.log.Debug("Validating Token", zap.String("token", segments[1]))
-		claims, err := validateToken(i.signing_key, segments[1])
+		claims, err := ValidateToken(i.signing_key, segments[1])
 
 		if err != nil {
 			return connect.NewError(connect.CodeUnauthenticated, err)
@@ -81,30 +80,7 @@ func (i *interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) co
 	}
 }
 
-func (i *interceptor) WrapSocket(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		header := r.Header.Get("Authorization")
-
-		segments := strings.Split(header, " ")
-		if len(segments) != 2 {
-			return
-		}
-
-		i.log.Debug("Validating Token", zap.String("token", segments[1]))
-		claims, err := validateToken(i.signing_key, segments[1])
-
-		if err != nil {
-			return
-		}
-
-		acc := claims[core.JWT_ACCOUNT_CLAIM]
-		r.Header.Set(string(core.ChatAccount), acc.(string))
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func validateToken(signing_key []byte, tokenString string) (jwt.MapClaims, error) {
+func ValidateToken(signing_key []byte, tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, nil

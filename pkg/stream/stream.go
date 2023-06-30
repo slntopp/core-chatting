@@ -41,19 +41,27 @@ func NewStreamServer(logger *zap.Logger, ctrl *graph.UsersController, ps *pubsub
 }
 
 func (s *StreamServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log := s.log.Named("Stream")
+
 	connection, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		log.Warn("Failed to upgrade connection", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	defer connection.Close()
 
 	_, tokenMessage, err := connection.ReadMessage()
 	if err != nil {
+		log.Warn("Failed to read message", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	claims, err := auth.ValidateToken(s.key, string(tokenMessage))
 	if err != nil {
+		log.Debug("Failed to validate token", zap.Error(err))
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
@@ -61,10 +69,12 @@ func (s *StreamServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	ctx := context.Background()
 
-	log := s.log.Named("Stream").Named(requestor)
+	log = log.Named(requestor)
 
 	res, err := s.ctrl.Resolve(ctx, []string{requestor})
 	if err != nil {
+		log.Error("Failed to resolve user", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -95,7 +105,9 @@ start_stream:
 
 		err = connection.WriteMessage(websocket.BinaryMessage, msg.Body)
 		if err != nil {
-			log.Error("Error", zap.Error(err))
+			log.Error("Error writing message", zap.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
 		err = msg.Ack(false)

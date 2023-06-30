@@ -42,6 +42,7 @@ func NewStreamServer(logger *zap.Logger, ctrl *graph.UsersController, ps *pubsub
 
 func (s *StreamServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log := s.log.Named("Stream")
+	log.Debug("New connection", zap.Any("headers", r.Header))
 
 	connection, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -49,19 +50,16 @@ func (s *StreamServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	defer connection.Close()
+	defer func() {
+		log.Debug("Closing connection")
+		log.Debug("Connection closed", zap.Error(connection.Close()))
+	}()
 
-	_, tokenMessage, err := connection.ReadMessage()
-	if err != nil {
-		log.Warn("Failed to read message", zap.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	claims, err := auth.ValidateToken(s.key, string(tokenMessage))
+	token := r.Header.Get("Sec-Websocket-Protocol")
+	claims, err := auth.ValidateToken(s.key, token)
 	if err != nil {
 		log.Debug("Failed to validate token", zap.Error(err))
-		w.WriteHeader(http.StatusUnauthorized)
+		connection.WriteMessage(websocket.CloseMessage, []byte("Failed to validate token"))
 		return
 	}
 
@@ -106,7 +104,6 @@ start_stream:
 		err = connection.WriteMessage(websocket.BinaryMessage, msg.Body)
 		if err != nil {
 			log.Error("Error writing message", zap.Error(err))
-			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 

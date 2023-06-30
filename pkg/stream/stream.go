@@ -30,6 +30,7 @@ func NewStreamServer(logger *zap.Logger, ctrl *graph.UsersController, ps *pubsub
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
+		Subprotocols: []string{"Bearer"},
 	}
 
 	return &StreamServer{
@@ -55,6 +56,8 @@ func (s *StreamServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Debug("Closing connection")
 		log.Debug("Connection closed", zap.Error(connection.Close()))
 	}()
+
+	log.Debug("Negotiated Sub Protocol", zap.String("protocol", connection.Subprotocol()))
 
 	protocol := r.Header.Get("Sec-Websocket-Protocol")
 	protocols := strings.Split(protocol, ", ")

@@ -98,27 +98,27 @@ export const useCcStore = defineStore('cc', () => {
         }
     }
 
-    (async () => {
-        console.log("Subscribing to state updates");
+    // (async () => {
+    //     console.log("Subscribing to state updates");
 
-        while (true) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            if (!app.conf) continue;
+    //     while (true) {
+    //         await new Promise((resolve) => setTimeout(resolve, 1000));
+    //         if (!app.conf) continue;
 
-            try {
-                const stream = streaming.stream(new Empty())
-                console.log("Subscribed");
-                for await (const event of stream) {
-                    console.debug('Received Event', event)
-                    if(event.type >= EventType.MESSAGE_SEND) {
-                        msg_handler(event)
-                    }
-                }
-            } catch (e) {
-                console.debug("Disconnected", e);
-            }
-        }
-    })();
+    //         try {
+    //             const stream = streaming.stream(new Empty())
+    //             console.log("Subscribed");
+    //             for await (const event of stream) {
+    //                 console.debug('Received Event', event)
+    //                 if(event.type >= EventType.MESSAGE_SEND) {
+    //                     msg_handler(event)
+    //                 }
+    //             }
+    //         } catch (e) {
+    //             console.debug("Disconnected", e);
+    //         }
+    //     }
+    // })();
 
     return {
         users, load_me, me,

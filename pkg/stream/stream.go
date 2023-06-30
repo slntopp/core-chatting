@@ -3,6 +3,7 @@ package stream
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	"github.com/slntopp/core-chatting/cc"
@@ -55,8 +56,16 @@ func (s *StreamServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Debug("Connection closed", zap.Error(connection.Close()))
 	}()
 
-	token := r.Header.Get("Sec-Websocket-Protocol")
-	claims, err := auth.ValidateToken(s.key, token)
+	protocol := r.Header.Get("Sec-Websocket-Protocol")
+	protocols := strings.Split(protocol, ", ")
+
+	if len(protocols) != 2 {
+		log.Warn("Invalid protocol")
+		connection.WriteMessage(websocket.CloseMessage, []byte("Invalid protocol"))
+		return
+	}
+
+	claims, err := auth.ValidateToken(s.key, protocols[1])
 	if err != nil {
 		log.Debug("Failed to validate token", zap.Error(err))
 		connection.WriteMessage(websocket.CloseMessage, []byte("Failed to validate token"))

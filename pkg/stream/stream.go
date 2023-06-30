@@ -77,7 +77,7 @@ start_stream:
 
 	var event = &cc.Event{}
 
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(10 * time.Second)
 
 	for {
 		select {

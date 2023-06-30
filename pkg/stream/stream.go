@@ -2,14 +2,15 @@ package stream
 
 import (
 	"context"
+	"errors"
+	"github.com/bufbuild/connect-go"
 	"net/http"
-	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
 
-	"github.com/slntopp/core-chatting/pkg/core/auth"
 	"github.com/slntopp/core-chatting/pkg/graph"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
 	"go.uber.org/zap"
@@ -42,50 +43,17 @@ func NewStreamServer(logger *zap.Logger, ctrl *graph.UsersController, ps *pubsub
 	}
 }
 
-func (s *StreamServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log := s.log.Named("Stream")
-	log.Debug("New connection", zap.Any("headers", r.Header))
+func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.Empty], serverStream *connect.ServerStream[cc.Event]) error {
+	requestor := ctx.Value(core.ChatAccount).(string)
 
-	connection, err := s.upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Warn("Failed to upgrade connection", zap.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	defer func() {
-		log.Debug("Closing connection")
-		log.Debug("Connection closed", zap.Error(connection.Close()))
-	}()
+	log := s.log.Named("Stream").Named(requestor)
 
-	log.Debug("Negotiated Sub Protocol", zap.String("protocol", connection.Subprotocol()))
-
-	protocol := r.Header.Get("Sec-Websocket-Protocol")
-	protocols := strings.Split(protocol, ", ")
-
-	if len(protocols) != 2 {
-		log.Warn("Invalid protocol")
-		connection.WriteMessage(websocket.CloseMessage, []byte("Invalid protocol"))
-		return
-	}
-
-	claims, err := auth.ValidateToken(s.key, protocols[1])
-	if err != nil {
-		log.Debug("Failed to validate token", zap.Error(err))
-		connection.WriteMessage(websocket.CloseMessage, []byte("Failed to validate token"))
-		return
-	}
-
-	requestor := claims[core.JWT_ACCOUNT_CLAIM].(string)
-
-	ctx := context.Background()
-
-	log = log.Named(requestor)
+	defer log.Debug("Stream closed")
 
 	res, err := s.ctrl.Resolve(ctx, []string{requestor})
 	if err != nil {
 		log.Error("Failed to resolve user", zap.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	for _, user := range res {
@@ -96,7 +64,7 @@ func (s *StreamServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	log.Error("Failed to resolve user")
 
-	return
+	return connect.NewError(connect.CodeUnauthenticated, errors.New("failed to resolve user"))
 start_stream:
 
 	log.Info("Start stream", zap.String("user", requestor))
@@ -104,31 +72,42 @@ start_stream:
 	msgs, err := s.ps.Sub(requestor)
 
 	if err != nil {
-		connection.WriteMessage(websocket.TextMessage, []byte(err.Error()))
-		return
+		return connect.NewError(connect.CodeInternal, err)
 	}
 
 	var event = &cc.Event{}
 
-	for msg := range msgs {
-		err := proto.Unmarshal(msg.Body, event)
-		if err != nil {
-			log.Error("Failed to unmarshal event", zap.Error(err))
+	ticker := time.NewTicker(1 * time.Second)
+
+	for {
+		select {
+		case msg := <-msgs:
+			err := proto.Unmarshal(msg.Body, event)
+			if err != nil {
+				log.Error("Failed to unmarshal event", zap.Error(err))
+			}
+
+			log.Info("Receive message", zap.Any("event", event))
+
+			err = serverStream.Send(event)
+			if err != nil {
+				log.Error("Error writing message", zap.Error(err))
+				return err
+			}
+
+			err = msg.Ack(false)
+			if err != nil {
+				log.Error("Failed to ack msg", zap.Error(err))
+			}
+			log.Debug("Processed event successfully")
+		case <-ticker.C:
+			log.Debug("Ping")
+			err := serverStream.Send(&cc.Event{
+				Type: cc.EventType_PING,
+			})
+			if err != nil {
+				return nil
+			}
 		}
-
-		log.Info("Receive message", zap.Any("event", event))
-
-		err = connection.WriteMessage(websocket.BinaryMessage, msg.Body)
-		if err != nil {
-			log.Error("Error writing message", zap.Error(err))
-			return
-		}
-
-		err = msg.Ack(false)
-		if err != nil {
-			log.Error("Failed to ack msg", zap.Error(err))
-		}
-
-		log.Debug("Processed event successfully")
 	}
 }

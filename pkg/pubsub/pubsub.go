@@ -29,22 +29,20 @@ func NewPubSub(logger *zap.Logger, conn *amqp091.Connection) *PubSub {
 func (s *PubSub) Pub(ctx context.Context, id string, event *cc.Event) {
 	log := s.log.Named(fmt.Sprintf("Pub-%s", id))
 
-	q, err := s.ch.QueueDeclare(
-		id,
-		false,
+	exchange := fmt.Sprintf("cc.user.%s", id)
+
+	err := s.ch.ExchangeDeclare(
+		exchange,
+		"fanout",
+		true,
 		true,
 		false,
 		false,
 		nil,
 	)
 
-	if q.Consumers == 0 {
-		log.Debug("No queue consumer")
-		return
-	}
-
 	if err != nil {
-		log.Error("Failed to get queue", zap.Error(err))
+		log.Error("failed to create exchange", zap.Error(err))
 		return
 	}
 
@@ -57,8 +55,8 @@ func (s *PubSub) Pub(ctx context.Context, id string, event *cc.Event) {
 
 	err = s.ch.PublishWithContext(
 		ctx,
+		exchange,
 		"",
-		q.Name,
 		false,
 		false,
 		amqp091.Publishing{
@@ -76,8 +74,25 @@ func (s *PubSub) Pub(ctx context.Context, id string, event *cc.Event) {
 func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, error) {
 	log := s.log.Named(fmt.Sprintf("Sub-%s", id))
 
+	exchange := fmt.Sprintf("cc.user.%s", id)
+
+	err := s.ch.ExchangeDeclare(
+		exchange,
+		"fanout",
+		true,
+		true,
+		false,
+		false,
+		nil,
+	)
+
+	if err != nil {
+		log.Error("failed to create exchange", zap.Error(err))
+		return nil, err
+	}
+
 	q, err := s.ch.QueueDeclare(
-		id,
+		"",
 		false,
 		true,
 		false,
@@ -89,6 +104,14 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, error) {
 		log.Error("Failed to get queue", zap.Error(err))
 		return nil, err
 	}
+
+	err = s.ch.QueueBind(
+		q.Name,   // queue name
+		"",       // routing key
+		exchange, // exchange
+		false,
+		nil,
+	)
 
 	msgs, err := s.ch.Consume(
 		q.Name,

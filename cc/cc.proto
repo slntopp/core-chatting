@@ -98,12 +98,13 @@ service UsersAPI {
 }
 
 enum EventType {
-  CHAT_CREATED = 0;
-  CHAT_UPDATED = 1;
-  CHAT_DELETED = 2;
-  MESSAGE_SEND = 3;
-  MESSAGE_UPDATED = 4;
-  MESSAGE_DELETED = 5;
+  PING = 0;
+  CHAT_CREATED = 1;
+  CHAT_UPDATED = 2;
+  CHAT_DELETED = 3;
+  MESSAGE_SEND = 4;
+  MESSAGE_UPDATED = 5;
+  MESSAGE_DELETED = 6;
 }
 
 message Event {
@@ -114,4 +115,4 @@ message Event {
   }
 }
 
-service StreamService { rpc Stream(Empty) returns (stream Event); }
+service StreamService { rpc Stream (Empty) returns (stream Event); }

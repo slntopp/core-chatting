@@ -91,6 +91,11 @@ export enum EventType {
    * @generated from enum value: MESSAGE_DELETED = 5;
    */
   MESSAGE_DELETED = 5,
+
+  /**
+   * @generated from enum value: PING = 6;
+   */
+  PING = 6,
 }
 // Retrieve enum metadata with: proto3.getEnumType(EventType)
 proto3.util.setEnumType(EventType, "cc.EventType", [
@@ -100,6 +105,7 @@ proto3.util.setEnumType(EventType, "cc.EventType", [
   { no: 3, name: "MESSAGE_SEND" },
   { no: 4, name: "MESSAGE_UPDATED" },
   { no: 5, name: "MESSAGE_DELETED" },
+  { no: 6, name: "PING" },
 ]);
 
 /**

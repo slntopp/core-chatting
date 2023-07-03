@@ -12,6 +12,7 @@ import {
 import {
     ChatsAPI, MessagesAPI, StreamService, UsersAPI
 } from "../connect/cc/cc_connect"
+import { useRoute, useRouter } from "vue-router";
 
 export const useCcStore = defineStore('cc', () => {
     const app = useAppStore();
@@ -29,6 +30,9 @@ export const useCcStore = defineStore('cc', () => {
     const messages_c = createPromiseClient(MessagesAPI, transport);
     const users_c = createPromiseClient(UsersAPI, transport);
     const streaming = createPromiseClient(StreamService, transport)
+
+    const route = useRoute()
+    const router = useRouter()
 
     const chats = ref<Map<string, Chat>>(new Map())
     const users = ref<Map<string, User>>(new Map())
@@ -70,8 +74,22 @@ export const useCcStore = defineStore('cc', () => {
         return result
     }
 
-    function get_messages(chat: Chat): Promise<Messages> {
-        return messages_c.get(chat)
+
+    const messages = ref<Map<string, Message[]>>(new Map())
+
+    function chat_messages(chat: Chat | undefined): Message[] {
+        if (!chat) return []
+        return messages.value.get(chat.uuid) || []
+    }
+
+    async function get_messages(chat: Chat, cache = true): Promise<Messages> {
+        if (cache && messages.value.get(chat.uuid) && messages.value.get(chat.uuid)!.length > 0) return new Messages({ messages: messages.value.get(chat.uuid)! })
+
+        let res = await messages_c.get(chat)
+        console.debug('Got Messages', res.messages)
+
+        messages.value.set(chat.uuid, res.messages)
+        return res
     }
     function send_message(message: Message): Promise<Empty> {
         return messages_c.send(message)
@@ -87,14 +105,54 @@ export const useCcStore = defineStore('cc', () => {
         me.value = await users_c.me(new Empty())
     }
 
-    let msg_handler = (event: Event) => {
+    const msg_handler = (event: Event) => {
         console.log('Received Message Event', event)
+
+        let msg: Message = event.item.value as Message
+        let idx: number
+
+        if (!msg.chat) return console.warn('message without chat', msg)
+
+        if (!messages.value.get(msg.chat)) messages.value.set(msg.chat, [])
+
+        switch (event.type) {
+            case EventType.MESSAGE_SEND:
+                messages.value.get(msg.chat)!.push(msg)
+                break
+            case EventType.MESSAGE_UPDATED:
+                idx = messages.value.get(msg.chat)!.findIndex(el => el.uuid == msg.uuid)
+                messages.value.get(msg.chat)![idx] = msg
+                break
+            case EventType.MESSAGE_DELETED:
+                idx = messages.value.get(msg.chat)!.findIndex(el => el.uuid == msg.uuid)
+                messages.value.get(msg.chat)!.splice(idx, 1)
+                break
+            default:
+                console.warn('unknown event type', event.type)
+        }
     }
 
-    function set_msg_handler(handler: (event: Event) => void) {
-        msg_handler = (event: Event) => {
-            console.log('Received Message Event', event)
-            handler(event)
+    const chat_handler = (event: Event) => {
+        console.log('Received Chat Event', event)
+
+        let chat: Chat = event.item.value as Chat
+
+        switch (event.type) {
+            case EventType.CHAT_CREATED:
+                chats.value.set(chat.uuid, chat)
+                break
+            case EventType.CHAT_UPDATED:
+                chats.value.set(chat.uuid, chat)
+                break
+            case EventType.CHAT_DELETED:
+                if (route.name == 'Chat' && route.params.uuid == chat.uuid) {
+                    router.push({ name: 'Empty Chat' })
+                }
+
+                chats.value.delete(chat.uuid)
+                break
+            default:
+                console.warn('unknown event type', event.type)
         }
     }
 
@@ -110,8 +168,11 @@ export const useCcStore = defineStore('cc', () => {
                 console.log("Subscribed");
                 for await (const event of stream) {
                     console.debug('Received Event', event)
-                    if (event.type >= EventType.MESSAGE_SEND) {
+                    if (event.type == EventType.PING) continue
+                    else if (event.type >= EventType.MESSAGE_SEND) {
                         msg_handler(event)
+                    } else {
+                        chat_handler(event)
                     }
                 }
             } catch (e) {
@@ -124,9 +185,9 @@ export const useCcStore = defineStore('cc', () => {
         users, load_me, me,
 
         chats, list_chats, create_chat, delete_chat,
-        get_messages, send_message, update_message, delete_message,
 
-        set_msg_handler,
+        messages, chat_messages, get_messages,
+        send_message, update_message, delete_message,
 
         fetch_defaults, resolve
     }

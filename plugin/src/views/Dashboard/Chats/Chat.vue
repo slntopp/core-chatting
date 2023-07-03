@@ -94,7 +94,7 @@ import {
 
 import { useRoute, useRouter } from 'vue-router';
 import { useCcStore } from '../../../store/chatting';
-import { Chat, Message, Kind, Role, Event, EventType } from '../../../connect/cc/cc_pb';
+import { Chat, Message, Kind, Role } from '../../../connect/cc/cc_pb';
 import { ConnectError } from '@bufbuild/connect';
 
 const SendOutline = defineAsyncComponent(() => import('@vicons/ionicons5/SendOutline'));
@@ -111,12 +111,20 @@ const scrollbar = ref()
 const input = ref<InputInst>()
 
 const chat = computed(() => {
-    return store.chats.get(route.params.uuid as string)
+    try {
+        return store.chats.get(route.params.uuid as string)
+    } catch (e) {
+        console.log(e)
+
+        router.push({ name: 'Empty Chat' })
+    }
 })
 
 const notify = useNotification()
 
 function chatHeader() {
+    if (!chat.value) return h(NText, {}, () => 'Loading...')
+
     let users = chat.value!.users.map(uuid => store.users.get(uuid)?.title ?? 'Unknown')
     let admins = chat.value!.admins.map(uuid => store.users.get(uuid)?.title ?? 'Unknown')
 
@@ -133,7 +141,7 @@ function chatHeader() {
             h(NButton, {
                 type: 'info', size: 'small',
                 ghost: true, round: true,
-                onClick: get_messages,
+                onClick: () => store.get_messages(chat.value! as Chat, false),
             }, () => 'Refresh'),
             h(NDivider, { vertical: true }),
             h(NButton, {
@@ -148,11 +156,9 @@ function chatHeader() {
     )
 }
 
-const messages = ref<Message[]>([])
-async function get_messages() {
-    let res = await store.get_messages(chat.value! as Chat)
-    messages.value = res.messages
-}
+const messages = computed(() => {
+    return store.chat_messages(chat.value! as Chat)
+})
 
 const updating = ref(false)
 const current_message = ref<Message>(new Message({
@@ -162,10 +168,7 @@ const current_message = ref<Message>(new Message({
 
 async function handle_approve(msg: Message, approve: boolean) {
     msg.underReview = !approve
-    msg = await store.update_message(msg)
-
-    let idx = messages.value.findIndex(el => el.uuid == msg.uuid)
-    messages.value.splice(idx, 1, msg)
+    await store.update_message(msg)
 }
 
 async function handle_send(kind = Kind.DEFAULT, review = false) {
@@ -178,16 +181,11 @@ async function handle_send(kind = Kind.DEFAULT, review = false) {
         current_message.value.kind = kind
 
         if (updating.value) {
-            let msg = await store.update_message(current_message.value as Message)
+            await store.update_message(current_message.value as Message)
             updating.value = false
-
-            let idx = messages.value.findIndex(el => el.uuid == msg.uuid)
-            messages.value.splice(idx, 1, msg)
         } else {
             current_message.value.chat = route.params.uuid as string
             await store.send_message(current_message.value as Message)
-
-            get_messages()
         }
     } catch (e) {
         if (e instanceof ConnectError) {
@@ -197,7 +195,7 @@ async function handle_send(kind = Kind.DEFAULT, review = false) {
             })
         }
 
-        get_messages()
+        store.get_messages(chat.value! as Chat, false)
     }
 
 
@@ -224,31 +222,9 @@ function scrollToBottom() {
 }
 
 async function load_chat() {
-    store.resolve([...chat.value!.users, ...chat.value!.admins])
-    await get_messages()
-
-    store.set_msg_handler((event: Event) => {
-        let msg: Message = event.item.value as Message
-        let idx: number
-
-        switch (event.type) {
-            case EventType.MESSAGE_SEND:
-                messages.value.push(msg)
-                break
-            case EventType.MESSAGE_UPDATED:
-                idx = messages.value.findIndex(el => el.uuid == msg.uuid)
-                messages.value[idx] = msg
-                break
-            case EventType.MESSAGE_DELETED:
-                idx = messages.value.findIndex(el => el.uuid == msg.uuid)
-                messages.value.splice(idx, 1)
-                break
-            default:
-                console.warn('unknown event type', event.type)
-        }
-
-        scrollToBottom()
-    })
+    if (!chat.value) return
+    store.resolve([...chat.value.users, ...chat.value.admins])
+    store.get_messages(chat.value as Chat)
 }
 
 watch(chat, load_chat)

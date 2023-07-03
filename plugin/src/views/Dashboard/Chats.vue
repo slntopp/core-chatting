@@ -2,7 +2,7 @@
     <n-layout-sider>
         <n-scrollbar style="height: 90vh">
             <n-list hoverable clickable>
-                <template #header >
+                <template #header>
                     <n-space justify="center" align="center" style="height: 5vh">
                         <n-button ghost type="success" @click="router.push({ name: 'Start Chat' })">
                             <template #icon>
@@ -52,22 +52,22 @@ interface ChatListItemProps {
     chat: Chat
 }
 function chatListItem(props: ChatListItemProps) {
-    let { chat} = props;
+    let { chat } = props;
 
     let users = chat.users.map(uuid => store.users.get(uuid)?.title ?? 'Unknown')
     let admins = chat.admins.map(uuid => store.users.get(uuid)?.title ?? 'Unknown')
 
-    let members = users.concat( admins )
+    let members = users.concat(admins)
     let avatar_title = members.map(el => el[0]).join(',')
 
     return h(NListItem, {
         "onClick": () => router.push({ name: 'Chat', params: { uuid: props.uuid } })
     }, () => h(
-        NSpace, {justify: "start"}, () => [
-            h(NAvatar, {round: true, size: "large"}, () => avatar_title),
-            h(NSpace, {vertical: true}, () => [
+        NSpace, { justify: "start" }, () => [
+            h(NAvatar, { round: true, size: "large" }, () => avatar_title),
+            h(NSpace, { vertical: true }, () => [
                 h(NText, {}, () => chat.topic ?? members),
-                h(NText, {depth: "3"}, () => "Last message placeholder")
+                h(NText, { depth: "3" }, () => "Last message placeholder")
             ])
         ]
     ))

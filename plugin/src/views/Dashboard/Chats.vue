@@ -68,6 +68,11 @@ interface ChatListItemProps {
     uuid: string
     chat: Chat
 }
+
+// TODO:
+//  - [ ] Wrap Topic Around Avatar
+//  - [ ] Make menu draggable (increase width)
+
 function chatListItem(props: ChatListItemProps) {
     let { chat } = props;
 

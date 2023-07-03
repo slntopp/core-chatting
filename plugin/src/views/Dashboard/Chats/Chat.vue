@@ -34,7 +34,7 @@
                                 maxRows: 5
                             }
                                 " style="min-width: 50vw; max-width: 60vw;" placeholder="Type your message"
-                                v-model:value="current_message.content"
+                                v-model:value="current_message.content" ref="input"
                                 @keypress.ctrl.enter.exact="e => { e.preventDefault(); handle_send() }"
                                 @keypress.ctrl.shift.enter.exact="e => { e.preventDefault(); handle_send(Kind.ADMIN_ONLY) }"
                                 @keyup.ctrl.up.exact="e => { e.preventDefault(); handle_begin_edit() }" />
@@ -89,7 +89,7 @@ import {
     NSpace, NButton, NIcon, NTooltip,
     NAvatar, NText, NInput, NAlert,
     NList, NListItem, NScrollbar, NDivider,
-    useNotification
+    useNotification, InputInst
 } from 'naive-ui';
 
 import { useRoute, useRouter } from 'vue-router';
@@ -108,6 +108,7 @@ const router = useRouter();
 
 const store = useCcStore()
 const scrollbar = ref()
+const input = ref<InputInst>()
 
 const chat = computed(() => {
     return store.chats.get(route.params.uuid as string)
@@ -263,6 +264,9 @@ function handle_begin_edit() {
         if (msg.sender == store.me.uuid) {
             updating.value = true
             current_message.value = msg
+            nextTick(() => {
+                input.value?.focus()
+            })
             break
         }
     }

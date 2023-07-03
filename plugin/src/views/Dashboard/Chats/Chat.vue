@@ -228,20 +228,18 @@ async function load_chat() {
     await get_messages()
 
     store.set_msg_handler((event: Event) => {
-        let msg: Message
+        let msg: Message = event.item.value as Message
         let idx: number
 
         switch (event.type) {
             case EventType.MESSAGE_SEND:
-                messages.value.push(event.item.value as Message)
+                messages.value.push(msg)
                 break
             case EventType.MESSAGE_UPDATED:
-                msg = event.item.value as Message
                 idx = messages.value.findIndex(el => el.uuid == msg.uuid)
                 messages.value[idx] = msg
                 break
             case EventType.MESSAGE_DELETED:
-                msg = event.item.value as Message
                 idx = messages.value.findIndex(el => el.uuid == msg.uuid)
                 messages.value.splice(idx, 1)
                 break

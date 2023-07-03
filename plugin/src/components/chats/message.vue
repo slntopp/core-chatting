@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, defineAsyncComponent, h, computed, ref, nextTick, } from 'vue';
+import { PropType, defineAsyncComponent, h, computed, ref, nextTick, toRefs} from 'vue';
 import {
     NAvatar, NGrid, NDivider, NButton,
     NGi, NIcon, NSpace, NDropdown,
@@ -39,12 +39,13 @@ const PencilOutline = defineAsyncComponent(() => import('@vicons/ionicons5/Penci
 const TrashOutline = defineAsyncComponent(() => import('@vicons/ionicons5/TrashOutline'));
 const ReviewOutline = defineAsyncComponent(() => import('../../assets/icons/ReviewOutline.svg'));
 
-const { message } = defineProps({
+const props = defineProps({
     message: {
         type: Object as PropType<Message>,
         required: true
     }
 })
+const { message } = toRefs(props)
 
 const emit = defineEmits(['approve', 'convert', 'edit', 'delete'])
 
@@ -53,7 +54,7 @@ const theme = useThemeVars()
 const store = useCcStore()
 
 function sender(): string {
-    return store.users.get(message.sender)?.title ?? 'Unknown'
+    return store.users.get(message.value.sender)?.title ?? 'Unknown'
 }
 
 const x = ref(0)
@@ -68,19 +69,19 @@ const options = computed(() => {
     const label = (text: string) => () => h('b', {}, text)
     const icon = (component: any) => () => h(NIcon, { size: 24, component: component })
 
-    if (store.chats.get(message.chat!)?.role == Role.ADMIN) {
+    if (store.chats.get(message.value.chat!)?.role == Role.ADMIN) {
         result.push({
-            label: label(message.underReview ? 'Approve' : 'Review'), key: 'approve',
+            label: label(message.value.underReview ? 'Approve' : 'Review'), key: 'approve',
             icon: icon(ReviewOutline)
         }, {
-            label: label(message.kind == Kind.ADMIN_ONLY ? 'Convert to Message' : 'Convert to Admin Note'),
+            label: label(message.value.kind == Kind.ADMIN_ONLY ? 'Convert to Message' : 'Convert to Admin Note'),
             key: 'convert', icon: icon(ClipboardOutline)
         }, {
             type: 'divider', key: 'd-pre-delete'
         })
     }
 
-    if (store.chats.get(message.chat!)?.role == Role.ADMIN || message.sender == store.me.uuid) {
+    if (store.chats.get(message.value.chat!)?.role == Role.ADMIN || message.value.sender == store.me.uuid) {
         result.unshift({
             label: label('Edit'), key: 'edit',
             icon: icon(PencilOutline)
@@ -101,10 +102,10 @@ function handle_select(key: "approve" | "convert" | "edit" | "delete") {
 
     switch (key) {
         case 'approve':
-            emit('approve', message.underReview)
+            emit('approve', message.value.underReview)
             break
         case 'convert':
-            emit('convert', message.kind == Kind.ADMIN_ONLY ? Kind.DEFAULT : Kind.ADMIN_ONLY)
+            emit('convert', message.value.kind == Kind.ADMIN_ONLY ? Kind.DEFAULT : Kind.ADMIN_ONLY)
             break
         default:
             emit(key)
@@ -128,7 +129,7 @@ function avatar() {
         h(NAvatar, { round: true, size: 64 }, () => h('span', { style: { fontSize: '1.5rem' } }, sender()[0]))
     ]
 
-    if (message.kind == Kind.ADMIN_ONLY) {
+    if (message.value.kind == Kind.ADMIN_ONLY) {
         elements.push(h(NIcon, {
             color: theme.value.warningColor,
             size: 24,
@@ -146,9 +147,9 @@ const container_style = computed(() => {
         backgroundColor: ''
     }
 
-    if (message.underReview)
+    if (message.value.underReview)
         style = { ...style, backgroundColor: theme.value.infoColor + '40', border: `1px solid ${theme.value.infoColor}` }
-    else if (message.kind == Kind.ADMIN_ONLY)
+    else if (message.value.kind == Kind.ADMIN_ONLY)
         style = { ...style, backgroundColor: theme.value.warningColor + '40', border: `1px solid ${theme.value.warningColor}` }
 
     return style
@@ -179,7 +180,7 @@ renderer.code = (code, language) => {
 marked.setOptions({ renderer })
 
 function content() {
-    const parsed = marked.parse(message.content)
+    const parsed = marked.parse(message.value.content)
     const sanitized = DOMPurify.sanitize(parsed)
 
     return sanitized
@@ -211,21 +212,21 @@ function getRelativeTime(timestamp: number) {
 function timestamp() {
 
     let result = ''
-    if (message.edited) {
+    if (message.value.edited) {
         result = 'edited, '
     }
 
-    result += getRelativeTime(Number(message.edited ? message.edited : message.sent))
+    result += getRelativeTime(Number(message.value.edited ? message.value.edited : message.value.sent))
 
     let tooltip = [
         h(NDivider, { titlePlacement: 'left' }, () => 'Sent'),
-        h(NText, {}, () => new Date(Number(message.sent)).toString())
+        h(NText, {}, () => new Date(Number(message.value.sent)).toString())
     ]
 
-    if (message.edited) {
+    if (message.value.edited) {
         tooltip.push(
             h(NDivider, { titlePlacement: 'left' }, () => 'Edited'),
-            h(NText, {}, () => new Date(Number(message.edited)).toString())
+            h(NText, {}, () => new Date(Number(message.value.edited)).toString())
         )
     }
 
@@ -239,7 +240,7 @@ function timestamp() {
 
 function render(_props: any, { slots }: any) {
 
-    const is_sender = message.sender == store.me.uuid
+    const is_sender = message.value.sender == store.me.uuid
 
     const avatar_item = h(NGi, {
         span: 3,
@@ -259,7 +260,7 @@ function render(_props: any, { slots }: any) {
         timestamp()
     ]
 
-    if (message.underReview) {
+    if (message.value.underReview) {
         title.push(h(NButton, {
             size: 'small', type: 'info',
             ghost: true, round: true,

@@ -238,7 +238,7 @@ async function load_chat() {
             case EventType.MESSAGE_UPDATED:
                 msg = event.item.value as Message
                 idx = messages.value.findIndex(el => el.uuid == msg.uuid)
-                messages.value.splice(idx, 1, msg)
+                messages.value[idx] = msg
                 break
             case EventType.MESSAGE_DELETED:
                 msg = event.item.value as Message

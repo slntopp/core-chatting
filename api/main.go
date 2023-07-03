@@ -86,6 +86,14 @@ func main() {
 	usersCtrl := graph.NewUsersController(log, db, usersCol)
 
 	router := mux.NewRouter()
+	router.Use(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Debug("Request", zap.String("method", r.Method), zap.String("path", r.URL.Path))
+			h.ServeHTTP(w, r)
+		})
+	})
+
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir(dist)))
 
 	authInterceptor := auth.NewAuthInterceptor(log, SIGNING_KEY)
 
@@ -106,8 +114,6 @@ func main() {
 	streamServer := stream.NewStreamServer(log, usersCtrl, ps, SIGNING_KEY)
 	path, handler = cc.NewStreamServiceHandler(streamServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
-
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir(dist)))
 
 	host := fmt.Sprintf("0.0.0.0:%s", port)
 

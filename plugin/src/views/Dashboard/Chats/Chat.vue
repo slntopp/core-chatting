@@ -207,8 +207,6 @@ async function handle_send(kind = Kind.DEFAULT, review = false) {
 }
 async function handle_delete(msg: Message) {
     await store.delete_message(msg)
-    let idx = messages.value.findIndex(el => el.uuid == msg.uuid)
-    messages.value.splice(idx, 1)
 }
 
 function scrollToBottom() {

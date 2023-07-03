@@ -18,7 +18,7 @@ export const useCcStore = defineStore('cc', () => {
     const app = useAppStore();
 
     const transport = createGrpcWebTransport({
-        baseUrl: 'http://localhost:8080',
+        baseUrl: import.meta.env.DEV ? 'http://localhost:8080' : '/',
         interceptors: [
             (next) => async (req) => {
                 req.header.set("Authorization", `Bearer ${app.conf?.token}`);

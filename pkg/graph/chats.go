@@ -3,6 +3,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/slntopp/core-chatting/cc"
 
@@ -35,6 +36,8 @@ func NewChatsController(logger *zap.Logger, db driver.Database) *ChatsController
 func (c *ChatsController) Create(ctx context.Context, chat *cc.Chat) (*cc.Chat, error) {
 	log := c.log.Named("Create")
 	log.Debug("Req received")
+
+	chat.Created = time.Now().UnixMilli()
 
 	document, err := c.col.CreateDocument(ctx, chat)
 	if err != nil {

@@ -12,7 +12,7 @@
                         </n-button>
                     </n-space>
                 </template>
-                <chat-list-item v-for="[uuid, chat] in store.chats" :uuid="uuid" :chat="chat" />
+                <chat-list-item v-for="chat in chats" :uuid="chat.uuid" :chat="chat" />
             </n-list>
         </n-scrollbar>
     </n-layout-sider>
@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, h } from 'vue';
+import { defineAsyncComponent, h, computed } from 'vue';
 import {
     NLayoutSider, NLayoutContent,
     NScrollbar, NList, NListItem,
@@ -46,6 +46,17 @@ async function sync() {
 sync()
 
 store.resolve()
+
+const chats = computed(() => {
+    let res: Chat[] = []
+    store.chats.forEach((chat) => {
+        res.push(chat)
+    })
+
+    return res.sort((a: Chat, b: Chat) => {
+        return Number(b.created - a.created)
+    })
+})
 
 interface ChatListItemProps {
     uuid: string

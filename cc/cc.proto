@@ -32,6 +32,8 @@ message Chat {
 
   optional string topic = 7;
   optional ChatMeta meta = 8;
+
+  int64 created = 9;
 }
 
 message Chats { repeated Chat chats = 1; }

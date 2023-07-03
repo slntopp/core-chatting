@@ -226,6 +226,11 @@ export class Chat extends Message$1<Chat> {
    */
   meta?: ChatMeta;
 
+  /**
+   * @generated from field: int64 created = 9;
+   */
+  created = protoInt64.zero;
+
   constructor(data?: PartialMessage<Chat>) {
     super();
     proto3.util.initPartial(data, this);
@@ -242,6 +247,7 @@ export class Chat extends Message$1<Chat> {
     { no: 6, name: "role", kind: "enum", T: proto3.getEnumType(Role) },
     { no: 7, name: "topic", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 8, name: "meta", kind: "message", T: ChatMeta, opt: true },
+    { no: 9, name: "created", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Chat {

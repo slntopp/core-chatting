@@ -7,7 +7,7 @@
         </n-button>
 
         <n-text>
-            Start a new chat
+            Start a new Chat
         </n-text>
     </n-space>
 

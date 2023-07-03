@@ -36,7 +36,10 @@ var (
 	arangodbCred string
 	dbName       string
 	usersCol     string
-	rbmq         string
+
+	rbmq string
+
+	dist string
 
 	SIGNING_KEY []byte
 )
@@ -46,22 +49,24 @@ func init() {
 	log = core.NewLogger()
 
 	viper.SetDefault("PORT", "8080")
-	viper.SetDefault("DB_HOST", "localhost:8529")
-	viper.SetDefault("DB_CRED", "root:password")
-	viper.SetDefault("RABBITMQ_CONN", "amqp://guest:guest@localhost:5672/")
-	viper.SetDefault("DB_NAME", "chats")
-	viper.SetDefault("USERS_COL", "Accounts")
-
-	viper.SetDefault("SIGNING_KEY", "secret")
-
 	port = viper.GetString("PORT")
 
+	viper.SetDefault("DB_HOST", "localhost:8529")
+	viper.SetDefault("DB_CRED", "root:password")
+	viper.SetDefault("DB_NAME", "chats")
+	viper.SetDefault("USERS_COL", "Accounts")
 	arangodbHost = viper.GetString("DB_HOST")
 	arangodbCred = viper.GetString("DB_CRED")
 	dbName = viper.GetString("DB_NAME")
 	usersCol = viper.GetString("USERS_COL")
+
+	viper.SetDefault("RABBITMQ_CONN", "amqp://guest:guest@localhost:5672/")
 	rbmq = viper.GetString("RABBITMQ_CONN")
 
+	viper.SetDefault("DIST", "dist")
+	dist = viper.GetString("DIST")
+
+	viper.SetDefault("SIGNING_KEY", "secret")
 	SIGNING_KEY = []byte(viper.GetString("SIGNING_KEY"))
 }
 
@@ -101,6 +106,8 @@ func main() {
 	streamServer := stream.NewStreamServer(log, usersCtrl, ps, SIGNING_KEY)
 	path, handler = cc.NewStreamServiceHandler(streamServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
+
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir(dist)))
 
 	host := fmt.Sprintf("0.0.0.0:%s", port)
 

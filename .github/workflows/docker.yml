@@ -1,0 +1,51 @@
+name: Build Docker Image
+
+on:
+  push:
+    branches:
+      - "master"
+      - "dev"
+      - "nocloud"
+    paths-ignore:
+      - "examples"
+      - "**/*.md"
+      - ".github/**"
+      - "!.github/workflows/docker.yml"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_TAG: ${{github.ref_name == 'master' && 'latest' || github.ref_name}}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4.3.0
+        with:
+          tags: type=raw,value=${{env.IMAGE_TAG}}
+          images: ${{ env.REGISTRY }}/slntopp/core-chatting
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3.3.0
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

@@ -7,7 +7,7 @@ import { createGrpcWebTransport } from "@bufbuild/connect-web";
 import { useAppStore } from "./app";
 
 import {
-    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType
+    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType, ChatMeta
 } from "../connect/cc/cc_pb"
 import {
     ChatsAPI, MessagesAPI, StreamService, UsersAPI
@@ -42,7 +42,15 @@ export const useCcStore = defineStore('cc', () => {
     async function list_chats() {
         let result = await chats_c.list(new Empty())
         console.debug('Got Chats', result.chats)
-        chats.value = new Map(result.chats.map((chat) => [chat.uuid, chat]))
+        chats.value = new Map(result.chats.map((chat) => {
+            if (!chat.meta) {
+                chat.meta = new ChatMeta({
+                    unread: 0,
+                })
+            }
+
+            return [chat.uuid, chat]
+        }))
     }
 
     async function create_chat(chat: Chat) {
@@ -118,10 +126,15 @@ export const useCcStore = defineStore('cc', () => {
         switch (event.type) {
             case EventType.MESSAGE_SEND:
                 messages.value.get(msg.chat)!.push(msg)
+                chats.value.get(msg.chat)!.meta = new ChatMeta({
+                    unread: chats.value.get(msg.chat)!.meta!.unread + 1,
+                    lastMessage: msg,
+                })
                 break
             case EventType.MESSAGE_UPDATED:
                 idx = messages.value.get(msg.chat)!.findIndex(el => el.uuid == msg.uuid)
                 messages.value.get(msg.chat)![idx] = msg
+                chats.value.get(msg.chat)!.meta!.unread++
                 break
             case EventType.MESSAGE_DELETED:
                 idx = messages.value.get(msg.chat)!.findIndex(el => el.uuid == msg.uuid)
@@ -136,6 +149,12 @@ export const useCcStore = defineStore('cc', () => {
         console.log('Received Chat Event', event)
 
         let chat: Chat = event.item.value as Chat
+
+        if (!chat.meta) {
+            chat.meta = new ChatMeta({
+                unread: 0,
+            })
+        }
 
         switch (event.type) {
             case EventType.CHAT_CREATED:

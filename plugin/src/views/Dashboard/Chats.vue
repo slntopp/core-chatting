@@ -27,7 +27,7 @@ import {
     NLayoutSider, NLayoutContent,
     NScrollbar, NList, NListItem,
     NSpace, NButton, NIcon,
-    NAvatar, NText
+    NAvatar, NText, NBadge
 } from 'naive-ui';
 
 import { useCcStore } from '../../store/chatting.ts';
@@ -81,17 +81,22 @@ function chatListItem(props: ChatListItemProps) {
     if (chat.meta && chat.meta.lastMessage)
         sub = chat.meta!.lastMessage!.content.slice(0, 16) + '...'
 
+    let result = [
+        h(NAvatar, { round: true, size: "large" }, () => avatar_title),
+        h(NSpace, { vertical: true }, () => [
+            h(NText, {}, () => chat.topic ?? members),
+            h(NText, { depth: "3" }, () => sub)
+        ]),
+    ]
+
+    if (chat.meta && chat.meta.unread > 0)
+        result[1] = h(NBadge, { value: chat.meta!.unread, max: 99, style: { width: '100%' }, size: 24, offset: [12, 12] }, result[1])
+
     return h(NListItem, {
         "onClick": () => router.push({ name: 'Chat', params: { uuid: props.uuid } })
-    }, () => h(
-        NSpace, { justify: "start" }, () => [
-            h(NAvatar, { round: true, size: "large" }, () => avatar_title),
-            h(NSpace, { vertical: true }, () => [
-                h(NText, {}, () => chat.topic ?? members),
-                h(NText, { depth: "3" }, () => sub)
-            ])
-        ]
-    ))
+    }, () => (h(
+        NSpace, { justify: "start" }, () => result
+    )))
 }
 
 </script>

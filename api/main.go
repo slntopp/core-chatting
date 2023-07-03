@@ -93,7 +93,9 @@ func main() {
 		})
 	})
 
-	router.PathPrefix("/cc.ui/").Handler(http.FileServer(http.Dir(dist)))
+	router.PathPrefix("/cc.ui/").Handler(
+		http.StripPrefix("/cc.ui/", http.FileServer(http.Dir(dist))),
+	)
 
 	authInterceptor := auth.NewAuthInterceptor(log, SIGNING_KEY)
 

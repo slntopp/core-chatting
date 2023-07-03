@@ -1,6 +1,8 @@
 syntax = "proto3";
 package cc;
 
+import "google/protobuf/struct.proto";
+
 option go_package = "github.com/slntopp/core-chatting/cc";
 
 message Empty {}
@@ -12,18 +14,28 @@ enum Role {
   ADMIN = 3;
 }
 
+message ChatMeta {
+  int32 unread = 1;
+  Message last_message = 2;
+}
+
 message Chat {
   string uuid = 1;
 
   repeated string users = 2;
   repeated string admins = 3;
+  string owner = 4;
 
-  repeated string gateways = 4;
+  repeated string gateways = 5;
 
-  Role role = 5;
+  Role role = 6;
 
-  optional string topic = 6;
+  optional string topic = 7;
+  optional ChatMeta meta = 8;
+
+  int64 created = 9;
 }
+
 message Chats { repeated Chat chats = 1; }
 
 service ChatsAPI {
@@ -56,6 +68,11 @@ message Message {
   repeated string gateways = 6;
 
   optional string chat = 7; // Required for Send, Update and Delete requests
+
+  int64 sent = 8;
+  int64 edited = 9;
+
+  bool under_review = 10;
 }
 message Messages { repeated Message messages = 1; }
 
@@ -64,6 +81,47 @@ service MessagesAPI {
 
   rpc Send(Message) returns (Message);
   rpc Update(Message) returns (Message);
-  
+
   rpc Delete(Message) returns (Message);
 }
+
+message User {
+  string uuid = 1;
+  string title = 2;
+}
+
+message Defaults {
+  repeated string gateways = 1;
+  repeated string admins = 2;
+}
+
+message Users { repeated User users = 1; }
+
+service UsersAPI {
+  rpc Me(Empty) returns (User);
+  rpc FetchDefaults(Empty) returns (Defaults);
+
+  // Resolves given Users data by their UUIDs
+  // And returns all accessible Users for Requestor
+  rpc Resolve(Users) returns (Users);
+}
+
+enum EventType {
+  PING = 0;
+  CHAT_CREATED = 1;
+  CHAT_UPDATED = 2;
+  CHAT_DELETED = 3;
+  MESSAGE_SEND = 4;
+  MESSAGE_UPDATED = 5;
+  MESSAGE_DELETED = 6;
+}
+
+message Event {
+  EventType type = 1;
+  oneof item {
+    Chat chat = 2;
+    Message msg = 3;
+  }
+}
+
+service StreamService { rpc Stream (Empty) returns (stream Event); }

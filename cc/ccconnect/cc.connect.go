@@ -25,6 +25,44 @@ const (
 	ChatsAPIName = "cc.ChatsAPI"
 	// MessagesAPIName is the fully-qualified name of the MessagesAPI service.
 	MessagesAPIName = "cc.MessagesAPI"
+	// UsersAPIName is the fully-qualified name of the UsersAPI service.
+	UsersAPIName = "cc.UsersAPI"
+	// StreamServiceName is the fully-qualified name of the StreamService service.
+	StreamServiceName = "cc.StreamService"
+)
+
+// These constants are the fully-qualified names of the RPCs defined in this package. They're
+// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+//
+// Note that these are different from the fully-qualified method names used by
+// google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
+// reflection-formatted method names, remove the leading slash and convert the remaining slash to a
+// period.
+const (
+	// ChatsAPICreateProcedure is the fully-qualified name of the ChatsAPI's Create RPC.
+	ChatsAPICreateProcedure = "/cc.ChatsAPI/Create"
+	// ChatsAPIUpdateProcedure is the fully-qualified name of the ChatsAPI's Update RPC.
+	ChatsAPIUpdateProcedure = "/cc.ChatsAPI/Update"
+	// ChatsAPIListProcedure is the fully-qualified name of the ChatsAPI's List RPC.
+	ChatsAPIListProcedure = "/cc.ChatsAPI/List"
+	// ChatsAPIDeleteProcedure is the fully-qualified name of the ChatsAPI's Delete RPC.
+	ChatsAPIDeleteProcedure = "/cc.ChatsAPI/Delete"
+	// MessagesAPIGetProcedure is the fully-qualified name of the MessagesAPI's Get RPC.
+	MessagesAPIGetProcedure = "/cc.MessagesAPI/Get"
+	// MessagesAPISendProcedure is the fully-qualified name of the MessagesAPI's Send RPC.
+	MessagesAPISendProcedure = "/cc.MessagesAPI/Send"
+	// MessagesAPIUpdateProcedure is the fully-qualified name of the MessagesAPI's Update RPC.
+	MessagesAPIUpdateProcedure = "/cc.MessagesAPI/Update"
+	// MessagesAPIDeleteProcedure is the fully-qualified name of the MessagesAPI's Delete RPC.
+	MessagesAPIDeleteProcedure = "/cc.MessagesAPI/Delete"
+	// UsersAPIMeProcedure is the fully-qualified name of the UsersAPI's Me RPC.
+	UsersAPIMeProcedure = "/cc.UsersAPI/Me"
+	// UsersAPIFetchDefaultsProcedure is the fully-qualified name of the UsersAPI's FetchDefaults RPC.
+	UsersAPIFetchDefaultsProcedure = "/cc.UsersAPI/FetchDefaults"
+	// UsersAPIResolveProcedure is the fully-qualified name of the UsersAPI's Resolve RPC.
+	UsersAPIResolveProcedure = "/cc.UsersAPI/Resolve"
+	// StreamServiceStreamProcedure is the fully-qualified name of the StreamService's Stream RPC.
+	StreamServiceStreamProcedure = "/cc.StreamService/Stream"
 )
 
 // ChatsAPIClient is a client for the cc.ChatsAPI service.
@@ -47,22 +85,22 @@ func NewChatsAPIClient(httpClient connect_go.HTTPClient, baseURL string, opts ..
 	return &chatsAPIClient{
 		create: connect_go.NewClient[cc.Chat, cc.Chat](
 			httpClient,
-			baseURL+"/cc.ChatsAPI/Create",
+			baseURL+ChatsAPICreateProcedure,
 			opts...,
 		),
 		update: connect_go.NewClient[cc.Chat, cc.Chat](
 			httpClient,
-			baseURL+"/cc.ChatsAPI/Update",
+			baseURL+ChatsAPIUpdateProcedure,
 			opts...,
 		),
 		list: connect_go.NewClient[cc.Empty, cc.Chats](
 			httpClient,
-			baseURL+"/cc.ChatsAPI/List",
+			baseURL+ChatsAPIListProcedure,
 			opts...,
 		),
 		delete: connect_go.NewClient[cc.Chat, cc.Chat](
 			httpClient,
-			baseURL+"/cc.ChatsAPI/Delete",
+			baseURL+ChatsAPIDeleteProcedure,
 			opts...,
 		),
 	}
@@ -111,23 +149,23 @@ type ChatsAPIHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle("/cc.ChatsAPI/Create", connect_go.NewUnaryHandler(
-		"/cc.ChatsAPI/Create",
+	mux.Handle(ChatsAPICreateProcedure, connect_go.NewUnaryHandler(
+		ChatsAPICreateProcedure,
 		svc.Create,
 		opts...,
 	))
-	mux.Handle("/cc.ChatsAPI/Update", connect_go.NewUnaryHandler(
-		"/cc.ChatsAPI/Update",
+	mux.Handle(ChatsAPIUpdateProcedure, connect_go.NewUnaryHandler(
+		ChatsAPIUpdateProcedure,
 		svc.Update,
 		opts...,
 	))
-	mux.Handle("/cc.ChatsAPI/List", connect_go.NewUnaryHandler(
-		"/cc.ChatsAPI/List",
+	mux.Handle(ChatsAPIListProcedure, connect_go.NewUnaryHandler(
+		ChatsAPIListProcedure,
 		svc.List,
 		opts...,
 	))
-	mux.Handle("/cc.ChatsAPI/Delete", connect_go.NewUnaryHandler(
-		"/cc.ChatsAPI/Delete",
+	mux.Handle(ChatsAPIDeleteProcedure, connect_go.NewUnaryHandler(
+		ChatsAPIDeleteProcedure,
 		svc.Delete,
 		opts...,
 	))
@@ -155,8 +193,9 @@ func (UnimplementedChatsAPIHandler) Delete(context.Context, *connect_go.Request[
 
 // MessagesAPIClient is a client for the cc.MessagesAPI service.
 type MessagesAPIClient interface {
-	Send(context.Context, *connect_go.Request[cc.Message]) (*connect_go.Response[cc.Message], error)
 	Get(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Messages], error)
+	Send(context.Context, *connect_go.Request[cc.Message]) (*connect_go.Response[cc.Message], error)
+	Update(context.Context, *connect_go.Request[cc.Message]) (*connect_go.Response[cc.Message], error)
 	Delete(context.Context, *connect_go.Request[cc.Message]) (*connect_go.Response[cc.Message], error)
 }
 
@@ -170,19 +209,24 @@ type MessagesAPIClient interface {
 func NewMessagesAPIClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) MessagesAPIClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &messagesAPIClient{
-		send: connect_go.NewClient[cc.Message, cc.Message](
-			httpClient,
-			baseURL+"/cc.MessagesAPI/Send",
-			opts...,
-		),
 		get: connect_go.NewClient[cc.Chat, cc.Messages](
 			httpClient,
-			baseURL+"/cc.MessagesAPI/Get",
+			baseURL+MessagesAPIGetProcedure,
+			opts...,
+		),
+		send: connect_go.NewClient[cc.Message, cc.Message](
+			httpClient,
+			baseURL+MessagesAPISendProcedure,
+			opts...,
+		),
+		update: connect_go.NewClient[cc.Message, cc.Message](
+			httpClient,
+			baseURL+MessagesAPIUpdateProcedure,
 			opts...,
 		),
 		delete: connect_go.NewClient[cc.Message, cc.Message](
 			httpClient,
-			baseURL+"/cc.MessagesAPI/Delete",
+			baseURL+MessagesAPIDeleteProcedure,
 			opts...,
 		),
 	}
@@ -190,9 +234,15 @@ func NewMessagesAPIClient(httpClient connect_go.HTTPClient, baseURL string, opts
 
 // messagesAPIClient implements MessagesAPIClient.
 type messagesAPIClient struct {
-	send   *connect_go.Client[cc.Message, cc.Message]
 	get    *connect_go.Client[cc.Chat, cc.Messages]
+	send   *connect_go.Client[cc.Message, cc.Message]
+	update *connect_go.Client[cc.Message, cc.Message]
 	delete *connect_go.Client[cc.Message, cc.Message]
+}
+
+// Get calls cc.MessagesAPI.Get.
+func (c *messagesAPIClient) Get(ctx context.Context, req *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Messages], error) {
+	return c.get.CallUnary(ctx, req)
 }
 
 // Send calls cc.MessagesAPI.Send.
@@ -200,9 +250,9 @@ func (c *messagesAPIClient) Send(ctx context.Context, req *connect_go.Request[cc
 	return c.send.CallUnary(ctx, req)
 }
 
-// Get calls cc.MessagesAPI.Get.
-func (c *messagesAPIClient) Get(ctx context.Context, req *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Messages], error) {
-	return c.get.CallUnary(ctx, req)
+// Update calls cc.MessagesAPI.Update.
+func (c *messagesAPIClient) Update(ctx context.Context, req *connect_go.Request[cc.Message]) (*connect_go.Response[cc.Message], error) {
+	return c.update.CallUnary(ctx, req)
 }
 
 // Delete calls cc.MessagesAPI.Delete.
@@ -212,8 +262,9 @@ func (c *messagesAPIClient) Delete(ctx context.Context, req *connect_go.Request[
 
 // MessagesAPIHandler is an implementation of the cc.MessagesAPI service.
 type MessagesAPIHandler interface {
-	Send(context.Context, *connect_go.Request[cc.Message]) (*connect_go.Response[cc.Message], error)
 	Get(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Messages], error)
+	Send(context.Context, *connect_go.Request[cc.Message]) (*connect_go.Response[cc.Message], error)
+	Update(context.Context, *connect_go.Request[cc.Message]) (*connect_go.Response[cc.Message], error)
 	Delete(context.Context, *connect_go.Request[cc.Message]) (*connect_go.Response[cc.Message], error)
 }
 
@@ -224,18 +275,23 @@ type MessagesAPIHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewMessagesAPIHandler(svc MessagesAPIHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle("/cc.MessagesAPI/Send", connect_go.NewUnaryHandler(
-		"/cc.MessagesAPI/Send",
-		svc.Send,
-		opts...,
-	))
-	mux.Handle("/cc.MessagesAPI/Get", connect_go.NewUnaryHandler(
-		"/cc.MessagesAPI/Get",
+	mux.Handle(MessagesAPIGetProcedure, connect_go.NewUnaryHandler(
+		MessagesAPIGetProcedure,
 		svc.Get,
 		opts...,
 	))
-	mux.Handle("/cc.MessagesAPI/Delete", connect_go.NewUnaryHandler(
-		"/cc.MessagesAPI/Delete",
+	mux.Handle(MessagesAPISendProcedure, connect_go.NewUnaryHandler(
+		MessagesAPISendProcedure,
+		svc.Send,
+		opts...,
+	))
+	mux.Handle(MessagesAPIUpdateProcedure, connect_go.NewUnaryHandler(
+		MessagesAPIUpdateProcedure,
+		svc.Update,
+		opts...,
+	))
+	mux.Handle(MessagesAPIDeleteProcedure, connect_go.NewUnaryHandler(
+		MessagesAPIDeleteProcedure,
 		svc.Delete,
 		opts...,
 	))
@@ -245,14 +301,186 @@ func NewMessagesAPIHandler(svc MessagesAPIHandler, opts ...connect_go.HandlerOpt
 // UnimplementedMessagesAPIHandler returns CodeUnimplemented from all methods.
 type UnimplementedMessagesAPIHandler struct{}
 
-func (UnimplementedMessagesAPIHandler) Send(context.Context, *connect_go.Request[cc.Message]) (*connect_go.Response[cc.Message], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.MessagesAPI.Send is not implemented"))
-}
-
 func (UnimplementedMessagesAPIHandler) Get(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Messages], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.MessagesAPI.Get is not implemented"))
 }
 
+func (UnimplementedMessagesAPIHandler) Send(context.Context, *connect_go.Request[cc.Message]) (*connect_go.Response[cc.Message], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.MessagesAPI.Send is not implemented"))
+}
+
+func (UnimplementedMessagesAPIHandler) Update(context.Context, *connect_go.Request[cc.Message]) (*connect_go.Response[cc.Message], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.MessagesAPI.Update is not implemented"))
+}
+
 func (UnimplementedMessagesAPIHandler) Delete(context.Context, *connect_go.Request[cc.Message]) (*connect_go.Response[cc.Message], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.MessagesAPI.Delete is not implemented"))
+}
+
+// UsersAPIClient is a client for the cc.UsersAPI service.
+type UsersAPIClient interface {
+	Me(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.User], error)
+	FetchDefaults(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Defaults], error)
+	// Resolves given Users data by their UUIDs
+	// And returns all accessible Users for Requestor
+	Resolve(context.Context, *connect_go.Request[cc.Users]) (*connect_go.Response[cc.Users], error)
+}
+
+// NewUsersAPIClient constructs a client for the cc.UsersAPI service. By default, it uses the
+// Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewUsersAPIClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) UsersAPIClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	return &usersAPIClient{
+		me: connect_go.NewClient[cc.Empty, cc.User](
+			httpClient,
+			baseURL+UsersAPIMeProcedure,
+			opts...,
+		),
+		fetchDefaults: connect_go.NewClient[cc.Empty, cc.Defaults](
+			httpClient,
+			baseURL+UsersAPIFetchDefaultsProcedure,
+			opts...,
+		),
+		resolve: connect_go.NewClient[cc.Users, cc.Users](
+			httpClient,
+			baseURL+UsersAPIResolveProcedure,
+			opts...,
+		),
+	}
+}
+
+// usersAPIClient implements UsersAPIClient.
+type usersAPIClient struct {
+	me            *connect_go.Client[cc.Empty, cc.User]
+	fetchDefaults *connect_go.Client[cc.Empty, cc.Defaults]
+	resolve       *connect_go.Client[cc.Users, cc.Users]
+}
+
+// Me calls cc.UsersAPI.Me.
+func (c *usersAPIClient) Me(ctx context.Context, req *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.User], error) {
+	return c.me.CallUnary(ctx, req)
+}
+
+// FetchDefaults calls cc.UsersAPI.FetchDefaults.
+func (c *usersAPIClient) FetchDefaults(ctx context.Context, req *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Defaults], error) {
+	return c.fetchDefaults.CallUnary(ctx, req)
+}
+
+// Resolve calls cc.UsersAPI.Resolve.
+func (c *usersAPIClient) Resolve(ctx context.Context, req *connect_go.Request[cc.Users]) (*connect_go.Response[cc.Users], error) {
+	return c.resolve.CallUnary(ctx, req)
+}
+
+// UsersAPIHandler is an implementation of the cc.UsersAPI service.
+type UsersAPIHandler interface {
+	Me(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.User], error)
+	FetchDefaults(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Defaults], error)
+	// Resolves given Users data by their UUIDs
+	// And returns all accessible Users for Requestor
+	Resolve(context.Context, *connect_go.Request[cc.Users]) (*connect_go.Response[cc.Users], error)
+}
+
+// NewUsersAPIHandler builds an HTTP handler from the service implementation. It returns the path on
+// which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewUsersAPIHandler(svc UsersAPIHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	mux := http.NewServeMux()
+	mux.Handle(UsersAPIMeProcedure, connect_go.NewUnaryHandler(
+		UsersAPIMeProcedure,
+		svc.Me,
+		opts...,
+	))
+	mux.Handle(UsersAPIFetchDefaultsProcedure, connect_go.NewUnaryHandler(
+		UsersAPIFetchDefaultsProcedure,
+		svc.FetchDefaults,
+		opts...,
+	))
+	mux.Handle(UsersAPIResolveProcedure, connect_go.NewUnaryHandler(
+		UsersAPIResolveProcedure,
+		svc.Resolve,
+		opts...,
+	))
+	return "/cc.UsersAPI/", mux
+}
+
+// UnimplementedUsersAPIHandler returns CodeUnimplemented from all methods.
+type UnimplementedUsersAPIHandler struct{}
+
+func (UnimplementedUsersAPIHandler) Me(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.User], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.UsersAPI.Me is not implemented"))
+}
+
+func (UnimplementedUsersAPIHandler) FetchDefaults(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Defaults], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.UsersAPI.FetchDefaults is not implemented"))
+}
+
+func (UnimplementedUsersAPIHandler) Resolve(context.Context, *connect_go.Request[cc.Users]) (*connect_go.Response[cc.Users], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.UsersAPI.Resolve is not implemented"))
+}
+
+// StreamServiceClient is a client for the cc.StreamService service.
+type StreamServiceClient interface {
+	Stream(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.ServerStreamForClient[cc.Event], error)
+}
+
+// NewStreamServiceClient constructs a client for the cc.StreamService service. By default, it uses
+// the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewStreamServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) StreamServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	return &streamServiceClient{
+		stream: connect_go.NewClient[cc.Empty, cc.Event](
+			httpClient,
+			baseURL+StreamServiceStreamProcedure,
+			opts...,
+		),
+	}
+}
+
+// streamServiceClient implements StreamServiceClient.
+type streamServiceClient struct {
+	stream *connect_go.Client[cc.Empty, cc.Event]
+}
+
+// Stream calls cc.StreamService.Stream.
+func (c *streamServiceClient) Stream(ctx context.Context, req *connect_go.Request[cc.Empty]) (*connect_go.ServerStreamForClient[cc.Event], error) {
+	return c.stream.CallServerStream(ctx, req)
+}
+
+// StreamServiceHandler is an implementation of the cc.StreamService service.
+type StreamServiceHandler interface {
+	Stream(context.Context, *connect_go.Request[cc.Empty], *connect_go.ServerStream[cc.Event]) error
+}
+
+// NewStreamServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	mux := http.NewServeMux()
+	mux.Handle(StreamServiceStreamProcedure, connect_go.NewServerStreamHandler(
+		StreamServiceStreamProcedure,
+		svc.Stream,
+		opts...,
+	))
+	return "/cc.StreamService/", mux
+}
+
+// UnimplementedStreamServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedStreamServiceHandler struct{}
+
+func (UnimplementedStreamServiceHandler) Stream(context.Context, *connect_go.Request[cc.Empty], *connect_go.ServerStream[cc.Event]) error {
+	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.StreamService.Stream is not implemented"))
 }

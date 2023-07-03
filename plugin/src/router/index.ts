@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 
 const routes = [
   {
-    path: "/chatting",
+    path: "/cc.ui",
     name: "Root",
     children: [
       {

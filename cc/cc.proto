@@ -14,6 +14,11 @@ enum Role {
   ADMIN = 3;
 }
 
+message ChatMeta {
+  int32 unread = 1;
+  Message last_message = 2;
+}
+
 message Chat {
   string uuid = 1;
 
@@ -26,7 +31,9 @@ message Chat {
   Role role = 6;
 
   optional string topic = 7;
+  optional ChatMeta meta = 8;
 }
+
 message Chats { repeated Chat chats = 1; }
 
 service ChatsAPI {

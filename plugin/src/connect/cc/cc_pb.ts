@@ -140,6 +140,49 @@ export class Empty extends Message$1<Empty> {
 }
 
 /**
+ * @generated from message cc.ChatMeta
+ */
+export class ChatMeta extends Message$1<ChatMeta> {
+  /**
+   * @generated from field: int32 unread = 1;
+   */
+  unread = 0;
+
+  /**
+   * @generated from field: cc.Message last_message = 2;
+   */
+  lastMessage?: Message;
+
+  constructor(data?: PartialMessage<ChatMeta>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "cc.ChatMeta";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "unread", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "last_message", kind: "message", T: Message },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ChatMeta {
+    return new ChatMeta().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ChatMeta {
+    return new ChatMeta().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ChatMeta {
+    return new ChatMeta().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ChatMeta | PlainMessage<ChatMeta> | undefined, b: ChatMeta | PlainMessage<ChatMeta> | undefined): boolean {
+    return proto3.util.equals(ChatMeta, a, b);
+  }
+}
+
+/**
  * @generated from message cc.Chat
  */
 export class Chat extends Message$1<Chat> {
@@ -178,6 +221,11 @@ export class Chat extends Message$1<Chat> {
    */
   topic?: string;
 
+  /**
+   * @generated from field: optional cc.ChatMeta meta = 8;
+   */
+  meta?: ChatMeta;
+
   constructor(data?: PartialMessage<Chat>) {
     super();
     proto3.util.initPartial(data, this);
@@ -193,6 +241,7 @@ export class Chat extends Message$1<Chat> {
     { no: 5, name: "gateways", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 6, name: "role", kind: "enum", T: proto3.getEnumType(Role) },
     { no: 7, name: "topic", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 8, name: "meta", kind: "message", T: ChatMeta, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Chat {

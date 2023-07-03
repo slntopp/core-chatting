@@ -53,8 +53,14 @@ const chats = computed(() => {
         res.push(chat)
     })
 
+    let sortable = (chat: Chat) => {
+        if (chat.meta && chat.meta.lastMessage)
+            return chat.meta.lastMessage.sent
+        return chat.created
+    }
+
     return res.sort((a: Chat, b: Chat) => {
-        return Number(b.created - a.created)
+        return Number(sortable(b) - sortable(a))
     })
 })
 
@@ -71,6 +77,10 @@ function chatListItem(props: ChatListItemProps) {
     let members = users.concat(admins)
     let avatar_title = members.map(el => el[0]).join(',')
 
+    let sub = "No messages yet"
+    if (chat.meta && chat.meta.lastMessage)
+        sub = chat.meta!.lastMessage!.content.slice(0, 16) + '...'
+
     return h(NListItem, {
         "onClick": () => router.push({ name: 'Chat', params: { uuid: props.uuid } })
     }, () => h(
@@ -78,7 +88,7 @@ function chatListItem(props: ChatListItemProps) {
             h(NAvatar, { round: true, size: "large" }, () => avatar_title),
             h(NSpace, { vertical: true }, () => [
                 h(NText, {}, () => chat.topic ?? members),
-                h(NText, { depth: "3" }, () => "Last message placeholder")
+                h(NText, { depth: "3" }, () => sub)
             ])
         ]
     ))

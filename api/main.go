@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/slntopp/core-chatting/pkg/core/auth"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/slntopp/core-chatting/pkg/core/auth"
 
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
@@ -78,7 +80,7 @@ func main() {
 	msgCtrs := graph.NewMessagesController(log, db)
 	usersCtrl := graph.NewUsersController(log, db, usersCol)
 
-	mux := http.NewServeMux()
+	router := mux.NewRouter()
 
 	authInterceptor := auth.NewAuthInterceptor(log, SIGNING_KEY)
 
@@ -86,19 +88,19 @@ func main() {
 
 	chatServer := chats.NewChatsServer(log, chatCtrl, ps)
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)
-	mux.Handle(path, handler)
+	router.PathPrefix(path).Handler(handler)
 
 	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrs, ps)
 	path, handler = cc.NewMessagesAPIHandler(messagesServer, interceptors)
-	mux.Handle(path, handler)
+	router.PathPrefix(path).Handler(handler)
 
 	usersServer := users.NewUsersServer(log, usersCtrl)
 	path, handler = cc.NewUsersAPIHandler(usersServer, interceptors)
-	mux.Handle(path, handler)
+	router.PathPrefix(path).Handler(handler)
 
 	streamServer := stream.NewStreamServer(log, usersCtrl, ps, SIGNING_KEY)
 	path, handler = cc.NewStreamServiceHandler(streamServer, interceptors)
-	mux.Handle(path, handler)
+	router.PathPrefix(path).Handler(handler)
 
 	host := fmt.Sprintf("0.0.0.0:%s", port)
 
@@ -108,7 +110,7 @@ func main() {
 		AllowedHeaders:      []string{"*", "Connect-Protocol-Version"},
 		AllowCredentials:    true,
 		AllowPrivateNetwork: true,
-	}).Handler(h2c.NewHandler(mux, &http2.Server{}))
+	}).Handler(h2c.NewHandler(router, &http2.Server{}))
 
 	log.Debug("Start server", zap.String("host", host))
 	err = http.ListenAndServe(host, handler)

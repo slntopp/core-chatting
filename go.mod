@@ -6,6 +6,7 @@ require (
 	github.com/arangodb/go-driver v1.6.0
 	github.com/bufbuild/connect-go v1.5.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/rabbitmq/amqp091-go v1.8.1
 	github.com/rs/cors v1.9.0

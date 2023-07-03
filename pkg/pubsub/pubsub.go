@@ -3,6 +3,7 @@ package pubsub
 import (
 	"context"
 	"fmt"
+
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/slntopp/core-chatting/cc"
 	"go.uber.org/zap"

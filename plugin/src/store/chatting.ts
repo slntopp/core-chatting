@@ -98,43 +98,25 @@ export const useCcStore = defineStore('cc', () => {
         }
     }
 
-    // (async () => {
-    //     console.log("Subscribing to state updates");
-
-    //     while (true) {
-    //         await new Promise((resolve) => setTimeout(resolve, 1000));
-    //         if (!app.conf) continue;
-
-    //         try {
-    //             const stream = streaming.stream(new Empty())
-    //             console.log("Subscribed");
-    //             for await (const event of stream) {
-    //                 console.debug('Received Event', event)
-    //                 if(event.type >= EventType.MESSAGE_SEND) {
-    //                     msg_handler(event)
-    //                 }
-    //             }
-    //         } catch (e) {
-    //             console.debug("Disconnected", e);
-    //         }
-    //     }
-    // })();
-
     (async () => {
         console.log("Subscribing to state updates");
 
-        let socket = new WebSocket('ws://localhost:8080/', [app.conf?.token ?? 'nope'])
-        socket.onerror = (e) => {
-            console.error('Socket Error', e)
-        }
-        socket.onopen = (e) => {
-            console.log('Socket Open', e)
-        }
-        socket.onclose = (e) => {
-            console.log('Socket Close', e)
-        }
-        socket.onmessage = (e) => {
-            console.log('Socket Message', e)
+        while (true) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            if (!app.conf) continue;
+
+            try {
+                const stream = streaming.stream(new Empty())
+                console.log("Subscribed");
+                for await (const event of stream) {
+                    console.debug('Received Event', event)
+                    if (event.type >= EventType.MESSAGE_SEND) {
+                        msg_handler(event)
+                    }
+                }
+            } catch (e) {
+                console.debug("Disconnected", e);
+            }
         }
     })();
 

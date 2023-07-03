@@ -63,49 +63,49 @@ proto3.util.setEnumType(Kind, "cc.Kind", [
  */
 export enum EventType {
   /**
-   * @generated from enum value: CHAT_CREATED = 0;
+   * @generated from enum value: PING = 0;
    */
-  CHAT_CREATED = 0,
+  PING = 0,
 
   /**
-   * @generated from enum value: CHAT_UPDATED = 1;
+   * @generated from enum value: CHAT_CREATED = 1;
    */
-  CHAT_UPDATED = 1,
+  CHAT_CREATED = 1,
 
   /**
-   * @generated from enum value: CHAT_DELETED = 2;
+   * @generated from enum value: CHAT_UPDATED = 2;
    */
-  CHAT_DELETED = 2,
+  CHAT_UPDATED = 2,
 
   /**
-   * @generated from enum value: MESSAGE_SEND = 3;
+   * @generated from enum value: CHAT_DELETED = 3;
    */
-  MESSAGE_SEND = 3,
+  CHAT_DELETED = 3,
 
   /**
-   * @generated from enum value: MESSAGE_UPDATED = 4;
+   * @generated from enum value: MESSAGE_SEND = 4;
    */
-  MESSAGE_UPDATED = 4,
+  MESSAGE_SEND = 4,
 
   /**
-   * @generated from enum value: MESSAGE_DELETED = 5;
+   * @generated from enum value: MESSAGE_UPDATED = 5;
    */
-  MESSAGE_DELETED = 5,
+  MESSAGE_UPDATED = 5,
 
   /**
-   * @generated from enum value: PING = 6;
+   * @generated from enum value: MESSAGE_DELETED = 6;
    */
-  PING = 6,
+  MESSAGE_DELETED = 6,
 }
 // Retrieve enum metadata with: proto3.getEnumType(EventType)
 proto3.util.setEnumType(EventType, "cc.EventType", [
-  { no: 0, name: "CHAT_CREATED" },
-  { no: 1, name: "CHAT_UPDATED" },
-  { no: 2, name: "CHAT_DELETED" },
-  { no: 3, name: "MESSAGE_SEND" },
-  { no: 4, name: "MESSAGE_UPDATED" },
-  { no: 5, name: "MESSAGE_DELETED" },
-  { no: 6, name: "PING" },
+  { no: 0, name: "PING" },
+  { no: 1, name: "CHAT_CREATED" },
+  { no: 2, name: "CHAT_UPDATED" },
+  { no: 3, name: "CHAT_DELETED" },
+  { no: 4, name: "MESSAGE_SEND" },
+  { no: 5, name: "MESSAGE_UPDATED" },
+  { no: 6, name: "MESSAGE_DELETED" },
 ]);
 
 /**
@@ -552,7 +552,7 @@ export class Event extends Message$1<Event> {
   /**
    * @generated from field: cc.EventType type = 1;
    */
-  type = EventType.CHAT_CREATED;
+  type = EventType.PING;
 
   /**
    * @generated from oneof cc.Event.item

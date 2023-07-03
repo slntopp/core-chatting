@@ -28,10 +28,11 @@ func (s *UsersServer) FetchDefaults(ctx context.Context, req *connect.Request[cc
 	log := s.log.Named("FetchDefaults")
 	log.Debug("Request received", zap.Any("req", req.Msg))
 
-	defaults := &cc.Defaults{
-		Gateways: []string{"whmcs", "email", "telegram"},
-		Admins:   ADMINS,
+	defaults, err := core.Config()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch defaults: %w", err)
 	}
+
 	resp := connect.NewResponse[cc.Defaults](defaults)
 
 	return resp, nil

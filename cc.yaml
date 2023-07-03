@@ -1,0 +1,7 @@
+admins:
+  - 0
+
+gateways:
+  - whmcs
+  - telegram
+  - email

@@ -12,22 +12,40 @@
       <n-divider vertical/>
       <n-button type="info" size="small" ghost round @click="refresh">Refresh</n-button>
       <n-divider vertical/>
+      <n-button type="warning" size="small" @click="startEditChat">Edit</n-button>
       <n-button type="error" size="small" ghost round @click="deleteChat">Delete</n-button>
     </n-space>
   </template>
+
+  <n-modal v-model:show="isEdit">
+    <n-card
+        title="Edit chat options"
+        :bordered="false"
+        size="huge"
+        role="dialog"
+        aria-modal="true"
+        style="width: 600px; "
+    >
+      <chat-options @close="isEdit=false" is-edit :chat="chat"/>
+    </n-card>
+  </n-modal>
 </template>
+
 <script setup lang="ts">
-import {computed, h, toRefs} from "vue";
-import {NAvatar, NButton, NDivider, NSpace, NText,NDropdown} from "naive-ui";
+import {computed, h, ref, toRefs} from "vue";
+import {NAvatar, NButton, NDivider, NSpace, NText,NDropdown,NModal,NCard} from "naive-ui";
 import {Chat} from "../../../connect/cc/cc_pb.ts";
 import {useCcStore} from "../../../store/chatting.ts";
 import {useRouter} from "vue-router";
+import ChatOptions from "../chatOptions.vue";
 
 const props = defineProps(['chat'])
 const {chat} = toRefs(props)
 
 const store = useCcStore()
 const router = useRouter()
+
+const isEdit=ref<boolean>(false)
 
 const members = computed(() => {
   if (!chat || !chat.value) {
@@ -38,10 +56,10 @@ const members = computed(() => {
 })
 
 const membersOptions=computed(()=>{
-  return [...new Set(members.value)].map((m,i)=>({key:m,label:m,icon:rendeIcon(members.value.map(el => el[i]).join(','))}))
+  return [...new Set(members.value)].map((m,i)=>({key:m,label:m,icon:renderIcon(members.value.map(el => el[i]).join(','))}))
 })
 
-const rendeIcon=(icon)=>{
+const renderIcon=(icon)=>{
   return () => {
     return h(NAvatar, { round:true, size:"medium"}, icon)
   }
@@ -60,6 +78,10 @@ const deleteChat = async () => {
     await store.delete_chat(chat.value! as Chat)
     router.push({name: 'Empty Chat'})
   }
+}
+
+const startEditChat=()=>{
+  isEdit.value=true
 }
 </script>
 

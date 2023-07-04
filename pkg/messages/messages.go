@@ -168,8 +168,6 @@ func (s *MessagesServer) Delete(ctx context.Context, req *connect.Request[cc.Mes
 }
 
 func handleSpecialNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub, msg *cc.Message, oldMsg *cc.Message, chat *cc.Chat) {
-	log.Debug("Chat", zap.Any("admins", chat.GetAdmins()), zap.Any("users", chat.GetUsers()))
-	log.Debug("Msg", zap.Any("oldKind", oldMsg.GetKind()), zap.Any("kind", msg.GetKind()), zap.Any("oldRev", oldMsg.GetUnderReview()), zap.Any("rev", msg.GetUnderReview()))
 
 	var adminEvent = &cc.Event{
 		Type: cc.EventType_MESSAGE_UPDATED,
@@ -193,9 +191,6 @@ func handleSpecialNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub
 		(diffReviews && msg.GetUnderReview() == true)
 
 	skip := msg.GetKind() == cc.Kind_DEFAULT && oldMsg.GetKind() == cc.Kind_ADMIN_ONLY && msg.GetUnderReview() == true && oldMsg.UnderReview == false
-
-	log.Debug("send event", zap.Any("is", sendEvent))
-	log.Debug("del event", zap.Any("is", deleteEvent))
 
 	if sendEvent {
 		userEvent.Type = cc.EventType_MESSAGE_SEND

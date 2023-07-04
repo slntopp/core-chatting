@@ -64,6 +64,7 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 	if err != nil {
 		return nil, err
 	}
+	log.Debug("Chat retrieved", zap.String("role", chat.Role.String()))
 
 	if chat.Role < cc.Role_USER {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))

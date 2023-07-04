@@ -119,7 +119,11 @@ FILTER @requestor in c.admins || @requestor in c.users
      )
     )
 	LET message = LAST(FOR m in @@messages SORT m.sent ASC)
-	LET unread = LENGTH(FOR m in @@messages FILTER !m.is_seen)
+	LET unread = LENGTH(
+		FOR m in @@messages 
+			FILTER !m.is_seen
+			FILTER m.sender != @requestor
+		)
 	RETURN MERGE(c, {
 	  role: role,
       meta: {
@@ -135,6 +139,7 @@ func (c *ChatsController) List(ctx context.Context, requestor string) ([]*cc.Cha
 
 	cur, err := c.db.Query(ctx, listChatsQuery, map[string]interface{}{
 		"@chats":    CHATS_COLLECTION,
+		"@messages": MESSAGES_COLLECTION,
 		"requestor": requestor,
 	})
 

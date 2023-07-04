@@ -58,6 +58,10 @@ export const useCcStore = defineStore('cc', () => {
 
             return [chat.uuid, chat]
         }))
+
+        resolve(
+            result.chats.map((chat) => [...chat.admins, ...chat.users]).flat()
+        )
     }
 
     async function create_chat(chat: Chat) {

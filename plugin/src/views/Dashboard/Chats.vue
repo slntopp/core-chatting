@@ -45,8 +45,6 @@ async function sync() {
 }
 sync()
 
-store.resolve()
-
 const chats = computed(() => {
     let res: Chat[] = []
     store.chats.forEach((chat) => {

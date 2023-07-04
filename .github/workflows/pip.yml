@@ -29,7 +29,7 @@ jobs:
           python -m build
       - name: Commit and push
         run: |
-          git config --local user.email "info@slnt-opp.xyz"
+          git config --local user.email "slntopp@users.noreply.github.com"
           git config --local user.name "Mikita Iwanowski"
           git add -f python/dist/*
           git commit -m "Update python package"

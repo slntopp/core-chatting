@@ -54,6 +54,8 @@ func (s *PubSub) Pub(ctx context.Context, id string, event *cc.Event) {
 		return
 	}
 
+	log.Debug("Publish event", zap.Any("event", event))
+
 	err = s.ch.PublishWithContext(
 		ctx,
 		exchange,

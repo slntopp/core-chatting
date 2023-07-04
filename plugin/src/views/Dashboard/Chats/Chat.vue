@@ -1,7 +1,7 @@
 <template>
     <n-list style="padding-left: 16px">
         <template #header>
-            <chat-header style="height: 5vh" />
+          <chat-header :chat="chat" style="height: 5vh" />
         </template>
 
         <n-scrollbar style="height: 80vh; max-width: 80%;" v-if="messages.length > 0" ref="scrollbar">
@@ -96,6 +96,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useCcStore } from '../../../store/chatting';
 import { Chat, Message, Kind, Role } from '../../../connect/cc/cc_pb';
 import { ConnectError } from '@bufbuild/connect';
+import ChatHeader from "../../../components/chats/layouts/chatHeader.vue";
 
 const SendOutline = defineAsyncComponent(() => import('@vicons/ionicons5/SendOutline'));
 const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
@@ -121,40 +122,6 @@ const chat = computed(() => {
 })
 
 const notify = useNotification()
-
-function chatHeader() {
-    if (!chat.value) return h(NText, {}, () => 'Loading...')
-
-    let users = chat.value!.users.map(uuid => store.users.get(uuid)?.title ?? 'Unknown')
-    let admins = chat.value!.admins.map(uuid => store.users.get(uuid)?.title ?? 'Unknown')
-
-    let members = users.concat(admins)
-    let avatar_title = members.map(el => el[0]).join(',')
-
-    return h(
-        NSpace, { justify: "start", align: 'center' }, () => [
-            h(NAvatar, { round: true, size: "medium" }, () => avatar_title),
-            h(NText, {}, () => chat.value!.topic ?? members),
-            h(NDivider, { vertical: true }),
-            h(NText, { depth: "3" }, () => `${members.length} members`),
-            h(NDivider, { vertical: true }),
-            h(NButton, {
-                type: 'info', size: 'small',
-                ghost: true, round: true,
-                onClick: () => store.get_messages(chat.value! as Chat, false),
-            }, () => 'Refresh'),
-            h(NDivider, { vertical: true }),
-            h(NButton, {
-                type: 'error', size: 'small',
-                ghost: true, round: true,
-                onClick: async () => {
-                    await store.delete_chat(chat.value! as Chat)
-                    router.push({ name: 'Empty Chat' })
-                },
-            }, () => 'Delete')
-        ]
-    )
-}
 
 const messages = computed(() => {
     return store.chat_messages(chat.value! as Chat)

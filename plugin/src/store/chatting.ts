@@ -17,8 +17,15 @@ import { useRoute, useRouter } from "vue-router";
 export const useCcStore = defineStore('cc', () => {
     const app = useAppStore();
 
+    let baseUrl = '/'
+    if (import.meta.env.VITE_API_URL) {
+        baseUrl = import.meta.env.VITE_API_URL
+    } else if (import.meta.env.DEV) {
+        baseUrl = 'http://localhost:8080'
+    }
+
     const transport = createGrpcWebTransport({
-        baseUrl: import.meta.env.DEV ? 'http://localhost:8080' : '/',
+        baseUrl: baseUrl,
         interceptors: [
             (next) => async (req) => {
                 req.header.set("Authorization", `Bearer ${app.conf?.token}`);

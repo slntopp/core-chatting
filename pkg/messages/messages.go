@@ -185,12 +185,12 @@ func handleSpecialNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub
 	diffKinds := msg.GetKind() != oldMsg.GetKind()
 	diffReviews := msg.GetUnderReview() != oldMsg.GetUnderReview()
 
-	sendEvent := (diffKinds || diffReviews) && msg.GetKind() == cc.Kind_DEFAULT && msg.GetUnderReview() == false
+	sendEvent := (diffKinds || diffReviews) && msg.GetKind() == cc.Kind_DEFAULT && !msg.GetUnderReview()
 
 	deleteEvent := (diffKinds && msg.GetKind() == cc.Kind_ADMIN_ONLY) ||
-		(diffReviews && msg.GetUnderReview() == true)
+		(diffReviews && msg.GetUnderReview())
 
-	skip := msg.GetKind() == cc.Kind_DEFAULT && oldMsg.GetKind() == cc.Kind_ADMIN_ONLY && msg.GetUnderReview() == true && oldMsg.UnderReview == false
+	skip := msg.GetKind() == cc.Kind_DEFAULT && oldMsg.GetKind() == cc.Kind_ADMIN_ONLY && msg.GetUnderReview() && !oldMsg.GetUnderReview()
 
 	if sendEvent {
 		userEvent.Type = cc.EventType_MESSAGE_SEND

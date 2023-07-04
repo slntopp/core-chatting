@@ -16,3 +16,8 @@ plugins:
   - name: connect-es
     out: plugin/src/connect
     opt: target=ts
+  
+  - plugin: buf.build/grpc/python:v1.56.0
+    out: python/src/core_chatting_slnt_opp
+  - plugin: buf.build/protocolbuffers/python
+    out: python/src/core_chatting_slnt_opp

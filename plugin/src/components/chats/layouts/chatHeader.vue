@@ -5,7 +5,10 @@
       <n-avatar round size="medium">{{ avatar_title }}</n-avatar>
       <n-text>{{ chat.topic ?? members }}</n-text>
       <n-divider vertical/>
-      <n-text depth="3">{{ `${members.length} members` }}</n-text>
+<!--      <n-text depth="3">{{ `${members.length} members` }}</n-text>-->
+      <n-dropdown trigger="click" :options="membersOptions">
+        <n-button  size="small" ghost round>members</n-button>
+      </n-dropdown>
       <n-divider vertical/>
       <n-button type="info" size="small" ghost round @click="refresh">Refresh</n-button>
       <n-divider vertical/>
@@ -14,8 +17,8 @@
   </template>
 </template>
 <script setup lang="ts">
-import {computed, toRefs} from "vue";
-import {NAvatar, NButton, NDivider, NSpace, NText} from "naive-ui";
+import {computed, h, toRefs} from "vue";
+import {NAvatar, NButton, NDivider, NSpace, NText,NDropdown} from "naive-ui";
 import {Chat} from "../../../connect/cc/cc_pb.ts";
 import {useCcStore} from "../../../store/chatting.ts";
 import {useRouter} from "vue-router";
@@ -33,6 +36,16 @@ const members = computed(() => {
 
   return chat.value.users.map(uuid => store.users.get(uuid)?.title ?? 'Unknown').concat(chat.value.admins.map(uuid => store.users.get(uuid)?.title ?? 'Unknown'))
 })
+
+const membersOptions=computed(()=>{
+  return [...new Set(members.value)].map((m,i)=>({key:m,label:m,icon:rendeIcon(members.value.map(el => el[i]).join(','))}))
+})
+
+const rendeIcon=(icon)=>{
+  return () => {
+    return h(NAvatar, { round:true, size:"medium"}, icon)
+  }
+}
 
 const avatar_title = computed(() => members.value.map(el => el[0]).join(','))
 

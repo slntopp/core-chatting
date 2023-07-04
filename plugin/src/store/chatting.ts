@@ -68,6 +68,14 @@ export const useCcStore = defineStore('cc', () => {
         return chat
     }
 
+    async function update_chat(chat:Chat){
+        chat = await chats_c.update(chat)
+
+        chats.value.set(chat.uuid, chat)
+
+        return chat
+    }
+
     async function delete_chat(chat: Chat) {
         await chats_c.delete(chat)
 
@@ -210,7 +218,7 @@ export const useCcStore = defineStore('cc', () => {
     return {
         users, load_me, me,
 
-        chats, list_chats, create_chat, delete_chat,
+        chats, list_chats, create_chat, delete_chat, update_chat,
 
         messages, chat_messages, get_messages,
         send_message, update_message, delete_message,

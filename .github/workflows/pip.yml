@@ -7,7 +7,7 @@ on:
       - dev
     paths:
       - '.github/workflows/pip.yml'
-      - 'python'
+      - 'python/**'
       - '!python/dist'
 
 jobs:

@@ -43,6 +43,8 @@ const (
 	ChatsAPICreateProcedure = "/cc.ChatsAPI/Create"
 	// ChatsAPIUpdateProcedure is the fully-qualified name of the ChatsAPI's Update RPC.
 	ChatsAPIUpdateProcedure = "/cc.ChatsAPI/Update"
+	// ChatsAPIGetProcedure is the fully-qualified name of the ChatsAPI's Get RPC.
+	ChatsAPIGetProcedure = "/cc.ChatsAPI/Get"
 	// ChatsAPIListProcedure is the fully-qualified name of the ChatsAPI's List RPC.
 	ChatsAPIListProcedure = "/cc.ChatsAPI/List"
 	// ChatsAPIDeleteProcedure is the fully-qualified name of the ChatsAPI's Delete RPC.
@@ -69,6 +71,7 @@ const (
 type ChatsAPIClient interface {
 	Create(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
 	Update(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
+	Get(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
 	List(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Chats], error)
 	Delete(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
 }
@@ -93,6 +96,11 @@ func NewChatsAPIClient(httpClient connect_go.HTTPClient, baseURL string, opts ..
 			baseURL+ChatsAPIUpdateProcedure,
 			opts...,
 		),
+		get: connect_go.NewClient[cc.Chat, cc.Chat](
+			httpClient,
+			baseURL+ChatsAPIGetProcedure,
+			opts...,
+		),
 		list: connect_go.NewClient[cc.Empty, cc.Chats](
 			httpClient,
 			baseURL+ChatsAPIListProcedure,
@@ -110,6 +118,7 @@ func NewChatsAPIClient(httpClient connect_go.HTTPClient, baseURL string, opts ..
 type chatsAPIClient struct {
 	create *connect_go.Client[cc.Chat, cc.Chat]
 	update *connect_go.Client[cc.Chat, cc.Chat]
+	get    *connect_go.Client[cc.Chat, cc.Chat]
 	list   *connect_go.Client[cc.Empty, cc.Chats]
 	delete *connect_go.Client[cc.Chat, cc.Chat]
 }
@@ -122,6 +131,11 @@ func (c *chatsAPIClient) Create(ctx context.Context, req *connect_go.Request[cc.
 // Update calls cc.ChatsAPI.Update.
 func (c *chatsAPIClient) Update(ctx context.Context, req *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error) {
 	return c.update.CallUnary(ctx, req)
+}
+
+// Get calls cc.ChatsAPI.Get.
+func (c *chatsAPIClient) Get(ctx context.Context, req *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error) {
+	return c.get.CallUnary(ctx, req)
 }
 
 // List calls cc.ChatsAPI.List.
@@ -138,6 +152,7 @@ func (c *chatsAPIClient) Delete(ctx context.Context, req *connect_go.Request[cc.
 type ChatsAPIHandler interface {
 	Create(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
 	Update(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
+	Get(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
 	List(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Chats], error)
 	Delete(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
 }
@@ -157,6 +172,11 @@ func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect_go.HandlerOption) (
 	mux.Handle(ChatsAPIUpdateProcedure, connect_go.NewUnaryHandler(
 		ChatsAPIUpdateProcedure,
 		svc.Update,
+		opts...,
+	))
+	mux.Handle(ChatsAPIGetProcedure, connect_go.NewUnaryHandler(
+		ChatsAPIGetProcedure,
+		svc.Get,
 		opts...,
 	))
 	mux.Handle(ChatsAPIListProcedure, connect_go.NewUnaryHandler(
@@ -181,6 +201,10 @@ func (UnimplementedChatsAPIHandler) Create(context.Context, *connect_go.Request[
 
 func (UnimplementedChatsAPIHandler) Update(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.ChatsAPI.Update is not implemented"))
+}
+
+func (UnimplementedChatsAPIHandler) Get(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.ChatsAPI.Get is not implemented"))
 }
 
 func (UnimplementedChatsAPIHandler) List(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Chats], error) {

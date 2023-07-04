@@ -58,6 +58,10 @@ export const useCcStore = defineStore('cc', () => {
 
             return [chat.uuid, chat]
         }))
+
+        resolve(
+            result.chats.map((chat) => [...chat.admins, ...chat.users]).flat()
+        )
     }
 
     async function create_chat(chat: Chat) {
@@ -139,7 +143,7 @@ export const useCcStore = defineStore('cc', () => {
         if (!messages.value.get(msg.chat)) messages.value.set(msg.chat, [])
 
         switch (event.type) {
-            case EventType.MESSAGE_SEND:
+            case EventType.MESSAGE_SENT:
                 messages.value.get(msg.chat)!.push(msg)
                 chats.value.get(msg.chat)!.meta = new ChatMeta({
                     unread: chats.value.get(msg.chat)!.meta!.unread + 1,
@@ -203,7 +207,7 @@ export const useCcStore = defineStore('cc', () => {
                 for await (const event of stream) {
                     console.debug('Received Event', event)
                     if (event.type == EventType.PING) continue
-                    else if (event.type >= EventType.MESSAGE_SEND) {
+                    else if (event.type >= EventType.MESSAGE_SENT) {
                         msg_handler(event)
                     } else {
                         chat_handler(event)

@@ -42,6 +42,7 @@ service ChatsAPI {
   rpc Create(Chat) returns (Chat);
   rpc Update(Chat) returns (Chat);
 
+  rpc Get(Chat) returns (Chat);
   rpc List(Empty) returns (Chats);
 
   rpc Delete(Chat) returns (Chat);
@@ -73,6 +74,7 @@ message Message {
   int64 edited = 9;
 
   bool under_review = 10;
+  bool is_seen = 11;
 }
 message Messages { repeated Message messages = 1; }
 
@@ -111,7 +113,7 @@ enum EventType {
   CHAT_CREATED = 1;
   CHAT_UPDATED = 2;
   CHAT_DELETED = 3;
-  MESSAGE_SEND = 4;
+  MESSAGE_SENT = 4;
   MESSAGE_UPDATED = 5;
   MESSAGE_DELETED = 6;
 }

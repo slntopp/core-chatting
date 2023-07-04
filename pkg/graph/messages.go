@@ -92,3 +92,18 @@ func (c *MessagesController) Delete(ctx context.Context, msg *cc.Message) (*cc.M
 
 	return msg, nil
 }
+
+func (c *MessagesController) Get(ctx context.Context, uuid string) (*cc.Message, error) {
+	log := c.log.Named("Get")
+	log.Debug("Req received")
+
+	var msg cc.Message
+
+	_, err := c.col.ReadDocument(ctx, uuid, &msg)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &msg, nil
+}

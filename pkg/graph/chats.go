@@ -70,7 +70,14 @@ func (c *ChatsController) Update(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 
 const getChatQuery = `
 LET chat = Document(@chat)
-LET role = @requestor in chat.admins ? 3 : (chat.owner == @requestor ? 2 : 1)
+
+LET role = (
+ @requestor in chat.admins ? 3 : (
+  chat.owner == @requestor ? 2 : (
+   @requestor in chat.users ? 1 : 0
+  )
+ )
+)
 
 RETURN MERGE(chat, {
   role: role
@@ -104,9 +111,25 @@ func (c *ChatsController) Get(ctx context.Context, uuid, requestor string) (*cc.
 const listChatsQuery = `
 FOR c in @@chats
 FILTER @requestor in c.admins || @requestor in c.users
-	LET role = @requestor in c.admins ? 3 : (c.owner == @requestor ? 2 : 1)
+	LET role = (
+     @requestor in c.admins ? 3 : (
+      c.owner == @requestor ? 2 : (
+       @requestor in c.users ? 1 : 0
+      )
+     )
+    )
+	LET message = LAST(FOR m in @@messages SORT m.sent ASC)
+	LET unread = LENGTH(
+		FOR m in @@messages 
+			FILTER !m.is_seen
+			FILTER m.sender != @requestor
+		)
 	RETURN MERGE(c, {
-	  role: role
+	  role: role,
+      meta: {
+		unread: unread,
+		last_message: message
+	  }
 	})
 `
 
@@ -116,6 +139,7 @@ func (c *ChatsController) List(ctx context.Context, requestor string) ([]*cc.Cha
 
 	cur, err := c.db.Query(ctx, listChatsQuery, map[string]interface{}{
 		"@chats":    CHATS_COLLECTION,
+		"@messages": MESSAGES_COLLECTION,
 		"requestor": requestor,
 	})
 

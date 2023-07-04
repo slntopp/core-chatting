@@ -23,6 +23,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r python/requirements.txt
+      - name: Patch Protobuf
+        run: |
+          sed -i 's/^import \(.\+\) as/from . import \1 as/' python/src/core_chatting/cc/*.py
+ 
       - name: Build
         working-directory: python
         run: |
@@ -31,7 +35,7 @@ jobs:
         run: |
           git config --local user.email "slntopp@users.noreply.github.com"
           git config --local user.name "Mikita Iwanowski"
-          git add -f python/dist/*
+          git add -f python/*
           git commit -m "Update python package"
           git push
           

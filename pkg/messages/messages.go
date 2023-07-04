@@ -71,7 +71,7 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 
 	req.Msg.Sender = requestor
 
-	if req.Msg.Kind == cc.Kind_ADMIN_ONLY && chat.Role != cc.Role_ADMIN {
+	if (req.Msg.Kind == cc.Kind_ADMIN_ONLY || req.Msg.UnderReview) && chat.Role != cc.Role_ADMIN {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("can't send admin only message"))
 	}
 

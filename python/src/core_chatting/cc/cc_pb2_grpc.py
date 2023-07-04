@@ -24,6 +24,11 @@ class ChatsAPIStub(object):
                 request_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Chat.FromString,
                 )
+        self.Get = channel.unary_unary(
+                '/cc.ChatsAPI/Get',
+                request_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
+                response_deserializer=cc_dot_cc__pb2.Chat.FromString,
+                )
         self.List = channel.unary_unary(
                 '/cc.ChatsAPI/List',
                 request_serializer=cc_dot_cc__pb2.Empty.SerializeToString,
@@ -51,6 +56,12 @@ class ChatsAPIServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Get(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def List(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -73,6 +84,11 @@ def add_ChatsAPIServicer_to_server(servicer, server):
             ),
             'Update': grpc.unary_unary_rpc_method_handler(
                     servicer.Update,
+                    request_deserializer=cc_dot_cc__pb2.Chat.FromString,
+                    response_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
+            ),
+            'Get': grpc.unary_unary_rpc_method_handler(
+                    servicer.Get,
                     request_deserializer=cc_dot_cc__pb2.Chat.FromString,
                     response_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
             ),
@@ -125,6 +141,23 @@ class ChatsAPI(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/cc.ChatsAPI/Update',
+            cc_dot_cc__pb2.Chat.SerializeToString,
+            cc_dot_cc__pb2.Chat.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Get(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cc.ChatsAPI/Get',
             cc_dot_cc__pb2.Chat.SerializeToString,
             cc_dot_cc__pb2.Chat.FromString,
             options, channel_credentials,

@@ -3,6 +3,7 @@ package chats
 import (
 	"context"
 	"errors"
+
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
 
@@ -65,6 +66,22 @@ func (s *ChatsServer) Update(ctx context.Context, req *connect.Request[cc.Chat])
 	}
 
 	go handleNotify(ctx, log, s.ps, chat, cc.EventType_CHAT_UPDATED)
+
+	resp := connect.NewResponse[cc.Chat](chat)
+
+	return resp, nil
+}
+
+func (s *ChatsServer) Get(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+	log := s.log.Named("Create")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	chat, err := s.ctrl.Get(ctx, req.Msg.Uuid, requestor)
+	if err != nil {
+		return nil, err
+	}
 
 	resp := connect.NewResponse[cc.Chat](chat)
 

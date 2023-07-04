@@ -42,6 +42,7 @@ service ChatsAPI {
   rpc Create(Chat) returns (Chat);
   rpc Update(Chat) returns (Chat);
 
+  rpc Get(Chat) returns (Chat);
   rpc List(Empty) returns (Chats);
 
   rpc Delete(Chat) returns (Chat);

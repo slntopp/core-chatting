@@ -31,6 +31,15 @@ export const ChatsAPI = {
       kind: MethodKind.Unary,
     },
     /**
+     * @generated from rpc cc.ChatsAPI.Get
+     */
+    get: {
+      name: "Get",
+      I: Chat,
+      O: Chat,
+      kind: MethodKind.Unary,
+    },
+    /**
      * @generated from rpc cc.ChatsAPI.List
      */
     list: {

@@ -83,9 +83,9 @@ export enum EventType {
   CHAT_DELETED = 3,
 
   /**
-   * @generated from enum value: MESSAGE_SEND = 4;
+   * @generated from enum value: MESSAGE_SENT = 4;
    */
-  MESSAGE_SEND = 4,
+  MESSAGE_SENT = 4,
 
   /**
    * @generated from enum value: MESSAGE_UPDATED = 5;
@@ -103,7 +103,7 @@ proto3.util.setEnumType(EventType, "cc.EventType", [
   { no: 1, name: "CHAT_CREATED" },
   { no: 2, name: "CHAT_UPDATED" },
   { no: 3, name: "CHAT_DELETED" },
-  { no: 4, name: "MESSAGE_SEND" },
+  { no: 4, name: "MESSAGE_SENT" },
   { no: 5, name: "MESSAGE_UPDATED" },
   { no: 6, name: "MESSAGE_DELETED" },
 ]);
@@ -403,6 +403,11 @@ export class Message extends Message$1<Message> {
    */
   underReview = false;
 
+  /**
+   * @generated from field: bool is_seen = 11;
+   */
+  isSeen = false;
+
   constructor(data?: PartialMessage<Message>) {
     super();
     proto3.util.initPartial(data, this);
@@ -421,6 +426,7 @@ export class Message extends Message$1<Message> {
     { no: 8, name: "sent", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 9, name: "edited", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 10, name: "under_review", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 11, name: "is_seen", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Message {

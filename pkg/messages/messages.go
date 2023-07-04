@@ -82,7 +82,7 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 		return nil, err
 	}
 
-	go handleNotify(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_SEND)
+	go handleNotify(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_SENT)
 
 	resp := connect.NewResponse[cc.Message](message)
 
@@ -193,7 +193,7 @@ func handleSpecialNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub
 	skip := msg.GetKind() == cc.Kind_DEFAULT && oldMsg.GetKind() == cc.Kind_ADMIN_ONLY && msg.GetUnderReview() == true && oldMsg.UnderReview == false
 
 	if sendEvent {
-		userEvent.Type = cc.EventType_MESSAGE_SEND
+		userEvent.Type = cc.EventType_MESSAGE_SENT
 	} else if deleteEvent && !skip {
 		userEvent.Type = cc.EventType_MESSAGE_DELETED
 	} else {

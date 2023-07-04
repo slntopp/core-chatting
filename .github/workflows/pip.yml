@@ -8,6 +8,7 @@ on:
     paths:
       - '.github/workflows/pip.yml'
       - 'python'
+      - '!python/dist'
 
 jobs:
   build-and-push:

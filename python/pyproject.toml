@@ -1,5 +1,5 @@
 [project]
-name = "core_chatting_slnt_opp"
+name = "core_chatting"
 version = "0.0.1"
 authors = [
     { name = "Mikita Iwanowski", email="info@slnt-opp.xyz" },

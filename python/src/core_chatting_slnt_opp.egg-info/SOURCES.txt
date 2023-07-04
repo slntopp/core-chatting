@@ -1,7 +1,0 @@
-pyproject.toml
-src/core_chatting_slnt_opp.egg-info/PKG-INFO
-src/core_chatting_slnt_opp.egg-info/SOURCES.txt
-src/core_chatting_slnt_opp.egg-info/dependency_links.txt
-src/core_chatting_slnt_opp.egg-info/top_level.txt
-src/core_chatting_slnt_opp/cc/cc_pb2.py
-src/core_chatting_slnt_opp/cc/cc_pb2_grpc.py

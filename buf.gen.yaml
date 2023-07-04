@@ -18,6 +18,6 @@ plugins:
     opt: target=ts
   
   - plugin: buf.build/grpc/python:v1.56.0
-    out: python/src/core_chatting_slnt_opp
+    out: python/src/core_chatting
   - plugin: buf.build/protocolbuffers/python
-    out: python/src/core_chatting_slnt_opp
+    out: python/src/core_chatting

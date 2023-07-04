@@ -83,6 +83,10 @@ func (s *ChatsServer) Get(ctx context.Context, req *connect.Request[cc.Chat]) (*
 		return nil, err
 	}
 
+	if chat.Role == cc.Role_NOACCESS {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
+	}
+
 	resp := connect.NewResponse[cc.Chat](chat)
 
 	return resp, nil

@@ -122,12 +122,12 @@ func handleNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub, chat 
 		Item: &cc.Event_Chat{Chat: chat},
 	}
 
-	for _, user := range chat.Users {
+	for _, user := range chat.GetUsers() {
 		log.Info("Send to", zap.Any("User", user))
 		go ps.Pub(ctx, user, event)
 	}
 
-	for _, admin := range chat.Admins {
+	for _, admin := range chat.GetAdmins() {
 		log.Info("Send to", zap.Any("Admin", admin))
 		go ps.Pub(ctx, admin, event)
 	}

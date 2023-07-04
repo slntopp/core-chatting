@@ -101,7 +101,6 @@ start_stream:
 			}
 			log.Debug("Processed event successfully")
 		case <-ticker.C:
-			log.Debug("Ping")
 			err := serverStream.Send(&cc.Event{
 				Type: cc.EventType_PING,
 			})

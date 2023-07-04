@@ -114,12 +114,22 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 
 	req.Msg.Edited = time.Now().UnixMilli()
 
+	oldMessage, err := s.msgCtrl.Get(ctx, req.Msg.GetUuid())
+
+	if err != nil {
+		return nil, err
+	}
+
 	message, err := s.msgCtrl.Update(ctx, req.Msg)
 	if err != nil {
 		return nil, err
 	}
 
-	go handleNotify(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_UPDATED)
+	if oldMessage.GetKind() != message.GetKind() || oldMessage.GetUnderReview() != message.GetUnderReview() {
+		go handleSpecialNotify(ctx, log, s.ps, message, oldMessage, chat)
+	} else {
+		go handleNotify(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_UPDATED)
+	}
 
 	resp := connect.NewResponse[cc.Message](message)
 
@@ -157,6 +167,49 @@ func (s *MessagesServer) Delete(ctx context.Context, req *connect.Request[cc.Mes
 	return resp, nil
 }
 
+func handleSpecialNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub, msg *cc.Message, oldMsg *cc.Message, chat *cc.Chat) {
+	log.Debug("Chat", zap.Any("admins", chat.GetAdmins()), zap.Any("users", chat.GetUsers()))
+	log.Debug("Msg", zap.Any("oldKind", oldMsg.GetKind()), zap.Any("kind", msg.GetKind()), zap.Any("oldRev", oldMsg.GetUnderReview()), zap.Any("rev", msg.GetUnderReview()))
+
+	var adminEvent = &cc.Event{
+		Type: cc.EventType_MESSAGE_UPDATED,
+		Item: &cc.Event_Msg{Msg: msg},
+	}
+
+	var userEvent = &cc.Event{
+		Item: &cc.Event_Msg{Msg: msg},
+	}
+
+	for _, admin := range chat.GetAdmins() {
+		go ps.Pub(ctx, admin, adminEvent)
+	}
+
+	diffKinds := msg.GetKind() != oldMsg.GetKind()
+	diffReviews := msg.GetUnderReview() != oldMsg.GetUnderReview()
+
+	sendEvent := (diffKinds || diffReviews) && msg.GetKind() == cc.Kind_DEFAULT && msg.GetUnderReview() == false
+
+	deleteEvent := (diffKinds && msg.GetKind() == cc.Kind_ADMIN_ONLY) ||
+		(diffReviews && msg.GetUnderReview() == true)
+
+	skip := msg.GetKind() == cc.Kind_DEFAULT && oldMsg.GetKind() == cc.Kind_ADMIN_ONLY && msg.GetUnderReview() == true && oldMsg.UnderReview == false
+
+	log.Debug("send event", zap.Any("is", sendEvent))
+	log.Debug("del event", zap.Any("is", deleteEvent))
+
+	if sendEvent {
+		userEvent.Type = cc.EventType_MESSAGE_SEND
+	} else if deleteEvent && !skip {
+		userEvent.Type = cc.EventType_MESSAGE_DELETED
+	} else {
+		return
+	}
+
+	for _, user := range chat.GetUsers() {
+		go ps.Pub(ctx, user, userEvent)
+	}
+}
+
 func handleNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub, msg *cc.Message, chat *cc.Chat, eventType cc.EventType) {
 	var event = &cc.Event{
 		Type: eventType,
@@ -164,12 +217,12 @@ func handleNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub, msg *
 	}
 
 	if msg.Kind == cc.Kind_DEFAULT && !msg.UnderReview {
-		for _, user := range chat.Users {
+		for _, user := range chat.GetUsers() {
 			go ps.Pub(ctx, user, event)
 		}
 	}
 
-	for _, admin := range chat.Admins {
+	for _, admin := range chat.GetAdmins() {
 		go ps.Pub(ctx, admin, event)
 	}
 

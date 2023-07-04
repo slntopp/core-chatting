@@ -73,6 +73,7 @@ message Message {
   int64 edited = 9;
 
   bool under_review = 10;
+  bool is_seen = 11;
 }
 message Messages { repeated Message messages = 1; }
 

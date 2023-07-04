@@ -118,8 +118,14 @@ FILTER @requestor in c.admins || @requestor in c.users
       )
      )
     )
+	LET message = LAST(FOR m in @@messages SORT m.sent ASC)
+	LET unread = LENGTH(FOR m in @@messages FILTER !m.is_seen)
 	RETURN MERGE(c, {
-	  role: role
+	  role: role,
+      meta: {
+		unread: unread,
+		last_message: message
+	  }
 	})
 `
 

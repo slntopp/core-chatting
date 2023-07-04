@@ -70,7 +70,14 @@ func (c *ChatsController) Update(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 
 const getChatQuery = `
 LET chat = Document(@chat)
-LET role = @requestor in chat.admins ? 3 : (chat.owner == @requestor ? 2 : 1)
+
+LET role = (
+ @requestor in chat.admins ? 3 : (
+  chat.owner == @requestor ? 2 : (
+   @requestor in chat.users ? 1 : 0
+  )
+ )
+)
 
 RETURN MERGE(chat, {
   role: role
@@ -104,7 +111,13 @@ func (c *ChatsController) Get(ctx context.Context, uuid, requestor string) (*cc.
 const listChatsQuery = `
 FOR c in @@chats
 FILTER @requestor in c.admins || @requestor in c.users
-	LET role = @requestor in c.admins ? 3 : (c.owner == @requestor ? 2 : 1)
+	LET role = (
+     @requestor in c.admins ? 3 : (
+      c.owner == @requestor ? 2 : (
+       @requestor in c.users ? 1 : 0
+      )
+     )
+    )
 	RETURN MERGE(c, {
 	  role: role
 	})

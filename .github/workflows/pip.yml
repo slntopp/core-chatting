@@ -25,8 +25,8 @@ jobs:
           pip install -r python/requirements.txt
       - name: Patch Protobuf
         run: |
-          sed -i 's/^import \(.\+\) as/from . import \1 as/' python/src/core_chatting/cc/*.py
- 
+          sed -i 's/from cc import/from core_chatting.cc import/' python/src/core_chatting/cc/*.py
+
       - name: Build
         working-directory: python
         run: |

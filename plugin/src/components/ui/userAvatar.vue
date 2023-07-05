@@ -1,10 +1,10 @@
 <template>
-  <n-avatar :round="round" :size="size">{{ avatarPreview }}</n-avatar>
+  <n-avatar :round="round" :size="props.size">{{ avatarPreview }}</n-avatar>
 </template>
 
 <script setup lang="ts">
 import {NAvatar} from "naive-ui";
-import {computed} from "vue";
+import {computed, toRefs} from "vue";
 
 interface AvatarProps {
   size: 'medium' | 'large' | 'small' | number
@@ -14,8 +14,10 @@ interface AvatarProps {
 
 const props = defineProps<AvatarProps>()
 
+const {size='medium',round=true,avatar}=toRefs(props)
+
 const avatarPreview = computed(() => {
-  return props.avatar?.split(" ").map((s: string) => s?.[0]).join('').toUpperCase()
+  return avatar.value.split(" ").map((s: string) => s?.[0]).join('').toUpperCase()
 })
 </script>
 

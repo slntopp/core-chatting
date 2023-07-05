@@ -69,7 +69,7 @@ start_stream:
 
 	log.Info("Start stream", zap.String("user", requestor))
 
-	msgs, err := s.ps.Sub(requestor)
+	msgs, queueTerminator, err := s.ps.Sub(requestor)
 
 	if err != nil {
 		return connect.NewError(connect.CodeInternal, err)
@@ -85,12 +85,6 @@ start_stream:
 			err := proto.Unmarshal(msg.Body, event)
 			if err != nil {
 				log.Error("Failed to unmarshal event", zap.Error(err))
-
-				err = msg.Ack(false)
-				if err != nil {
-					log.Error("Failed to ack msg", zap.Error(err))
-				}
-
 				continue
 			}
 
@@ -99,18 +93,7 @@ start_stream:
 			err = serverStream.Send(event)
 			if err != nil {
 				log.Error("Error writing message", zap.Error(err))
-
-				err = msg.Ack(false)
-				if err != nil {
-					log.Error("Failed to ack msg", zap.Error(err))
-				}
-
 				return err
-			}
-
-			err = msg.Ack(false)
-			if err != nil {
-				log.Error("Failed to ack msg", zap.Error(err))
 			}
 
 			log.Debug("Processed event successfully")
@@ -119,6 +102,10 @@ start_stream:
 				Type: cc.EventType_PING,
 			})
 			if err != nil {
+				queueError := queueTerminator()
+				if queueError != nil {
+					log.Error("Failed to delete queue", zap.Error(queueError))
+				}
 				return nil
 			}
 		}

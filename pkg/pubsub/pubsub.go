@@ -74,7 +74,7 @@ func (s *PubSub) Pub(ctx context.Context, id string, event *cc.Event) {
 	}
 }
 
-func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, error) {
+func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, func() error, error) {
 	log := s.log.Named(fmt.Sprintf("Sub-%s", id))
 
 	exchange := fmt.Sprintf("cc.user.%s", id)
@@ -82,7 +82,7 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, error) {
 	err := s.ch.ExchangeDeclare(
 		exchange,
 		"fanout",
-		true,
+		false,
 		true,
 		false,
 		false,
@@ -91,27 +91,32 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, error) {
 
 	if err != nil {
 		log.Error("failed to create exchange", zap.Error(err))
-		return nil, err
+		return nil, nil, err
 	}
 
 	q, err := s.ch.QueueDeclare(
 		"",
 		false,
-		true,
+		false,
 		false,
 		false,
 		nil,
 	)
 
+	queueTerminator := func() error {
+		_, err := s.ch.QueueDelete(q.Name, false, false, false)
+		return err
+	}
+
 	if err != nil {
 		log.Error("Failed to get queue", zap.Error(err))
-		return nil, err
+		return nil, nil, err
 	}
 
 	err = s.ch.QueueBind(
-		q.Name,   // queue name
-		"",       // routing key
-		exchange, // exchange
+		q.Name,
+		"",
+		exchange,
 		false,
 		nil,
 	)
@@ -119,7 +124,7 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, error) {
 	msgs, err := s.ch.Consume(
 		q.Name,
 		"",
-		false,
+		true,
 		false,
 		false,
 		false,
@@ -128,8 +133,8 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, error) {
 
 	if err != nil {
 		log.Error("Failed to get consume chan", zap.Error(err))
-		return nil, err
+		return nil, nil, err
 	}
 
-	return msgs, nil
+	return msgs, queueTerminator, nil
 }

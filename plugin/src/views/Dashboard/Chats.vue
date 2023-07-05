@@ -12,7 +12,7 @@
             </n-button>
           </n-space>
         </template>
-        <chat-list-item v-for="chat in chats" :uuid="chat.uuid" :chat="chat"/>
+        <chat-item v-for="chat in chats" :uuid="chat.uuid" :chat="chat"/>
       </n-list>
     </n-scrollbar>
   </n-layout-sider>
@@ -22,25 +22,14 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, h} from 'vue';
-import {
-  NBadge,
-  NButton,
-  NIcon,
-  NLayoutContent,
-  NLayoutSider,
-  NList,
-  NListItem,
-  NScrollbar,
-  NSpace,
-  NText
-} from 'naive-ui';
+import {computed, defineAsyncComponent} from 'vue';
+import {NButton, NIcon, NLayoutContent, NLayoutSider, NList, NScrollbar, NSpace,} from 'naive-ui';
 
 import {useCcStore} from '../../store/chatting.ts';
 
 import {useRouter} from 'vue-router';
 import {Chat} from '../../connect/cc/cc_pb';
-import UserAvatar from "../../components/ui/userAvatar.vue";
+import ChatItem from "../../components/chats/chatItem.vue";
 
 const ChatbubbleEllipsesOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ChatbubbleEllipsesOutline'));
 
@@ -69,50 +58,4 @@ const chats = computed(() => {
     return Number(sortable(b) - sortable(a))
   })
 })
-
-interface ChatListItemProps {
-  uuid: string
-  chat: Chat
-}
-
-// TODO:
-//  - [ ] Wrap Topic Around Avatar
-//  - [ ] Make menu draggable (increase width)
-
-function chatListItem(props: ChatListItemProps) {
-  let {chat} = props;
-
-  let users = chat.users.map(uuid => store.users.get(uuid)?.title ?? 'Unknown')
-  let admins = chat.admins.map(uuid => store.users.get(uuid)?.title ?? 'Unknown')
-
-  let members = users.concat(admins)
-
-  let sub = "No messages yet"
-  if (chat.meta && chat.meta.lastMessage)
-    sub = chat.meta!.lastMessage!.content.slice(0, 16) + '...'
-
-  let result = [
-    h(UserAvatar, {round: true, size: "large", avatar: members.join(' ')},),
-    h(NSpace, {vertical: true}, () => [
-      h(NText, {}, () => chat.topic ?? members),
-      h(NText, {depth: "3"}, () => sub)
-    ]),
-  ]
-
-  if (chat.meta && chat.meta.unread > 0)
-    result[1] = h(NBadge, {
-      value: chat.meta!.unread,
-      max: 99,
-      style: {width: '100%'},
-      size: 24,
-      offset: [12, 12]
-    }, result[1])
-
-  return h(NListItem, {
-    "onClick": () => router.push({name: 'Chat', params: {uuid: props.uuid}})
-  }, () => (h(
-      NSpace, {justify: "start"}, () => result
-  )))
-}
-
 </script>

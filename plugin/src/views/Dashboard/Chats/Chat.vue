@@ -84,11 +84,11 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, h, ref, computed, watch, nextTick } from 'vue';
+import { defineAsyncComponent, ref, computed, watch, nextTick } from 'vue';
 import {
     NSpace, NButton, NIcon, NTooltip,
-    NAvatar, NText, NInput, NAlert,
-    NList, NListItem, NScrollbar, NDivider,
+    NAvatar, NInput, NAlert,
+    NList, NListItem, NScrollbar,
     useNotification, InputInst
 } from 'naive-ui';
 

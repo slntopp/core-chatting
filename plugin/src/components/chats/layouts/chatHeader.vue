@@ -52,20 +52,20 @@ const members = computed(() => {
     return []
   }
 
-  return chat.value.users.map(uuid => store.users.get(uuid)?.title ?? 'Unknown').concat(chat.value.admins.map(uuid => store.users.get(uuid)?.title ?? 'Unknown'))
+  return chat.value.users.map((uuid:string) => store.users.get(uuid)?.title ?? 'Unknown').concat(chat.value.admins.map((uuid:string) => store.users.get(uuid)?.title ?? 'Unknown'))
 })
 
 const membersOptions=computed(()=>{
-  return [...new Set(members.value)].map((m,i)=>({key:m,label:m,icon:renderIcon(members.value.map(el => el[i]).join(','))}))
+  return [...new Set(members.value)].map((m:any,i:number)=>({key:m as string,label:m as string,icon:renderIcon(members.value.map((el:any) => el[i]).join(','))}))
 })
 
-const renderIcon=(icon)=>{
+const renderIcon=(icon:string)=>{
   return () => {
     return h(NAvatar, { round:true, size:"medium"}, icon)
   }
 }
 
-const avatar_title = computed(() => members.value.map(el => el[0]).join(','))
+const avatar_title = computed(() => members.value.map((el:any) => el[0]).join(','))
 
 const refresh = () => {
   if (chat) {

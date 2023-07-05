@@ -123,6 +123,7 @@ FILTER @requestor in c.admins || @requestor in c.users
 		FOR m in @@messages 
 			FILTER !m.is_seen
 			FILTER m.sender != @requestor
+			FILTER m.chat == c._key
 			RETURN m
 		)
 	RETURN MERGE(c, {

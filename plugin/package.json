@@ -22,7 +22,7 @@
     "pinia": "^2.1.4",
     "vfonts": "^0.0.3",
     "vite-svg-loader": "^4.0.0",
-    "vue": "^3.2.47",
+    "vue": "^3.3.0",
     "vue-router": "^4.2.2"
   },
   "devDependencies": {

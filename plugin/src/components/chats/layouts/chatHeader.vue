@@ -2,12 +2,11 @@
   <n-text v-if="!chat">Loading...</n-text>
   <template v-else>
     <n-space justify="start" align="center">
-      <n-avatar round size="medium">{{ avatar_title }}</n-avatar>
+      <user-avatar round :avatar="members.join(' ')"/>
       <n-text>{{ chat.topic ?? members }}</n-text>
       <n-divider vertical/>
-<!--      <n-text depth="3">{{ `${members.length} members` }}</n-text>-->
       <n-dropdown trigger="click" :options="membersOptions">
-        <n-button  size="small" ghost round>members</n-button>
+        <n-button size="small" ghost round>members</n-button>
       </n-dropdown>
       <n-divider vertical/>
       <n-button type="info" size="small" ghost round @click="refresh">Refresh</n-button>
@@ -33,39 +32,42 @@
 
 <script setup lang="ts">
 import {computed, h, ref, toRefs} from "vue";
-import {NAvatar, NButton, NDivider, NSpace, NText,NDropdown,NModal,NCard} from "naive-ui";
+import {NButton, NCard, NDivider, NDropdown, NModal, NSpace, NText} from "naive-ui";
 import {Chat} from "../../../connect/cc/cc_pb.ts";
 import {useCcStore} from "../../../store/chatting.ts";
 import {useRouter} from "vue-router";
 import ChatOptions from "../chatOptions.vue";
+import UserAvatar from "../../ui/userAvatar.vue";
 
-const props = defineProps(['chat'])
+interface ChatHeaderProps {
+  chat: Chat
+}
+
+const props = defineProps<ChatHeaderProps>()
 const {chat} = toRefs(props)
 
 const store = useCcStore()
 const router = useRouter()
 
-const isEdit=ref<boolean>(false)
+const isEdit = ref<boolean>(false)
 
 const members = computed(() => {
-  if (!chat || !chat.value) {
-    return []
-  }
-
-  return chat.value.users.map((uuid:string) => store.users.get(uuid)?.title ?? 'Unknown').concat(chat.value.admins.map((uuid:string) => store.users.get(uuid)?.title ?? 'Unknown'))
+  return chat.value.users.map((uuid: string) => store.users.get(uuid)?.title ?? 'Unknown').concat(chat.value.admins.map((uuid: string) => store.users.get(uuid)?.title ?? 'Unknown'))
 })
 
-const membersOptions=computed(()=>{
-  return [...new Set(members.value)].map((m:any,i:number)=>({key:m as string,label:m as string,icon:renderIcon(members.value.map((el:any) => el[i]).join(','))}))
+const membersOptions = computed(() => {
+  return [...new Set(members.value)].map((m: any, i: number) => ({
+    key: m as string,
+    label: m as string,
+    icon: renderIcon(members.value.map((el: any) => el[i]).join(','))
+  }))
 })
 
-const renderIcon=(icon:string)=>{
+const renderIcon = (icon: string) => {
   return () => {
-    return h(NAvatar, { round:true, size:"medium"}, icon)
+    return h(UserAvatar, {round: true, size: "medium", avatar: icon}, null)
   }
 }
-
-const avatar_title = computed(() => members.value.map((el:any) => el[0]).join(','))
 
 const refresh = () => {
   if (chat) {
@@ -80,8 +82,8 @@ const deleteChat = async () => {
   }
 }
 
-const startEditChat=()=>{
-  isEdit.value=true
+const startEditChat = () => {
+  isEdit.value = true
 }
 </script>
 

@@ -5,8 +5,8 @@
       <user-avatar round :avatar="members.join(' ')"/>
       <n-text>{{ chat.topic ?? members }}</n-text>
       <n-divider vertical/>
-      <n-dropdown trigger="click" :options="membersOptions">
-        <n-button size="small" ghost round>members</n-button>
+      <n-dropdown trigger="hover" :options="membersOptions">
+        <n-text>{{members.length}} members</n-text>
       </n-dropdown>
       <n-divider vertical/>
       <n-button type="info" size="small" ghost round @click="refresh">Refresh</n-button>
@@ -29,6 +29,10 @@
     </n-card>
   </n-modal>
 </template>
+
+// TODO:
+//  - [ ] Wrap Topic Around Avatar
+//  - [ ] Make menu draggable (increase width)
 
 <script setup lang="ts">
 import {computed, h, ref, toRefs} from "vue";

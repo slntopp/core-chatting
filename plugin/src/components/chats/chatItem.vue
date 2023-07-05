@@ -2,22 +2,20 @@
   <n-list-item @click="goToChat">
     <n-space justify="start">
       <user-avatar round size="large" :avatar="members.join(' ')"/>
-      <n-badge v-if="chat.meta && chat.meta.unread > 0"
-               :value="chat.meta!.unread"
-               :max="99"
-               :style="{width: '100%'}"
-               size="24"
-               :offset="[12, 12]"
-      >
-        <n-space vertical>
-          <n-text>{{ chat.topic ?? members }}</n-text>
-          <n-text depth="3">{{ sub }}</n-text>
-        </n-space>
-      </n-badge>
-      <n-space v-else vertical>
+      <n-space vertical>
         <n-text>{{ chat.topic ?? members }}</n-text>
         <n-text depth="3">{{ sub }}</n-text>
       </n-space>
+      <div style="    position: absolute;
+    right: 15px;">
+        <n-badge
+            v-if="isUnreadMessages"
+            :value="chat.meta!.unread"
+            :max="99"
+            size="24"
+            :offset="[12, 12]"
+        />
+      </div>
     </n-space>
   </n-list-item>
 </template>
@@ -50,8 +48,10 @@ const sub = computed(() => {
   if (chat.value.meta && chat.value.meta.lastMessage)
     return chat.value.meta!.lastMessage!.content.slice(0, 16) + '...'
 
-  return  "No messages yet"
+  return "No messages yet"
 })
+
+const isUnreadMessages = computed(() => chat.value.meta && chat.value.meta.unread > 0)
 
 const goToChat = () => {
   router.push({name: 'Chat', params: {uuid: uuid.value}})

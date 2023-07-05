@@ -35,7 +35,7 @@ func (s *PubSub) Pub(ctx context.Context, id string, event *cc.Event) {
 	err := s.ch.ExchangeDeclare(
 		exchange,
 		"fanout",
-		true,
+		false,
 		true,
 		false,
 		false,

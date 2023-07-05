@@ -109,9 +109,9 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, error) {
 	}
 
 	err = s.ch.QueueBind(
-		q.Name,   // queue name
-		"",       // routing key
-		exchange, // exchange
+		q.Name,
+		"",
+		exchange,
 		false,
 		nil,
 	)
@@ -119,7 +119,7 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, error) {
 	msgs, err := s.ch.Consume(
 		q.Name,
 		"",
-		false,
+		true,
 		false,
 		false,
 		false,

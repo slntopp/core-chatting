@@ -85,12 +85,6 @@ start_stream:
 			err := proto.Unmarshal(msg.Body, event)
 			if err != nil {
 				log.Error("Failed to unmarshal event", zap.Error(err))
-
-				err = msg.Ack(false)
-				if err != nil {
-					log.Error("Failed to ack msg", zap.Error(err))
-				}
-
 				continue
 			}
 
@@ -99,18 +93,7 @@ start_stream:
 			err = serverStream.Send(event)
 			if err != nil {
 				log.Error("Error writing message", zap.Error(err))
-
-				err = msg.Ack(false)
-				if err != nil {
-					log.Error("Failed to ack msg", zap.Error(err))
-				}
-
 				return err
-			}
-
-			err = msg.Ack(false)
-			if err != nil {
-				log.Error("Failed to ack msg", zap.Error(err))
 			}
 
 			log.Debug("Processed event successfully")

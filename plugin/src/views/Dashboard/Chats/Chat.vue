@@ -199,7 +199,7 @@ function scrollToBottom() {
     }
 
     nextTick(() => {
-      scrollbar.value.scrollTo({top: Number.MAX_SAFE_INTEGER, behavior: "smooth"})
+      scrollbar.value.scrollTo({top: Number.MAX_SAFE_INTEGER})
     })
   }, 500)
 }
@@ -210,6 +210,7 @@ async function load_chat() {
     isMessageLoading.value = true
     await Promise.all([store.resolve([...chat.value.users, ...chat.value.admins]),
       store.get_messages(chat.value as Chat)])
+    scrollToBottom()
   } finally {
     isMessageLoading.value = false
   }

@@ -106,6 +106,7 @@ service UsersAPI {
   // Resolves given Users data by their UUIDs
   // And returns all accessible Users for Requestor
   rpc Resolve(Users) returns (Users);
+  rpc GetMembers(Empty) returns (Users);
 }
 
 enum EventType {

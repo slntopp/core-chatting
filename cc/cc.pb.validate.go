@@ -710,8 +710,6 @@ func (m *Message) validate(all bool) error {
 
 	// no validation rules for UnderReview
 
-	// no validation rules for IsSeen
-
 	if m.Chat != nil {
 		// no validation rules for Chat
 	}

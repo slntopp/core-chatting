@@ -308,9 +308,9 @@ export declare class Message extends Message$1<Message> {
   underReview: boolean;
 
   /**
-   * @generated from field: bool is_seen = 11;
+   * @generated from field: repeated string readers = 11;
    */
-  isSeen: boolean;
+  readers: string[];
 
   constructor(data?: PartialMessage<Message>);
 

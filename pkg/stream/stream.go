@@ -92,14 +92,14 @@ start_stream:
 
 			log.Info("Receive message", zap.Any("event", event))
 
-			/*if event.GetType() == cc.EventType_MESSAGE_SENT {
+			if event.GetType() == cc.EventType_MESSAGE_SENT {
 				message := event.GetMsg()
-				message.Readers = append(message.GetReaders(), requestor)
-				_, err := s.msgCtrl.Update(ctx, message)
+				newMessage, err := s.msgCtrl.Read(ctx, message, requestor)
 				if err != nil {
-					log.Error("Failed to update message", zap.Error(err))
+					log.Error("Failed to update readers", zap.Error(err))
 				}
-			}*/
+				event.Item = &cc.Event_Msg{Msg: newMessage}
+			}
 
 			err = serverStream.Send(event)
 			if err != nil {

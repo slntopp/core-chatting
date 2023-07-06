@@ -47,12 +47,11 @@ func (s *MessagesServer) Get(ctx context.Context, req *connect.Request[cc.Chat])
 		return nil, err
 	}
 
-	for index := range messages {
-		if !core.In(requestor, messages[index].Readers) {
-			messages[index].Readers = append(messages[index].GetReaders(), requestor)
-			_, err := s.msgCtrl.Update(ctx, messages[index])
+	for _, msg := range messages {
+		if !core.In(requestor, msg.Readers) {
+			_, err := s.msgCtrl.Read(ctx, msg, requestor)
 			if err != nil {
-				log.Error("Failed to add reader", zap.Error(err))
+				log.Error("Failed to update reader", zap.Error(err))
 			}
 		}
 	}
@@ -60,6 +59,8 @@ func (s *MessagesServer) Get(ctx context.Context, req *connect.Request[cc.Chat])
 	resp := connect.NewResponse[cc.Messages](&cc.Messages{
 		Messages: messages,
 	})
+
+	go s.ps.Pub(ctx, requestor, &cc.Event{Type: cc.EventType_CHAT_READ, Item: &cc.Event_Chat{Chat: req.Msg}})
 
 	return resp, nil
 }

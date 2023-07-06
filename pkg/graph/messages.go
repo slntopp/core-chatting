@@ -56,7 +56,8 @@ UPDATE @key WITH {
     kind: @kind,
     content: @content,
     edited: @edited,
-    under_review: @under_review,    
+    under_review: @under_review,
+	readers : @readers
 } IN @@messages
 `
 
@@ -70,6 +71,7 @@ func (c *MessagesController) Update(ctx context.Context, msg *cc.Message) (*cc.M
 		"edited":       msg.GetEdited(),
 		"under_review": msg.GetUnderReview(),
 		"key":          msg.GetUuid(),
+		"readers":      msg.GetReaders(),
 		"@messages":    MESSAGES_COLLECTION,
 	})
 

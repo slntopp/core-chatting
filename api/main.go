@@ -82,7 +82,7 @@ func main() {
 	db := graph.ConnectDb(log, arangodbHost, arangodbCred, dbName)
 
 	chatCtrl := graph.NewChatsController(log, db)
-	msgCtrs := graph.NewMessagesController(log, db)
+	msgCtrl := graph.NewMessagesController(log, db)
 	usersCtrl := graph.NewUsersController(log, db, usersCol)
 
 	router := mux.NewRouter()
@@ -105,7 +105,7 @@ func main() {
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 
-	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrs, ps)
+	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrl, ps)
 	path, handler = cc.NewMessagesAPIHandler(messagesServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 
@@ -113,7 +113,7 @@ func main() {
 	path, handler = cc.NewUsersAPIHandler(usersServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 
-	streamServer := stream.NewStreamServer(log, usersCtrl, ps, SIGNING_KEY)
+	streamServer := stream.NewStreamServer(log, usersCtrl, msgCtrl, ps, SIGNING_KEY)
 	path, handler = cc.NewStreamServiceHandler(streamServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 

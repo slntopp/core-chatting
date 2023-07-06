@@ -21,12 +21,13 @@ type StreamServer struct {
 	log *zap.Logger
 
 	upgrader websocket.Upgrader
-	ctrl     *graph.UsersController
+	userCtrl *graph.UsersController
+	msgCtrl  *graph.MessagesController
 	ps       *pubsub.PubSub
 	key      []byte
 }
 
-func NewStreamServer(logger *zap.Logger, ctrl *graph.UsersController, ps *pubsub.PubSub, key []byte) *StreamServer {
+func NewStreamServer(logger *zap.Logger, userCtrl *graph.UsersController, msgCtrl *graph.MessagesController, ps *pubsub.PubSub, key []byte) *StreamServer {
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -36,7 +37,8 @@ func NewStreamServer(logger *zap.Logger, ctrl *graph.UsersController, ps *pubsub
 
 	return &StreamServer{
 		log:      logger.Named("StreamService"),
-		ctrl:     ctrl,
+		userCtrl: userCtrl,
+		msgCtrl:  msgCtrl,
 		ps:       ps,
 		upgrader: upgrader,
 		key:      key,
@@ -50,7 +52,7 @@ func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.Empty
 
 	defer log.Debug("Stream closed")
 
-	res, err := s.ctrl.Resolve(ctx, []string{requestor})
+	res, err := s.userCtrl.Resolve(ctx, []string{requestor})
 	if err != nil {
 		log.Error("Failed to resolve user", zap.Error(err))
 		return err
@@ -89,6 +91,15 @@ start_stream:
 			}
 
 			log.Info("Receive message", zap.Any("event", event))
+
+			if event.GetType() == cc.EventType_MESSAGE_SENT {
+				message := event.GetMsg()
+				message.Readers = append(message.GetReaders(), requestor)
+				_, err := s.msgCtrl.Update(ctx, message)
+				if err != nil {
+					log.Error("Failed to update message", zap.Error(err))
+				}
+			}
 
 			err = serverStream.Send(event)
 			if err != nil {

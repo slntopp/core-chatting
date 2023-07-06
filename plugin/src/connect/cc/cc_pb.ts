@@ -83,19 +83,24 @@ export enum EventType {
   CHAT_DELETED = 3,
 
   /**
-   * @generated from enum value: MESSAGE_SENT = 4;
+   * @generated from enum value: CHAT_READ = 4;
    */
-  MESSAGE_SENT = 4,
+  CHAT_READ = 4,
 
   /**
-   * @generated from enum value: MESSAGE_UPDATED = 5;
+   * @generated from enum value: MESSAGE_SENT = 5;
    */
-  MESSAGE_UPDATED = 5,
+  MESSAGE_SENT = 5,
 
   /**
-   * @generated from enum value: MESSAGE_DELETED = 6;
+   * @generated from enum value: MESSAGE_UPDATED = 6;
    */
-  MESSAGE_DELETED = 6,
+  MESSAGE_UPDATED = 6,
+
+  /**
+   * @generated from enum value: MESSAGE_DELETED = 7;
+   */
+  MESSAGE_DELETED = 7,
 }
 // Retrieve enum metadata with: proto3.getEnumType(EventType)
 proto3.util.setEnumType(EventType, "cc.EventType", [
@@ -103,9 +108,10 @@ proto3.util.setEnumType(EventType, "cc.EventType", [
   { no: 1, name: "CHAT_CREATED" },
   { no: 2, name: "CHAT_UPDATED" },
   { no: 3, name: "CHAT_DELETED" },
-  { no: 4, name: "MESSAGE_SENT" },
-  { no: 5, name: "MESSAGE_UPDATED" },
-  { no: 6, name: "MESSAGE_DELETED" },
+  { no: 4, name: "CHAT_READ" },
+  { no: 5, name: "MESSAGE_SENT" },
+  { no: 6, name: "MESSAGE_UPDATED" },
+  { no: 7, name: "MESSAGE_DELETED" },
 ]);
 
 /**

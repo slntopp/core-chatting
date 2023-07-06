@@ -47,6 +47,16 @@ func (s *MessagesServer) Get(ctx context.Context, req *connect.Request[cc.Chat])
 		return nil, err
 	}
 
+	for index := range messages {
+		if !core.In(requestor, messages[index].Readers) {
+			messages[index].Readers = append(messages[index].GetReaders(), requestor)
+			_, err := s.msgCtrl.Update(ctx, messages[index])
+			if err != nil {
+				log.Error("Failed to add reader", zap.Error(err))
+			}
+		}
+	}
+
 	resp := connect.NewResponse[cc.Messages](&cc.Messages{
 		Messages: messages,
 	})
@@ -60,7 +70,9 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 
 	requestor := ctx.Value(core.ChatAccount).(string)
 
-	chat, err := s.chatCtrl.Get(ctx, req.Msg.GetChat(), requestor)
+	msg := req.Msg
+
+	chat, err := s.chatCtrl.Get(ctx, msg.GetChat(), requestor)
 	if err != nil {
 		return nil, err
 	}
@@ -70,15 +82,15 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
 	}
 
-	req.Msg.Sender = requestor
+	msg.Sender = requestor
 
-	if (req.Msg.Kind == cc.Kind_ADMIN_ONLY || req.Msg.UnderReview) && chat.Role != cc.Role_ADMIN {
+	if (msg.Kind == cc.Kind_ADMIN_ONLY || msg.UnderReview) && chat.Role != cc.Role_ADMIN {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("can't send admin only message"))
 	}
 
-	req.Msg.Sent = time.Now().UnixMilli()
+	msg.Sent = time.Now().UnixMilli()
 
-	message, err := s.msgCtrl.Send(ctx, req.Msg)
+	message, err := s.msgCtrl.Send(ctx, msg)
 	if err != nil {
 		return nil, err
 	}

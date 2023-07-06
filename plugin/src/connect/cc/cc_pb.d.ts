@@ -71,19 +71,24 @@ export declare enum EventType {
   CHAT_DELETED = 3,
 
   /**
-   * @generated from enum value: MESSAGE_SENT = 4;
+   * @generated from enum value: CHAT_READ = 4;
    */
-  MESSAGE_SENT = 4,
+  CHAT_READ = 4,
 
   /**
-   * @generated from enum value: MESSAGE_UPDATED = 5;
+   * @generated from enum value: MESSAGE_SENT = 5;
    */
-  MESSAGE_UPDATED = 5,
+  MESSAGE_SENT = 5,
 
   /**
-   * @generated from enum value: MESSAGE_DELETED = 6;
+   * @generated from enum value: MESSAGE_UPDATED = 6;
    */
-  MESSAGE_DELETED = 6,
+  MESSAGE_UPDATED = 6,
+
+  /**
+   * @generated from enum value: MESSAGE_DELETED = 7;
+   */
+  MESSAGE_DELETED = 7,
 }
 
 /**

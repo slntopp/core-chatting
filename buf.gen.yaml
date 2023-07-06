@@ -13,10 +13,10 @@ plugins:
 
   - name: es
     out: plugin/src/connect
-    opt: target=ts
+    opt: target=js+dts
   - name: connect-es
     out: plugin/src/connect
-    opt: target=ts
+    opt: target=js+dts
   
   - plugin: buf.build/grpc/python:v1.56.0
     out: python/src/core_chatting

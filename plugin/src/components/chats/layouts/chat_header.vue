@@ -62,7 +62,7 @@ const membersOptions = computed(() => {
   return [...new Set(members.value)].map((m: any, i: number) => ({
     key: m as string,
     label: m as string,
-    icon: renderIcon(members.value.map((el: any) => el[i]).join(','))
+    icon: renderIcon(members.value[i])
   }))
 })
 

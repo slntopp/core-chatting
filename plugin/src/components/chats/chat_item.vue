@@ -1,9 +1,9 @@
 <template>
-  <n-list-item @click="goToChat">
-    <n-space justify="start">
+  <n-list-item class="chat" @click="goToChat">
+    <n-space :wrap-item="false" justify="start">
       <user-avatar round size="large" :avatar="members.join(' ')" />
-      <n-space vertical>
-        <n-text>{{ chat.topic ?? members }}</n-text>
+      <n-space class="preview" vertical>
+        <n-text class="topic">{{ chatTopic}}</n-text>
         <n-text depth="3">{{ sub }}</n-text>
       </n-space>
       <div style="    position: absolute;
@@ -40,10 +40,22 @@ const members = computed(() => users.value.concat(admins.value))
 
 const sub = computed(() => {
   if (chat.value.meta && chat.value.meta.lastMessage)
-    return chat.value.meta!.lastMessage!.content.slice(0, 16) + '...'
+    return chat.value.meta.lastMessage!.content.length>20? chat.value.meta!.lastMessage!.content.slice(0, 16) + '...':chat.value.meta!.lastMessage!.content
 
   return "No messages yet"
 })
+
+const chatTopic=computed(()=>{
+  const topic=chat.value.topic ?? members.value.join(', ')
+  const words = topic.split(' ')
+
+  if(topic.length > 512)
+      return topic.slice(0, 509) + '...';
+  else if (words.length > 16) return words.slice(0, 16).join(' ') + '...'
+
+  return topic
+})
+
 
 const isUnreadMessages = computed(() => chat.value.meta && chat.value.meta.unread > 0)
 
@@ -52,4 +64,13 @@ const goToChat = () => {
 }
 </script>
 
-<style scoped></style>
+<style scoped lang="scss">
+  .chat{
+    .preview{
+      width: calc(100% - 80px);
+      .topic{
+        word-break: break-all;
+      }
+    }
+  }
+</style>

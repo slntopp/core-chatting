@@ -4,8 +4,12 @@
       <chat-header :chat="chat!" style="height: 5vh"/>
     </template>
 
-    <n-scrollbar style="height: 80vh; max-width: 80%;" v-if="messages.length > 0" ref="scrollbar">
-      <n-list-item v-for="message in messages" :key="message.uuid">
+    <n-scrollbar style="height: 80vh; max-width: 80%;" v-if="isMessageLoading || messages.length>0" ref="scrollbar">
+      <template  v-if="isMessageLoading">
+          <mock-message v-for="(n,index) in 5" :key="index+chat.topic"/>
+      </template>
+
+      <n-list-item v-else v-for="message in messages" :key="message.uuid">
         <!-- @vue-ignore -->
         <message-view :message="message" @approve="a => handle_approve(message, a)"
                       @convert="kind => { updating = true; current_message = message; handle_send(kind, !messages['underReview']) }"
@@ -106,6 +110,7 @@ import {Chat, Kind, Message, Role} from '../../../connect/cc/cc_pb';
 import {ConnectError} from '@bufbuild/connect';
 import ChatHeader from "../../../components/chats/layouts/chat_header.vue";
 import UserAvatar from "../../../components/ui/user_avatar.vue";
+import MockMessage from "../../../components/chats/mockMessage.vue";
 
 const SendOutline = defineAsyncComponent(() => import('@vicons/ionicons5/SendOutline'));
 const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
@@ -119,6 +124,7 @@ const router = useRouter();
 const store = useCcStore()
 const scrollbar = ref()
 const input = ref<InputInst>()
+const isMessageLoading = ref(false)
 
 const chat = computed(() => {
   try {
@@ -200,8 +206,13 @@ function scrollToBottom() {
 
 async function load_chat() {
   if (!chat.value) return
-  store.resolve([...chat.value.users, ...chat.value.admins])
-  store.get_messages(chat.value as Chat)
+  try {
+    isMessageLoading.value = true
+    await Promise.all([store.resolve([...chat.value.users, ...chat.value.admins]),
+      store.get_messages(chat.value as Chat)])
+  } finally {
+    isMessageLoading.value = false
+  }
 }
 
 watch(chat, load_chat)

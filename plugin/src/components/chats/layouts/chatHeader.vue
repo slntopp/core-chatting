@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { computed, h, ref, toRefs } from "vue";
 import { NButton, NCard, NDivider, NDropdown, NIcon, NModal, NSpace, NText } from "naive-ui";
-import { Chat } from "../../../connect/cc/cc_pb.ts";
+import { Chat } from "../../../connect/cc/cc_pb";
 import { useCcStore } from "../../../store/chatting.ts";
 import { useRouter } from "vue-router";
 import ChatOptions from "../chatOptions.vue";

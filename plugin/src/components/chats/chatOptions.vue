@@ -64,7 +64,7 @@ import {
 
 import { useRouter } from 'vue-router';
 import { useCcStore } from "../../store/chatting.ts";
-import { Chat, Role } from "../../connect/cc/cc_pb.ts";
+import { Chat, Role } from "../../connect/cc/cc_pb";
 
 interface ChatOptionsProps {
   isEdit?: boolean

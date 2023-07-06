@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import UserAvatar from "../ui/userAvatar.vue";
 import { NBadge, NListItem, NSpace, NText } from "naive-ui";
-import { Chat } from "../../connect/cc/cc_pb.ts";
+import { Chat } from "../../connect/cc/cc_pb";
 import { computed, toRefs } from "vue";
 import { useCcStore } from "../../store/chatting.ts";
 import { useRouter } from "vue-router";

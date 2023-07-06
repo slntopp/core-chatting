@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, h, nextTick, PropType, ref, toRefs} from 'vue';
+import {computed, defineAsyncComponent, h, nextTick, ref, toRefs} from 'vue';
 import {NButton, NDivider, NDropdown, NGi, NGrid, NH2, NIcon, NSpace, NText, NTooltip, useThemeVars,} from 'naive-ui'
 
 import {Kind, Message, Role} from '../../connect/cc/cc_pb'
@@ -27,21 +27,21 @@ import {marked, Renderer} from 'marked'
 
 // @ts-ignore
 import {mangle} from 'marked-mangle'
-
+// @ts-ignore
 import DOMPurify from 'dompurify'
 import UserAvatar from "../ui/userAvatar.vue";
+
+interface MessageProps{
+  message:Message
+}
 
 const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
 const PencilOutline = defineAsyncComponent(() => import('@vicons/ionicons5/PencilOutline'));
 const TrashOutline = defineAsyncComponent(() => import('@vicons/ionicons5/TrashOutline'));
 const ReviewOutline = defineAsyncComponent(() => import('../../assets/icons/ReviewOutline.svg'));
 
-const props = defineProps({
-  message: {
-    type: Object as PropType<Message>,
-    required: true
-  }
-})
+
+const props = defineProps<MessageProps>()
 const {message} = toRefs(props)
 
 const emit = defineEmits(['approve', 'convert', 'edit', 'delete'])
@@ -170,6 +170,7 @@ marked.use({
   breaks: true, mangle: false,
   headerIds: false, headerPrefix: '',
 })
+// @ts-ignore
 marked.use(mangle)
 
 const renderer = new Renderer()
@@ -284,7 +285,7 @@ function render(_props: any, {slots}: any) {
             },
             () => [
               h(NSpace, {align: 'center'}, () => title),
-              slots.default(),
+              (slots as any).default(),
             ]
         )
     ),

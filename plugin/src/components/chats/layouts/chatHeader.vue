@@ -61,7 +61,7 @@ const router = useRouter()
 const isEdit = ref<boolean>(false)
 
 const members = computed(() => {
-  return chat.value.users.map((uuid: string) => store.users.get(uuid)?.title ?? 'Unknown').concat(chat.value.admins.map((uuid: string) => store.users.get(uuid)?.title ?? 'Unknown'))
+  return chat!.value.users.map((uuid: string) => store.users.get(uuid)?.title ?? 'Unknown').concat(chat.value.admins.map((uuid: string) => store.users.get(uuid)?.title ?? 'Unknown'))
 })
 
 const membersOptions = computed(() => {
@@ -74,7 +74,7 @@ const membersOptions = computed(() => {
 
 const renderIcon = (icon: string) => {
   return () => {
-    return h(UserAvatar, {round: true, size: "medium", avatar: icon}, null)
+    return h(UserAvatar, {round: true, size: "medium", avatar: icon})
   }
 }
 

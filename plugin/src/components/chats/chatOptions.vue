@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, h, onMounted, PropType, ref, toRefs} from 'vue';
+import {computed, defineAsyncComponent, h, onMounted, ref, toRefs} from 'vue';
 import {
   FormInst,
   NButton,
@@ -66,9 +66,14 @@ import {useRouter} from 'vue-router';
 import {useCcStore} from "../../store/chatting.ts";
 import {Chat, Role} from "../../connect/cc/cc_pb.ts";
 
+interface ChatOptionsProps{
+  isEdit?:boolean
+  chat?:Chat
+}
+
 const CloseSharp = defineAsyncComponent(() => import('@vicons/ionicons5/CloseSharp'));
 
-const props = defineProps({isEdit: {type: Boolean, default: false}, chat: {type: Object as PropType<Chat>}})
+const props = defineProps<ChatOptionsProps>()
 const {isEdit, chat: oldChat} = toRefs(props)
 
 const emit = defineEmits(['close'])
@@ -102,7 +107,7 @@ const membersWithoutDublicates = computed(() => members_options.value.filter(op 
 
 onMounted(() => {
   if (isEdit?.value && oldChat?.value) {
-    chat.value = {...oldChat?.value as Chat}
+    chat.value = {...oldChat.value } as Chat
   }
 })
 

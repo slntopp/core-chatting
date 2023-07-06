@@ -1,14 +1,14 @@
 <template>
   <n-list style="padding-left: 16px">
     <template #header>
-      <chat-header :chat="chat" style="height: 5vh"/>
+      <chat-header :chat="chat!" style="height: 5vh"/>
     </template>
 
     <n-scrollbar style="height: 80vh; max-width: 80%;" v-if="messages.length > 0" ref="scrollbar">
       <n-list-item v-for="message in messages" :key="message.uuid">
         <!-- @vue-ignore -->
         <message-view :message="message" @approve="a => handle_approve(message, a)"
-                      @convert="kind => { updating = true; current_message = message; handle_send(kind, !messages.underReview) }"
+                      @convert="kind => { updating = true; current_message = message; handle_send(kind, !messages['underReview']) }"
                       @delete="handle_delete(message)" @edit="() => { updating = true; current_message = message; }"/>
       </n-list-item>
     </n-scrollbar>
@@ -85,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, nextTick, ref, watch} from 'vue';
+import {Component, computed, defineAsyncComponent, nextTick, ref, watch} from 'vue';
 import {
   InputInst,
   NAlert,
@@ -109,7 +109,7 @@ import UserAvatar from "../../../components/ui/userAvatar.vue";
 
 const SendOutline = defineAsyncComponent(() => import('@vicons/ionicons5/SendOutline'));
 const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
-const ReviewOutline = defineAsyncComponent(() => import('../../../assets/icons/ReviewOutline.svg'));
+const ReviewOutline = defineAsyncComponent(() => import('../../../assets/icons/ReviewOutline.svg')) as Component;
 
 const MessageView = defineAsyncComponent(() => import('../../../components/chats/message.vue'));
 

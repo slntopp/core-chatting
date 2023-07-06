@@ -104,6 +104,7 @@ const members_options = ref<SelectOption[]>([])
 const adminsWithoutDublicates = computed(() => admins_options.value.filter(op => !chat.value.users.find(m => m === op.value)))
 const membersWithoutDublicates = computed(() => members_options.value.filter(op => !chat.value.admins.find(m => m === op.value)))
 
+const me=computed(()=>store.me)
 
 onMounted(() => {
   if (isEdit?.value && oldChat?.value) {
@@ -139,7 +140,7 @@ async function fetch_defaults() {
       return {
         label: user.title,
         value: user.uuid,
-        disabled: defaults.admins.includes(user.uuid),
+        disabled:me.value.uuid!==user.uuid && defaults.admins.includes(user.uuid),
       }
     })
   } finally {

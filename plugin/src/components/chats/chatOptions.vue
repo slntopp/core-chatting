@@ -3,7 +3,7 @@
     <n-space v-if="!isEdit" justify="start" align="center">
       <n-button round quaternary @click="router.push({ name: 'Empty Chat' })">
         <template #icon>
-          <n-icon :component="CloseSharp"/>
+          <n-icon :component="CloseSharp" />
         </template>
       </n-button>
 
@@ -16,20 +16,20 @@
       <n-space justify="center">
         <n-form :model="chat" ref="form" :rules="rules" label-placement="left">
           <n-form-item label="Topic">
-            <n-input v-model:value="chat.topic" clearable placeholder="What are we chatting about?"/>
+            <n-input v-model:value="chat.topic" clearable placeholder="What are we chatting about?" />
           </n-form-item>
 
           <n-form-item label="Members">
             <n-select :render-tag="renderTag" v-model:value="chat.users" multiple :options="membersWithoutDublicates"
-                      filterable/>
+              filterable />
           </n-form-item>
 
           <n-form-item label="Admins">
-            <n-select v-model:value="chat.admins" multiple :options="adminsWithoutDublicates" filterable/>
+            <n-select v-model:value="chat.admins" multiple :options="adminsWithoutDublicates" filterable />
           </n-form-item>
 
           <n-form-item label="Gateways">
-            <n-select v-model:value="chat.gateways" multiple :options="gateways_options" filterable/>
+            <n-select v-model:value="chat.gateways" multiple :options="gateways_options" filterable />
           </n-form-item>
         </n-form>
       </n-space>
@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, h, onMounted, ref, toRefs} from 'vue';
+import { computed, defineAsyncComponent, h, onMounted, ref, toRefs } from 'vue';
 import {
   FormInst,
   NButton,
@@ -62,19 +62,19 @@ import {
   SelectRenderTag
 } from 'naive-ui';
 
-import {useRouter} from 'vue-router';
-import {useCcStore} from "../../store/chatting.ts";
-import {Chat, Role} from "../../connect/cc/cc_pb.ts";
+import { useRouter } from 'vue-router';
+import { useCcStore } from "../../store/chatting.ts";
+import { Chat, Role } from "../../connect/cc/cc_pb.ts";
 
-interface ChatOptionsProps{
-  isEdit?:boolean
-  chat?:Chat
+interface ChatOptionsProps {
+  isEdit?: boolean
+  chat?: Chat
 }
 
 const CloseSharp = defineAsyncComponent(() => import('@vicons/ionicons5/CloseSharp'));
 
 const props = defineProps<ChatOptionsProps>()
-const {isEdit, chat: oldChat} = toRefs(props)
+const { isEdit, chat: oldChat } = toRefs(props)
 
 const emit = defineEmits(['close'])
 
@@ -107,7 +107,7 @@ const membersWithoutDublicates = computed(() => members_options.value.filter(op 
 
 onMounted(() => {
   if (isEdit?.value && oldChat?.value) {
-    chat.value = {...oldChat.value } as Chat
+    chat.value = { ...oldChat.value } as Chat
   }
 })
 
@@ -166,7 +166,7 @@ function submit() {
       } else {
         let result = await store.create_chat(chat.value as Chat);
 
-        router.push({name: 'Chat', params: {uuid: result.uuid}})
+        router.push({ name: 'Chat', params: { uuid: result.uuid } })
       }
     } finally {
       isEditLoading.value = false
@@ -176,25 +176,23 @@ function submit() {
   })
 }
 
-const renderTag: SelectRenderTag = ({option, handleClose}) => {
+const renderTag: SelectRenderTag = ({ option, handleClose }) => {
   return h(
-      NTag,
-      {
-        type: option.type as 'success' | 'warning' | 'error',
-        closable: true,
-        onMousedown: (e: FocusEvent) => {
-          e.preventDefault()
-        },
-        onClose: (e: MouseEvent) => {
-          e.stopPropagation()
-          handleClose()
-        }
+    NTag,
+    {
+      type: option.type as 'success' | 'warning' | 'error',
+      closable: true,
+      onMousedown: (e: FocusEvent) => {
+        e.preventDefault()
       },
-      {default: () => option.value !== option.label ? option.label : 'Deleted'}
+      onClose: (e: MouseEvent) => {
+        e.stopPropagation()
+        handleClose()
+      }
+    },
+    { default: () => option.value !== option.label ? option.label : 'Deleted' }
   )
 }
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

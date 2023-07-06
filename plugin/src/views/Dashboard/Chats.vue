@@ -29,7 +29,7 @@ import {useCcStore} from '../../store/chatting.ts';
 
 import {useRouter} from 'vue-router';
 import {Chat} from '../../connect/cc/cc_pb';
-import ChatItem from "../../components/chats/chatItem.vue";
+import ChatItem from "../../components/chats/chat_item.vue";
 
 const ChatbubbleEllipsesOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ChatbubbleEllipsesOutline'));
 

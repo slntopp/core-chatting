@@ -104,8 +104,8 @@ import {useRoute, useRouter} from 'vue-router';
 import {useCcStore} from '../../../store/chatting';
 import {Chat, Kind, Message, Role} from '../../../connect/cc/cc_pb';
 import {ConnectError} from '@bufbuild/connect';
-import ChatHeader from "../../../components/chats/layouts/chatHeader.vue";
-import UserAvatar from "../../../components/ui/userAvatar.vue";
+import ChatHeader from "../../../components/chats/layouts/chat_header.vue";
+import UserAvatar from "../../../components/ui/user_avatar.vue";
 
 const SendOutline = defineAsyncComponent(() => import('@vicons/ionicons5/SendOutline'));
 const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));

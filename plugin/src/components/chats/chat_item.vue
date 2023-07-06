@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import UserAvatar from "../ui/userAvatar.vue";
+import UserAvatar from "../ui/user_avatar.vue";
 import { NBadge, NListItem, NSpace, NText } from "naive-ui";
 import { Chat } from "../../connect/cc/cc_pb";
 import { computed, toRefs } from "vue";

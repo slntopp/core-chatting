@@ -4,5 +4,5 @@
 
 <script setup lang="ts">
 
-import ChatOptions from "../../../components/chats/chatOptions.vue";
+import ChatOptions from "../../../components/chats/chat_options.vue";
 </script>

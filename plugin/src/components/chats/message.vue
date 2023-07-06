@@ -29,7 +29,7 @@ import { marked, Renderer } from 'marked'
 import { mangle } from 'marked-mangle'
 // @ts-ignore
 import DOMPurify from 'dompurify'
-import UserAvatar from "../ui/userAvatar.vue";
+import UserAvatar from "../ui/user_avatar.vue";
 
 interface MessageProps {
   message: Message

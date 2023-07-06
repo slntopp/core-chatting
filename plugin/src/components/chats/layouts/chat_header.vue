@@ -38,8 +38,8 @@ import { NButton, NCard, NDivider, NDropdown, NIcon, NModal, NSpace, NText } fro
 import { Chat } from "../../../connect/cc/cc_pb";
 import { useCcStore } from "../../../store/chatting.ts";
 import { useRouter } from "vue-router";
-import ChatOptions from "../chatOptions.vue";
-import UserAvatar from "../../ui/userAvatar.vue";
+import ChatOptions from "../chat_options.vue";
+import UserAvatar from "../../ui/user_avatar.vue";
 import { PencilSharp as EditIcon } from '@vicons/ionicons5'
 
 interface ChatHeaderProps {

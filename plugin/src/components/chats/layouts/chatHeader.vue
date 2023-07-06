@@ -4,14 +4,18 @@
     <n-space justify="start" align="center">
       <user-avatar round :avatar="members.join(' ')"/>
       <n-text>{{ chat.topic ?? members }}</n-text>
+      <n-button text @click="startEditChat">
+        <n-icon size="20">
+          <edit-icon/>
+        </n-icon>
+      </n-button>
       <n-divider vertical/>
       <n-dropdown trigger="hover" :options="membersOptions">
-        <n-text>{{members.length}} members</n-text>
+        <n-text>{{ members.length }} members</n-text>
       </n-dropdown>
       <n-divider vertical/>
       <n-button type="info" size="small" ghost round @click="refresh">Refresh</n-button>
       <n-divider vertical/>
-      <n-button type="warning" size="small" @click="startEditChat">Edit</n-button>
       <n-button type="error" size="small" ghost round @click="deleteChat">Delete</n-button>
     </n-space>
   </template>
@@ -23,7 +27,7 @@
         size="huge"
         role="dialog"
         aria-modal="true"
-        style="width: 600px; "
+        style="width: 500px; height: 500px"
     >
       <chat-options @close="isEdit=false" is-edit :chat="chat"/>
     </n-card>
@@ -36,12 +40,13 @@
 
 <script setup lang="ts">
 import {computed, h, ref, toRefs} from "vue";
-import {NButton, NCard, NDivider, NDropdown, NModal, NSpace, NText} from "naive-ui";
+import {NButton, NCard, NDivider, NDropdown, NIcon, NModal, NSpace, NText} from "naive-ui";
 import {Chat} from "../../../connect/cc/cc_pb.ts";
 import {useCcStore} from "../../../store/chatting.ts";
 import {useRouter} from "vue-router";
 import ChatOptions from "../chatOptions.vue";
 import UserAvatar from "../../ui/userAvatar.vue";
+import {PencilSharp as EditIcon} from '@vicons/ionicons5'
 
 interface ChatHeaderProps {
   chat: Chat

@@ -191,15 +191,15 @@ async function handle_delete(msg: Message) {
   await store.delete_message(msg)
 }
 
-function scrollToBottom() {
+function scrollToBottom(smooth=false) {
   setTimeout(() => {
     if (!scrollbar.value) {
       console.warn('scrollbar not ready')
       return
     }
-
+    console.log(smooth?'smooth':undefined)
     nextTick(() => {
-      scrollbar.value.scrollTo({top: Number.MAX_SAFE_INTEGER})
+      scrollbar.value.scrollTo({top: Number.MAX_SAFE_INTEGER,behavior:smooth?'smooth':undefined})
     })
   }, 500)
 }
@@ -219,7 +219,12 @@ async function load_chat() {
 watch(chat, load_chat)
 load_chat()
 
-watch(messages, scrollToBottom)
+watch(messages, ()=>{
+  if(chat.value.meta){
+    chat.value.meta.unread=0;
+  }
+  scrollToBottom(true)
+},{deep:true})
 
 function handle_begin_edit() {
   for (let i = messages.value.length - 1; i >= 0; i--) {

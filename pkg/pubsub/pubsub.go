@@ -103,14 +103,14 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, func() error, error) {
 		nil,
 	)
 
-	queueTerminator := func() error {
-		_, err := s.ch.QueueDelete(q.Name, false, false, false)
-		return err
-	}
-
 	if err != nil {
 		log.Error("Failed to get queue", zap.Error(err))
 		return nil, nil, err
+	}
+
+	queueTerminator := func() error {
+		_, err := s.ch.QueueDelete(q.Name, false, false, false)
+		return err
 	}
 
 	err = s.ch.QueueBind(

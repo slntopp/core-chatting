@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"sync"
 
 	"github.com/slntopp/core-chatting/cc"
 
@@ -11,6 +12,7 @@ import (
 
 type MessagesController struct {
 	log *zap.Logger
+	sync.Mutex
 
 	db  driver.Database
 	col driver.Collection
@@ -80,6 +82,38 @@ func (c *MessagesController) Update(ctx context.Context, msg *cc.Message) (*cc.M
 	}
 
 	return msg, nil
+}
+
+const readMessageQuery = `
+LET message = Document(@message)
+LET new = PUSH(message.readers, @reader)
+UPDATE message with {readers: new} in @@messages RETURN NEW
+`
+
+func (c *MessagesController) Read(ctx context.Context, msg *cc.Message, reader string) (*cc.Message, error) {
+	log := c.log.Named("Read")
+	log.Debug("Req received")
+
+	c.Lock()
+	defer c.Unlock()
+	cur, err := c.db.Query(ctx, readMessageQuery, map[string]interface{}{
+		"message":   driver.NewDocumentID(MESSAGES_COLLECTION, msg.GetUuid()),
+		"reader":    reader,
+		"@messages": MESSAGES_COLLECTION,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var newMessage cc.Message
+
+	_, err = cur.ReadDocument(ctx, &newMessage)
+	if err != nil {
+		return nil, err
+	}
+
+	return &newMessage, nil
 }
 
 func (c *MessagesController) Delete(ctx context.Context, msg *cc.Message) (*cc.Message, error) {

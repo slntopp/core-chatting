@@ -10,7 +10,7 @@
         </n-icon>
       </n-button>
       <n-divider vertical />
-      <n-dropdown trigger="hover" :options="membersOptions">
+      <n-dropdown :render-option="renderOption" trigger="hover" :options="membersOptions">
         <n-text>{{ members.length }} members</n-text>
       </n-dropdown>
       <n-divider vertical />
@@ -58,10 +58,14 @@ const members = computed(() => {
   return chat!.value.users.map((uuid: string) => store.users.get(uuid)?.title ?? 'Unknown').concat(chat.value.admins.map((uuid: string) => store.users.get(uuid)?.title ?? 'Unknown'))
 })
 
+const renderOption=(op)=>{
+  return h('div',{style:{padding:'5px'}},op.node)
+}
+
 const membersOptions = computed(() => {
   return [...new Set(members.value)].map((m: any, i: number) => ({
     key: m as string,
-    label: m as string,
+    label:renderLabel(m),
     icon: renderIcon(members.value[i])
   }))
 })
@@ -71,7 +75,11 @@ const renderIcon = (icon: string) => {
     return h(UserAvatar, { round: true, size: "medium", avatar: icon })
   }
 }
-
+const renderLabel = (text: string) => {
+  return () => {
+    return h(NText, {style:{marginLeft:'10px'}},text)
+  }
+}
 const refresh = () => {
   if (chat) {
     store.get_messages(chat.value as Chat, false)

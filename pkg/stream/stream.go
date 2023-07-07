@@ -73,6 +73,13 @@ start_stream:
 
 	msgs, queueTerminator, err := s.ps.Sub(requestor)
 
+	defer func() {
+		queueError := queueTerminator()
+		if queueError != nil {
+			log.Error("Failed to delete queue", zap.Error(queueError))
+		}
+	}()
+
 	if err != nil {
 		return connect.NewError(connect.CodeInternal, err)
 	}
@@ -113,10 +120,6 @@ start_stream:
 				Type: cc.EventType_PING,
 			})
 			if err != nil {
-				queueError := queueTerminator()
-				if queueError != nil {
-					log.Error("Failed to delete queue", zap.Error(queueError))
-				}
 				return nil
 			}
 		}

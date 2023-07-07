@@ -56,7 +56,9 @@ func (c *UsersController) Resolve(ctx context.Context, uuids []string) ([]*cc.Us
 
 const getMembers = `
 FOR a in @@accounts
-	RETURN a
+  RETURN MERGE(a, {
+  	uuid: a._key
+  })
 `
 
 func (c *UsersController) GetMembers(ctx context.Context) ([]*cc.User, error) {

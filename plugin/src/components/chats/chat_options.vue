@@ -20,12 +20,12 @@
           </n-form-item>
 
           <n-form-item label="Members">
-            <n-select :render-tag="renderTag" v-model:value="chat.users" multiple :options="membersWithoutDublicates"
+            <n-select :render-tag="renderTag" v-model:value="chat.users" multiple :options="membersWithoutDuplicates"
               filterable />
           </n-form-item>
 
           <n-form-item label="Admins">
-            <n-select v-model:value="chat.admins" multiple :options="adminsWithoutDublicates" filterable />
+            <n-select v-model:value="chat.admins" multiple :options="adminsWithoutDuplicates" filterable />
           </n-form-item>
 
           <n-form-item label="Gateways">
@@ -64,7 +64,7 @@ import {
 
 import { useRouter } from 'vue-router';
 import { useCcStore } from "../../store/chatting.ts";
-import { Chat, Role } from "../../connect/cc/cc_pb";
+import {Chat, Defaults, Role, Users} from "../../connect/cc/cc_pb";
 
 interface ChatOptionsProps {
   isEdit?: boolean
@@ -101,8 +101,15 @@ const admins_options = ref<SelectOption[]>([])
 const gateways_options = ref<SelectOption[]>([])
 const members_options = ref<SelectOption[]>([])
 
-const adminsWithoutDublicates = computed(() => admins_options.value.filter(op => !chat.value.users.find(m => m === op.value)))
-const membersWithoutDublicates = computed(() => members_options.value.filter(op => !chat.value.admins.find(m => m === op.value)))
+const adminsWithoutDuplicates = computed(() => admins_options.value.map(op => {
+  const disabled=!!chat.value.users.find(m => m === op.value)
+  return {...op,disabled}
+}))
+
+const membersWithoutDuplicates = computed(() => members_options.value.map(op => {
+  const disabled=!!chat.value.admins.find(m => m === op.value)
+  return {...op,disabled}
+}))
 
 const me=computed(()=>store.me)
 
@@ -116,9 +123,10 @@ async function fetch_defaults() {
   try {
     isDefaultLoading.value = true
 
-    let result = await store.resolve();
+    const data=await Promise.all([store.get_members(),store.fetch_defaults()])
+    const members=data[0] as Users
+    const defaults=data[1] as Defaults
 
-    let defaults = await store.fetch_defaults();
     console.debug("Defaults", defaults)
 
     admins_options.value = defaults.admins.map(admin => {
@@ -136,7 +144,7 @@ async function fetch_defaults() {
     })
     chat.value.gateways = defaults.gateways
 
-    members_options.value = result.users.map(user => {
+    members_options.value = members.users.map(user => {
       return {
         label: user.title,
         value: user.uuid,

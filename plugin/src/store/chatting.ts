@@ -132,6 +132,10 @@ export const useCcStore = defineStore('cc', () => {
         me.value = await users_c.me(new Empty())
     }
 
+    function get_members():Promise<Users> {
+        return  users_c.getMembers(new Empty())
+    }
+
     const msg_handler = (event: Event) => {
         console.log('Received Message Event', event)
 
@@ -220,7 +224,7 @@ export const useCcStore = defineStore('cc', () => {
     })();
 
     return {
-        users, load_me, me,
+        users, load_me, me,get_members,
 
         chats, list_chats, create_chat, delete_chat, update_chat,
 

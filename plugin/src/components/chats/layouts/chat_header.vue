@@ -33,7 +33,7 @@
 //  - [ ] Make menu draggable (increase width)
 
 <script setup lang="ts">
-import { computed, h, ref, toRefs } from "vue";
+import {computed, h, ref, toRefs, VNode} from "vue";
 import { NButton, NCard, NDivider, NDropdown, NIcon, NModal, NSpace, NText } from "naive-ui";
 import { Chat } from "../../../connect/cc/cc_pb";
 import { useCcStore } from "../../../store/chatting.ts";
@@ -58,8 +58,8 @@ const members = computed(() => {
   return chat!.value.users.map((uuid: string) => store.users.get(uuid)?.title ?? 'Unknown').concat(chat.value.admins.map((uuid: string) => store.users.get(uuid)?.title ?? 'Unknown'))
 })
 
-const renderOption=(op)=>{
-  return h('div',{style:{padding:'5px'}},op.node)
+const renderOption=({ node}:{node:VNode})=>{
+  return h('div',{style:{padding:'5px'}},node)
 }
 
 const membersOptions = computed(() => {

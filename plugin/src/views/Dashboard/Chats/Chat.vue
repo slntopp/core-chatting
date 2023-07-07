@@ -6,7 +6,7 @@
 
     <n-scrollbar style="height: 80vh; max-width: 80%;" v-if="isMessageLoading || messages.length>0" ref="scrollbar">
       <template  v-if="isMessageLoading">
-          <mock-message v-for="(n,index) in 5" :key="index+chat.topic"/>
+          <mock-message v-for="(_,index) in 5" :key="index+ (chat?.topic || '')"/>
       </template>
 
       <n-list-item v-else v-for="message in messages" :key="message.uuid">
@@ -197,7 +197,6 @@ function scrollToBottom(smooth=false) {
       console.warn('scrollbar not ready')
       return
     }
-    console.log(smooth?'smooth':undefined)
     nextTick(() => {
       scrollbar.value.scrollTo({top: Number.MAX_SAFE_INTEGER,behavior:smooth?'smooth':undefined})
     })
@@ -220,7 +219,7 @@ watch(chat, load_chat)
 load_chat()
 
 watch(messages, ()=>{
-  if(chat.value.meta){
+  if(chat.value?.meta){
     chat.value.meta.unread=0;
   }
   scrollToBottom(true)

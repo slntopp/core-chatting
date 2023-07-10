@@ -12,32 +12,29 @@
       </n-text>
     </n-space>
 
-    <n-space vertical justify="start" style="padding-left: 16px; padding-top: 10%;">
-      <n-space justify="center">
-        <n-form :model="chat" ref="form" :rules="rules" label-placement="left">
-          <n-form-item label="Topic">
-            <n-input v-model:value="chat.topic" clearable placeholder="What are we chatting about?"/>
-          </n-form-item>
+    <n-space vertical justify="start" style="padding-left: 16px; padding-top: 10%;max-width: 800px;margin: auto">
+      <n-form :model="chat" ref="form" :rules="rules" label-placement="left">
+        <n-form-item label="Topic" label-align="start" label-width="75">
+          <n-input v-model:value="chat.topic" clearable placeholder="What are we chatting about?"/>
+        </n-form-item>
 
-          <n-form-item label="Members">
-            <member-select v-model:value="chat.users" :options="membersWithoutDuplicates"/>
-          </n-form-item>
+        <n-form-item label="Members" label-align="start" label-width="75">
+          <member-select v-model:value="chat.users" :options="membersWithoutDuplicates"/>
+        </n-form-item>
 
-          <n-form-item label="Admins">
-            <n-select v-model:value="chat.admins" multiple :options="adminsWithoutDuplicates" filterable/>
-          </n-form-item>
+        <n-form-item label="Admins" label-align="start" label-width="75">
+          <n-select v-model:value="chat.admins" multiple :options="adminsWithoutDuplicates" filterable/>
+        </n-form-item>
 
-          <n-form-item label="Gateways">
-            <n-select v-model:value="chat.gateways" multiple :options="gateways_options" filterable/>
-          </n-form-item>
-        </n-form>
-      </n-space>
-
-      <n-space justify="space-around" style="width: 80%;">
-        <n-button :loading="isEditLoading" ghost type="success" @click="submit">
-          {{ isEdit ? 'Edit chat' : 'Start chat' }}
-        </n-button>
-      </n-space>
+        <n-form-item label="Gateways" label-align="start" label-width="75">
+          <n-select v-model:value="chat.gateways" multiple :options="gateways_options" filterable/>
+        </n-form-item>
+        <n-space justify="end">
+          <n-button :loading="isEditLoading" ghost type="success" @click="submit">
+            {{ isEdit ? 'Edit chat' : 'Start chat' }}
+          </n-button>
+        </n-space>
+      </n-form>
     </n-space>
   </template>
   <n-spin style="width: 100%;height: 100%; margin: auto" size="large" v-else></n-spin>

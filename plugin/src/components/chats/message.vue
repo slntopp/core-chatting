@@ -38,6 +38,7 @@ interface MessageProps {
 const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
 const PencilOutline = defineAsyncComponent(() => import('@vicons/ionicons5/PencilOutline'));
 const TrashOutline = defineAsyncComponent(() => import('@vicons/ionicons5/TrashOutline'));
+const EyeOutline = defineAsyncComponent(() => import('@vicons/ionicons5/EyeOutline'));
 const ReviewOutline = defineAsyncComponent(() => import('../../assets/icons/ReviewOutline.svg'));
 
 
@@ -63,7 +64,6 @@ const options = computed(() => {
 
   const label = (text: string) => () => h('b', {}, text)
   const icon = (component: any) => () => h(NIcon, {size: 24, component: component})
-
   if (store.chats.get(message.value.chat!)?.role == Role.ADMIN) {
     result.push({
       label: label(message.value.underReview ? 'Approve' : 'Review'), key: 'approve',
@@ -88,6 +88,12 @@ const options = computed(() => {
       icon: icon(TrashOutline)
     })
   }
+  result.push({
+    label: label('Readers'),
+    icon: icon(EyeOutline),
+    key: 'readers',
+    children: message.value!.readers.map(r => ({key: r, label: store.users.get(r)?.title ?? 'Unknown'}))
+  })
 
   return result
 })

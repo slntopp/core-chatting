@@ -85,5 +85,7 @@ func (c *UsersController) GetMembers(ctx context.Context) ([]*cc.User, error) {
 		members = append(members, &member)
 	}
 
+	log.Debug("Len", zap.Int("len", len(members)))
+
 	return members, nil
 }

@@ -121,9 +121,9 @@ FILTER @requestor in c.admins || @requestor in c.users
 	LET message = LAST(FOR m in @@messages FILTER m.chat == c._key SORT m.sent ASC RETURN m)
 	LET unread = LENGTH(
 		FOR m in @@messages 
+			FILTER m.chat == c._key
 			FILTER @requestor in m.readers
 			FILTER m.sender != @requestor
-			FILTER m.chat == c._key
 			RETURN m
 		)
 	RETURN MERGE(c, {

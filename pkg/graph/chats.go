@@ -122,7 +122,7 @@ FILTER @requestor in c.admins || @requestor in c.users
 	LET unread = LENGTH(
 		FOR m in @@messages 
 			FILTER m.chat == c._key
-			FILTER @requestor in m.readers
+			FILTER @requestor not in m.readers
 			FILTER m.sender != @requestor
 			RETURN m
 		)

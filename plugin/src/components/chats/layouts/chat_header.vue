@@ -10,7 +10,7 @@
         </n-icon>
       </n-button>
       <n-divider vertical/>
-      <members-dropdown @delete="deleteMember" :members="members"/>
+      <members-dropdown @add="startAddMembers" @delete="deleteMember" :members="members"/>
       <n-divider vertical/>
       <n-button type="info" size="small" ghost round @click="refresh">Refresh</n-button>
       <n-divider vertical/>
@@ -24,6 +24,19 @@
       <chat-options @close="isEdit = false" is-edit :chat="chat"/>
     </n-card>
   </n-modal>
+
+  <n-modal v-model:show="isAddDialog">
+    <n-card  title="Add members" :bordered="false" size="huge" role="dialog" aria-modal="true"
+            style="width: 400px;">
+      <template v-if="!isDefaultLoading">
+        <member-select v-model:value="chatWithNewMembers!.users" :options="availableMembersOptions"/>
+        <n-space style="margin-top: 10px" vertical align="end" justify="end">
+          <n-button :loading="isAddSaveLoading" @click="saveMembers">Save</n-button>
+        </n-space>
+      </template>
+      <n-spin style="width: 100%;height: 100%; margin: auto" size="large" v-else></n-spin>
+    </n-card>
+  </n-modal>
 </template>
 
 // TODO:
@@ -32,7 +45,7 @@
 
 <script setup lang="ts">
 import {computed,  ref, toRefs} from "vue";
-import {NButton, NCard, NDivider, NIcon, NModal, NSpace, NText} from "naive-ui";
+import {NButton, NCard, NDivider, NIcon, NModal, NSpace, NSpin, NText, SelectOption} from "naive-ui";
 import {Chat} from "../../../connect/cc/cc_pb";
 import {useCcStore} from "../../../store/chatting.ts";
 import {useRouter} from "vue-router";
@@ -40,6 +53,8 @@ import ChatOptions from "../chat_options.vue";
 import UserAvatar from "../../ui/user_avatar.vue";
 import {PencilSharp as EditIcon} from '@vicons/ionicons5'
 import MembersDropdown from "../../users/membersDropdown.vue";
+import useDefaults from "../../../hooks/useDefaults.ts";
+import MemberSelect from "../../users/member_select.vue";
 
 interface ChatHeaderProps {
   chat: Chat
@@ -50,12 +65,18 @@ const {chat} = toRefs(props)
 
 const store = useCcStore()
 const router = useRouter()
+const {fetch_defaults,isDefaultLoading,users,admins}=useDefaults()
 
 const isEdit = ref<boolean>(false)
+const isAddDialog = ref<boolean>(false)
+const chatWithNewMembers = ref<Chat>()
+const availableMembersOptions = ref<SelectOption[]>([])
+const isAddSaveLoading = ref<boolean>(false)
 
 const members = computed(() => {
   return chat!.value.users.map((uuid: string) => store.users.get(uuid)).concat(chat.value.admins.map((uuid: string) => store.users.get(uuid)))
 })
+const me=computed(()=>store.me)
 
 const refresh = () => {
   if (chat) {
@@ -75,8 +96,37 @@ const deleteMember=(uuid:string)=>{
   store.update_chat({...chat.value,users})
 }
 
+const fetchAvailableUsers=async ()=>{
+  await fetch_defaults()
+  availableMembersOptions.value = users.value.map(user => {
+    return {
+      label: user.title,
+      value: user.uuid,
+      disabled:me.value.uuid!==user.uuid && admins.value.includes(user.uuid),
+    }
+  })
+}
+
+const startAddMembers=()=>{
+  if(!users.value.length){
+    fetchAvailableUsers()
+  }
+  chatWithNewMembers.value={...chat.value}
+  isAddDialog.value=true
+}
+
 const startEditChat = () => {
   isEdit.value = true
+}
+
+const saveMembers=async ()=>{
+  try{
+    isAddSaveLoading.value=true
+    await store.update_chat(chatWithNewMembers.value as Chat)
+    isAddDialog.value=false
+  }finally {
+    isAddSaveLoading.value=false
+  }
 }
 </script>
 

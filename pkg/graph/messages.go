@@ -86,7 +86,7 @@ func (c *MessagesController) Update(ctx context.Context, msg *cc.Message) (*cc.M
 
 const readMessageQuery = `
 LET message = Document(@message)
-LET new = PUSH(message.readers, @reader)
+LET new = UNIQUE(PUSH(message.readers, @reader))
 UPDATE message with {readers: new} in @@messages RETURN NEW
 `
 

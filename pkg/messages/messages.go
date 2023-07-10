@@ -47,12 +47,13 @@ func (s *MessagesServer) Get(ctx context.Context, req *connect.Request[cc.Chat])
 		return nil, err
 	}
 
-	for _, msg := range messages {
-		if !core.In(requestor, msg.Readers) {
-			_, err := s.msgCtrl.Read(ctx, msg, requestor)
+	for index := range messages {
+		if !core.In(requestor, messages[index].Readers) {
+			newMessage, err := s.msgCtrl.Read(ctx, messages[index], requestor)
 			if err != nil {
 				log.Error("Failed to update reader", zap.Error(err))
 			}
+			messages[index] = newMessage
 		}
 	}
 

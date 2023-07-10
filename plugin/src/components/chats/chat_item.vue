@@ -40,7 +40,10 @@ const members = computed(() => users.value.concat(admins.value))
 
 const sub = computed(() => {
   if (chat.value.meta && chat.value.meta.lastMessage)
-    return chat.value.meta.lastMessage!.content.length > 20 ? chat.value.meta!.lastMessage!.content.slice(0, 16) + '...' : chat.value.meta!.lastMessage!.content
+  {
+    const lastMessage= chat.value.meta.lastMessage!.content.length > 20 ? chat.value.meta!.lastMessage!.content.slice(0, 16) + '...' : chat.value.meta!.lastMessage!.content
+    return lastMessage.replace(/(<([^>]+)>)/ig,"")
+  }
 
   return "No messages yet"
 })

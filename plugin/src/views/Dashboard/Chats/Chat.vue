@@ -110,7 +110,7 @@ import {Chat, Kind, Message, Role} from '../../../connect/cc/cc_pb';
 import {ConnectError} from '@bufbuild/connect';
 import ChatHeader from "../../../components/chats/layouts/chat_header.vue";
 import UserAvatar from "../../../components/ui/user_avatar.vue";
-import MockMessage from "../../../components/chats/mockMessage.vue";
+import MockMessage from "../../../components/chats/mock_message.vue";
 
 const SendOutline = defineAsyncComponent(() => import('@vicons/ionicons5/SendOutline'));
 const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));

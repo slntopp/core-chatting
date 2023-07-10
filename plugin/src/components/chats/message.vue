@@ -5,15 +5,15 @@
   </render>
 
   <n-dropdown placement="bottom-start" trigger="manual" :x="x" :y="y" :options="options" :show="show"
-    @clickoutside=" show = false" @select="handle_select" />
+              @clickoutside=" show = false" @select="handle_select"/>
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, h, nextTick, ref, toRefs } from 'vue';
-import { NButton, NDivider, NDropdown, NGi, NGrid, NH2, NIcon, NSpace, NText, NTooltip, useThemeVars, } from 'naive-ui'
+import {computed, defineAsyncComponent, h, nextTick, ref, toRefs} from 'vue';
+import {NButton, NDivider, NDropdown, NGi, NGrid, NH2, NIcon, NSpace, NText, NTooltip, useThemeVars,} from 'naive-ui'
 
-import { Kind, Message, Role } from '../../connect/cc/cc_pb'
-import { useCcStore } from '../../store/chatting';
+import {Kind, Message, Role} from '../../connect/cc/cc_pb'
+import {useCcStore} from '../../store/chatting';
 
 import hljs from 'highlight.js';
 import javascript from 'highlight.js/lib/languages/javascript'
@@ -23,10 +23,10 @@ import xml from 'highlight.js/lib/languages/xml'
 import json from 'highlight.js/lib/languages/json'
 import markdown from 'highlight.js/lib/languages/markdown'
 
-import { marked, Renderer } from 'marked'
+import {marked, Renderer} from 'marked'
 
 // @ts-ignore
-import { mangle } from 'marked-mangle'
+import {mangle} from 'marked-mangle'
 // @ts-ignore
 import DOMPurify from 'dompurify'
 import UserAvatar from "../ui/user_avatar.vue";
@@ -42,7 +42,7 @@ const ReviewOutline = defineAsyncComponent(() => import('../../assets/icons/Revi
 
 
 const props = defineProps<MessageProps>()
-const { message } = toRefs(props)
+const {message} = toRefs(props)
 
 const emit = defineEmits(['approve', 'convert', 'edit', 'delete'])
 
@@ -62,7 +62,7 @@ const options = computed(() => {
   let result = []
 
   const label = (text: string) => () => h('b', {}, text)
-  const icon = (component: any) => () => h(NIcon, { size: 24, component: component })
+  const icon = (component: any) => () => h(NIcon, {size: 24, component: component})
 
   if (store.chats.get(message.value.chat!)?.role == Role.ADMIN) {
     result.push({
@@ -123,7 +123,7 @@ function show_dropdown(e: MouseEvent) {
 function avatar() {
 
   let elements = [
-    h(UserAvatar, { round: true, size: 64, avatar: sender() })
+    h(UserAvatar, {round: true, size: 64, avatar: sender()})
   ]
 
   if (message.value.kind == Kind.ADMIN_ONLY) {
@@ -134,7 +134,7 @@ function avatar() {
     }))
   }
 
-  return h(NSpace, { vertical: true, justify: 'start', align: 'center' }, () => elements)
+  return h(NSpace, {vertical: true, justify: 'start', align: 'center'}, () => elements)
 }
 
 const container_style = computed(() => {
@@ -145,7 +145,7 @@ const container_style = computed(() => {
   }
 
   if (message.value.underReview)
-    style = { ...style, backgroundColor: theme.value.infoColor + '40', border: `1px solid ${theme.value.infoColor}` }
+    style = {...style, backgroundColor: theme.value.infoColor + '40', border: `1px solid ${theme.value.infoColor}`}
   else if (message.value.kind == Kind.ADMIN_ONLY)
     style = {
       ...style,
@@ -177,9 +177,9 @@ const renderer = new Renderer()
 renderer.code = (code, language) => {
   if (!language) language = 'plaintext'
 
-  return `<div class="code"><code>${hljs.highlight(code, { language }).value}</code></div>`
+  return `<div class="code"><code>${hljs.highlight(code, {language}).value}</code></div>`
 }
-marked.setOptions({ renderer })
+marked.setOptions({renderer})
 
 function content() {
   const parsed = marked.parse(message.value.content)
@@ -221,43 +221,43 @@ function timestamp() {
   result += getRelativeTime(Number(message.value.edited ? message.value.edited : message.value.sent))
 
   let tooltip = [
-    h(NDivider, { titlePlacement: 'left' }, () => 'Sent'),
+    h(NDivider, {titlePlacement: 'left'}, () => 'Sent'),
     h(NText, {}, () => new Date(Number(message.value.sent)).toString())
   ]
 
   if (message.value.edited) {
     tooltip.push(
-      h(NDivider, { titlePlacement: 'left' }, () => 'Edited'),
-      h(NText, {}, () => new Date(Number(message.value.edited)).toString())
+        h(NDivider, {titlePlacement: 'left'}, () => 'Edited'),
+        h(NText, {}, () => new Date(Number(message.value.edited)).toString())
     )
   }
 
   return h(NTooltip, {
     placement: 'top'
   }, {
-    trigger: () => h(NText, { depth: 3 }, () => result),
+    trigger: () => h(NText, {depth: 3}, () => result),
     default: () => tooltip
   })
 }
 
-function render(_props: any, { slots }: any) {
+function render(_props: any, {slots}: any) {
 
   const is_sender = message.value.sender == store.me.uuid
 
   const avatar_item = h(NGi, {
-    span: 3,
-  },
-    () => avatar()
+        span: 3,
+      },
+      () => avatar()
   )
 
 
   let title = [
     h(
-      NH2,
-      {
-        style: "margin: 0",
-      },
-      () => h(NText, {}, () => sender())
+        NH2,
+        {
+          style: "margin: 0",
+        },
+        () => h(NText, {}, () => sender())
     ),
     timestamp()
   ]
@@ -276,18 +276,18 @@ function render(_props: any, { slots }: any) {
 
   let elements = [
     avatar_item,
-    h(NGi, { span: 21 },
-      () => h(
-        NSpace,
-        {
-          vertical: true,
-          align: is_sender ? "end" : "start",
-        },
-        () => [
-          h(NSpace, { align: 'center' }, () => title),
-          (slots as any).default(),
-        ]
-      )
+    h(NGi, {span: 21},
+        () => h(
+            NSpace,
+            {
+              vertical: true,
+              align: is_sender ? "end" : "start",
+            },
+            () => [
+              h(NSpace, {align: 'center'}, () => title),
+              (slots as any).default(),
+            ]
+        )
     ),
   ]
 
@@ -296,12 +296,12 @@ function render(_props: any, { slots }: any) {
   }
 
   return h(
-    NGrid,
-    {
-      xGap: 12,
-      style: container_style.value,
-    },
-    () => elements
+      NGrid,
+      {
+        xGap: 12,
+        style: container_style.value,
+      },
+      () => elements
   );
 }
 </script>

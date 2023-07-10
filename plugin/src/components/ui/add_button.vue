@@ -1,5 +1,6 @@
 <template>
-  <n-button :bordered="false" @click="emit('click')"><slot></slot>
+  <n-button :bordered="false" @click="emit('click')">
+    <slot></slot>
     <n-icon style="margin-left: 5px" size="20">
       <add-icon></add-icon>
     </n-icon>
@@ -7,10 +8,10 @@
 </template>
 
 <script setup lang="ts">
-import {NButton,NIcon} from "naive-ui";
+import {NButton, NIcon} from "naive-ui";
 import {AddCircle as AddIcon} from '@vicons/ionicons5'
 
-const emit=defineEmits(['click'])
+const emit = defineEmits(['click'])
 </script>
 
 <style scoped>

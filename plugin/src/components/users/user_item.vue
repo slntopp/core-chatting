@@ -2,7 +2,7 @@
   <div class="user__item">
     <div class="user__data">
       <user-avatar class="avatar" round :avatar="user.title"/>
-      <n-text>{{user.title}}</n-text>
+      <n-text>{{ user.title }}</n-text>
     </div>
     <div class="actions">
       <n-button text @click="emit('delete')">
@@ -20,31 +20,34 @@ import userAvatar from '../ui/user_avatar.vue'
 import {User} from "../../connect/cc/cc_pb.ts";
 import {Trash as TrashIcon} from '@vicons/ionicons5'
 
-interface UserItemProps{
-  user:User
+interface UserItemProps {
+  user: User
 }
 
-const props=defineProps<UserItemProps>()
-const emit=defineEmits(['delete'])
+const props = defineProps<UserItemProps>()
+const emit = defineEmits(['delete'])
 </script>
 
 <style scoped lang="scss">
-  .user__item{
+.user__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+
+  .user__data {
     display: flex;
-    justify-content: space-between;
+    justify-content: start;
     align-items: center;
-    padding: 5px;
-    .user__data{
-      display: flex;
-      justify-content: start;
-      align-items: center;
-      .avatar{
-        margin-right: 10px;
-      }
-    }
-    .actions{
-      margin-left: 5px;
-      margin-right: 5px;
+
+    .avatar {
+      margin-right: 10px;
     }
   }
+
+  .actions {
+    margin-left: 5px;
+    margin-right: 5px;
+  }
+}
 </style>

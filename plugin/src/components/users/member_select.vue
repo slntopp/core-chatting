@@ -1,5 +1,6 @@
 <template>
-  <n-select :render-tag="renderTag" :value="value" @update-value="emit('update:value',$event)" multiple :options="options"
+  <n-select :render-tag="renderTag" :value="value" @update-value="emit('update:value',$event)" multiple
+            :options="options"
             filterable/>
 </template>
 

@@ -23,7 +23,7 @@ const emit = defineEmits(['delete', 'add'])
 const membersOptions = computed(() => {
   const membersOptions = [...new Set(members.value)].map((m) => ({
     key: m.uuid,
-    extra: m,
+    extra: m as any,
     label: m.title || 'Unknown',
   }))
   membersOptions.push({key: 'add', label: 'add', extra: {} as User})
@@ -34,7 +34,7 @@ const renderOption = ({option}: { option: DropdownOption }) => {
   if (option.key === 'add') {
     return h(AddButton, {style: {width: '100%'}, onClick: addMember}, 'Add')
   }
-  return h(memberItem, {user: option.extra, onDelete: () => emit('delete', option.key)})
+  return h(memberItem as any, {user: option.extra, onDelete: () => emit('delete', option.key)})
 }
 
 const addMember = () => {

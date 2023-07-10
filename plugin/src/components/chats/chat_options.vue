@@ -14,19 +14,19 @@
 
     <n-space vertical justify="start" style="padding-left: 16px; padding-top: 10%;max-width: 800px;margin: auto">
       <n-form :model="chat" ref="form" :rules="rules" label-placement="left">
-        <n-form-item label="Topic" label-align="start" label-width="75">
+        <n-form-item label="Topic" label-align="left" label-width="75">
           <n-input v-model:value="chat.topic" clearable placeholder="What are we chatting about?"/>
         </n-form-item>
 
-        <n-form-item label="Members" label-align="start" label-width="75">
+        <n-form-item label="Members" label-align="left" label-width="75">
           <member-select v-model:value="chat.users" :options="membersWithoutDuplicates"/>
         </n-form-item>
 
-        <n-form-item label="Admins" label-align="start" label-width="75">
+        <n-form-item label="Admins" label-align="left" label-width="75">
           <n-select v-model:value="chat.admins" multiple :options="adminsWithoutDuplicates" filterable/>
         </n-form-item>
 
-        <n-form-item label="Gateways" label-align="start" label-width="75">
+        <n-form-item label="Gateways" label-align="left" label-width="75">
           <n-select v-model:value="chat.gateways" multiple :options="gateways_options" filterable/>
         </n-form-item>
         <n-space justify="end">

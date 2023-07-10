@@ -1,17 +1,16 @@
 <template>
   <n-select :consistent-menu-width="false" :render-tag="renderTag" :value="value"
             @update-value="emit('update:value',$event)" multiple
-            :options="options"
+            :options="props.options"
             filterable/>
 </template>
 
 <script setup lang="ts">
-import {NSelect, NTag, SelectRenderTag} from "naive-ui";
+import {NSelect, NTag, SelectOption, SelectRenderTag} from "naive-ui";
 import {h} from "vue";
-import {User} from "../../connect/cc/cc_pb.ts";
 
 interface MemberSelectProps {
-  options: User[]
+  options: SelectOption[]
   value: string[]
 }
 

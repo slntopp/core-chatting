@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import {computed, ref, toRefs} from "vue";
 import {NButton, NCard, NDivider, NIcon, NModal, NSpace, NSpin, NText, SelectOption} from "naive-ui";
-import {Chat} from "../../../connect/cc/cc_pb";
+import {Chat, User} from "../../../connect/cc/cc_pb";
 import {useCcStore} from "../../../store/chatting.ts";
 import {useRouter} from "vue-router";
 import ChatOptions from "../chat_options.vue";
@@ -74,7 +74,7 @@ const availableMembersOptions = ref<SelectOption[]>([])
 const isAddSaveLoading = ref<boolean>(false)
 
 const members = computed(() => {
-  return chat!.value.users.map((uuid: string) => store.users.get(uuid)).concat(chat.value.admins.map((uuid: string) => store.users.get(uuid)))
+  return chat!.value.users.map((uuid: string) => store.users.get(uuid) as User).concat(chat.value.admins.map((uuid: string) => store.users.get(uuid)  as User))
 })
 const me = computed(() => store.me)
 
@@ -93,7 +93,7 @@ const deleteChat = async () => {
 
 const deleteMember = (uuid: string) => {
   const users = chat.value.users.filter((u) => u !== uuid)
-  store.update_chat({...chat.value, users})
+  store.update_chat({...chat.value, users} as Chat)
 }
 
 const fetchAvailableUsers = async () => {
@@ -111,7 +111,7 @@ const startAddMembers = () => {
   if (!users.value.length) {
     fetchAvailableUsers()
   }
-  chatWithNewMembers.value = {...chat.value}
+  chatWithNewMembers.value = {...chat.value} as Chat
   isAddDialog.value = true
 }
 

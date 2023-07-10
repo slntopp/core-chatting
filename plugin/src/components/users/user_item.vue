@@ -1,8 +1,8 @@
 <template>
   <div class="user__item">
     <div class="user__data">
-      <user-avatar class="avatar" round :avatar="user.title"/>
-      <n-text>{{ user.title }}</n-text>
+      <user-avatar class="avatar" round :avatar="props.user.title"/>
+      <n-text>{{ props.user.title }}</n-text>
     </div>
     <div class="actions">
       <n-button text @click="emit('delete')">

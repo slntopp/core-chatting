@@ -229,11 +229,13 @@ func handleNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub, msg *
 	if msg.Kind == cc.Kind_DEFAULT && !msg.UnderReview {
 		for _, user := range chat.GetUsers() {
 			go ps.Pub(ctx, user, event)
+			go ps.PubGateway(ctx, user, event, chat.GetGateways())
 		}
 	}
 
 	for _, admin := range chat.GetAdmins() {
 		go ps.Pub(ctx, admin, event)
+		go ps.PubGateway(ctx, admin, event, chat.GetGateways())
 	}
 
 }

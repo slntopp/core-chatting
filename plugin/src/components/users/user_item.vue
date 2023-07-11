@@ -1,10 +1,10 @@
 <template>
   <div class="user__item">
     <div class="user__data">
-      <user-avatar class="avatar" round :avatar="props.user.title"/>
-      <n-text>{{ props.user.title }}</n-text>
+      <user-avatar class="avatar" round :avatar="user.title"/>
+      <n-text>{{ user.title }}</n-text>
     </div>
-    <div class="actions">
+    <div class="actions" v-if="actions">
       <n-button text @click="emit('delete')">
         <n-icon size="20">
           <trash-icon/>
@@ -22,6 +22,7 @@ import {Trash as TrashIcon} from '@vicons/ionicons5'
 
 interface UserItemProps {
   user: User
+  actions?:boolean
 }
 
 const props = defineProps<UserItemProps>()

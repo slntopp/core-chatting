@@ -34,7 +34,7 @@ const renderOption = ({option}: { option: DropdownOption }) => {
   if (option.key === 'add') {
     return h(AddButton, {style: {width: '100%'}, onClick: addMember}, 'Add')
   }
-  return h(memberItem as any, {user: option.extra, onDelete: () => emit('delete', option.key)})
+  return h(memberItem as any, {user: option.extra, onDelete: () => emit('delete', option.key),actions:true})
 }
 
 const addMember = () => {

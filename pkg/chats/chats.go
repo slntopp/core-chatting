@@ -153,4 +153,5 @@ func handleNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub, chat 
 		go ps.Pub(ctx, admin, event)
 	}
 
+	go ps.PubGateway(ctx, event, chat.GetGateways())
 }

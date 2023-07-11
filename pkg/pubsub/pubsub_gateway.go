@@ -9,34 +9,12 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func (s *PubSub) PubGateway(ctx context.Context, id string, event *cc.Event, gateways []string) {
-	log := s.log.Named(fmt.Sprintf("Pub-Gateway.%s", id))
+func (s *PubSub) PubGateway(ctx context.Context, event *cc.Event, gateways []string) {
+	log := s.log.Named(fmt.Sprintf("Pub-Gateway"))
 	for _, gateway := range gateways {
-		exchangeName := fmt.Sprintf("cc.gateway.%s", gateway)
-
-		err := s.ch.ExchangeDeclare(
-			exchangeName,
-			"topic",
-			true,
-			false,
-			false,
-			false,
-			nil,
-		)
-		if err != nil {
-			log.Error("failed to create exchange", zap.Error(err))
-			return
-		}
-
-		queueName := fmt.Sprintf("cc.gateway.%s.%s", gateway, id)
+		queueName := fmt.Sprintf("cc.gateway.%s", gateway)
 
 		queue, err := s.ch.QueueDeclare(queueName, true, false, true, false, nil)
-		if err != nil {
-			log.Error("failed to create exchange", zap.Error(err))
-			return
-		}
-
-		err = s.ch.QueueBind(queue.Name, id, exchangeName, false, nil)
 		if err != nil {
 			log.Error("failed to create exchange", zap.Error(err))
 			return
@@ -52,8 +30,45 @@ func (s *PubSub) PubGateway(ctx context.Context, id string, event *cc.Event, gat
 
 		err = s.ch.PublishWithContext(
 			ctx,
-			exchangeName,
-			id,
+			"",
+			queue.Name,
+			false,
+			false,
+			amqp091.Publishing{
+				ContentType: "text/plain",
+				Body:        marshal,
+			},
+		)
+		if err != nil {
+			log.Error("Failed to publish event", zap.Error(err))
+			return
+		}
+	}
+}
+
+func (s *PubSub) PubGatewayChat(ctx context.Context, chatId string, event *cc.Event, gateways []string) {
+	log := s.log.Named(fmt.Sprintf("Pub-Gateway.%s", chatId))
+	for _, gateway := range gateways {
+		queueName := fmt.Sprintf("cc.gateway.%s.chats.%s", gateway, chatId)
+
+		queue, err := s.ch.QueueDeclare(queueName, true, false, true, false, nil)
+		if err != nil {
+			log.Error("failed to create exchange", zap.Error(err))
+			return
+		}
+
+		marshal, err := proto.Marshal(event)
+		if err != nil {
+			log.Error("Failed to marshal event", zap.Error(err))
+			return
+		}
+
+		log.Debug("Publish event", zap.Any("event", event))
+
+		err = s.ch.PublishWithContext(
+			ctx,
+			"",
+			queue.Name,
 			false,
 			false,
 			amqp091.Publishing{

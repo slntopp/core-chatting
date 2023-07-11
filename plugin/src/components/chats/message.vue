@@ -12,7 +12,7 @@
 import {computed, defineAsyncComponent, h, nextTick, ref, toRefs} from 'vue';
 import {NButton, NDivider, NDropdown, NGi, NGrid, NH2, NIcon, NSpace, NText, NTooltip, useThemeVars,} from 'naive-ui'
 
-import {Kind, Message, Role} from '../../connect/cc/cc_pb'
+import {Kind, Message, Role, User} from '../../connect/cc/cc_pb'
 import {useCcStore} from '../../store/chatting';
 
 import hljs from 'highlight.js';
@@ -30,6 +30,7 @@ import {mangle} from 'marked-mangle'
 // @ts-ignore
 import DOMPurify from 'dompurify'
 import UserAvatar from "../ui/user_avatar.vue";
+import UserItem from "../users/user_item.vue";
 
 interface MessageProps {
   message: Message
@@ -92,7 +93,7 @@ const options = computed(() => {
     label: label('Readers'),
     icon: icon(EyeOutline),
     key: 'readers',
-    children: message.value!.readers.map(r => ({key: r, label: store.users.get(r)?.title ?? 'Unknown'}))
+    children: message.value!.readers.map(r => ({key: r,type: 'render', render:()=>h(UserItem,{user: store.users.get(r) as User,actions:false})}))
   })
 
   return result

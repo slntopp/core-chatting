@@ -200,7 +200,7 @@ function scrollToBottom(smooth=false) {
     nextTick(() => {
       scrollbar.value.scrollTo({top: Number.MAX_SAFE_INTEGER,behavior:smooth?'smooth':undefined})
     })
-  }, 500)
+  }, 0)
 }
 
 async function load_chat() {

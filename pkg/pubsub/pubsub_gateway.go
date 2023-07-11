@@ -14,7 +14,7 @@ func (s *PubSub) PubGateway(ctx context.Context, event *cc.Event, gateways []str
 	for _, gateway := range gateways {
 		queueName := fmt.Sprintf("cc.gateway.%s", gateway)
 
-		queue, err := s.ch.QueueDeclare(queueName, true, false, true, false, nil)
+		queue, err := s.ch.QueueDeclare(queueName, true, false, false, false, nil)
 		if err != nil {
 			log.Error("failed to create exchange", zap.Error(err))
 			return
@@ -51,7 +51,7 @@ func (s *PubSub) PubGatewayChat(ctx context.Context, chatId string, event *cc.Ev
 	for _, gateway := range gateways {
 		queueName := fmt.Sprintf("cc.gateway.%s.chats.%s", gateway, chatId)
 
-		queue, err := s.ch.QueueDeclare(queueName, true, false, true, false, nil)
+		queue, err := s.ch.QueueDeclare(queueName, true, false, false, false, nil)
 		if err != nil {
 			log.Error("failed to create exchange", zap.Error(err))
 			return

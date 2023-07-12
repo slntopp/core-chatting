@@ -1,28 +1,33 @@
 <template>
-  <n-layout-sider>
-    <n-scrollbar style="height: 90vh">
-      <n-list hoverable clickable>
-        <template #header>
-          <n-space justify="center" align="center" style="height: 5vh">
-            <n-button ghost type="success" @click="router.push({ name: 'Start Chat' })">
-              <template #icon>
-                <n-icon :component="ChatbubbleEllipsesOutline"/>
-              </template>
-              Start Chat
-            </n-button>
-          </n-space>
-        </template>
-        <chat-item v-for="chat in chats" :uuid="chat.uuid" :chat="chat"/>
-      </n-list>
-    </n-scrollbar>
-  </n-layout-sider>
-  <n-layout-content>
-    <router-view/>
-  </n-layout-content>
+  <div id="left">
+    <n-layout-sider>
+      <n-scrollbar style="height: 100vh">
+        <n-list hoverable clickable>
+          <template #header>
+            <n-space justify="center" align="center" style="height: 5vh">
+              <n-button ghost type="success" @click="router.push({ name: 'Start Chat' })">
+                <template #icon>
+                  <n-icon :component="ChatbubbleEllipsesOutline"/>
+                </template>
+                Start Chat
+              </n-button>
+            </n-space>
+          </template>
+          <chat-item v-for="chat in chats" :uuid="chat.uuid" :chat="chat"/>
+        </n-list>
+      </n-scrollbar>
+    </n-layout-sider>
+  </div>
+  <div id="separator"></div>
+  <div id="right">
+    <n-layout-content >
+      <router-view/>
+    </n-layout-content>
+  </div>
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent} from 'vue';
+import {computed, defineAsyncComponent, onMounted} from 'vue';
 import {NButton, NIcon, NLayoutContent, NLayoutSider, NList, NScrollbar, NSpace,} from 'naive-ui';
 
 import {useCcStore} from '../../store/chatting.ts';
@@ -39,6 +44,48 @@ const router = useRouter();
 async function sync() {
   await store.list_chats();
 }
+
+function dragElement(element:any, direction:string='H') {
+  let md:any;
+  const first = document.getElementById("left");
+  const second = document.getElementById("right");
+  element.onmousedown = onMouseDown;
+
+  function onMouseDown(e:any) {
+    md = {
+      e,
+      offsetLeft: element.offsetLeft,
+      offsetTop: element.offsetTop,
+      firstWidth: first!.offsetWidth,
+      secondWidth: second!.offsetWidth
+    };
+
+    document.onmousemove = onMouseMove;
+    document.onmouseup = () => {
+      document.onmousemove = document.onmouseup = null;
+    }
+  }
+
+  function onMouseMove(e:any) {
+    var delta = {
+      x: e.clientX - md.e.clientX,
+      y: e.clientY - md.e.clientY
+    };
+
+    if (direction === "H") // Horizontal
+    {
+      delta.x = Math.min(Math.max(delta.x, -md.firstWidth),
+          md.secondWidth);
+
+      element.style.left = md.offsetLeft + delta.x + "px";
+      first!.style.width = (md.firstWidth + delta.x) + "px";
+    }
+  }
+}
+
+onMounted(()=>{
+  dragElement(document.getElementById("separator"), "H");
+})
 
 sync()
 
@@ -59,3 +106,37 @@ const chats = computed(() => {
   })
 })
 </script>
+
+<style lang="scss">
+#separator {
+  cursor: col-resize;
+  background-color: #aaa;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 5px;
+  /* Prevent the browser's built-in drag from interfering */
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+#left {
+  background-color: #dde;
+  min-width: 275px;
+  .n-layout-sider n-layout-sider--static-positioned n-layout-sider--left-placement n-layout-sider--show-content{
+    width: 100%;
+    max-width: 100%;
+  }
+  aside{
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+#right {
+  background-color: #eee;
+  height: 100%;
+  min-width: 50%;
+  width: 100%;
+}
+</style>

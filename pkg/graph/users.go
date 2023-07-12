@@ -11,6 +11,8 @@ import (
 type UsersController struct {
 	log *zap.Logger
 
+	colname string
+
 	db  driver.Database
 	col driver.Collection
 }
@@ -23,9 +25,10 @@ func NewUsersController(logger *zap.Logger, db driver.Database, colname string) 
 	col := GetEnsureCollection(log, ctx, db, colname)
 
 	return &UsersController{
-		log: log,
-		db:  db,
-		col: col,
+		log:     log,
+		colname: colname,
+		db:      db,
+		col:     col,
 	}
 }
 
@@ -49,4 +52,40 @@ func (c *UsersController) Resolve(ctx context.Context, uuids []string) ([]*cc.Us
 	log.Debug("Found users", zap.Any("users", users))
 
 	return users, nil
+}
+
+const getMembers = `
+FOR a in @@accounts
+  RETURN MERGE(a, {
+  	uuid: a._key
+  })
+`
+
+func (c *UsersController) GetMembers(ctx context.Context) ([]*cc.User, error) {
+	log := c.log.Named("GetMembers")
+	log.Debug("Request received")
+
+	cur, err := c.db.Query(ctx, getMembers, map[string]interface{}{
+		"@accounts": c.colname,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var members []*cc.User
+
+	for cur.HasMore() {
+		var member cc.User
+
+		_, err := cur.ReadDocument(ctx, &member)
+		if err != nil {
+			return nil, err
+		}
+
+		members = append(members, &member)
+	}
+
+	log.Debug("Len", zap.Int("len", len(members)))
+
+	return members, nil
 }

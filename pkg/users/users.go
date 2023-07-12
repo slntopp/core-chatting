@@ -17,8 +17,6 @@ type UsersServer struct {
 	ctrl *graph.UsersController
 }
 
-var ADMINS = []string{"0"}
-
 func NewUsersServer(logger *zap.Logger, ctrl *graph.UsersController) *UsersServer {
 	return &UsersServer{log: logger.Named("UsersServer"), ctrl: ctrl}
 }
@@ -44,7 +42,12 @@ func (s *UsersServer) Resolve(ctx context.Context, req *connect.Request[cc.Users
 
 	requestor := ctx.Value(core.ChatAccount).(string)
 
-	uuids := append(ADMINS, requestor)
+	conf, err := core.Config()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch defaults: %w", err)
+	}
+
+	uuids := append(conf.Admins, requestor)
 	for _, user := range req.Msg.GetUsers() {
 		uuids = append(uuids, user.GetUuid())
 	}
@@ -81,4 +84,22 @@ func (s *UsersServer) Me(ctx context.Context, req *connect.Request[cc.Empty]) (*
 	}
 
 	return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("undexpected: User not found"))
+}
+
+func (s *UsersServer) GetMembers(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.Users], error) {
+	log := s.log.Named("Me")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	//requestor := ctx.Value(core.ChatAccount).(string)
+
+	members, err := s.ctrl.GetMembers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := connect.NewResponse[cc.Users](&cc.Users{
+		Users: members,
+	})
+
+	return resp, nil
 }

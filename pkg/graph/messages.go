@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"sync"
 
 	"github.com/slntopp/core-chatting/cc"
 
@@ -11,6 +12,7 @@ import (
 
 type MessagesController struct {
 	log *zap.Logger
+	sync.Mutex
 
 	db  driver.Database
 	col driver.Collection
@@ -56,7 +58,8 @@ UPDATE @key WITH {
     kind: @kind,
     content: @content,
     edited: @edited,
-    under_review: @under_review,    
+    under_review: @under_review,
+	readers : @readers
 } IN @@messages
 `
 
@@ -70,6 +73,7 @@ func (c *MessagesController) Update(ctx context.Context, msg *cc.Message) (*cc.M
 		"edited":       msg.GetEdited(),
 		"under_review": msg.GetUnderReview(),
 		"key":          msg.GetUuid(),
+		"readers":      msg.GetReaders(),
 		"@messages":    MESSAGES_COLLECTION,
 	})
 
@@ -78,6 +82,38 @@ func (c *MessagesController) Update(ctx context.Context, msg *cc.Message) (*cc.M
 	}
 
 	return msg, nil
+}
+
+const readMessageQuery = `
+LET message = Document(@message)
+LET new = UNIQUE(PUSH(message.readers, @reader))
+UPDATE message with {readers: new} in @@messages RETURN NEW
+`
+
+func (c *MessagesController) Read(ctx context.Context, msg *cc.Message, reader string) (*cc.Message, error) {
+	log := c.log.Named("Read")
+	log.Debug("Req received")
+
+	c.Lock()
+	defer c.Unlock()
+	cur, err := c.db.Query(ctx, readMessageQuery, map[string]interface{}{
+		"message":   driver.NewDocumentID(MESSAGES_COLLECTION, msg.GetUuid()),
+		"reader":    reader,
+		"@messages": MESSAGES_COLLECTION,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var newMessage cc.Message
+
+	_, err = cur.ReadDocument(ctx, &newMessage)
+	if err != nil {
+		return nil, err
+	}
+
+	return &newMessage, nil
 }
 
 func (c *MessagesController) Delete(ctx context.Context, msg *cc.Message) (*cc.Message, error) {
@@ -91,4 +127,19 @@ func (c *MessagesController) Delete(ctx context.Context, msg *cc.Message) (*cc.M
 	}
 
 	return msg, nil
+}
+
+func (c *MessagesController) Get(ctx context.Context, uuid string) (*cc.Message, error) {
+	log := c.log.Named("Get")
+	log.Debug("Req received")
+
+	var msg cc.Message
+
+	_, err := c.col.ReadDocument(ctx, uuid, &msg)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &msg, nil
 }

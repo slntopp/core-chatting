@@ -21,12 +21,13 @@ type StreamServer struct {
 	log *zap.Logger
 
 	upgrader websocket.Upgrader
-	ctrl     *graph.UsersController
+	userCtrl *graph.UsersController
+	msgCtrl  *graph.MessagesController
 	ps       *pubsub.PubSub
 	key      []byte
 }
 
-func NewStreamServer(logger *zap.Logger, ctrl *graph.UsersController, ps *pubsub.PubSub, key []byte) *StreamServer {
+func NewStreamServer(logger *zap.Logger, userCtrl *graph.UsersController, msgCtrl *graph.MessagesController, ps *pubsub.PubSub, key []byte) *StreamServer {
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -36,7 +37,8 @@ func NewStreamServer(logger *zap.Logger, ctrl *graph.UsersController, ps *pubsub
 
 	return &StreamServer{
 		log:      logger.Named("StreamService"),
-		ctrl:     ctrl,
+		userCtrl: userCtrl,
+		msgCtrl:  msgCtrl,
 		ps:       ps,
 		upgrader: upgrader,
 		key:      key,
@@ -50,7 +52,7 @@ func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.Empty
 
 	defer log.Debug("Stream closed")
 
-	res, err := s.ctrl.Resolve(ctx, []string{requestor})
+	res, err := s.userCtrl.Resolve(ctx, []string{requestor})
 	if err != nil {
 		log.Error("Failed to resolve user", zap.Error(err))
 		return err
@@ -69,7 +71,14 @@ start_stream:
 
 	log.Info("Start stream", zap.String("user", requestor))
 
-	msgs, err := s.ps.Sub(requestor)
+	msgs, queueTerminator, err := s.ps.Sub(requestor)
+
+	defer func() {
+		queueError := queueTerminator()
+		if queueError != nil {
+			log.Error("Failed to delete queue", zap.Error(queueError))
+		}
+	}()
 
 	if err != nil {
 		return connect.NewError(connect.CodeInternal, err)
@@ -85,9 +94,19 @@ start_stream:
 			err := proto.Unmarshal(msg.Body, event)
 			if err != nil {
 				log.Error("Failed to unmarshal event", zap.Error(err))
+				continue
 			}
 
 			log.Info("Receive message", zap.Any("event", event))
+
+			if event.GetType() == cc.EventType_MESSAGE_SENT {
+				message := event.GetMsg()
+				newMessage, err := s.msgCtrl.Read(ctx, message, requestor)
+				if err != nil {
+					log.Error("Failed to update readers", zap.Error(err))
+				}
+				event.Item = &cc.Event_Msg{Msg: newMessage}
+			}
 
 			err = serverStream.Send(event)
 			if err != nil {
@@ -95,13 +114,8 @@ start_stream:
 				return err
 			}
 
-			err = msg.Ack(false)
-			if err != nil {
-				log.Error("Failed to ack msg", zap.Error(err))
-			}
 			log.Debug("Processed event successfully")
 		case <-ticker.C:
-			log.Debug("Ping")
 			err := serverStream.Send(&cc.Event{
 				Type: cc.EventType_PING,
 			})

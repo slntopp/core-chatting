@@ -1,0 +1,12 @@
+[project]
+name = "core_chatting"
+version = "0.0.1"
+authors = [
+    { name = "Mikita Iwanowski", email="info@slnt-opp.xyz" },
+]
+description = "Core Chatting gRPC Client for Python"
+requires-python = ">=3.7"
+
+[project.urls]
+"Homepage" = "https://github.com/slntopp/core-chatting"
+"Bug Tracker" = "https://github.com/slntopp/core-chatting/issues"

@@ -197,6 +197,8 @@ func handleSpecialNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub
 		go ps.Pub(ctx, admin, adminEvent)
 	}
 
+	go ps.PubGatewayChat(ctx, chat.GetUuid(), adminEvent, chat.GetGateways())
+
 	diffKinds := msg.GetKind() != oldMsg.GetKind()
 	diffReviews := msg.GetUnderReview() != oldMsg.GetUnderReview()
 
@@ -236,4 +238,5 @@ func handleNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub, msg *
 		go ps.Pub(ctx, admin, event)
 	}
 
+	go ps.PubGatewayChat(ctx, chat.GetUuid(), event, chat.GetGateways())
 }

@@ -165,47 +165,33 @@ type ChatsAPIHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	chatsAPICreateHandler := connect_go.NewUnaryHandler(
+	mux := http.NewServeMux()
+	mux.Handle(ChatsAPICreateProcedure, connect_go.NewUnaryHandler(
 		ChatsAPICreateProcedure,
 		svc.Create,
 		opts...,
-	)
-	chatsAPIUpdateHandler := connect_go.NewUnaryHandler(
+	))
+	mux.Handle(ChatsAPIUpdateProcedure, connect_go.NewUnaryHandler(
 		ChatsAPIUpdateProcedure,
 		svc.Update,
 		opts...,
-	)
-	chatsAPIGetHandler := connect_go.NewUnaryHandler(
+	))
+	mux.Handle(ChatsAPIGetProcedure, connect_go.NewUnaryHandler(
 		ChatsAPIGetProcedure,
 		svc.Get,
 		opts...,
-	)
-	chatsAPIListHandler := connect_go.NewUnaryHandler(
+	))
+	mux.Handle(ChatsAPIListProcedure, connect_go.NewUnaryHandler(
 		ChatsAPIListProcedure,
 		svc.List,
 		opts...,
-	)
-	chatsAPIDeleteHandler := connect_go.NewUnaryHandler(
+	))
+	mux.Handle(ChatsAPIDeleteProcedure, connect_go.NewUnaryHandler(
 		ChatsAPIDeleteProcedure,
 		svc.Delete,
 		opts...,
-	)
-	return "/cc.ChatsAPI/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case ChatsAPICreateProcedure:
-			chatsAPICreateHandler.ServeHTTP(w, r)
-		case ChatsAPIUpdateProcedure:
-			chatsAPIUpdateHandler.ServeHTTP(w, r)
-		case ChatsAPIGetProcedure:
-			chatsAPIGetHandler.ServeHTTP(w, r)
-		case ChatsAPIListProcedure:
-			chatsAPIListHandler.ServeHTTP(w, r)
-		case ChatsAPIDeleteProcedure:
-			chatsAPIDeleteHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
+	))
+	return "/cc.ChatsAPI/", mux
 }
 
 // UnimplementedChatsAPIHandler returns CodeUnimplemented from all methods.
@@ -314,40 +300,28 @@ type MessagesAPIHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewMessagesAPIHandler(svc MessagesAPIHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	messagesAPIGetHandler := connect_go.NewUnaryHandler(
+	mux := http.NewServeMux()
+	mux.Handle(MessagesAPIGetProcedure, connect_go.NewUnaryHandler(
 		MessagesAPIGetProcedure,
 		svc.Get,
 		opts...,
-	)
-	messagesAPISendHandler := connect_go.NewUnaryHandler(
+	))
+	mux.Handle(MessagesAPISendProcedure, connect_go.NewUnaryHandler(
 		MessagesAPISendProcedure,
 		svc.Send,
 		opts...,
-	)
-	messagesAPIUpdateHandler := connect_go.NewUnaryHandler(
+	))
+	mux.Handle(MessagesAPIUpdateProcedure, connect_go.NewUnaryHandler(
 		MessagesAPIUpdateProcedure,
 		svc.Update,
 		opts...,
-	)
-	messagesAPIDeleteHandler := connect_go.NewUnaryHandler(
+	))
+	mux.Handle(MessagesAPIDeleteProcedure, connect_go.NewUnaryHandler(
 		MessagesAPIDeleteProcedure,
 		svc.Delete,
 		opts...,
-	)
-	return "/cc.MessagesAPI/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case MessagesAPIGetProcedure:
-			messagesAPIGetHandler.ServeHTTP(w, r)
-		case MessagesAPISendProcedure:
-			messagesAPISendHandler.ServeHTTP(w, r)
-		case MessagesAPIUpdateProcedure:
-			messagesAPIUpdateHandler.ServeHTTP(w, r)
-		case MessagesAPIDeleteProcedure:
-			messagesAPIDeleteHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
+	))
+	return "/cc.MessagesAPI/", mux
 }
 
 // UnimplementedMessagesAPIHandler returns CodeUnimplemented from all methods.
@@ -456,40 +430,28 @@ type UsersAPIHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewUsersAPIHandler(svc UsersAPIHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	usersAPIMeHandler := connect_go.NewUnaryHandler(
+	mux := http.NewServeMux()
+	mux.Handle(UsersAPIMeProcedure, connect_go.NewUnaryHandler(
 		UsersAPIMeProcedure,
 		svc.Me,
 		opts...,
-	)
-	usersAPIFetchDefaultsHandler := connect_go.NewUnaryHandler(
+	))
+	mux.Handle(UsersAPIFetchDefaultsProcedure, connect_go.NewUnaryHandler(
 		UsersAPIFetchDefaultsProcedure,
 		svc.FetchDefaults,
 		opts...,
-	)
-	usersAPIResolveHandler := connect_go.NewUnaryHandler(
+	))
+	mux.Handle(UsersAPIResolveProcedure, connect_go.NewUnaryHandler(
 		UsersAPIResolveProcedure,
 		svc.Resolve,
 		opts...,
-	)
-	usersAPIGetMembersHandler := connect_go.NewUnaryHandler(
+	))
+	mux.Handle(UsersAPIGetMembersProcedure, connect_go.NewUnaryHandler(
 		UsersAPIGetMembersProcedure,
 		svc.GetMembers,
 		opts...,
-	)
-	return "/cc.UsersAPI/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case UsersAPIMeProcedure:
-			usersAPIMeHandler.ServeHTTP(w, r)
-		case UsersAPIFetchDefaultsProcedure:
-			usersAPIFetchDefaultsHandler.ServeHTTP(w, r)
-		case UsersAPIResolveProcedure:
-			usersAPIResolveHandler.ServeHTTP(w, r)
-		case UsersAPIGetMembersProcedure:
-			usersAPIGetMembersHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
+	))
+	return "/cc.UsersAPI/", mux
 }
 
 // UnimplementedUsersAPIHandler returns CodeUnimplemented from all methods.
@@ -555,19 +517,13 @@ type StreamServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	streamServiceStreamHandler := connect_go.NewServerStreamHandler(
+	mux := http.NewServeMux()
+	mux.Handle(StreamServiceStreamProcedure, connect_go.NewServerStreamHandler(
 		StreamServiceStreamProcedure,
 		svc.Stream,
 		opts...,
-	)
-	return "/cc.StreamService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case StreamServiceStreamProcedure:
-			streamServiceStreamHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
+	))
+	return "/cc.StreamService/", mux
 }
 
 // UnimplementedStreamServiceHandler returns CodeUnimplemented from all methods.

@@ -4,7 +4,7 @@
       <user-avatar round size="large" :avatar="members.join(' ')"/>
       <n-space class="preview" vertical>
         <n-text class="topic">{{ chatTopic }}</n-text>
-        <n-text depth="3">{{ sub }}</n-text>
+        <n-text class="sub" depth="3">{{ sub }}</n-text>
       </n-space>
       <div style="    position: absolute;
     right: 15px;">
@@ -39,10 +39,8 @@ const admins = computed(() => chat.value.admins.map(uuid => store.users.get(uuid
 const members = computed(() => users.value.concat(admins.value))
 
 const sub = computed(() => {
-  if (chat.value.meta && chat.value.meta.lastMessage)
-  {
-    const lastMessage= chat.value.meta.lastMessage!.content.length > 20 ? chat.value.meta!.lastMessage!.content.slice(0, 16) + '...' : chat.value.meta!.lastMessage!.content
-    return lastMessage.replace(/(<([^>]+)>)/ig,"")
+  if (chat.value.meta && chat.value.meta.lastMessage) {
+    return chat.value.meta.lastMessage!.content.replace(/(<([^>]+)>)/ig, "")
   }
 
   return "No messages yet"
@@ -71,6 +69,15 @@ const goToChat = () => {
 .chat {
   .preview {
     width: calc(100% - 80px);
+
+    .sub {
+      display: block;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
     .topic {
       word-break: break-all;

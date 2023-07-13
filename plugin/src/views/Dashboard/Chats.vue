@@ -122,6 +122,7 @@ const chats = computed(() => {
 
 #left {
   min-width: 275px;
+  width: 275px;
 
   .n-layout-sider n-layout-sider--static-positioned n-layout-sider--left-placement n-layout-sider--show-content {
     width: 100%;

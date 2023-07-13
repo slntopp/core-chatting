@@ -20,7 +20,7 @@
   </div>
   <div id="separator"></div>
   <div id="right">
-    <n-layout-content >
+    <n-layout-content>
       <router-view/>
     </n-layout-content>
   </div>
@@ -45,13 +45,13 @@ async function sync() {
   await store.list_chats();
 }
 
-function dragElement(element:any, direction:string='H') {
-  let md:any;
+function dragElement(element: any, direction: string = 'H') {
+  let md: any;
   const first = document.getElementById("left");
   const second = document.getElementById("right");
   element.onmousedown = onMouseDown;
 
-  function onMouseDown(e:any) {
+  function onMouseDown(e: any) {
     md = {
       e,
       offsetLeft: element.offsetLeft,
@@ -66,7 +66,7 @@ function dragElement(element:any, direction:string='H') {
     }
   }
 
-  function onMouseMove(e:any) {
+  function onMouseMove(e: any) {
     var delta = {
       x: e.clientX - md.e.clientX,
       y: e.clientY - md.e.clientY
@@ -83,7 +83,7 @@ function dragElement(element:any, direction:string='H') {
   }
 }
 
-onMounted(()=>{
+onMounted(() => {
   dragElement(document.getElementById("separator"), "H");
 })
 
@@ -110,10 +110,10 @@ const chats = computed(() => {
 <style lang="scss">
 #separator {
   cursor: col-resize;
-  background-color: #aaa;
+  background-color: #18181C;
   background-repeat: no-repeat;
   background-position: center;
-  width: 5px;
+  width: 10px;
   /* Prevent the browser's built-in drag from interfering */
   -moz-user-select: none;
   -ms-user-select: none;
@@ -121,20 +121,20 @@ const chats = computed(() => {
 }
 
 #left {
-  background-color: #dde;
   min-width: 275px;
-  .n-layout-sider n-layout-sider--static-positioned n-layout-sider--left-placement n-layout-sider--show-content{
+
+  .n-layout-sider n-layout-sider--static-positioned n-layout-sider--left-placement n-layout-sider--show-content {
     width: 100%;
     max-width: 100%;
   }
-  aside{
+
+  aside {
     width: 100% !important;
     max-width: 100% !important;
   }
 }
 
 #right {
-  background-color: #eee;
   height: 100%;
   min-width: 50%;
   width: 100%;

@@ -3,7 +3,7 @@
         <n-layout-header>
             <cc-nav />
         </n-layout-header>
-        <n-layout has-sider>
+        <n-layout has-sider  style="max-height: 100vh !important;">
             <router-view />
         </n-layout>
     </n-layout>

@@ -2,7 +2,7 @@
   <div :class="{'chats__panel':true,'closed':!isChatPanelOpen}">
     <n-layout-sider
         :collapsed-width="50" collapse-mode="transform" :collapsed="!isChatPanelOpen">
-      <n-space  justify="space-between" align="center" :class="{'chat__actions':true,hide:!isChatPanelOpen}">
+      <n-space justify="space-between" align="center" :class="{'chat__actions':true,hide:!isChatPanelOpen}">
         <n-button ghost type="success" @click="router.push({ name: 'Start Chat' })">
           <template #icon>
             <n-icon :component="ChatbubbleEllipsesOutline"/>
@@ -40,6 +40,7 @@ import {useCcStore} from '../../store/chatting.ts';
 import {useRouter} from 'vue-router';
 import {Chat} from '../../connect/cc/cc_pb';
 import ChatItem from "../../components/chats/chat_item.vue";
+import useDraggable from "../../hooks/useDraggable.ts";
 
 const ChatbubbleEllipsesOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ChatbubbleEllipsesOutline'));
 const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForward'));
@@ -47,6 +48,7 @@ const CloseIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack
 
 const store = useCcStore();
 const router = useRouter();
+const {makeDraggable} = useDraggable()
 
 const isChatPanelOpen = ref(true)
 
@@ -54,46 +56,12 @@ async function sync() {
   await store.list_chats();
 }
 
-function dragElement(element: any, direction: string = 'H') {
-  let md: any;
-  const first: any = document.getElementsByClassName("chats__panel").item(0);
-  const second: any = document.getElementsByClassName("chat__item").item(0);
-  element.onmousedown = onMouseDown;
-
-  function onMouseDown(e: any) {
-    md = {
-      e,
-      offsetLeft: element.offsetLeft,
-      offsetTop: element.offsetTop,
-      firstWidth: first!.offsetWidth,
-      secondWidth: second!.offsetWidth
-    };
-
-    document.onmousemove = onMouseMove;
-    document.onmouseup = () => {
-      document.onmousemove = document.onmouseup = null;
-    }
-  }
-
-  function onMouseMove(e: any) {
-    var delta = {
-      x: e.clientX - md.e.clientX,
-      y: e.clientY - md.e.clientY
-    };
-
-    if (direction === "H") // Horizontal
-    {
-      delta.x = Math.min(Math.max(delta.x, -md.firstWidth),
-          md.secondWidth);
-
-      element.style.left = md.offsetLeft + delta.x + "px";
-      first!.style.width = (md.firstWidth + delta.x) + "px";
-    }
-  }
-}
-
 onMounted(() => {
-  dragElement(document.getElementById("separator"), "H");
+  makeDraggable({
+    resizer: document.getElementById("separator")!,
+    first: document.getElementsByClassName("chats__panel").item(0) as HTMLElement,
+    second: document.getElementsByClassName("chat__item").item(0) as HTMLElement
+  });
 })
 
 sync()
@@ -133,9 +101,10 @@ const chats = computed(() => {
   min-width: 275px;
   width: 275px;
 
-  .chat__actions{
+  .chat__actions {
     padding: 10px 0px 10px 10px;
-    &.hide{
+
+    &.hide {
       margin: 0px;
     }
   }

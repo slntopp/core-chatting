@@ -1,25 +1,30 @@
 <template>
-  <div id="left">
-    <n-layout-sider>
-      <n-scrollbar style="height: 100vh">
-        <n-list hoverable clickable>
-          <template #header>
-            <n-space justify="center" align="center" style="height: 5vh">
-              <n-button ghost type="success" @click="router.push({ name: 'Start Chat' })">
-                <template #icon>
-                  <n-icon :component="ChatbubbleEllipsesOutline"/>
-                </template>
-                Start Chat
-              </n-button>
-            </n-space>
+  <div :class="{'chats__panel':true,'closed':!isChatPanelOpen}">
+    <n-layout-sider
+        :collapsed-width="50" collapse-mode="transform" :collapsed="!isChatPanelOpen">
+      <n-space  justify="space-between" align="center" :class="{'chat__actions':true,hide:!isChatPanelOpen}">
+        <n-button ghost type="success" @click="router.push({ name: 'Start Chat' })">
+          <template #icon>
+            <n-icon :component="ChatbubbleEllipsesOutline"/>
           </template>
+          Start Chat
+        </n-button>
+        <n-button @click="isChatPanelOpen=!isChatPanelOpen">
+          <n-icon>
+            <close-icon v-if="isChatPanelOpen"/>
+            <open-icon v-else/>
+          </n-icon>
+        </n-button>
+      </n-space>
+      <n-scrollbar v-if="isChatPanelOpen" style="height: 100vh">
+        <n-list hoverable clickable>
           <chat-item v-for="chat in chats" :uuid="chat.uuid" :chat="chat"/>
         </n-list>
       </n-scrollbar>
     </n-layout-sider>
   </div>
-  <div id="separator"></div>
-  <div id="right">
+  <div id="separator" v-show="isChatPanelOpen"></div>
+  <div class="chat__item">
     <n-layout-content>
       <router-view/>
     </n-layout-content>
@@ -27,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, onMounted} from 'vue';
+import {computed, defineAsyncComponent, onMounted, ref} from 'vue';
 import {NButton, NIcon, NLayoutContent, NLayoutSider, NList, NScrollbar, NSpace,} from 'naive-ui';
 
 import {useCcStore} from '../../store/chatting.ts';
@@ -37,9 +42,13 @@ import {Chat} from '../../connect/cc/cc_pb';
 import ChatItem from "../../components/chats/chat_item.vue";
 
 const ChatbubbleEllipsesOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ChatbubbleEllipsesOutline'));
+const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForward'));
+const CloseIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
 
 const store = useCcStore();
 const router = useRouter();
+
+const isChatPanelOpen = ref(true)
 
 async function sync() {
   await store.list_chats();
@@ -47,8 +56,8 @@ async function sync() {
 
 function dragElement(element: any, direction: string = 'H') {
   let md: any;
-  const first = document.getElementById("left");
-  const second = document.getElementById("right");
+  const first: any = document.getElementsByClassName("chats__panel").item(0);
+  const second: any = document.getElementsByClassName("chat__item").item(0);
   element.onmousedown = onMouseDown;
 
   function onMouseDown(e: any) {
@@ -120,13 +129,21 @@ const chats = computed(() => {
   user-select: none;
 }
 
-#left {
+.chats__panel {
   min-width: 275px;
   width: 275px;
 
-  .n-layout-sider n-layout-sider--static-positioned n-layout-sider--left-placement n-layout-sider--show-content {
-    width: 100%;
-    max-width: 100%;
+  .chat__actions{
+    padding: 10px 0px 10px 10px;
+    &.hide{
+      margin: 0px;
+    }
+  }
+
+  &.closed {
+    min-width: 45px !important;
+    width: 45px !important;
+    background-color: #18181C;
   }
 
   aside {
@@ -135,7 +152,7 @@ const chats = computed(() => {
   }
 }
 
-#right {
+.chat__item {
   height: 100%;
   min-width: 50%;
   width: 100%;

@@ -1,5 +1,5 @@
 interface MakeDraggableOprions {
-    direction: 'H'
+    direction?: 'H'
     resizer: HTMLElement
     first: HTMLElement
     second: HTMLElement

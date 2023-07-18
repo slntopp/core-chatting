@@ -2,7 +2,7 @@
   <n-list-item class="chat" @click="goToChat">
     <n-space :wrap-item="false" justify="start">
       <user-avatar round size="large" :avatar="members.join(' ')"/>
-      <n-space class="preview" vertical>
+      <n-space v-if="!hideMessage" class="preview" vertical>
         <n-text class="topic">{{ chatTopic }}</n-text>
         <n-text class="sub" depth="3">{{ sub }}</n-text>
       </n-space>
@@ -25,6 +25,7 @@ import {useRouter} from "vue-router";
 interface ChatItemProps {
   chat: Chat
   uuid: string
+  hideMessage:boolean
 }
 
 const props = defineProps<ChatItemProps>()

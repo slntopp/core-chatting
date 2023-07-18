@@ -24,7 +24,7 @@
     </n-space>
 
     <template #footer>
-      <n-space style="min-height: 10vh" align="end">
+      <n-space style="min-height: 10vh" align="center">
         <user-avatar round size="medium" avatar="M E"></user-avatar>
 
         <n-space vertical justify="center">

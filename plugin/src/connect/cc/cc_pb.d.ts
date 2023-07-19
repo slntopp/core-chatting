@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
+import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage, Value } from "@bufbuild/protobuf";
 import { Message as Message$1, proto3 } from "@bufbuild/protobuf";
 
 /**
@@ -123,6 +123,11 @@ export declare class ChatMeta extends Message$1<ChatMeta> {
    * @generated from field: cc.Message last_message = 2;
    */
   lastMessage?: Message;
+
+  /**
+   * @generated from field: map<string, google.protobuf.Value> data = 3;
+   */
+  data: { [key: string]: Value };
 
   constructor(data?: PartialMessage<ChatMeta>);
 

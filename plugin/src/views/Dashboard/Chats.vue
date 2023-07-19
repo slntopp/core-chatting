@@ -1,9 +1,10 @@
 <template>
   <div :class="{'chats__panel':true,'closed':!isChatPanelOpen}">
     <n-layout-sider collapse-mode="transform" :collapsed="!isChatPanelOpen">
-      <n-space :justify="isChatPanelOpen?'space-between':'center'" align="center" :class="{'chat__actions':true,hide:!isChatPanelOpen}">
+      <n-space :justify="isChatPanelOpen?'space-between':'center'" align="center"
+               :class="{'chat__actions':true,hide:!isChatPanelOpen}">
         <n-button ghost type="success" @click="router.push({ name: 'Start Chat' })">
-            <n-icon :component="ChatbubbleEllipsesOutline"/>
+          <n-icon :component="ChatbubbleEllipsesOutline"/>
           <span v-if="isChatPanelOpen" style="margin-left: 5px">Start Chat</span>
         </n-button>
         <n-button ghost @click="isChatPanelOpen=!isChatPanelOpen">
@@ -12,6 +13,9 @@
             <open-icon v-else/>
           </n-icon>
         </n-button>
+      </n-space>
+      <n-space style="margin-top: 10px;" v-if="isChatPanelOpen" align="center" justify="center">
+        <n-input v-model:value="searchParam" type="text" placeholder="Search..."/>
       </n-space>
       <n-scrollbar style="height: 100vh;min-width: 150px">
         <n-list hoverable clickable>
@@ -30,7 +34,7 @@
 
 <script setup lang="ts">
 import {computed, defineAsyncComponent, onMounted, ref} from 'vue';
-import {NButton, NIcon, NLayoutContent, NLayoutSider, NList, NScrollbar, NSpace,} from 'naive-ui';
+import {NButton, NIcon, NInput, NLayoutContent, NLayoutSider, NList, NScrollbar, NSpace} from 'naive-ui';
 
 import {useCcStore} from '../../store/chatting.ts';
 
@@ -48,6 +52,7 @@ const router = useRouter();
 const {makeDraggable} = useDraggable()
 
 const isChatPanelOpen = ref(true)
+const searchParam = ref('')
 
 async function sync() {
   await store.list_chats();
@@ -63,11 +68,30 @@ onMounted(() => {
 
 sync()
 
+const filterChat = (chat: Chat, val: string): boolean => {
+  if (!val) {
+    return true
+  }
+  val = val.toLowerCase()
+
+  const startsWithKeys = ['topic', 'uuid']
+
+  for (const key of startsWithKeys) {
+    if ((chat as any)[key]?.toLowerCase().startsWith(val)) {
+      return true
+    }
+  }
+
+  return !!chat.users.find(u => u.startsWith(val) || store.users.get(u)?.title.toLowerCase().startsWith(val)) || !!chat.admins.find(u => u.startsWith(val) || store.users.get(u)?.title.toLocaleLowerCase().startsWith(val))
+}
+
 const chats = computed(() => {
   let res: Chat[] = []
   store.chats.forEach((chat) => {
     res.push(chat)
   })
+
+  res = res.filter((c) => filterChat(c, searchParam.value))
 
   let sortable = (chat: Chat) => {
     if (chat.meta && chat.meta.lastMessage)
@@ -103,7 +127,7 @@ const chats = computed(() => {
 
     &.hide {
       flex-flow: column-reverse !important;
-    margin: 0px;
+      margin: 0px;
     }
   }
 
@@ -111,9 +135,10 @@ const chats = computed(() => {
     min-width: 70px !important;
     width: 70px !important;
     background-color: #18181C;
-    .n-layout-sider-scroll-container{
+
+    .n-layout-sider-scroll-container {
       min-width: 70px !important;
-      width:70px !important;
+      width: 70px !important;
     }
   }
 

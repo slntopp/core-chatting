@@ -14,7 +14,7 @@
           </n-icon>
         </n-button>
       </n-space>
-      <n-space style="margin-top: 10px;" v-if="isChatPanelOpen" align="center" justify="center">
+      <n-space class="search" v-if="isChatPanelOpen" align="center" justify="center">
         <n-input v-model:value="searchParam" type="text" placeholder="Search..."/>
       </n-space>
       <n-scrollbar style="height: 100vh;min-width: 150px">
@@ -128,6 +128,15 @@ const chats = computed(() => {
     &.hide {
       flex-flow: column-reverse !important;
       margin: 0px;
+    }
+  }
+
+  .search{
+    margin-top: 5px;
+    margin-bottom: 10px;
+    margin-left: 9px;
+    div{
+      width: 100%;
     }
   }
 

@@ -1,5 +1,5 @@
 <template>
-  <n-list style="padding-left: 16px">
+  <n-list style="padding-left: 16px;min-height: 100vh">
     <template #header>
       <chat-header :chat="chat!" style="height: 5vh"/>
     </template>
@@ -24,10 +24,10 @@
     </n-space>
 
     <template #footer>
-      <n-space style="min-height: 10vh" align="center">
-        <user-avatar round size="medium" avatar="M E"></user-avatar>
+      <n-space class="footer" align="center">
+        <user-avatar class="avatar" round size="medium" avatar="M E"></user-avatar>
 
-        <n-space vertical justify="center">
+        <n-space class="textarea" vertical justify="center">
           <n-alert style="min-width: 50vw;" title="Editing" type="info" closable v-if="updating"
                    @close="handle_stop_edit"/>
           <n-tooltip placement="top-end">
@@ -56,7 +56,7 @@
           </n-tooltip>
         </n-space>
 
-        <n-space>
+        <n-space class="actions">
           <n-button type="success" ghost circle size="small" @click="handle_send()">
             <template #icon>
               <n-icon :component="SendOutline"/>
@@ -248,7 +248,7 @@ function handle_stop_edit() {
 
 </script>
 
-<style>
+<style lang="scss">
 kbd {
   background-color: #eee;
   border-radius: 3px;
@@ -265,5 +265,14 @@ kbd {
 
 textarea {
   overflow-wrap: anywhere;
+}
+
+.footer{
+  .actions{
+  }
+  .avatar{
+  }
+  .textarea{
+  }
 }
 </style>

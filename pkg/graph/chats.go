@@ -130,7 +130,8 @@ FILTER @requestor in c.admins || @requestor in c.users
 	  role: role,
       meta: {
 		unread: unread,
-		last_message: message
+		last_message: message,
+		data: c.meta.data
 	  }
 	})
 `

@@ -176,7 +176,15 @@ func (c *ChatsController) Delete(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 	log := c.log.Named("Delete")
 	log.Debug("Req received")
 
-	_, err := c.col.RemoveDocument(ctx, chat.GetUuid())
+	var deletedChat cc.Chat
+
+	_, err := c.col.ReadDocument(ctx, chat.GetUuid(), &deletedChat)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = c.col.RemoveDocument(ctx, chat.GetUuid())
 
 	if err != nil {
 		return nil, err
@@ -191,7 +199,7 @@ func (c *ChatsController) Delete(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 		return nil, err
 	}
 
-	return chat, nil
+	return &deletedChat, nil
 }
 
 const getChatMessages = `

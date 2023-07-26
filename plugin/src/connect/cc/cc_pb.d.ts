@@ -322,6 +322,11 @@ export declare class Message extends Message$1<Message> {
    */
   readers: string[];
 
+  /**
+   * @generated from field: map<string, google.protobuf.Value> meta = 12;
+   */
+  meta: { [key: string]: Value };
+
   constructor(data?: PartialMessage<Message>);
 
   static readonly runtime: typeof proto3;

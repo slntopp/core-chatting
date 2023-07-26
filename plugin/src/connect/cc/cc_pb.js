@@ -122,6 +122,7 @@ export const Message = proto3.makeMessageType(
     { no: 9, name: "edited", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 10, name: "under_review", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 11, name: "readers", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 12, name: "meta", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
   ],
 );
 

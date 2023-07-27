@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from cc import cc_pb2 as cc_dot_cc__pb2
+from core_chatting.cc import cc_pb2 as cc_dot_cc__pb2
 
 
 class ChatsAPIStub(object):

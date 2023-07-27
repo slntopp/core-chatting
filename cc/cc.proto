@@ -39,12 +39,18 @@ message Chat {
 
 message Chats { repeated Chat chats = 1; }
 
+message GetawayRequest {
+  string gateway = 1;
+  string gateway_chat_id = 2;
+}
+
 service ChatsAPI {
   rpc Create(Chat) returns (Chat);
   rpc Update(Chat) returns (Chat);
 
   rpc Get(Chat) returns (Chat);
   rpc List(Empty) returns (Chats);
+  rpc GetByGateway(GetawayRequest) returns (Chat);
 
   rpc Delete(Chat) returns (Chat);
 }

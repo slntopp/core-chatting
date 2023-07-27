@@ -247,3 +247,34 @@ func (c *ChatsController) GetMessages(ctx context.Context, chat *cc.Chat, is_adm
 
 	return messages, nil
 }
+
+const getChatByGateway = `
+FOR c in @@chats
+    FILTER c.meta[@gateway] == @id
+    RETURN c
+`
+
+func (c *ChatsController) GetByGateway(ctx context.Context, req *cc.GetawayRequest) (*cc.Chat, error) {
+	log := c.log.Named("GetByGateway")
+	log.Debug("Req received")
+
+	cur, err := c.db.Query(ctx, getChatQuery, map[string]interface{}{
+		"@chats":  CHATS_COLLECTION,
+		"id":      req.GatewayChatId,
+		"gateway": req.Gateway,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close()
+
+	var chat cc.Chat
+
+	_, err = cur.ReadDocument(ctx, &chat)
+	if err != nil {
+		return nil, err
+	}
+
+	return &chat, nil
+}

@@ -41,7 +41,7 @@ message Chats { repeated Chat chats = 1; }
 
 message GetawayRequest {
   string gateway = 1;
-  string gateway_chat_id = 2;
+  int64 gateway_chat_id = 2;
 }
 
 service ChatsAPI {

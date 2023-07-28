@@ -250,7 +250,7 @@ func (c *ChatsController) GetMessages(ctx context.Context, chat *cc.Chat, is_adm
 
 const getChatByGateway = `
 FOR c in @@chats
-    FILTER c.meta[@gateway] == @id
+    FILTER c.meta.data[@gateway] == @id
     RETURN c
 `
 
@@ -258,7 +258,7 @@ func (c *ChatsController) GetByGateway(ctx context.Context, req *cc.GetawayReque
 	log := c.log.Named("GetByGateway")
 	log.Debug("Req received")
 
-	queryContext := driver.WithQueryCount(ctx, true)
+	queryContext := driver.WithQueryCount(ctx)
 
 	cur, err := c.db.Query(queryContext, getChatQuery, map[string]interface{}{
 		"@chats":  CHATS_COLLECTION,

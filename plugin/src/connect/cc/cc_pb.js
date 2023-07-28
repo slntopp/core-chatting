@@ -95,6 +95,17 @@ export const Chats = proto3.makeMessageType(
 );
 
 /**
+ * @generated from message cc.GetawayRequest
+ */
+export const GetawayRequest = proto3.makeMessageType(
+  "cc.GetawayRequest",
+  () => [
+    { no: 1, name: "gateway", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "gateway_chat_id", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+  ],
+);
+
+/**
  * @generated from message cc.Attachment
  */
 export const Attachment = proto3.makeMessageType(
@@ -122,6 +133,7 @@ export const Message = proto3.makeMessageType(
     { no: 9, name: "edited", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 10, name: "under_review", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 11, name: "readers", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 12, name: "meta", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
   ],
 );
 

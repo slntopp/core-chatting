@@ -233,6 +233,35 @@ export declare class Chats extends Message$1<Chats> {
 }
 
 /**
+ * @generated from message cc.GetawayRequest
+ */
+export declare class GetawayRequest extends Message$1<GetawayRequest> {
+  /**
+   * @generated from field: string gateway = 1;
+   */
+  gateway: string;
+
+  /**
+   * @generated from field: int64 gateway_chat_id = 2;
+   */
+  gatewayChatId: bigint;
+
+  constructor(data?: PartialMessage<GetawayRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.GetawayRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetawayRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetawayRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetawayRequest;
+
+  static equals(a: GetawayRequest | PlainMessage<GetawayRequest> | undefined, b: GetawayRequest | PlainMessage<GetawayRequest> | undefined): boolean;
+}
+
+/**
  * @generated from message cc.Attachment
  */
 export declare class Attachment extends Message$1<Attachment> {
@@ -321,6 +350,11 @@ export declare class Message extends Message$1<Message> {
    * @generated from field: repeated string readers = 11;
    */
   readers: string[];
+
+  /**
+   * @generated from field: map<string, google.protobuf.Value> meta = 12;
+   */
+  meta: { [key: string]: Value };
 
   constructor(data?: PartialMessage<Message>);
 

@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -130,7 +131,8 @@ FILTER @requestor in c.admins || @requestor in c.users
 	  role: role,
       meta: {
 		unread: unread,
-		last_message: message
+		last_message: message,
+		data: c.meta.data
 	  }
 	})
 `
@@ -175,7 +177,15 @@ func (c *ChatsController) Delete(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 	log := c.log.Named("Delete")
 	log.Debug("Req received")
 
-	_, err := c.col.RemoveDocument(ctx, chat.GetUuid())
+	var deletedChat cc.Chat
+
+	_, err := c.col.ReadDocument(ctx, chat.GetUuid(), &deletedChat)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = c.col.RemoveDocument(ctx, chat.GetUuid())
 
 	if err != nil {
 		return nil, err
@@ -190,7 +200,7 @@ func (c *ChatsController) Delete(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 		return nil, err
 	}
 
-	return chat, nil
+	return &deletedChat, nil
 }
 
 const getChatMessages = `
@@ -237,4 +247,41 @@ func (c *ChatsController) GetMessages(ctx context.Context, chat *cc.Chat, is_adm
 	}
 
 	return messages, nil
+}
+
+const getChatByGateway = `
+FOR c in @@chats
+    FILTER c.meta.data[@gateway] == @id
+    RETURN c
+`
+
+func (c *ChatsController) GetByGateway(ctx context.Context, req *cc.GetawayRequest) (*cc.Chat, error) {
+	log := c.log.Named("GetByGateway")
+	log.Debug("Req received")
+
+	queryContext := driver.WithQueryCount(ctx)
+
+	cur, err := c.db.Query(queryContext, getChatByGateway, map[string]interface{}{
+		"@chats":  CHATS_COLLECTION,
+		"id":      req.GatewayChatId,
+		"gateway": req.Gateway,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close()
+
+	if cur.Count() == 0 {
+		return nil, errors.New("no chat")
+	}
+
+	var chat cc.Chat
+
+	_, err = cur.ReadDocument(ctx, &chat)
+	if err != nil {
+		return nil, err
+	}
+
+	return &chat, nil
 }

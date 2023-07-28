@@ -17,7 +17,7 @@
       </n-list-item>
     </n-scrollbar>
 
-    <n-space v-else style="height: 100vh; width: 100%;" justify="center" align="center">
+    <n-space v-else style="height: 90vh; width: 100%;" justify="center" align="center">
       <n-alert type="info" title="No Messages yet">
         Use textarea below to send a message.
       </n-alert>

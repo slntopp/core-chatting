@@ -258,7 +258,9 @@ func (c *ChatsController) GetByGateway(ctx context.Context, req *cc.GetawayReque
 	log := c.log.Named("GetByGateway")
 	log.Debug("Req received")
 
-	cur, err := c.db.Query(ctx, getChatQuery, map[string]interface{}{
+	queryContext := driver.WithQueryCount(ctx, true)
+
+	cur, err := c.db.Query(queryContext, getChatQuery, map[string]interface{}{
 		"@chats":  CHATS_COLLECTION,
 		"id":      req.GatewayChatId,
 		"gateway": req.Gateway,
@@ -268,6 +270,10 @@ func (c *ChatsController) GetByGateway(ctx context.Context, req *cc.GetawayReque
 		return nil, err
 	}
 	defer cur.Close()
+
+	if cur.Count() == 0 {
+		return nil, nil
+	}
 
 	var chat cc.Chat
 

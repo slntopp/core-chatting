@@ -146,6 +146,8 @@ func (s *ChatsServer) GetByGateway(ctx context.Context, req *connect.Request[cc.
 		return nil, err
 	}
 
+	log.Debug("Chat", zap.Any("chat", chat))
+
 	resp := connect.NewResponse[cc.Chat](chat)
 
 	return resp, nil

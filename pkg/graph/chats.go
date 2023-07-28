@@ -272,6 +272,7 @@ func (c *ChatsController) GetByGateway(ctx context.Context, req *cc.GetawayReque
 	defer cur.Close()
 
 	if cur.Count() == 0 {
+		log.Debug("Zero count")
 		return nil, nil
 	}
 

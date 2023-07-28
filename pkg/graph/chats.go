@@ -260,7 +260,7 @@ func (c *ChatsController) GetByGateway(ctx context.Context, req *cc.GetawayReque
 
 	queryContext := driver.WithQueryCount(ctx)
 
-	cur, err := c.db.Query(queryContext, getChatQuery, map[string]interface{}{
+	cur, err := c.db.Query(queryContext, getChatByGateway, map[string]interface{}{
 		"@chats":  CHATS_COLLECTION,
 		"id":      req.GatewayChatId,
 		"gateway": req.Gateway,

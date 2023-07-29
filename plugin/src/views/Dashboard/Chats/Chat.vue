@@ -4,7 +4,7 @@
       <chat-header :chat="chat!" style="height: 5vh"/>
     </template>
 
-    <n-scrollbar style="height: 80vh;" v-if="isMessageLoading || messages.length>0" ref="scrollbar">
+    <n-scrollbar style="max-height: 80vh !important;" v-if="isMessageLoading || messages.length>0" ref="scrollbar">
       <template  v-if="isMessageLoading">
           <mock-message v-for="(_,index) in 5" :key="index+ (chat?.topic || '')"/>
       </template>

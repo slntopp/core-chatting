@@ -43,8 +43,12 @@ const (
 	ChatsAPICreateProcedure = "/cc.ChatsAPI/Create"
 	// ChatsAPIUpdateProcedure is the fully-qualified name of the ChatsAPI's Update RPC.
 	ChatsAPIUpdateProcedure = "/cc.ChatsAPI/Update"
+	// ChatsAPIGetProcedure is the fully-qualified name of the ChatsAPI's Get RPC.
+	ChatsAPIGetProcedure = "/cc.ChatsAPI/Get"
 	// ChatsAPIListProcedure is the fully-qualified name of the ChatsAPI's List RPC.
 	ChatsAPIListProcedure = "/cc.ChatsAPI/List"
+	// ChatsAPIGetByGatewayProcedure is the fully-qualified name of the ChatsAPI's GetByGateway RPC.
+	ChatsAPIGetByGatewayProcedure = "/cc.ChatsAPI/GetByGateway"
 	// ChatsAPIDeleteProcedure is the fully-qualified name of the ChatsAPI's Delete RPC.
 	ChatsAPIDeleteProcedure = "/cc.ChatsAPI/Delete"
 	// MessagesAPIGetProcedure is the fully-qualified name of the MessagesAPI's Get RPC.
@@ -61,6 +65,8 @@ const (
 	UsersAPIFetchDefaultsProcedure = "/cc.UsersAPI/FetchDefaults"
 	// UsersAPIResolveProcedure is the fully-qualified name of the UsersAPI's Resolve RPC.
 	UsersAPIResolveProcedure = "/cc.UsersAPI/Resolve"
+	// UsersAPIGetMembersProcedure is the fully-qualified name of the UsersAPI's GetMembers RPC.
+	UsersAPIGetMembersProcedure = "/cc.UsersAPI/GetMembers"
 	// StreamServiceStreamProcedure is the fully-qualified name of the StreamService's Stream RPC.
 	StreamServiceStreamProcedure = "/cc.StreamService/Stream"
 )
@@ -69,7 +75,9 @@ const (
 type ChatsAPIClient interface {
 	Create(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
 	Update(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
+	Get(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
 	List(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Chats], error)
+	GetByGateway(context.Context, *connect_go.Request[cc.GetawayRequest]) (*connect_go.Response[cc.Chat], error)
 	Delete(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
 }
 
@@ -93,9 +101,19 @@ func NewChatsAPIClient(httpClient connect_go.HTTPClient, baseURL string, opts ..
 			baseURL+ChatsAPIUpdateProcedure,
 			opts...,
 		),
+		get: connect_go.NewClient[cc.Chat, cc.Chat](
+			httpClient,
+			baseURL+ChatsAPIGetProcedure,
+			opts...,
+		),
 		list: connect_go.NewClient[cc.Empty, cc.Chats](
 			httpClient,
 			baseURL+ChatsAPIListProcedure,
+			opts...,
+		),
+		getByGateway: connect_go.NewClient[cc.GetawayRequest, cc.Chat](
+			httpClient,
+			baseURL+ChatsAPIGetByGatewayProcedure,
 			opts...,
 		),
 		delete: connect_go.NewClient[cc.Chat, cc.Chat](
@@ -108,10 +126,12 @@ func NewChatsAPIClient(httpClient connect_go.HTTPClient, baseURL string, opts ..
 
 // chatsAPIClient implements ChatsAPIClient.
 type chatsAPIClient struct {
-	create *connect_go.Client[cc.Chat, cc.Chat]
-	update *connect_go.Client[cc.Chat, cc.Chat]
-	list   *connect_go.Client[cc.Empty, cc.Chats]
-	delete *connect_go.Client[cc.Chat, cc.Chat]
+	create       *connect_go.Client[cc.Chat, cc.Chat]
+	update       *connect_go.Client[cc.Chat, cc.Chat]
+	get          *connect_go.Client[cc.Chat, cc.Chat]
+	list         *connect_go.Client[cc.Empty, cc.Chats]
+	getByGateway *connect_go.Client[cc.GetawayRequest, cc.Chat]
+	delete       *connect_go.Client[cc.Chat, cc.Chat]
 }
 
 // Create calls cc.ChatsAPI.Create.
@@ -124,9 +144,19 @@ func (c *chatsAPIClient) Update(ctx context.Context, req *connect_go.Request[cc.
 	return c.update.CallUnary(ctx, req)
 }
 
+// Get calls cc.ChatsAPI.Get.
+func (c *chatsAPIClient) Get(ctx context.Context, req *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error) {
+	return c.get.CallUnary(ctx, req)
+}
+
 // List calls cc.ChatsAPI.List.
 func (c *chatsAPIClient) List(ctx context.Context, req *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Chats], error) {
 	return c.list.CallUnary(ctx, req)
+}
+
+// GetByGateway calls cc.ChatsAPI.GetByGateway.
+func (c *chatsAPIClient) GetByGateway(ctx context.Context, req *connect_go.Request[cc.GetawayRequest]) (*connect_go.Response[cc.Chat], error) {
+	return c.getByGateway.CallUnary(ctx, req)
 }
 
 // Delete calls cc.ChatsAPI.Delete.
@@ -138,7 +168,9 @@ func (c *chatsAPIClient) Delete(ctx context.Context, req *connect_go.Request[cc.
 type ChatsAPIHandler interface {
 	Create(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
 	Update(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
+	Get(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
 	List(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Chats], error)
+	GetByGateway(context.Context, *connect_go.Request[cc.GetawayRequest]) (*connect_go.Response[cc.Chat], error)
 	Delete(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error)
 }
 
@@ -159,9 +191,19 @@ func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect_go.HandlerOption) (
 		svc.Update,
 		opts...,
 	))
+	mux.Handle(ChatsAPIGetProcedure, connect_go.NewUnaryHandler(
+		ChatsAPIGetProcedure,
+		svc.Get,
+		opts...,
+	))
 	mux.Handle(ChatsAPIListProcedure, connect_go.NewUnaryHandler(
 		ChatsAPIListProcedure,
 		svc.List,
+		opts...,
+	))
+	mux.Handle(ChatsAPIGetByGatewayProcedure, connect_go.NewUnaryHandler(
+		ChatsAPIGetByGatewayProcedure,
+		svc.GetByGateway,
 		opts...,
 	))
 	mux.Handle(ChatsAPIDeleteProcedure, connect_go.NewUnaryHandler(
@@ -183,8 +225,16 @@ func (UnimplementedChatsAPIHandler) Update(context.Context, *connect_go.Request[
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.ChatsAPI.Update is not implemented"))
 }
 
+func (UnimplementedChatsAPIHandler) Get(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.ChatsAPI.Get is not implemented"))
+}
+
 func (UnimplementedChatsAPIHandler) List(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Chats], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.ChatsAPI.List is not implemented"))
+}
+
+func (UnimplementedChatsAPIHandler) GetByGateway(context.Context, *connect_go.Request[cc.GetawayRequest]) (*connect_go.Response[cc.Chat], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.ChatsAPI.GetByGateway is not implemented"))
 }
 
 func (UnimplementedChatsAPIHandler) Delete(context.Context, *connect_go.Request[cc.Chat]) (*connect_go.Response[cc.Chat], error) {
@@ -324,6 +374,7 @@ type UsersAPIClient interface {
 	// Resolves given Users data by their UUIDs
 	// And returns all accessible Users for Requestor
 	Resolve(context.Context, *connect_go.Request[cc.Users]) (*connect_go.Response[cc.Users], error)
+	GetMembers(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Users], error)
 }
 
 // NewUsersAPIClient constructs a client for the cc.UsersAPI service. By default, it uses the
@@ -351,6 +402,11 @@ func NewUsersAPIClient(httpClient connect_go.HTTPClient, baseURL string, opts ..
 			baseURL+UsersAPIResolveProcedure,
 			opts...,
 		),
+		getMembers: connect_go.NewClient[cc.Empty, cc.Users](
+			httpClient,
+			baseURL+UsersAPIGetMembersProcedure,
+			opts...,
+		),
 	}
 }
 
@@ -359,6 +415,7 @@ type usersAPIClient struct {
 	me            *connect_go.Client[cc.Empty, cc.User]
 	fetchDefaults *connect_go.Client[cc.Empty, cc.Defaults]
 	resolve       *connect_go.Client[cc.Users, cc.Users]
+	getMembers    *connect_go.Client[cc.Empty, cc.Users]
 }
 
 // Me calls cc.UsersAPI.Me.
@@ -376,6 +433,11 @@ func (c *usersAPIClient) Resolve(ctx context.Context, req *connect_go.Request[cc
 	return c.resolve.CallUnary(ctx, req)
 }
 
+// GetMembers calls cc.UsersAPI.GetMembers.
+func (c *usersAPIClient) GetMembers(ctx context.Context, req *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Users], error) {
+	return c.getMembers.CallUnary(ctx, req)
+}
+
 // UsersAPIHandler is an implementation of the cc.UsersAPI service.
 type UsersAPIHandler interface {
 	Me(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.User], error)
@@ -383,6 +445,7 @@ type UsersAPIHandler interface {
 	// Resolves given Users data by their UUIDs
 	// And returns all accessible Users for Requestor
 	Resolve(context.Context, *connect_go.Request[cc.Users]) (*connect_go.Response[cc.Users], error)
+	GetMembers(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Users], error)
 }
 
 // NewUsersAPIHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -407,6 +470,11 @@ func NewUsersAPIHandler(svc UsersAPIHandler, opts ...connect_go.HandlerOption) (
 		svc.Resolve,
 		opts...,
 	))
+	mux.Handle(UsersAPIGetMembersProcedure, connect_go.NewUnaryHandler(
+		UsersAPIGetMembersProcedure,
+		svc.GetMembers,
+		opts...,
+	))
 	return "/cc.UsersAPI/", mux
 }
 
@@ -423,6 +491,10 @@ func (UnimplementedUsersAPIHandler) FetchDefaults(context.Context, *connect_go.R
 
 func (UnimplementedUsersAPIHandler) Resolve(context.Context, *connect_go.Request[cc.Users]) (*connect_go.Response[cc.Users], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.UsersAPI.Resolve is not implemented"))
+}
+
+func (UnimplementedUsersAPIHandler) GetMembers(context.Context, *connect_go.Request[cc.Empty]) (*connect_go.Response[cc.Users], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("cc.UsersAPI.GetMembers is not implemented"))
 }
 
 // StreamServiceClient is a client for the cc.StreamService service.

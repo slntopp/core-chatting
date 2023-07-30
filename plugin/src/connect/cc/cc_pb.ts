@@ -83,19 +83,24 @@ export enum EventType {
   CHAT_DELETED = 3,
 
   /**
-   * @generated from enum value: MESSAGE_SEND = 4;
+   * @generated from enum value: CHAT_READ = 4;
    */
-  MESSAGE_SEND = 4,
+  CHAT_READ = 4,
 
   /**
-   * @generated from enum value: MESSAGE_UPDATED = 5;
+   * @generated from enum value: MESSAGE_SENT = 5;
    */
-  MESSAGE_UPDATED = 5,
+  MESSAGE_SENT = 5,
 
   /**
-   * @generated from enum value: MESSAGE_DELETED = 6;
+   * @generated from enum value: MESSAGE_UPDATED = 6;
    */
-  MESSAGE_DELETED = 6,
+  MESSAGE_UPDATED = 6,
+
+  /**
+   * @generated from enum value: MESSAGE_DELETED = 7;
+   */
+  MESSAGE_DELETED = 7,
 }
 // Retrieve enum metadata with: proto3.getEnumType(EventType)
 proto3.util.setEnumType(EventType, "cc.EventType", [
@@ -103,9 +108,10 @@ proto3.util.setEnumType(EventType, "cc.EventType", [
   { no: 1, name: "CHAT_CREATED" },
   { no: 2, name: "CHAT_UPDATED" },
   { no: 3, name: "CHAT_DELETED" },
-  { no: 4, name: "MESSAGE_SEND" },
-  { no: 5, name: "MESSAGE_UPDATED" },
-  { no: 6, name: "MESSAGE_DELETED" },
+  { no: 4, name: "CHAT_READ" },
+  { no: 5, name: "MESSAGE_SENT" },
+  { no: 6, name: "MESSAGE_UPDATED" },
+  { no: 7, name: "MESSAGE_DELETED" },
 ]);
 
 /**
@@ -403,6 +409,11 @@ export class Message extends Message$1<Message> {
    */
   underReview = false;
 
+  /**
+   * @generated from field: repeated string readers = 11;
+   */
+  readers: string[] = [];
+
   constructor(data?: PartialMessage<Message>) {
     super();
     proto3.util.initPartial(data, this);
@@ -421,6 +432,7 @@ export class Message extends Message$1<Message> {
     { no: 8, name: "sent", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 9, name: "edited", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 10, name: "under_review", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 11, name: "readers", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Message {

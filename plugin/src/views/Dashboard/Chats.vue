@@ -1,107 +1,165 @@
 <template>
-    <n-layout-sider>
-        <n-scrollbar style="height: 90vh">
-            <n-list hoverable clickable>
-                <template #header>
-                    <n-space justify="center" align="center" style="height: 5vh">
-                        <n-button ghost type="success" @click="router.push({ name: 'Start Chat' })">
-                            <template #icon>
-                                <n-icon :component="ChatbubbleEllipsesOutline" />
-                            </template>
-                            Start Chat
-                        </n-button>
-                    </n-space>
-                </template>
-                <chat-list-item v-for="chat in chats" :uuid="chat.uuid" :chat="chat" />
-            </n-list>
-        </n-scrollbar>
+  <div :class="{'chats__panel':true,'closed':!isChatPanelOpen}">
+    <n-layout-sider collapse-mode="transform" :collapsed="!isChatPanelOpen">
+      <n-space :justify="isChatPanelOpen?'space-between':'center'" align="center"
+               :class="{'chat__actions':true,hide:!isChatPanelOpen}">
+        <n-button ghost type="success" @click="router.push({ name: 'Start Chat' })">
+          <n-icon :component="ChatbubbleEllipsesOutline"/>
+          <span v-if="isChatPanelOpen" style="margin-left: 5px">Start Chat</span>
+        </n-button>
+        <n-button ghost @click="isChatPanelOpen=!isChatPanelOpen">
+          <n-icon>
+            <close-icon v-if="isChatPanelOpen"/>
+            <open-icon v-else/>
+          </n-icon>
+        </n-button>
+      </n-space>
+      <n-space class="search" v-if="isChatPanelOpen" align="center" justify="center">
+        <n-input v-model:value="searchParam" type="text" placeholder="Search..."/>
+      </n-space>
+      <n-scrollbar style="height: 100vh;min-width: 150px">
+        <n-list hoverable clickable>
+          <chat-item :hide-message="!isChatPanelOpen" v-for="chat in chats" :uuid="chat.uuid" :chat="chat"/>
+        </n-list>
+      </n-scrollbar>
     </n-layout-sider>
+  </div>
+  <div id="separator" v-show="isChatPanelOpen"></div>
+  <div class="chat__item">
     <n-layout-content>
-        <router-view />
+      <router-view/>
     </n-layout-content>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, h, computed } from 'vue';
-import {
-    NLayoutSider, NLayoutContent,
-    NScrollbar, NList, NListItem,
-    NSpace, NButton, NIcon,
-    NAvatar, NText, NBadge
-} from 'naive-ui';
+import {computed, defineAsyncComponent, onMounted, ref} from 'vue';
+import {NButton, NIcon, NInput, NLayoutContent, NLayoutSider, NList, NScrollbar, NSpace} from 'naive-ui';
 
-import { useCcStore } from '../../store/chatting.ts';
+import {useCcStore} from '../../store/chatting.ts';
 
-import { useRouter } from 'vue-router';
-import { Chat } from '../../connect/cc/cc_pb';
+import {useRouter} from 'vue-router';
+import {Chat} from '../../connect/cc/cc_pb';
+import ChatItem from "../../components/chats/chat_item.vue";
+import useDraggable from "../../hooks/useDraggable.ts";
 
 const ChatbubbleEllipsesOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ChatbubbleEllipsesOutline'));
+const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForward'));
+const CloseIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
 
 const store = useCcStore();
 const router = useRouter();
+const {makeDraggable} = useDraggable()
+
+const isChatPanelOpen = ref(true)
+const searchParam = ref('')
 
 async function sync() {
-    await store.list_chats();
+  await store.list_chats();
 }
-sync()
 
-store.resolve()
-
-const chats = computed(() => {
-    let res: Chat[] = []
-    store.chats.forEach((chat) => {
-        res.push(chat)
-    })
-
-    let sortable = (chat: Chat) => {
-        if (chat.meta && chat.meta.lastMessage)
-            return chat.meta.lastMessage.sent
-        return chat.created
-    }
-
-    return res.sort((a: Chat, b: Chat) => {
-        return Number(sortable(b) - sortable(a))
-    })
+onMounted(() => {
+  makeDraggable({
+    resizer: document.getElementById("separator")!,
+    first: document.getElementsByClassName("chats__panel").item(0) as HTMLElement,
+    second: document.getElementsByClassName("chat__item").item(0) as HTMLElement
+  });
 })
 
-interface ChatListItemProps {
-    uuid: string
-    chat: Chat
+sync()
+
+const filterChat = (chat: Chat, val: string): boolean => {
+  if (!val) {
+    return true
+  }
+  val = val.toLowerCase()
+
+  const startsWithKeys = ['topic', 'uuid']
+
+  for (const key of startsWithKeys) {
+    if ((chat as any)[key]?.toLowerCase().startsWith(val)) {
+      return true
+    }
+  }
+
+  return !!chat.users.find(u => u.startsWith(val) || store.users.get(u)?.title.toLowerCase().startsWith(val)) || !!chat.admins.find(u => u.startsWith(val) || store.users.get(u)?.title.toLocaleLowerCase().startsWith(val))
 }
 
-// TODO:
-//  - [ ] Wrap Topic Around Avatar
-//  - [ ] Make menu draggable (increase width)
+const chats = computed(() => {
+  let res: Chat[] = []
+  store.chats.forEach((chat) => {
+    res.push(chat)
+  })
 
-function chatListItem(props: ChatListItemProps) {
-    let { chat } = props;
+  res = res.filter((c) => filterChat(c, searchParam.value))
 
-    let users = chat.users.map(uuid => store.users.get(uuid)?.title ?? 'Unknown')
-    let admins = chat.admins.map(uuid => store.users.get(uuid)?.title ?? 'Unknown')
-
-    let members = users.concat(admins)
-    let avatar_title = members.map(el => el[0]).join(',')
-
-    let sub = "No messages yet"
+  let sortable = (chat: Chat) => {
     if (chat.meta && chat.meta.lastMessage)
-        sub = chat.meta!.lastMessage!.content.slice(0, 16) + '...'
+      return chat.meta.lastMessage.sent
+    return chat.created
+  }
 
-    let result = [
-        h(NAvatar, { round: true, size: "large" }, () => avatar_title),
-        h(NSpace, { vertical: true }, () => [
-            h(NText, {}, () => chat.topic ?? members),
-            h(NText, { depth: "3" }, () => sub)
-        ]),
-    ]
+  return res.sort((a: Chat, b: Chat) => {
+    return Number(sortable(b) - sortable(a))
+  })
+})
+</script>
 
-    if (chat.meta && chat.meta.unread > 0)
-        result[1] = h(NBadge, { value: chat.meta!.unread, max: 99, style: { width: '100%' }, size: 24, offset: [12, 12] }, result[1])
-
-    return h(NListItem, {
-        "onClick": () => router.push({ name: 'Chat', params: { uuid: props.uuid } })
-    }, () => (h(
-        NSpace, { justify: "start" }, () => result
-    )))
+<style lang="scss">
+#separator {
+  cursor: col-resize;
+  background-color: #18181C;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 10px;
+  /* Prevent the browser's built-in drag from interfering */
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
-</script>
+.chats__panel {
+  min-width: 275px;
+  width: 275px;
+
+  .chat__actions {
+    padding: 10px 0px 10px 10px;
+
+    &.hide {
+      flex-flow: column-reverse !important;
+      margin: 0px;
+    }
+  }
+
+  .search{
+    margin-top: 5px;
+    margin-bottom: 10px;
+    margin-left: 9px;
+    div{
+      width: 100%;
+    }
+  }
+
+  &.closed {
+    min-width: 70px !important;
+    width: 70px !important;
+    background-color: #18181C;
+
+    .n-layout-sider-scroll-container {
+      min-width: 70px !important;
+      width: 70px !important;
+    }
+  }
+
+  aside {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+.chat__item {
+  height: 100%;
+  min-width: 50%;
+  width: 100%;
+}
+</style>

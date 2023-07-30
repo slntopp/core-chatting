@@ -17,6 +17,7 @@ enum Role {
 message ChatMeta {
   int32 unread = 1;
   Message last_message = 2;
+  map<string, google.protobuf.Value> data = 3;
 }
 
 message Chat {
@@ -38,11 +39,18 @@ message Chat {
 
 message Chats { repeated Chat chats = 1; }
 
+message GetawayRequest {
+  string gateway = 1;
+  int64 gateway_chat_id = 2;
+}
+
 service ChatsAPI {
   rpc Create(Chat) returns (Chat);
   rpc Update(Chat) returns (Chat);
 
+  rpc Get(Chat) returns (Chat);
   rpc List(Empty) returns (Chats);
+  rpc GetByGateway(GetawayRequest) returns (Chat);
 
   rpc Delete(Chat) returns (Chat);
 }
@@ -73,6 +81,8 @@ message Message {
   int64 edited = 9;
 
   bool under_review = 10;
+  repeated string readers = 11;
+  map<string, google.protobuf.Value> meta = 12;
 }
 message Messages { repeated Message messages = 1; }
 
@@ -104,6 +114,7 @@ service UsersAPI {
   // Resolves given Users data by their UUIDs
   // And returns all accessible Users for Requestor
   rpc Resolve(Users) returns (Users);
+  rpc GetMembers(Empty) returns (Users);
 }
 
 enum EventType {
@@ -111,9 +122,10 @@ enum EventType {
   CHAT_CREATED = 1;
   CHAT_UPDATED = 2;
   CHAT_DELETED = 3;
-  MESSAGE_SEND = 4;
-  MESSAGE_UPDATED = 5;
-  MESSAGE_DELETED = 6;
+  CHAT_READ = 4;
+  MESSAGE_SENT = 5;
+  MESSAGE_UPDATED = 6;
+  MESSAGE_DELETED = 7;
 }
 
 message Event {

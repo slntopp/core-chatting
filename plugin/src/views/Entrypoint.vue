@@ -22,7 +22,6 @@ function alert(title: string, content: string) {
     }, {
         default: () => content
     })
-
 }
 
 function handler() {

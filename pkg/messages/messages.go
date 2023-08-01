@@ -3,6 +3,8 @@ package messages
 import (
 	"context"
 	"errors"
+	"fmt"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 	"time"
 
 	"github.com/slntopp/core-chatting/pkg/pubsub"
@@ -91,6 +93,18 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 	}
 
 	msg.Sent = time.Now().UnixMilli()
+
+	if chat.GetGateways() != nil {
+		if msg.GetMeta() == nil {
+			msg.Meta = map[string]*structpb.Value{}
+		}
+		data := chat.GetMeta().GetData()
+		if data != nil {
+			for _, gate := range chat.GetGateways() {
+				msg.Meta[fmt.Sprintf("%s_chat_id", gate)] = data[gate]
+			}
+		}
+	}
 
 	message, err := s.msgCtrl.Send(ctx, msg)
 	if err != nil {

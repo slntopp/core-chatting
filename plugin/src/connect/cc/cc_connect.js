@@ -85,6 +85,15 @@ export const MessagesAPI = {
       kind: MethodKind.Unary,
     },
     /**
+     * @generated from rpc cc.MessagesAPI.GetByGateway
+     */
+    getByGateway: {
+      name: "GetByGateway",
+      I: GetawayRequest,
+      O: Message,
+      kind: MethodKind.Unary,
+    },
+    /**
      * @generated from rpc cc.MessagesAPI.Send
      */
     send: {

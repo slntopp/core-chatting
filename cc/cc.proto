@@ -41,7 +41,7 @@ message Chats { repeated Chat chats = 1; }
 
 message GetawayRequest {
   string gateway = 1;
-  int64 gateway_chat_id = 2;
+  int64 gateway_id = 2;
 }
 
 service ChatsAPI {
@@ -88,6 +88,7 @@ message Messages { repeated Message messages = 1; }
 
 service MessagesAPI {
   rpc Get(Chat) returns (Messages);
+  rpc GetByGateway(GetawayRequest) returns (Message);
 
   rpc Send(Message) returns (Message);
   rpc Update(Message) returns (Message);

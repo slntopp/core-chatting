@@ -242,9 +242,9 @@ export declare class GetawayRequest extends Message$1<GetawayRequest> {
   gateway: string;
 
   /**
-   * @generated from field: int64 gateway_chat_id = 2;
+   * @generated from field: int64 gateway_id = 2;
    */
-  gatewayChatId: bigint;
+  gatewayId: bigint;
 
   constructor(data?: PartialMessage<GetawayRequest>);
 

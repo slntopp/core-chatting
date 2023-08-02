@@ -263,7 +263,7 @@ func (c *ChatsController) GetByGateway(ctx context.Context, req *cc.GetawayReque
 
 	cur, err := c.db.Query(queryContext, getChatByGateway, map[string]interface{}{
 		"@chats":  CHATS_COLLECTION,
-		"id":      req.GatewayChatId,
+		"id":      req.GatewayId,
 		"gateway": req.Gateway,
 	})
 

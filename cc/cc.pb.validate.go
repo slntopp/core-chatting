@@ -608,7 +608,7 @@ func (m *GetawayRequest) validate(all bool) error {
 
 	// no validation rules for Gateway
 
-	// no validation rules for GatewayChatId
+	// no validation rules for GatewayId
 
 	if len(errors) > 0 {
 		return GetawayRequestMultiError(errors)

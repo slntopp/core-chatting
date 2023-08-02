@@ -85,6 +85,15 @@ export declare const MessagesAPI: {
       readonly kind: MethodKind.Unary,
     },
     /**
+     * @generated from rpc cc.MessagesAPI.GetByGateway
+     */
+    readonly getByGateway: {
+      readonly name: "GetByGateway",
+      readonly I: typeof GetawayRequest,
+      readonly O: typeof Message,
+      readonly kind: MethodKind.Unary,
+    },
+    /**
      * @generated from rpc cc.MessagesAPI.Send
      */
     readonly send: {

@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/slntopp/core-chatting/cc"
@@ -59,7 +60,8 @@ UPDATE @key WITH {
     content: @content,
     edited: @edited,
     under_review: @under_review,
-	readers : @readers
+	readers : @readers,
+	meta: @meta
 } IN @@messages
 `
 
@@ -67,15 +69,18 @@ func (c *MessagesController) Update(ctx context.Context, msg *cc.Message) (*cc.M
 	log := c.log.Named("Update")
 	log.Debug("Req received")
 
-	_, err := c.db.Query(ctx, updateMessageQuery, map[string]interface{}{
+	params := map[string]interface{}{
 		"kind":         msg.GetKind(),
 		"content":      msg.GetContent(),
 		"edited":       msg.GetEdited(),
 		"under_review": msg.GetUnderReview(),
 		"key":          msg.GetUuid(),
 		"readers":      msg.GetReaders(),
+		"meta":         msg.GetMeta(),
 		"@messages":    MESSAGES_COLLECTION,
-	})
+	}
+
+	_, err := c.db.Query(ctx, updateMessageQuery, params)
 
 	if err != nil {
 		return nil, err
@@ -142,4 +147,37 @@ func (c *MessagesController) Get(ctx context.Context, uuid string) (*cc.Message,
 	}
 
 	return &msg, nil
+}
+
+const getMessageByGateway = `
+FOR m in @@messages
+    FILTER m.meta[@gateway] == @id
+    RETURN m
+`
+
+func (c *MessagesController) GetByGateway(ctx context.Context, msg *cc.GetawayRequest) (*cc.Message, error) {
+	log := c.log.Named("GetByGateway")
+	log.Debug("Req received")
+
+	gateway := fmt.Sprintf("%s_message_id", msg.GetGateway())
+
+	cur, err := c.db.Query(ctx, getMessageByGateway, map[string]interface{}{
+		"@messages": MESSAGES_COLLECTION,
+		"id":        msg.GetGatewayId(),
+		"gateway":   gateway,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close()
+
+	var message cc.Message
+
+	_, err = cur.ReadDocument(ctx, &message)
+	if err != nil {
+		return nil, err
+	}
+
+	return &message, nil
 }

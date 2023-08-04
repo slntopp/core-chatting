@@ -1,6 +1,6 @@
 <template>
   <div :class="{'chats__panel':true,'closed':!isChatPanelOpen}">
-    <n-layout-sider collapse-mode="transform" :collapsed="!isChatPanelOpen">
+    <n-layout-sider style="margin-bottom: 25px" collapse-mode="transform" :collapsed="!isChatPanelOpen">
       <n-space :justify="isChatPanelOpen?'space-between':'center'" align="center"
                :class="{'chat__actions':true,hide:!isChatPanelOpen}">
         <n-button ghost type="success" @click="router.push({ name: 'Start Chat' })">
@@ -18,7 +18,7 @@
         <n-input v-model:value="searchParam" type="text" placeholder="Search..."/>
       </n-space>
       <n-scrollbar style="height: 100vh;min-width: 150px">
-        <n-list hoverable clickable>
+        <n-list style="margin-bottom: 25px" hoverable clickable>
           <chat-item :hide-message="!isChatPanelOpen" v-for="chat in chats" :uuid="chat.uuid" :chat="chat"/>
         </n-list>
       </n-scrollbar>
@@ -131,11 +131,12 @@ const chats = computed(() => {
     }
   }
 
-  .search{
+  .search {
     margin-top: 5px;
     margin-bottom: 10px;
     margin-left: 9px;
-    div{
+
+    div {
       width: 100%;
     }
   }

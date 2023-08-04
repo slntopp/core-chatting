@@ -5,8 +5,8 @@
     </template>
 
     <n-scrollbar style="max-height: 80vh !important;" v-if="isMessageLoading || messages.length>0" ref="scrollbar">
-      <template  v-if="isMessageLoading">
-          <mock-message v-for="(_,index) in 5" :key="index+ (chat?.topic || '')"/>
+      <template v-if="isMessageLoading">
+        <mock-message v-for="(_,index) in 5" :key="index+ (chat?.topic || '')"/>
       </template>
 
       <n-list-item v-else v-for="message in messages" :key="message.uuid">
@@ -23,10 +23,11 @@
       </n-alert>
     </n-space>
 
-    <template #footer>
-      <n-space class="footer" align="center">
-        <user-avatar class="avatar" round size="medium" avatar="M E"></user-avatar>
-
+    <template class="footer" #footer>
+      <div class="footer">
+        <div class="avatar">
+          <user-avatar round size="medium" avatar="M E"></user-avatar>
+        </div>
         <n-space class="textarea" vertical justify="center">
           <n-alert style="min-width: 50vw;" title="Editing" type="info" closable v-if="updating"
                    @close="handle_stop_edit"/>
@@ -37,7 +38,7 @@
                                 minRows: 2,
                                 maxRows: 5
                             }
-                                " style="min-width: 50vw; max-width: 60vw;" placeholder="Type your message"
+                                " style="width: 100%" placeholder="Type your message"
                        v-model:value="current_message.content" ref="input"
                        @keypress.ctrl.enter.exact="e => { e.preventDefault(); handle_send() }"
                        @keypress.ctrl.shift.enter.exact="e => { e.preventDefault(); handle_send(Kind.ADMIN_ONLY) }"
@@ -83,7 +84,7 @@
             Message will be put under moderation, thus not visible to user until one of the Admins approves it.
           </n-tooltip>
         </n-space>
-      </n-space>
+      </div>
     </template>
   </n-list>
 </template>
@@ -191,14 +192,14 @@ async function handle_delete(msg: Message) {
   await store.delete_message(msg)
 }
 
-function scrollToBottom(smooth=false) {
+function scrollToBottom(smooth = false) {
   setTimeout(() => {
     if (!scrollbar.value) {
       console.warn('scrollbar not ready')
       return
     }
     nextTick(() => {
-      scrollbar.value.scrollTo({top: Number.MAX_SAFE_INTEGER,behavior:smooth?'smooth':undefined})
+      scrollbar.value.scrollTo({top: Number.MAX_SAFE_INTEGER, behavior: smooth ? 'smooth' : undefined})
     })
   }, 0)
 }
@@ -218,12 +219,12 @@ async function load_chat() {
 watch(chat, load_chat)
 load_chat()
 
-watch(messages, ()=>{
-  if(chat.value?.meta){
-    chat.value.meta.unread=0;
+watch(messages, () => {
+  if (chat.value?.meta) {
+    chat.value.meta.unread = 0;
   }
   scrollToBottom(true)
-},{deep:true})
+}, {deep: true})
 
 function handle_begin_edit() {
   for (let i = messages.value.length - 1; i >= 0; i--) {
@@ -267,12 +268,39 @@ textarea {
   overflow-wrap: anywhere;
 }
 
-.footer{
-  .actions{
+.footer {
+  display: flex;
+  justify-items: center;
+  align-items: center;
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+
+  .actions {
+    margin: 0px 10px;
+    max-width: 125px;
+    min-width: 125px;
   }
-  .avatar{
+
+  .avatar {
+    max-width: 35px;
+    margin: 0px 10px;
   }
-  .textarea{
+
+  .textarea {
+    min-width: 100px;
+    width: 80%;
+    margin: 0px 10px;
+  }
+
+  @media (max-width: 600px) {
+    flex-wrap: wrap;
+    .textarea {
+      width: 60%;
+    }
+    .actions {
+      margin: 20px auto;
+    }
   }
 }
 </style>

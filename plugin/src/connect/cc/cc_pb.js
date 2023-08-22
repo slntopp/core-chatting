@@ -160,6 +160,18 @@ export const User = proto3.makeMessageType(
 );
 
 /**
+ * @generated from message cc.Department
+ */
+export const Department = proto3.makeMessageType(
+  "cc.Department",
+  () => [
+    { no: 1, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "admin", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ],
+);
+
+/**
  * @generated from message cc.Defaults
  */
 export const Defaults = proto3.makeMessageType(
@@ -167,6 +179,7 @@ export const Defaults = proto3.makeMessageType(
   () => [
     { no: 1, name: "gateways", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 2, name: "admins", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 3, name: "departments", kind: "message", T: Department, repeated: true },
   ],
 );
 

@@ -430,6 +430,40 @@ export declare class User extends Message$1<User> {
 }
 
 /**
+ * @generated from message cc.Department
+ */
+export declare class Department extends Message$1<Department> {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string description = 2;
+   */
+  description: string;
+
+  /**
+   * @generated from field: string admin = 3;
+   */
+  admin: string;
+
+  constructor(data?: PartialMessage<Department>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.Department";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Department;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Department;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Department;
+
+  static equals(a: Department | PlainMessage<Department> | undefined, b: Department | PlainMessage<Department> | undefined): boolean;
+}
+
+/**
  * @generated from message cc.Defaults
  */
 export declare class Defaults extends Message$1<Defaults> {
@@ -442,6 +476,11 @@ export declare class Defaults extends Message$1<Defaults> {
    * @generated from field: repeated string admins = 2;
    */
   admins: string[];
+
+  /**
+   * @generated from field: repeated cc.Department departments = 3;
+   */
+  departments: Department[];
 
   constructor(data?: PartialMessage<Defaults>);
 

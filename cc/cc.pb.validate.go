@@ -1251,6 +1251,111 @@ var _ interface {
 	ErrorName() string
 } = UserValidationError{}
 
+// Validate checks the field values on Department with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Department) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Department with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in DepartmentMultiError, or
+// nil if none found.
+func (m *Department) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Department) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Title
+
+	// no validation rules for Description
+
+	// no validation rules for Admin
+
+	if len(errors) > 0 {
+		return DepartmentMultiError(errors)
+	}
+
+	return nil
+}
+
+// DepartmentMultiError is an error wrapping multiple validation errors
+// returned by Department.ValidateAll() if the designated constraints aren't met.
+type DepartmentMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DepartmentMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DepartmentMultiError) AllErrors() []error { return m }
+
+// DepartmentValidationError is the validation error returned by
+// Department.Validate if the designated constraints aren't met.
+type DepartmentValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DepartmentValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DepartmentValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DepartmentValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DepartmentValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DepartmentValidationError) ErrorName() string { return "DepartmentValidationError" }
+
+// Error satisfies the builtin error interface
+func (e DepartmentValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDepartment.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DepartmentValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DepartmentValidationError{}
+
 // Validate checks the field values on Defaults with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -1272,6 +1377,40 @@ func (m *Defaults) validate(all bool) error {
 	}
 
 	var errors []error
+
+	for idx, item := range m.GetDepartments() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DefaultsValidationError{
+						field:  fmt.Sprintf("Departments[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DefaultsValidationError{
+						field:  fmt.Sprintf("Departments[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DefaultsValidationError{
+					field:  fmt.Sprintf("Departments[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
 
 	if len(errors) > 0 {
 		return DefaultsMultiError(errors)

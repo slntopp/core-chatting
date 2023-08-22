@@ -102,9 +102,16 @@ message User {
   google.protobuf.Struct data = 3;
 }
 
+message Department {
+  string title = 1;
+  string description = 2;
+  string admin = 3;
+}
+
 message Defaults {
   repeated string gateways = 1;
   repeated string admins = 2;
+  repeated Department departments = 3;
 }
 
 message Users { repeated User users = 1; }

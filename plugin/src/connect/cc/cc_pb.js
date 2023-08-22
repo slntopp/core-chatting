@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { proto3, Value } from "@bufbuild/protobuf";
+import { proto3, Struct, Value } from "@bufbuild/protobuf";
 
 /**
  * @generated from enum cc.Role
@@ -155,6 +155,7 @@ export const User = proto3.makeMessageType(
   () => [
     { no: 1, name: "uuid", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "data", kind: "message", T: Struct },
   ],
 );
 

@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage, Value } from "@bufbuild/protobuf";
+import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage, Struct, Value } from "@bufbuild/protobuf";
 import { Message as Message$1, proto3 } from "@bufbuild/protobuf";
 
 /**
@@ -408,6 +408,11 @@ export declare class User extends Message$1<User> {
    * @generated from field: string title = 2;
    */
   title: string;
+
+  /**
+   * @generated from field: google.protobuf.Struct data = 3;
+   */
+  data?: Struct;
 
   constructor(data?: PartialMessage<User>);
 

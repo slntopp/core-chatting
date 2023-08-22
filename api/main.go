@@ -19,7 +19,7 @@ import (
 	"github.com/slntopp/core-chatting/pkg/messages"
 	"github.com/slntopp/core-chatting/pkg/users"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/rs/cors"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"

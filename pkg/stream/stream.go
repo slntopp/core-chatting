@@ -3,7 +3,6 @@ package stream
 import (
 	"context"
 	"errors"
-	"github.com/bufbuild/connect-go"
 	"net/http"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
 
+	"connectrpc.com/connect"
 	"github.com/slntopp/core-chatting/pkg/graph"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
 	"go.uber.org/zap"

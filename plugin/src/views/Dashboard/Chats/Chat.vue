@@ -1,10 +1,14 @@
 <template>
-  <n-list style="padding-left: 16px;min-height: 100vh">
+  <n-list class="chat">
     <template #header>
       <chat-header :chat="chat!" style="height: 5vh"/>
     </template>
 
-    <n-scrollbar style="max-height: 80vh !important;" v-if="isMessageLoading || messages.length>0" ref="scrollbar">
+    <n-scrollbar
+      ref="scrollbar"
+      style="max-height: calc(100vh - 66px - 77px); margin-bottom: auto"
+      v-if="isMessageLoading || messages.length>0"
+    >
       <template v-if="isMessageLoading">
         <mock-message v-for="(_,index) in 5" :key="index+ (chat?.topic || '')"/>
       </template>
@@ -23,7 +27,7 @@
       </n-alert>
     </n-space>
 
-    <template class="footer" #footer>
+    <template #footer>
       <div class="footer">
         <div class="avatar">
           <user-avatar round size="medium" avatar="M E"></user-avatar>
@@ -34,18 +38,21 @@
           <n-tooltip placement="top-end">
             <template #trigger>
 
-              <n-input type="textarea" size="small" :autosize="{
-                                minRows: 2,
-                                maxRows: 5
-                            }
-                                " style="width: 100%" placeholder="Type your message"
-                       v-model:value="current_message.content" ref="input"
-                       @keypress.ctrl.enter.exact="e => { e.preventDefault(); handle_send() }"
-                       @keypress.ctrl.shift.enter.exact="e => { e.preventDefault(); handle_send(Kind.ADMIN_ONLY) }"
-                       @keyup.ctrl.up.exact="e => { e.preventDefault(); handle_begin_edit() }"/>
+              <n-input
+                ref="input"
+                size="small"
+                type="textarea"
+                style="width: 100%" placeholder="Type your message"
+                v-model:value="current_message.content"
+                :autosize="{ minRows: 2, maxRows: 5 }"
+
+                @keypress.prevent.ctrl.enter.exact="handle_send"
+                @keypress.prevent.ctrl.shift.enter.exact="handle_send(Kind.ADMIN_ONLY)"
+                @keyup.prevent.ctrl.up.exact="handle_begin_edit"
+              />
             </template>
 
-            <ul>
+            <ul style="padding: 0 0 0 10px">
               <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to send message</li>
               <li v-if="chat?.role == Role.ADMIN"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Enter</kbd> to
                 send
@@ -57,7 +64,7 @@
           </n-tooltip>
         </n-space>
 
-        <n-space class="actions">
+        <n-space class="actions" style="flex-flow: nowrap">
           <n-button type="success" ghost circle size="small" @click="handle_send()">
             <template #icon>
               <n-icon :component="SendOutline"/>
@@ -198,8 +205,13 @@ function scrollToBottom(smooth = false) {
       console.warn('scrollbar not ready')
       return
     }
+
     nextTick(() => {
-      scrollbar.value.scrollTo({top: Number.MAX_SAFE_INTEGER, behavior: smooth ? 'smooth' : undefined})
+      setTimeout(() => {
+        const top = scrollbar.value.$el.nextSibling.firstChild.scrollHeight;
+
+        scrollbar.value.scrollTo({ top, behavior: smooth ? 'smooth' : undefined })
+      }, 300)
     })
   }, 0)
 }
@@ -208,8 +220,12 @@ async function load_chat() {
   if (!chat.value) return
   try {
     isMessageLoading.value = true
-    await Promise.all([store.resolve([...chat.value.users, ...chat.value.admins]),
-      store.get_messages(chat.value as Chat)])
+    await Promise.all([
+      store.resolve([...chat.value.users, ...chat.value.admins]),
+      store.get_messages(chat.value as Chat)
+    ])
+
+    handle_stop_edit()
     scrollToBottom()
   } finally {
     isMessageLoading.value = false
@@ -249,7 +265,7 @@ function handle_stop_edit() {
 
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 kbd {
   background-color: #eee;
   border-radius: 3px;
@@ -268,29 +284,31 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.chat {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding-left: 16px;
+}
+
 .footer {
   display: flex;
-  justify-items: center;
+  justify-content: center;
   align-items: center;
-  position: absolute;
-  bottom: 20px;
-  width: 100%;
-
-  .actions {
-    margin: 0px 10px;
-    max-width: 125px;
-    min-width: 125px;
-  }
+  width: calc(100% - 35px);
+  gap: 15px;
 
   .avatar {
     max-width: 35px;
-    margin: 0px 10px;
   }
 
   .textarea {
     min-width: 100px;
-    width: 80%;
-    margin: 0px 10px;
+    width: 100%;
+  }
+  
+  .actions {
+    justify-content: space-between;
   }
 
   @media (max-width: 600px) {

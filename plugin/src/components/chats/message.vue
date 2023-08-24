@@ -1,16 +1,23 @@
 <template>
   <render @contextmenu="show_dropdown">
-    <div v-html="content()">
-    </div>
+    <span v-html="content()"></span>
   </render>
 
-  <n-dropdown placement="bottom-start" trigger="manual" :x="x" :y="y" :options="options" :show="show"
-              @clickoutside=" show = false" @select="handle_select"/>
+  <n-dropdown
+    placement="bottom-start"
+    trigger="manual"
+    :x="x"
+    :y="y"
+    :show="show"
+    :options="options"
+    @clickoutside="show = false"
+    @select="handle_select"
+  />
 </template>
 
 <script setup lang="ts">
 import {computed, defineAsyncComponent, h, nextTick, ref, toRefs} from 'vue';
-import {NButton, NDivider, NDropdown, NGi, NGrid, NH2, NIcon, NSpace, NText, NTooltip, useThemeVars,} from 'naive-ui'
+import {NButton, NDivider, NDropdown, NH2, NIcon, NSpace, NText, NTooltip, useThemeVars} from 'naive-ui'
 
 import {Kind, Message, Role, User} from '../../connect/cc/cc_pb'
 import {useCcStore} from '../../store/chatting';
@@ -146,8 +153,10 @@ function avatar() {
 
 const container_style = computed(() => {
   let style = {
-    padding: '12px 0 12px 12px', borderRadius: theme.value.borderRadius,
-    maxWidth: '98%', border: `1px solid ${theme.value.borderColor}`,
+    padding: '12px',
+    borderRadius: theme.value.borderRadius,
+    maxWidth: 'calc(100% - 45px)',
+    border: `1px solid ${theme.value.borderColor}`,
     backgroundColor: ''
   }
 
@@ -192,7 +201,7 @@ function content() {
   const parsed = marked.parse(message.value.content)
   const sanitized = DOMPurify.sanitize(parsed)
 
-  return sanitized
+  return sanitized.replace(/^<p>/, '').replace(/<\/p>$/, '')
 }
 
 const now = ref(new Date())
@@ -228,14 +237,17 @@ function timestamp() {
   result += getRelativeTime(Number(message.value.edited ? message.value.edited : message.value.sent))
 
   let tooltip = [
-    h(NDivider, {titlePlacement: 'left'}, () => 'Sent'),
-    h(NText, {}, () => new Date(Number(message.value.sent)).toString())
+    h(NText, {}, () =>
+      `Sent: ${new Date(Number(message.value.sent)).toLocaleString()}`
+    )
   ]
 
   if (message.value.edited) {
     tooltip.push(
-        h(NDivider, {titlePlacement: 'left'}, () => 'Edited'),
-        h(NText, {}, () => new Date(Number(message.value.edited)).toString())
+      h(NDivider, { style: { margin: '5px 0' } }),
+      h(NText, {}, () =>
+        `Edited: ${new Date(Number(message.value.edited)).toLocaleString()}`
+      )
     )
   }
 
@@ -248,15 +260,7 @@ function timestamp() {
 }
 
 function render(_props: any, {slots}: any) {
-
   const is_sender = message.value.sender == store.me.uuid
-
-  const avatar_item = h(NGi, {
-        span: 3,
-      },
-      () => avatar()
-  )
-
 
   let title = [
     h(
@@ -282,19 +286,16 @@ function render(_props: any, {slots}: any) {
   }
 
   let elements = [
-    avatar_item,
-    h(NGi, {span: 21},
-        () => h(
-            NSpace,
-            {
-              vertical: true,
-              align: is_sender ? "end" : "start",
-            },
-            () => [
-              h(NSpace, {align: 'center'}, () => title),
-              (slots as any).default(),
-            ]
-        )
+    avatar(),
+    h(NSpace,
+      {
+        vertical: true,
+        align: is_sender ? "end" : "start",
+      },
+      () => [
+        h(NSpace, {align: 'center'}, () => title),
+        (slots as any).default(),
+      ]
     ),
   ]
 
@@ -302,14 +303,12 @@ function render(_props: any, {slots}: any) {
     elements = elements.reverse()
   }
 
-  return h(
-      NGrid,
-      {
-        xGap: 12,
-        style: container_style.value,
-      },
-      () => elements
-  );
+  return h('div', { style: {
+    display: 'grid',
+    gridTemplateColumns: (is_sender) ? '1fr auto' : 'auto 1fr',
+    gap: '15px',
+    ...container_style.value
+  } }, elements);
 }
 </script>
 
@@ -320,5 +319,9 @@ div.code {
   border-radius: 6px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.n-space span img {
+  max-width: 50vw;
 }
 </style>

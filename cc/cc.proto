@@ -20,6 +20,14 @@ message ChatMeta {
   map<string, google.protobuf.Value> data = 3;
 }
 
+enum Status {
+  NEW = 0;
+  OPEN = 1;
+  IN_PROGRESS = 3;
+  RESOLVE = 4;
+  CLOSE = 5;
+}
+
 message Chat {
   string uuid = 1;
 
@@ -35,6 +43,8 @@ message Chat {
   optional ChatMeta meta = 8;
 
   int64 created = 9;
+
+  Status status = 10;
 }
 
 message Chats { repeated Chat chats = 1; }

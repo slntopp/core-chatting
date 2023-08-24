@@ -444,9 +444,9 @@ export declare class Department extends Message$1<Department> {
   description: string;
 
   /**
-   * @generated from field: string admin = 3;
+   * @generated from field: repeated string admins = 3;
    */
-  admin: string;
+  admins: string[];
 
   constructor(data?: PartialMessage<Department>);
 

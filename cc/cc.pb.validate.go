@@ -338,6 +338,8 @@ func (m *Chat) validate(all bool) error {
 
 	// no validation rules for Created
 
+	// no validation rules for Status
+
 	if m.Topic != nil {
 		// no validation rules for Topic
 	}

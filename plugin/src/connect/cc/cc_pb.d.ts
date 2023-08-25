@@ -32,6 +32,36 @@ export declare enum Role {
 }
 
 /**
+ * @generated from enum cc.Status
+ */
+export declare enum Status {
+  /**
+   * @generated from enum value: NEW = 0;
+   */
+  NEW = 0,
+
+  /**
+   * @generated from enum value: OPEN = 1;
+   */
+  OPEN = 1,
+
+  /**
+   * @generated from enum value: IN_PROGRESS = 3;
+   */
+  IN_PROGRESS = 3,
+
+  /**
+   * @generated from enum value: RESOLVE = 4;
+   */
+  RESOLVE = 4,
+
+  /**
+   * @generated from enum value: CLOSE = 5;
+   */
+  CLOSE = 5,
+}
+
+/**
  * @generated from enum cc.Kind
  */
 export declare enum Kind {
@@ -192,6 +222,11 @@ export declare class Chat extends Message$1<Chat> {
    * @generated from field: int64 created = 9;
    */
   created: bigint;
+
+  /**
+   * @generated from field: cc.Status status = 10;
+   */
+  status: Status;
 
   constructor(data?: PartialMessage<Chat>);
 

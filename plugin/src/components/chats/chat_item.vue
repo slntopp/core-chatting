@@ -67,7 +67,7 @@ const goToChat = () => {
   router.push({name: 'Chat', params: {uuid: uuid.value}})
 }
 
-const getStatus = (statusCode: string) => {
+const getStatus = (statusCode: Status) => {
   const status = Status[statusCode].toLowerCase().replace('_', ' ')
 
   return `${status[0].toUpperCase()}${status.slice(1)}`

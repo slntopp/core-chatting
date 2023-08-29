@@ -147,7 +147,10 @@ const chat = computed(() => {
 const notify = useNotification()
 
 const messages = computed(() => {
-  return store.chat_messages(chat.value! as Chat)
+  const chatMessages = store.chat_messages(chat.value! as Chat)
+
+  chatMessages.sort((a, b) => Number(a.sent - b.sent))
+  return chatMessages
 })
 
 const updating = ref(false)

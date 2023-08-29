@@ -2,7 +2,7 @@
   <n-text v-if="!chat">Loading...</n-text>
   <template v-else>
     <n-space justify="start" align="center">
-      <user-avatar round :avatar="members.map(m=>m.title).join(' ')"/>
+      <user-avatar round :avatar="members.map((m) => m?.title ?? '').join(' ')"/>
       <n-text>{{ chat.topic ?? members }}</n-text>
       <n-button text @click="startEditChat">
         <n-icon size="20">

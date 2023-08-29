@@ -14,10 +14,27 @@
           </n-icon>
         </n-button>
       </n-space>
-      <n-space class="search" v-if="isChatPanelOpen" align="center" justify="center">
+      <n-space class="search" v-if="isChatPanelOpen" align="center" justify="space-between" :wrap="false">
         <n-input v-model:value="searchParam" type="text" placeholder="Search..."/>
+
+        <n-popover trigger="hover" placement="bottom">
+          <template #trigger>
+            <n-icon size="24" style="vertical-align: middle">
+              <sort-icon />
+            </n-icon>
+          </template>
+
+          <div>Sort By:</div>
+          <n-divider style="margin: 5px 0" />
+          <n-radio-group v-model:value="sortBy">
+            <n-space>
+              <n-radio value="created" label="Created" />
+              <n-radio value="sent" label="Sent" />
+            </n-space>
+          </n-radio-group>
+        </n-popover>
       </n-space>
-      <n-scrollbar style="height: 100vh;min-width: 150px">
+      <n-scrollbar style="height: calc(100vh - 100px); min-width: 150px">
         <n-list style="margin-bottom: 25px" hoverable clickable>
           <chat-item :hide-message="!isChatPanelOpen" v-for="chat in chats" :uuid="chat.uuid" :chat="chat"/>
         </n-list>
@@ -34,7 +51,7 @@
 
 <script setup lang="ts">
 import {computed, defineAsyncComponent, onMounted, ref} from 'vue';
-import {NButton, NIcon, NInput, NLayoutContent, NLayoutSider, NList, NScrollbar, NSpace} from 'naive-ui';
+import {NButton, NIcon, NInput, NLayoutContent, NLayoutSider, NList, NScrollbar, NSpace, NPopover, NRadioGroup, NRadio, NDivider} from 'naive-ui';
 
 import {useCcStore} from '../../store/chatting.ts';
 
@@ -46,6 +63,7 @@ import useDraggable from "../../hooks/useDraggable.ts";
 const ChatbubbleEllipsesOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ChatbubbleEllipsesOutline'));
 const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForward'));
 const CloseIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
+const SortIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowDown'));
 
 const store = useCcStore();
 const router = useRouter();
@@ -85,6 +103,8 @@ const filterChat = (chat: Chat, val: string): boolean => {
   return !!chat.users.find(u => u.startsWith(val) || store.users.get(u)?.title.toLowerCase().startsWith(val)) || !!chat.admins.find(u => u.startsWith(val) || store.users.get(u)?.title.toLocaleLowerCase().startsWith(val))
 }
 
+const sortBy = ref<'sent' | 'created'>('sent')
+
 const chats = computed(() => {
   let res: Chat[] = []
   store.chats.forEach((chat) => {
@@ -94,8 +114,9 @@ const chats = computed(() => {
   res = res.filter((c) => filterChat(c, searchParam.value))
 
   let sortable = (chat: Chat) => {
-    if (chat.meta && chat.meta.lastMessage)
+    if (chat.meta?.lastMessage && sortBy.value === 'sent') {
       return chat.meta.lastMessage.sent
+    }
     return chat.created
   }
 
@@ -119,8 +140,8 @@ const chats = computed(() => {
 }
 
 .chats__panel {
-  min-width: 275px;
-  width: 275px;
+  min-width: 450px;
+  width: 450px;
 
   .chat__actions {
     padding: 10px 0px 10px 10px;
@@ -136,7 +157,7 @@ const chats = computed(() => {
     margin-bottom: 10px;
     margin-left: 9px;
 
-    div {
+    div:first-child {
       width: 100%;
     }
   }

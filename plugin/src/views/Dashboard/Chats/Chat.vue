@@ -115,7 +115,7 @@ import {
 import {useRoute, useRouter} from 'vue-router';
 import {useCcStore} from '../../../store/chatting';
 import {Chat, Kind, Message, Role} from '../../../connect/cc/cc_pb';
-import {ConnectError} from '@bufbuild/connect';
+import {ConnectError} from '@connectrpc/connect';
 import ChatHeader from "../../../components/chats/layouts/chat_header.vue";
 import UserAvatar from "../../../components/ui/user_avatar.vue";
 import MockMessage from "../../../components/chats/mock_message.vue";

@@ -1,8 +1,8 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
 
-import { createPromiseClient } from "@bufbuild/connect";
-import { createGrpcWebTransport } from "@bufbuild/connect-web";
+import { createPromiseClient } from "@connectrpc/connect";
+import { createGrpcWebTransport } from "@connectrpc/connect-web";
 
 import { useAppStore } from "./app";
 

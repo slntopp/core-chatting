@@ -2,12 +2,14 @@
   <n-list-item class="chat" @click="goToChat">
     <n-space :wrap-item="false" justify="start">
       <user-avatar round size="large" :avatar="members.join(' ')"/>
-      <n-space v-if="!hideMessage" class="preview" vertical>
+      <div v-if="!hideMessage" class="preview">
         <n-text class="topic">{{ chatTopic }}</n-text>
+        <n-tag round :title="uuid">{{ uuid.slice(0, 4) }}...</n-tag>
         <n-text class="sub" depth="3">{{ sub }}</n-text>
-      </n-space>
-      <div style="    position: absolute;
-    right: 15px;">
+        <n-text class="topic">{{ getStatus(chat.status) }}</n-text>
+      </div>
+
+      <div style="position: absolute; right: 15px">
         <n-badge v-if="isUnreadMessages" :value="chat.meta!.unread" :max="99" size="24" :offset="[12, 12]"/>
       </div>
     </n-space>
@@ -16,8 +18,8 @@
 
 <script setup lang="ts">
 import UserAvatar from "../ui/user_avatar.vue";
-import {NBadge, NListItem, NSpace, NText} from "naive-ui";
-import {Chat} from "../../connect/cc/cc_pb";
+import {NBadge, NListItem, NSpace, NText, NTag} from "naive-ui";
+import {Chat, Status} from "../../connect/cc/cc_pb";
 import {computed, toRefs} from "vue";
 import {useCcStore} from "../../store/chatting.ts";
 import {useRouter} from "vue-router";
@@ -64,12 +66,25 @@ const isUnreadMessages = computed(() => chat.value.meta && chat.value.meta.unrea
 const goToChat = () => {
   router.push({name: 'Chat', params: {uuid: uuid.value}})
 }
+
+const getStatus = (statusCode: string) => {
+  const status = Status[statusCode].toLowerCase().replace('_', ' ')
+
+  return `${status[0].toUpperCase()}${status.slice(1)}`
+}
 </script>
 
 <style scoped lang="scss">
 .chat {
   .preview {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 5px;
     width: calc(100% - 80px);
+
+    *:nth-child(even) {
+      justify-self: center;
+    }
 
     .sub {
       display: block;
@@ -84,5 +99,11 @@ const goToChat = () => {
       word-break: break-all;
     }
   }
+}
+</style>
+
+<style>
+.n-list .n-list-item .n-list-item__main {
+  overflow: hidden;
 }
 </style>

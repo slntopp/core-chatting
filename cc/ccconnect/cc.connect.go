@@ -47,15 +47,10 @@ const (
 	ChatsAPIGetProcedure = "/cc.ChatsAPI/Get"
 	// ChatsAPIListProcedure is the fully-qualified name of the ChatsAPI's List RPC.
 	ChatsAPIListProcedure = "/cc.ChatsAPI/List"
-	// ChatsAPIGetByGatewayProcedure is the fully-qualified name of the ChatsAPI's GetByGateway RPC.
-	ChatsAPIGetByGatewayProcedure = "/cc.ChatsAPI/GetByGateway"
 	// ChatsAPIDeleteProcedure is the fully-qualified name of the ChatsAPI's Delete RPC.
 	ChatsAPIDeleteProcedure = "/cc.ChatsAPI/Delete"
 	// MessagesAPIGetProcedure is the fully-qualified name of the MessagesAPI's Get RPC.
 	MessagesAPIGetProcedure = "/cc.MessagesAPI/Get"
-	// MessagesAPIGetByGatewayProcedure is the fully-qualified name of the MessagesAPI's GetByGateway
-	// RPC.
-	MessagesAPIGetByGatewayProcedure = "/cc.MessagesAPI/GetByGateway"
 	// MessagesAPISendProcedure is the fully-qualified name of the MessagesAPI's Send RPC.
 	MessagesAPISendProcedure = "/cc.MessagesAPI/Send"
 	// MessagesAPIUpdateProcedure is the fully-qualified name of the MessagesAPI's Update RPC.
@@ -80,7 +75,6 @@ type ChatsAPIClient interface {
 	Update(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	Get(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	List(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Chats], error)
-	GetByGateway(context.Context, *connect.Request[cc.GetawayRequest]) (*connect.Response[cc.Chat], error)
 	Delete(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 }
 
@@ -114,11 +108,6 @@ func NewChatsAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 			baseURL+ChatsAPIListProcedure,
 			opts...,
 		),
-		getByGateway: connect.NewClient[cc.GetawayRequest, cc.Chat](
-			httpClient,
-			baseURL+ChatsAPIGetByGatewayProcedure,
-			opts...,
-		),
 		delete: connect.NewClient[cc.Chat, cc.Chat](
 			httpClient,
 			baseURL+ChatsAPIDeleteProcedure,
@@ -129,12 +118,11 @@ func NewChatsAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 
 // chatsAPIClient implements ChatsAPIClient.
 type chatsAPIClient struct {
-	create       *connect.Client[cc.Chat, cc.Chat]
-	update       *connect.Client[cc.Chat, cc.Chat]
-	get          *connect.Client[cc.Chat, cc.Chat]
-	list         *connect.Client[cc.Empty, cc.Chats]
-	getByGateway *connect.Client[cc.GetawayRequest, cc.Chat]
-	delete       *connect.Client[cc.Chat, cc.Chat]
+	create *connect.Client[cc.Chat, cc.Chat]
+	update *connect.Client[cc.Chat, cc.Chat]
+	get    *connect.Client[cc.Chat, cc.Chat]
+	list   *connect.Client[cc.Empty, cc.Chats]
+	delete *connect.Client[cc.Chat, cc.Chat]
 }
 
 // Create calls cc.ChatsAPI.Create.
@@ -157,11 +145,6 @@ func (c *chatsAPIClient) List(ctx context.Context, req *connect.Request[cc.Empty
 	return c.list.CallUnary(ctx, req)
 }
 
-// GetByGateway calls cc.ChatsAPI.GetByGateway.
-func (c *chatsAPIClient) GetByGateway(ctx context.Context, req *connect.Request[cc.GetawayRequest]) (*connect.Response[cc.Chat], error) {
-	return c.getByGateway.CallUnary(ctx, req)
-}
-
 // Delete calls cc.ChatsAPI.Delete.
 func (c *chatsAPIClient) Delete(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
 	return c.delete.CallUnary(ctx, req)
@@ -173,7 +156,6 @@ type ChatsAPIHandler interface {
 	Update(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	Get(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	List(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Chats], error)
-	GetByGateway(context.Context, *connect.Request[cc.GetawayRequest]) (*connect.Response[cc.Chat], error)
 	Delete(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 }
 
@@ -203,11 +185,6 @@ func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect.HandlerOption) (str
 		svc.List,
 		opts...,
 	)
-	chatsAPIGetByGatewayHandler := connect.NewUnaryHandler(
-		ChatsAPIGetByGatewayProcedure,
-		svc.GetByGateway,
-		opts...,
-	)
 	chatsAPIDeleteHandler := connect.NewUnaryHandler(
 		ChatsAPIDeleteProcedure,
 		svc.Delete,
@@ -223,8 +200,6 @@ func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect.HandlerOption) (str
 			chatsAPIGetHandler.ServeHTTP(w, r)
 		case ChatsAPIListProcedure:
 			chatsAPIListHandler.ServeHTTP(w, r)
-		case ChatsAPIGetByGatewayProcedure:
-			chatsAPIGetByGatewayHandler.ServeHTTP(w, r)
 		case ChatsAPIDeleteProcedure:
 			chatsAPIDeleteHandler.ServeHTTP(w, r)
 		default:
@@ -252,10 +227,6 @@ func (UnimplementedChatsAPIHandler) List(context.Context, *connect.Request[cc.Em
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.List is not implemented"))
 }
 
-func (UnimplementedChatsAPIHandler) GetByGateway(context.Context, *connect.Request[cc.GetawayRequest]) (*connect.Response[cc.Chat], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.GetByGateway is not implemented"))
-}
-
 func (UnimplementedChatsAPIHandler) Delete(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.Delete is not implemented"))
 }
@@ -263,7 +234,6 @@ func (UnimplementedChatsAPIHandler) Delete(context.Context, *connect.Request[cc.
 // MessagesAPIClient is a client for the cc.MessagesAPI service.
 type MessagesAPIClient interface {
 	Get(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Messages], error)
-	GetByGateway(context.Context, *connect.Request[cc.GetawayRequest]) (*connect.Response[cc.Message], error)
 	Send(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Update(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Delete(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
@@ -282,11 +252,6 @@ func NewMessagesAPIClient(httpClient connect.HTTPClient, baseURL string, opts ..
 		get: connect.NewClient[cc.Chat, cc.Messages](
 			httpClient,
 			baseURL+MessagesAPIGetProcedure,
-			opts...,
-		),
-		getByGateway: connect.NewClient[cc.GetawayRequest, cc.Message](
-			httpClient,
-			baseURL+MessagesAPIGetByGatewayProcedure,
 			opts...,
 		),
 		send: connect.NewClient[cc.Message, cc.Message](
@@ -309,21 +274,15 @@ func NewMessagesAPIClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // messagesAPIClient implements MessagesAPIClient.
 type messagesAPIClient struct {
-	get          *connect.Client[cc.Chat, cc.Messages]
-	getByGateway *connect.Client[cc.GetawayRequest, cc.Message]
-	send         *connect.Client[cc.Message, cc.Message]
-	update       *connect.Client[cc.Message, cc.Message]
-	delete       *connect.Client[cc.Message, cc.Message]
+	get    *connect.Client[cc.Chat, cc.Messages]
+	send   *connect.Client[cc.Message, cc.Message]
+	update *connect.Client[cc.Message, cc.Message]
+	delete *connect.Client[cc.Message, cc.Message]
 }
 
 // Get calls cc.MessagesAPI.Get.
 func (c *messagesAPIClient) Get(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Messages], error) {
 	return c.get.CallUnary(ctx, req)
-}
-
-// GetByGateway calls cc.MessagesAPI.GetByGateway.
-func (c *messagesAPIClient) GetByGateway(ctx context.Context, req *connect.Request[cc.GetawayRequest]) (*connect.Response[cc.Message], error) {
-	return c.getByGateway.CallUnary(ctx, req)
 }
 
 // Send calls cc.MessagesAPI.Send.
@@ -344,7 +303,6 @@ func (c *messagesAPIClient) Delete(ctx context.Context, req *connect.Request[cc.
 // MessagesAPIHandler is an implementation of the cc.MessagesAPI service.
 type MessagesAPIHandler interface {
 	Get(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Messages], error)
-	GetByGateway(context.Context, *connect.Request[cc.GetawayRequest]) (*connect.Response[cc.Message], error)
 	Send(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Update(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Delete(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
@@ -359,11 +317,6 @@ func NewMessagesAPIHandler(svc MessagesAPIHandler, opts ...connect.HandlerOption
 	messagesAPIGetHandler := connect.NewUnaryHandler(
 		MessagesAPIGetProcedure,
 		svc.Get,
-		opts...,
-	)
-	messagesAPIGetByGatewayHandler := connect.NewUnaryHandler(
-		MessagesAPIGetByGatewayProcedure,
-		svc.GetByGateway,
 		opts...,
 	)
 	messagesAPISendHandler := connect.NewUnaryHandler(
@@ -385,8 +338,6 @@ func NewMessagesAPIHandler(svc MessagesAPIHandler, opts ...connect.HandlerOption
 		switch r.URL.Path {
 		case MessagesAPIGetProcedure:
 			messagesAPIGetHandler.ServeHTTP(w, r)
-		case MessagesAPIGetByGatewayProcedure:
-			messagesAPIGetByGatewayHandler.ServeHTTP(w, r)
 		case MessagesAPISendProcedure:
 			messagesAPISendHandler.ServeHTTP(w, r)
 		case MessagesAPIUpdateProcedure:
@@ -404,10 +355,6 @@ type UnimplementedMessagesAPIHandler struct{}
 
 func (UnimplementedMessagesAPIHandler) Get(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Messages], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.MessagesAPI.Get is not implemented"))
-}
-
-func (UnimplementedMessagesAPIHandler) GetByGateway(context.Context, *connect.Request[cc.GetawayRequest]) (*connect.Response[cc.Message], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.MessagesAPI.GetByGateway is not implemented"))
 }
 
 func (UnimplementedMessagesAPIHandler) Send(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error) {

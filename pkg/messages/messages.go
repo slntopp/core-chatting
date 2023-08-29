@@ -204,23 +204,3 @@ func (s *MessagesServer) Delete(ctx context.Context, req *connect.Request[cc.Mes
 
 	return resp, nil
 }
-
-func (s *MessagesServer) GetByGateway(ctx context.Context, req *connect.Request[cc.GetawayRequest]) (*connect.Response[cc.Message], error) {
-	log := s.log.Named("GetByGateway")
-	log.Debug("Request received", zap.Any("req", req.Msg))
-
-	requestor := ctx.Value(core.ChatAccount).(string)
-
-	message, err := s.msgCtrl.GetByGateway(ctx, req.Msg)
-	if err != nil {
-		return nil, err
-	}
-
-	if message.Sender != requestor {
-		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to message"))
-	}
-
-	resp := connect.NewResponse[cc.Message](message)
-
-	return resp, nil
-}

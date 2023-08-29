@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, Chats, Defaults, Empty, Event, GetawayRequest, Message, Messages, User, Users } from "./cc_pb.js";
+import { Chat, Chats, Defaults, Empty, Event, Message, Messages, User, Users } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -49,15 +49,6 @@ export declare const ChatsAPI: {
       readonly kind: MethodKind.Unary,
     },
     /**
-     * @generated from rpc cc.ChatsAPI.GetByGateway
-     */
-    readonly getByGateway: {
-      readonly name: "GetByGateway",
-      readonly I: typeof GetawayRequest,
-      readonly O: typeof Chat,
-      readonly kind: MethodKind.Unary,
-    },
-    /**
      * @generated from rpc cc.ChatsAPI.Delete
      */
     readonly delete: {
@@ -82,15 +73,6 @@ export declare const MessagesAPI: {
       readonly name: "Get",
       readonly I: typeof Chat,
       readonly O: typeof Messages,
-      readonly kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc cc.MessagesAPI.GetByGateway
-     */
-    readonly getByGateway: {
-      readonly name: "GetByGateway",
-      readonly I: typeof GetawayRequest,
-      readonly O: typeof Message,
       readonly kind: MethodKind.Unary,
     },
     /**

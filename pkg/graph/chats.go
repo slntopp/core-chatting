@@ -2,7 +2,6 @@ package graph
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -248,41 +247,4 @@ func (c *ChatsController) GetMessages(ctx context.Context, chat *cc.Chat, is_adm
 	}
 
 	return messages, nil
-}
-
-const getChatByGateway = `
-FOR c in @@chats
-    FILTER c.meta.data[@gateway] == @id
-    RETURN c
-`
-
-func (c *ChatsController) GetByGateway(ctx context.Context, req *cc.GetawayRequest) (*cc.Chat, error) {
-	log := c.log.Named("GetByGateway")
-	log.Debug("Req received")
-
-	queryContext := driver.WithQueryCount(ctx)
-
-	cur, err := c.db.Query(queryContext, getChatByGateway, map[string]interface{}{
-		"@chats":  CHATS_COLLECTION,
-		"id":      req.GatewayId,
-		"gateway": req.Gateway,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	defer cur.Close()
-
-	if cur.Count() == 0 {
-		return nil, errors.New("no chat")
-	}
-
-	var chat cc.Chat
-
-	_, err = cur.ReadDocument(ctx, &chat)
-	if err != nil {
-		return nil, err
-	}
-
-	return &chat, nil
 }

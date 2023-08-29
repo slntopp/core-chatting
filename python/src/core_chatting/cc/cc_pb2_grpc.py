@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from core_chatting.cc import cc_pb2 as cc_dot_cc__pb2
+from cc import cc_pb2 as cc_dot_cc__pb2
 
 
 class ChatsAPIStub(object):
@@ -33,11 +33,6 @@ class ChatsAPIStub(object):
                 '/cc.ChatsAPI/List',
                 request_serializer=cc_dot_cc__pb2.Empty.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Chats.FromString,
-                )
-        self.GetByGateway = channel.unary_unary(
-                '/cc.ChatsAPI/GetByGateway',
-                request_serializer=cc_dot_cc__pb2.GetawayRequest.SerializeToString,
-                response_deserializer=cc_dot_cc__pb2.Chat.FromString,
                 )
         self.Delete = channel.unary_unary(
                 '/cc.ChatsAPI/Delete',
@@ -73,12 +68,6 @@ class ChatsAPIServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetByGateway(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def Delete(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -107,11 +96,6 @@ def add_ChatsAPIServicer_to_server(servicer, server):
                     servicer.List,
                     request_deserializer=cc_dot_cc__pb2.Empty.FromString,
                     response_serializer=cc_dot_cc__pb2.Chats.SerializeToString,
-            ),
-            'GetByGateway': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetByGateway,
-                    request_deserializer=cc_dot_cc__pb2.GetawayRequest.FromString,
-                    response_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
             ),
             'Delete': grpc.unary_unary_rpc_method_handler(
                     servicer.Delete,
@@ -197,23 +181,6 @@ class ChatsAPI(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def GetByGateway(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cc.ChatsAPI/GetByGateway',
-            cc_dot_cc__pb2.GetawayRequest.SerializeToString,
-            cc_dot_cc__pb2.Chat.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
     def Delete(request,
             target,
             options=(),
@@ -245,11 +212,6 @@ class MessagesAPIStub(object):
                 request_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Messages.FromString,
                 )
-        self.GetByGateway = channel.unary_unary(
-                '/cc.MessagesAPI/GetByGateway',
-                request_serializer=cc_dot_cc__pb2.GetawayRequest.SerializeToString,
-                response_deserializer=cc_dot_cc__pb2.Message.FromString,
-                )
         self.Send = channel.unary_unary(
                 '/cc.MessagesAPI/Send',
                 request_serializer=cc_dot_cc__pb2.Message.SerializeToString,
@@ -271,12 +233,6 @@ class MessagesAPIServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def Get(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetByGateway(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -307,11 +263,6 @@ def add_MessagesAPIServicer_to_server(servicer, server):
                     servicer.Get,
                     request_deserializer=cc_dot_cc__pb2.Chat.FromString,
                     response_serializer=cc_dot_cc__pb2.Messages.SerializeToString,
-            ),
-            'GetByGateway': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetByGateway,
-                    request_deserializer=cc_dot_cc__pb2.GetawayRequest.FromString,
-                    response_serializer=cc_dot_cc__pb2.Message.SerializeToString,
             ),
             'Send': grpc.unary_unary_rpc_method_handler(
                     servicer.Send,
@@ -352,23 +303,6 @@ class MessagesAPI(object):
         return grpc.experimental.unary_unary(request, target, '/cc.MessagesAPI/Get',
             cc_dot_cc__pb2.Chat.SerializeToString,
             cc_dot_cc__pb2.Messages.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def GetByGateway(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cc.MessagesAPI/GetByGateway',
-            cc_dot_cc__pb2.GetawayRequest.SerializeToString,
-            cc_dot_cc__pb2.Message.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

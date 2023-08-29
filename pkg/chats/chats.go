@@ -136,19 +136,3 @@ func (s *ChatsServer) Delete(ctx context.Context, req *connect.Request[cc.Chat])
 
 	return resp, nil
 }
-
-func (s *ChatsServer) GetByGateway(ctx context.Context, req *connect.Request[cc.GetawayRequest]) (*connect.Response[cc.Chat], error) {
-	log := s.log.Named("Create")
-	log.Debug("Request received", zap.Any("req", req.Msg))
-
-	chat, err := s.ctrl.GetByGateway(ctx, req.Msg)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Debug("Chat", zap.Any("chat", chat))
-
-	resp := connect.NewResponse[cc.Chat](chat)
-
-	return resp, nil
-}

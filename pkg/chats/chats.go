@@ -3,7 +3,6 @@ package chats
 import (
 	"context"
 	"errors"
-
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
 
@@ -17,12 +16,13 @@ import (
 type ChatsServer struct {
 	log *zap.Logger
 
-	ctrl *graph.ChatsController
-	ps   *pubsub.PubSub
+	ctrl       *graph.ChatsController
+	users_ctrl *graph.UsersController
+	ps         *pubsub.PubSub
 }
 
-func NewChatsServer(logger *zap.Logger, ctrl *graph.ChatsController, ps *pubsub.PubSub) *ChatsServer {
-	return &ChatsServer{log: logger.Named("ChatsServer"), ctrl: ctrl, ps: ps}
+func NewChatsServer(logger *zap.Logger, ctrl *graph.ChatsController, users_ctrl *graph.UsersController, ps *pubsub.PubSub) *ChatsServer {
+	return &ChatsServer{log: logger.Named("ChatsServer"), ctrl: ctrl, users_ctrl: users_ctrl, ps: ps}
 }
 
 func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
@@ -32,6 +32,24 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 	requestor := ctx.Value(core.ChatAccount).(string)
 
 	req.Msg.Owner = requestor
+
+	msg := req.Msg
+	resolve, err := s.users_ctrl.Resolve(ctx, []string{requestor})
+	if err != nil {
+		return nil, err
+	}
+	user := resolve[0]
+
+	if user.GetData() != nil {
+		fields := user.GetData().GetFields()
+		if fields != nil {
+			for _, gate := range msg.GetGateways() {
+				if val, ok := fields[gate]; ok {
+					msg.Meta.Data[gate] = val
+				}
+			}
+		}
+	}
 
 	chat, err := s.ctrl.Create(ctx, req.Msg)
 	if err != nil {

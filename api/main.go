@@ -101,7 +101,7 @@ func main() {
 
 	interceptors := connect.WithInterceptors(authInterceptor)
 
-	chatServer := chats.NewChatsServer(log, chatCtrl, ps)
+	chatServer := chats.NewChatsServer(log, chatCtrl, usersCtrl, ps)
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 

@@ -6,6 +6,7 @@ require (
 	connectrpc.com/connect v1.11.0
 	github.com/arangodb/go-driver v1.6.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang/protobuf v1.5.3
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/rabbitmq/amqp091-go v1.8.1

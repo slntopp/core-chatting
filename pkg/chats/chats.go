@@ -3,6 +3,7 @@ package chats
 import (
 	"context"
 	"errors"
+	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
 
@@ -42,6 +43,9 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 
 	if user.GetData() != nil {
 		fields := user.GetData().GetFields()
+		msg.Meta = &cc.ChatMeta{
+			Data: map[string]*structpb.Value{},
+		}
 		if fields != nil {
 			for _, gate := range msg.GetGateways() {
 				if val, ok := fields[gate]; ok {

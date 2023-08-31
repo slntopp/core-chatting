@@ -26,9 +26,8 @@ export const Status = proto3.makeEnum(
   [
     {no: 0, name: "NEW"},
     {no: 1, name: "OPEN"},
-    {no: 3, name: "IN_PROGRESS"},
-    {no: 4, name: "RESOLVE"},
-    {no: 5, name: "CLOSE"},
+    {no: 2, name: "RESOLVE"},
+    {no: 3, name: "CLOSE"},
   ],
 );
 

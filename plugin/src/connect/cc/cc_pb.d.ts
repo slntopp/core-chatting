@@ -46,19 +46,14 @@ export declare enum Status {
   OPEN = 1,
 
   /**
-   * @generated from enum value: IN_PROGRESS = 3;
+   * @generated from enum value: RESOLVE = 2;
    */
-  IN_PROGRESS = 3,
+  RESOLVE = 2,
 
   /**
-   * @generated from enum value: RESOLVE = 4;
+   * @generated from enum value: CLOSE = 3;
    */
-  RESOLVE = 4,
-
-  /**
-   * @generated from enum value: CLOSE = 5;
-   */
-  CLOSE = 5,
+  CLOSE = 3,
 }
 
 /**

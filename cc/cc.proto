@@ -23,9 +23,8 @@ message ChatMeta {
 enum Status {
   NEW = 0;
   OPEN = 1;
-  IN_PROGRESS = 3;
-  RESOLVE = 4;
-  CLOSE = 5;
+  RESOLVE = 2;
+  CLOSE = 3;
 }
 
 message Chat {

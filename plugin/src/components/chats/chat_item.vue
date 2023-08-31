@@ -6,7 +6,25 @@
         <n-text class="topic">{{ chatTopic }}</n-text>
         <n-tag round :title="uuid">{{ uuid.slice(0, 4) }}...</n-tag>
         <n-text class="sub" depth="3">{{ sub }}</n-text>
-        <n-text class="topic">{{ getStatus(chat.status) }}</n-text>
+
+        <n-popover
+          placement="right"
+          trigger="manual"
+          :show="isVisible"
+          @clickoutside="isVisible = false"
+        >
+          <template #trigger>
+            <n-text class="status" @click.stop="isVisible = !isVisible">
+              {{ getStatus(chat.status) }}
+              <n-icon> <swap-horizontal /> </n-icon>
+            </n-text>
+          </template>
+
+          <div style="display: flex; gap: 5px">
+            <n-select style="min-width: 150px" v-model:value="status" :options="statuses" />
+            <n-button @click="updateChat">Ok</n-button>
+          </div>
+        </n-popover>
       </div>
 
       <div style="position: absolute; right: 15px">
@@ -18,9 +36,10 @@
 
 <script setup lang="ts">
 import UserAvatar from "../ui/user_avatar.vue";
-import {NBadge, NListItem, NSpace, NText, NTag} from "naive-ui";
+import {NBadge, NListItem, NSpace, NText, NTag, NIcon, NSelect, NButton, NPopover} from "naive-ui";
+import {SwapHorizontal} from "@vicons/ionicons5";
 import {Chat, Status} from "../../connect/cc/cc_pb";
-import {computed, toRefs} from "vue";
+import {computed, ref, toRefs} from "vue";
 import {useCcStore} from "../../store/chatting.ts";
 import {useRouter} from "vue-router";
 
@@ -67,10 +86,24 @@ const goToChat = () => {
   router.push({name: 'Chat', params: {uuid: uuid.value}})
 }
 
-const getStatus = (statusCode: Status) => {
+const getStatus = (statusCode: Status | number) => {
   const status = Status[statusCode].toLowerCase().replace('_', ' ')
 
   return `${status[0].toUpperCase()}${status.slice(1)}`
+}
+
+const isVisible = ref(false)
+const status = ref(chat.value.status)
+
+const statuses = computed(() =>
+  Object.keys(Status).filter((key) => isFinite(+key)).map((key) => ({
+    label: getStatus(+key), value: +key
+  }))
+)
+
+const updateChat = () => {
+  store.update_chat({ ...chat.value, status: status.value } as Chat)
+  isVisible.value = false
 }
 </script>
 
@@ -83,7 +116,7 @@ const getStatus = (statusCode: Status) => {
     width: calc(100% - 80px);
 
     *:nth-child(even) {
-      justify-self: center;
+      justify-self: end;
     }
 
     .sub {
@@ -97,6 +130,12 @@ const getStatus = (statusCode: Status) => {
 
     .topic {
       word-break: break-all;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
   }
 }

@@ -3,7 +3,8 @@ package chats
 import (
 	"context"
 	"errors"
-	structpb "github.com/golang/protobuf/ptypes/struct"
+	"google.golang.org/protobuf/types/known/structpb"
+
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
 
@@ -50,6 +51,25 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 			for _, gate := range msg.GetGateways() {
 				if val, ok := fields[gate]; ok {
 					msg.Meta.Data[gate] = val
+				}
+			}
+		}
+
+		for _, gate := range msg.GetGateways() {
+			if val, ok := fields[gate]; ok {
+				last_chat, err := s.ctrl.GetByGateway(ctx, gate, val)
+				if err != nil {
+					log.Error("Failed to find chat", zap.Error(err))
+					return nil, err
+				}
+				if last_chat == nil {
+					continue
+				}
+				last_chat.Meta.Data[gate] = structpb.NewNumberValue(-1)
+				_, err = s.ctrl.Update(ctx, last_chat)
+				if err != nil {
+					log.Error("Failed to update chat", zap.Error(err))
+					return nil, err
 				}
 			}
 		}

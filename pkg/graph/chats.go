@@ -3,6 +3,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"google.golang.org/protobuf/types/known/structpb"
 	"time"
 
 	"github.com/slntopp/core-chatting/cc"
@@ -247,4 +248,47 @@ func (c *ChatsController) GetMessages(ctx context.Context, chat *cc.Chat, is_adm
 	}
 
 	return messages, nil
+}
+
+const getByGatewayQuery = `
+FOR c in @@chats
+	FILTER c.meta.data["@gate"] = @gate_id
+	RETURN c
+`
+
+func (c *ChatsController) GetByGateway(ctx context.Context, gate string, gateId *structpb.Value) (*cc.Chat, error) {
+	value := gateId.GetNumberValue()
+	stringValue := gateId.GetStringValue()
+
+	var queryId interface{}
+	if stringValue == "" {
+		queryId = value
+	} else {
+		queryId = stringValue
+	}
+
+	reqCtx := driver.WithQueryCount(ctx, true)
+
+	cur, err := c.db.Query(reqCtx, getByGatewayQuery, map[string]interface{}{
+		"@chats":  CHATS_COLLECTION,
+		"gate":    gate,
+		"gate_id": queryId,
+	})
+
+	if cur.Count() == 0 {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	var gateChat cc.Chat
+
+	_, err = cur.ReadDocument(ctx, &gateChat)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gateChat, nil
 }

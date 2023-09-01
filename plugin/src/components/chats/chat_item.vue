@@ -1,5 +1,5 @@
 <template>
-  <n-list-item class="chat" @click="goToChat">
+  <n-list-item class="chat" @click="goToChat(null)">
     <n-space :wrap-item="false" justify="start">
       <user-avatar round size="large" :avatar="members.join(' ')"/>
       <div v-if="!hideMessage" class="preview">
@@ -16,7 +16,7 @@
           <template #trigger>
             <n-text class="status" @click.stop="isVisible = !isVisible">
               {{ getStatus(chat.status) }}
-              <n-icon> <swap-horizontal /> </n-icon>
+              <n-icon> <swap-icon /> </n-icon>
             </n-text>
           </template>
 
@@ -28,6 +28,9 @@
       </div>
 
       <div style="position: absolute; right: 15px">
+        <!-- <n-icon @click.stop="goToChat('none')">
+          <enter-icon />
+        </n-icon> -->
         <n-badge v-if="isUnreadMessages" :value="chat.meta!.unread" :max="99" size="24" :offset="[12, 12]"/>
       </div>
     </n-space>
@@ -37,19 +40,22 @@
 <script setup lang="ts">
 import UserAvatar from "../ui/user_avatar.vue";
 import {NBadge, NListItem, NSpace, NText, NTag, NIcon, NSelect, NButton, NPopover} from "naive-ui";
-import {SwapHorizontal} from "@vicons/ionicons5";
 import {Chat, Status} from "../../connect/cc/cc_pb";
-import {computed, ref, toRefs} from "vue";
+import {computed, defineAsyncComponent, ref, toRefs} from "vue";
 import {useCcStore} from "../../store/chatting.ts";
 import {useRouter} from "vue-router";
+
+const SwapIcon = defineAsyncComponent(() => import("@vicons/ionicons5/SwapHorizontal"));
+// const EnterIcon = defineAsyncComponent(() => import('@vicons/ionicons5/EnterOutline'));
 
 interface ChatItemProps {
   chat: Chat
   uuid: string
-  hideMessage:boolean
+  hideMessage: boolean
 }
 
 const props = defineProps<ChatItemProps>()
+const emits = defineEmits(['update:mode'])
 const {chat, uuid} = toRefs(props)
 
 const store = useCcStore()
@@ -82,7 +88,11 @@ const chatTopic = computed(() => {
 
 const isUnreadMessages = computed(() => chat.value.meta && chat.value.meta.unread > 0)
 
-const goToChat = () => {
+const goToChat = (mode: string | null) => {
+  console.log(mode);
+  
+  if (mode) emits('update:mode', mode)
+  else emits('update:mode', 'half')
   router.push({name: 'Chat', params: {uuid: uuid.value}})
 }
 

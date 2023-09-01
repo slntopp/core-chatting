@@ -1,20 +1,45 @@
 <template>
-  <div :class="{'chats__panel':true,'closed':!isChatPanelOpen}">
-    <n-layout-sider style="margin-bottom: 25px" collapse-mode="transform" :collapsed="!isChatPanelOpen">
-      <n-space :justify="isChatPanelOpen?'space-between':'center'" align="center"
-               :class="{'chat__actions':true,hide:!isChatPanelOpen}">
+  <div
+    v-if="displayMode !== 'none'"
+    :class="{ chats__panel: true, closed: !isChatPanelOpen }"
+    :style="(displayMode === 'full') ? 'min-width: 100%' : undefined"
+  >
+    <n-layout-sider
+      style="margin-bottom: 25px"
+      collapse-mode="transform"
+      :collapsed="!isChatPanelOpen"
+    >
+      <n-space
+        align="center"
+        :justify="(isChatPanelOpen) ? 'space-between' : 'center'"
+        :class="{ chat__actions: true, hide: !isChatPanelOpen }"
+      >
         <n-button ghost type="success" @click="router.push({ name: 'Start Chat' })">
-          <n-icon :component="ChatbubbleEllipsesOutline"/>
-          <span v-if="isChatPanelOpen" style="margin-left: 5px">Start Chat</span>
+          <n-icon :component="ChatbubbleEllipsesOutline" />
+          <span v-if="isChatPanelOpen" style="margin-left: 5px">
+            Start Chat
+          </span>
         </n-button>
-        <n-button ghost @click="isChatPanelOpen=!isChatPanelOpen">
+
+        <n-button ghost @click="changeMode(null)">
+          <n-icon> <switch-icon /> </n-icon>
+        </n-button>
+
+        <n-button ghost @click="changePanelOpen">
           <n-icon>
-            <close-icon v-if="isChatPanelOpen"/>
-            <open-icon v-else/>
+            <close-icon v-if="isChatPanelOpen" />
+            <open-icon v-else />
           </n-icon>
         </n-button>
       </n-space>
-      <n-space class="search" v-if="isChatPanelOpen" align="center" justify="space-between" :wrap="false">
+
+      <n-space
+        class="search"
+        align="center"
+        justify="space-between"
+        v-if="isChatPanelOpen"
+        :wrap="false"
+      >
         <n-input v-model:value="searchParam" type="text" placeholder="Search..."/>
 
         <n-popover trigger="hover" placement="bottom">
@@ -34,15 +59,24 @@
           </n-radio-group>
         </n-popover>
       </n-space>
+
       <n-scrollbar style="height: calc(100vh - 100px); min-width: 150px">
-        <n-list style="margin-bottom: 25px" hoverable clickable>
-          <chat-item :hide-message="!isChatPanelOpen" v-for="chat in chats" :uuid="chat.uuid" :chat="chat"/>
+        <n-list hoverable clickable style="margin-bottom: 25px">
+          <chat-item
+            v-for="chat in chats"
+            :display-mode="displayMode"
+            :hide-message="!isChatPanelOpen"
+            :uuid="chat.uuid"
+            :chat="chat"
+            @update:mode="(value) => changeMode(value)"
+          />
         </n-list>
       </n-scrollbar>
     </n-layout-sider>
   </div>
+
   <div id="separator" v-show="isChatPanelOpen"></div>
-  <div class="chat__item">
+  <div class="chat__item" v-if="displayMode !== 'full'">
     <n-layout-content>
       <router-view/>
     </n-layout-content>
@@ -64,12 +98,12 @@ const ChatbubbleEllipsesOutline = defineAsyncComponent(() => import('@vicons/ion
 const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForward'));
 const CloseIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
 const SortIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowDown'));
+const SwitchIcon = defineAsyncComponent(() => import('@vicons/ionicons5/SwapHorizontal'));
 
 const store = useCcStore();
 const router = useRouter();
 const {makeDraggable} = useDraggable()
 
-const isChatPanelOpen = ref(true)
 const searchParam = ref('')
 
 async function sync() {
@@ -124,6 +158,26 @@ const chats = computed(() => {
     return Number(sortable(b) - sortable(a))
   })
 })
+
+const isChatPanelOpen = ref(true)
+const displayMode = ref('full')
+
+function changePanelOpen() {
+  isChatPanelOpen.value = !isChatPanelOpen.value
+
+  if (isChatPanelOpen) displayMode.value = 'half'
+  else displayMode.value = 'none'
+}
+
+function changeMode(mode: string | null) {
+  if (mode) displayMode.value = mode
+  else if (displayMode.value === 'half') {
+    displayMode.value = 'full'
+    isChatPanelOpen.value = true
+  } else {
+    displayMode.value = 'half'
+  }
+}
 </script>
 
 <style lang="scss">
@@ -142,6 +196,7 @@ const chats = computed(() => {
 .chats__panel {
   min-width: 450px;
   width: 450px;
+  transition: .4s;
 
   .chat__actions {
     padding: 10px 0px 10px 10px;

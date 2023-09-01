@@ -57,11 +57,7 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 
 		for _, gate := range msg.GetGateways() {
 			if val, ok := fields[gate]; ok {
-				last_chat, err := s.ctrl.GetByGateway(ctx, gate, val)
-				if err != nil {
-					log.Error("Failed to find chat", zap.Error(err))
-					return nil, err
-				}
+				last_chat, _ := s.ctrl.GetByGateway(ctx, gate, val)
 				if last_chat == nil {
 					continue
 				}

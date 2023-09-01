@@ -267,17 +267,11 @@ func (c *ChatsController) GetByGateway(ctx context.Context, gate string, gateId 
 		queryId = stringValue
 	}
 
-	reqCtx := driver.WithQueryCount(ctx, true)
-
-	cur, err := c.db.Query(reqCtx, getByGatewayQuery, map[string]interface{}{
+	cur, err := c.db.Query(ctx, getByGatewayQuery, map[string]interface{}{
 		"@chats":  CHATS_COLLECTION,
 		"gate":    gate,
 		"gate_id": queryId,
 	})
-
-	if cur.Count() == 0 {
-		return nil, nil
-	}
 
 	if err != nil {
 		return nil, err

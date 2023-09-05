@@ -252,7 +252,7 @@ func (c *ChatsController) GetMessages(ctx context.Context, chat *cc.Chat, is_adm
 
 const getByGatewayQuery = `
 FOR c in @@chats
-	FILTER c.meta.data["@gate"] = @gate_id
+	FILTER c.meta.data["@gate"] == @gate_id
 	RETURN c
 `
 
@@ -285,4 +285,36 @@ func (c *ChatsController) GetByGateway(ctx context.Context, gate string, gateId 
 	}
 
 	return &gateChat, nil
+}
+
+const deleteGateways = `
+FOR c in @@chats
+	FILTER c.meta.data[@gate] == @gate_id
+	UPDATE c with {meta: {data: {@gate : @null_value }}} in @@chats
+`
+
+func (c *ChatsController) DeleteGateways(ctx context.Context, fields map[string]*structpb.Value) error {
+	for key, val := range fields {
+		numValue := val.GetNumberValue()
+		stringValue := val.GetStringValue()
+
+		var queryValue interface{}
+
+		if stringValue == "" {
+			queryValue = numValue
+		} else {
+			queryValue = stringValue
+		}
+
+		_, err := c.db.Query(ctx, deleteGateways, map[string]interface{}{
+			"@chats":     CHATS_COLLECTION,
+			"gate":       key,
+			"gate_id":    queryValue,
+			"null_value": structpb.NewNullValue(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

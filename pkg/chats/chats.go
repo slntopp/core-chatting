@@ -54,6 +54,11 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 				}
 			}
 		}
+		err := s.ctrl.DeleteGateways(ctx, fields)
+		if err != nil {
+			log.Error("Failed to delete old gates", zap.Error(err))
+			return nil, err
+		}
 	}
 
 	chat, err := s.ctrl.Create(ctx, req.Msg)

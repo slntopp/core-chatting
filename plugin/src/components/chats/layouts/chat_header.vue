@@ -4,11 +4,22 @@
     <n-space justify="start" align="center">
       <n-button
         ghost
-        v-if="route.meta.displayMode === 'none'"
-        @click="route.meta.displayMode = 'half'"
+        v-if="appStore.displayMode === 'none'"
+        @click="appStore.displayMode = 'full'"
       >
         <n-icon> <open-icon /> </n-icon>
       </n-button>
+
+      <n-tooltip>
+        <template #trigger>
+          <n-tag round @click="addToClipboard(chat.uuid, notification)">
+            <code style="text-decoration: underline; cursor: pointer">
+              {{ chat.uuid.slice(0, 8).toUpperCase() }}
+            </code>
+          </n-tag>
+        </template>
+        {{ chat.uuid }}
+      </n-tooltip>
 
       <user-avatar round :avatar="members.map((m) => m?.title ?? '').join(' ')"/>
       <n-text>{{ chat.topic ?? members }}</n-text>
@@ -21,9 +32,39 @@
       <n-divider vertical/>
       <members-dropdown @add="startAddMembers" @delete="deleteMember" :members="members"/>
       <n-divider vertical/>
+      <chat-status :chat="chat" />
+
+      <n-divider vertical/>
       <n-button type="info" size="small" ghost round @click="refresh">Refresh</n-button>
       <n-divider vertical/>
       <n-button type="error" size="small" ghost round @click="deleteChat">Delete</n-button>
+
+      <n-divider vertical/>
+      <n-space vertical style="gap: 0" :wrap-item="false">
+        <n-text>
+          Created:
+          <n-tooltip>
+            <template #trigger>
+              <code style="text-decoration: underline">
+                {{ getRelativeTime(Number(chat.created), now) }}
+              </code>
+            </template>
+            {{ new Date(Number(chat.created)).toLocaleString() }}
+          </n-tooltip>
+        </n-text>
+
+        <n-text>
+          Last update:
+          <n-tooltip>
+            <template #trigger>
+              <code style="text-decoration: underline">
+                {{ getRelativeTime(lastUpdate, now) }}
+              </code>
+            </template>
+            {{ new Date(lastUpdate).toLocaleString() }}
+          </n-tooltip>
+        </n-text>
+      </n-space>
     </n-space>
   </template>
 
@@ -54,18 +95,21 @@
 
 <script setup lang="ts">
 import {computed, defineAsyncComponent, ref, toRefs} from "vue";
-import {NButton, NCard, NDivider, NIcon, NModal, NSpace, NSpin, NText, SelectOption} from "naive-ui";
+import {NButton, NCard, NDivider, NIcon, NModal, NSpace, NSpin, NTag, NText, NTooltip, SelectOption, useNotification} from "naive-ui";
 import {Chat, User} from "../../../connect/cc/cc_pb";
 import {useCcStore} from "../../../store/chatting.ts";
-import {useRoute, useRouter} from "vue-router";
+import {useAppStore} from "../../../store/app";
+import {useRouter} from "vue-router";
 import ChatOptions from "../chat_options.vue";
 import UserAvatar from "../../ui/user_avatar.vue";
 import MembersDropdown from "../../users/members_dropdown.vue";
 import useDefaults from "../../../hooks/useDefaults.ts";
 import MemberSelect from "../../users/member_select.vue";
+import {addToClipboard, getRelativeTime} from "../../../functions.ts";
+import ChatStatus from "../chat_status.vue";
 
 const EditIcon = defineAsyncComponent(() => import('@vicons/ionicons5/PencilSharp'));
-const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForward'));
+const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
 
 interface ChatHeaderProps {
   chat: Chat
@@ -74,9 +118,10 @@ interface ChatHeaderProps {
 const props = defineProps<ChatHeaderProps>()
 const {chat} = toRefs(props)
 
+const appStore = useAppStore()
 const store = useCcStore()
 const router = useRouter()
-const route = useRoute()
+const notification = useNotification()
 const {fetch_defaults, isDefaultLoading, users, admins} = useDefaults()
 
 const isEdit = ref<boolean>(false)
@@ -86,7 +131,14 @@ const availableMembersOptions = ref<SelectOption[]>([])
 const isAddSaveLoading = ref<boolean>(false)
 
 const members = computed(() => {
-  return chat!.value.users.map((uuid: string) => store.users.get(uuid) as User).concat(chat.value.admins.map((uuid: string) => store.users.get(uuid)  as User))
+  const uuids = new Set([...chat!.value.users, ...chat.value.admins])
+  const result: User[] = []
+
+  uuids.forEach((uuid) => {
+    result.push(store.users.get(uuid) as User)
+  })
+
+  return result
 })
 const me = computed(() => store.me)
 
@@ -140,6 +192,12 @@ const saveMembers = async () => {
     isAddSaveLoading.value = false
   }
 }
-</script>
 
-<style scoped></style>
+const now = ref(Date.now())
+
+setInterval(() => now.value = Date.now(), 1000)
+
+const lastUpdate = computed(() =>
+  Number(chat.value.meta?.lastMessage?.edited || chat.value.meta?.lastMessage?.sent)
+)
+</script>

@@ -120,7 +120,7 @@ FILTER @requestor in c.admins || @requestor in c.users
       )
      )
     )
-	LET message = LAST(FOR m in @@messages FILTER m.chat == c._key SORT m.sent ASC RETURN m)
+	LET message = LAST(FOR m in @@messages FILTER m.chat == c._key SORT m.sent DESC RETURN m)
 	LET unread = LENGTH(
 		FOR m in @@messages 
 			FILTER m.chat == c._key

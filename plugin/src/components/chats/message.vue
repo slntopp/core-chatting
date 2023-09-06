@@ -38,6 +38,7 @@ import {mangle} from 'marked-mangle'
 import DOMPurify from 'dompurify'
 import UserAvatar from "../ui/user_avatar.vue";
 import UserItem from "../users/user_item.vue";
+import {getRelativeTime} from '../../functions.ts';
 
 interface MessageProps {
   message: Message
@@ -204,28 +205,8 @@ function content() {
   return sanitized.replace(/^<p>/, '').replace(/<\/p>$/, '')
 }
 
-const now = ref(new Date())
-setInterval(() => now.value = new Date(), 1000)
-
-function getRelativeTime(timestamp: number) {
-  const timeDifference = (now.value.getTime() - timestamp) / 1000;
-  const minutesDifference = Math.floor(timeDifference / 60);
-
-  if (minutesDifference >= 4320) {
-    return new Date(timestamp).toLocaleDateString();
-  } else if (minutesDifference >= 1440) {
-    const daysDifference = Math.floor(minutesDifference / 1440);
-    return `${daysDifference} days ago`;
-  } else if (minutesDifference >= 60) {
-    const hoursDifference = Math.floor(minutesDifference / 60);
-    return `${hoursDifference} hours ago`;
-  } else if (minutesDifference > 0) {
-    return `${minutesDifference} minutes ago`;
-  } else {
-    return 'just now';
-  }
-}
-
+const now = ref(Date.now())
+setInterval(() => now.value = Date.now(), 1000)
 
 function timestamp() {
 
@@ -234,7 +215,7 @@ function timestamp() {
     result = 'edited, '
   }
 
-  result += getRelativeTime(Number(message.value.edited ? message.value.edited : message.value.sent))
+  result += getRelativeTime(Number(message.value.edited ? message.value.edited : message.value.sent), now.value)
 
   let tooltip = [
     h(NText, {}, () =>

@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import {NButton, NIcon} from 'naive-ui'
+import {NButton, NIcon, NText} from 'naive-ui'
 import userAvatar from '../ui/user_avatar.vue'
 import {User} from "../../connect/cc/cc_pb.ts";
 import {Trash as TrashIcon} from '@vicons/ionicons5'

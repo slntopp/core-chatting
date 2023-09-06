@@ -1,8 +1,8 @@
 <template>
   <div
-    v-if="displayMode !== 'none'"
+    v-if="appStore.displayMode !== 'none'"
     :class="{ chats__panel: true, closed: !isChatPanelOpen }"
-    :style="(displayMode === 'full') ? 'min-width: 100%' : undefined"
+    :style="(appStore.displayMode === 'full') ? 'min-width: calc(100% - 8px)' : undefined"
   >
     <n-layout-sider
       style="margin-bottom: 25px"
@@ -11,18 +11,24 @@
     >
       <n-space
         align="center"
+        :wrap-item="false"
         :justify="(isChatPanelOpen) ? 'space-between' : 'center'"
         :class="{ chat__actions: true, hide: !isChatPanelOpen }"
       >
-        <n-button ghost type="success" @click="router.push({ name: 'Start Chat' })">
+        <n-button ghost @click="changeMode(null)">
+          <n-icon> <switch-icon /> </n-icon>
+        </n-button>
+
+        <n-button
+          ghost
+          type="success"
+          :style="(isChatPanelOpen) ? 'margin-right: auto' : null"
+          @click="router.push({ name: 'Start Chat' })"
+        >
           <n-icon :component="ChatbubbleEllipsesOutline" />
           <span v-if="isChatPanelOpen" style="margin-left: 5px">
             Start Chat
           </span>
-        </n-button>
-
-        <n-button ghost @click="changeMode(null)">
-          <n-icon> <switch-icon /> </n-icon>
         </n-button>
 
         <n-button ghost @click="changePanelOpen">
@@ -42,21 +48,33 @@
       >
         <n-input v-model:value="searchParam" type="text" placeholder="Search..."/>
 
-        <n-popover trigger="hover" placement="bottom">
+        <n-popover trigger="click" placement="bottom">
           <template #trigger>
-            <n-icon size="24" style="vertical-align: middle">
+            <n-icon size="24" style="vertical-align: middle; cursor: pointer">
               <sort-icon />
             </n-icon>
           </template>
 
-          <div>Sort By:</div>
-          <n-divider style="margin: 5px 0" />
-          <n-radio-group v-model:value="sortBy">
-            <n-space>
-              <n-radio value="created" label="Created" />
-              <n-radio value="sent" label="Sent" />
-            </n-space>
-          </n-radio-group>
+          <div>
+            <div>Sort By:</div>
+            <n-divider style="margin: 5px 0" />
+            <n-radio-group v-model:value="sortBy">
+              <n-space>
+                <n-radio value="created" label="Created" />
+                <n-radio value="sent" label="Sent" />
+              </n-space>
+            </n-radio-group>
+          </div>
+
+          <div style="margin-top: 10px">
+            <div>Filter by status:</div>
+            <n-divider style="margin: 5px 0" />
+            <n-checkbox-group v-model:value="checkedStatuses">
+              <n-space>
+                <n-checkbox v-for="status of statuses" :value="status.value" :label="status.label" />
+              </n-space>
+            </n-checkbox-group>
+          </div>
         </n-popover>
       </n-space>
 
@@ -64,11 +82,11 @@
         <n-list hoverable clickable style="margin-bottom: 25px">
           <chat-item
             v-for="chat in chats"
-            :display-mode="displayMode"
             :hide-message="!isChatPanelOpen"
             :uuid="chat.uuid"
             :chat="chat"
-            @update:mode="(value) => changeMode(value)"
+            :class="{ active: chat.uuid === router.currentRoute.value.params.uuid }"
+            @click="changeMode('none')"
           />
         </n-list>
       </n-scrollbar>
@@ -76,7 +94,7 @@
   </div>
 
   <div id="separator" v-show="isChatPanelOpen"></div>
-  <div class="chat__item" v-if="displayMode !== 'full'">
+  <div class="chat__item" v-if="appStore.displayMode !== 'full'">
     <n-layout-content>
       <router-view/>
     </n-layout-content>
@@ -85,21 +103,23 @@
 
 <script setup lang="ts">
 import {computed, defineAsyncComponent, onMounted, ref} from 'vue';
-import {NButton, NIcon, NInput, NLayoutContent, NLayoutSider, NList, NScrollbar, NSpace, NPopover, NRadioGroup, NRadio, NDivider} from 'naive-ui';
+import {NButton, NIcon, NInput, NLayoutContent, NLayoutSider, NList, NScrollbar, NSpace, NPopover, NRadioGroup, NRadio, NDivider, NCheckboxGroup, NCheckbox} from 'naive-ui';
 
+import {useAppStore} from '../../store/app.ts';
 import {useCcStore} from '../../store/chatting.ts';
 
 import {useRouter} from 'vue-router';
-import {Chat} from '../../connect/cc/cc_pb';
+import {Chat, Status} from '../../connect/cc/cc_pb';
 import ChatItem from "../../components/chats/chat_item.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
 
 const ChatbubbleEllipsesOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ChatbubbleEllipsesOutline'));
 const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForward'));
 const CloseIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
-const SortIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowDown'));
+const SortIcon = defineAsyncComponent(() => import('@vicons/ionicons5/SettingsOutline'));
 const SwitchIcon = defineAsyncComponent(() => import('@vicons/ionicons5/SwapHorizontal'));
 
+const appStore = useAppStore()
 const store = useCcStore();
 const router = useRouter();
 const {makeDraggable} = useDraggable()
@@ -115,7 +135,7 @@ onMounted(() => {
     resizer: document.getElementById("separator")!,
     first: document.getElementsByClassName("chats__panel").item(0) as HTMLElement,
     second: document.getElementsByClassName("chat__item").item(0) as HTMLElement
-  });
+  })
 })
 
 sync()
@@ -140,12 +160,20 @@ const filterChat = (chat: Chat, val: string): boolean => {
 const sortBy = ref<'sent' | 'created'>('sent')
 
 const chats = computed(() => {
-  let res: Chat[] = []
+  let result: Chat[] = []
   store.chats.forEach((chat) => {
-    res.push(chat)
+    result.push(chat)
   })
 
-  res = res.filter((c) => filterChat(c, searchParam.value))
+  result = result.filter((chat) => {
+    const isIncluded = checkedStatuses.value.includes(chat.status)
+
+    if (checkedStatuses.value.length > 0) {
+      return filterChat(chat, searchParam.value) && isIncluded
+    } else {
+      return filterChat(chat, searchParam.value)
+    }
+  })
 
   let sortable = (chat: Chat) => {
     if (chat.meta?.lastMessage && sortBy.value === 'sent') {
@@ -154,28 +182,41 @@ const chats = computed(() => {
     return chat.created
   }
 
-  return res.sort((a: Chat, b: Chat) => {
+  return result.sort((a: Chat, b: Chat) => {
     return Number(sortable(b) - sortable(a))
   })
 })
 
+const checkedStatuses = ref<Status[]>([])
+
+const statuses = computed(() =>
+  Object.keys(Status).filter((key) => isFinite(+key)).map((key) => ({
+    label: getStatus(+key), value: +key
+  }))
+)
+
+function getStatus(statusCode: Status | number) {
+  const status = Status[statusCode].toLowerCase().replace('_', ' ')
+
+  return `${status[0].toUpperCase()}${status.slice(1)}`
+}
+
 const isChatPanelOpen = ref(true)
-const displayMode = ref('full')
 
 function changePanelOpen() {
   isChatPanelOpen.value = !isChatPanelOpen.value
 
-  if (isChatPanelOpen) displayMode.value = 'half'
-  else displayMode.value = 'none'
+  if (isChatPanelOpen) appStore.displayMode = 'half'
+  else appStore.displayMode = 'none'
 }
 
 function changeMode(mode: string | null) {
-  if (mode) displayMode.value = mode
-  else if (displayMode.value === 'half') {
-    displayMode.value = 'full'
+  if (mode) appStore.displayMode = mode
+  else if (appStore.displayMode === 'half') {
+    appStore.displayMode = 'full'
     isChatPanelOpen.value = true
   } else {
-    displayMode.value = 'half'
+    appStore.displayMode = 'half'
   }
 }
 </script>
@@ -204,6 +245,7 @@ function changeMode(mode: string | null) {
     &.hide {
       flex-flow: column-reverse !important;
       margin: 0px;
+      padding: 10px;
     }
   }
 
@@ -231,6 +273,10 @@ function changeMode(mode: string | null) {
   aside {
     width: 100% !important;
     max-width: 100% !important;
+  }
+
+  .n-list-item.active {
+    background: var(--n-color-hover-modal);
   }
 }
 

@@ -1,36 +1,25 @@
 <template>
-  <n-list-item class="chat" @click="goToChat(null)">
+  <n-list-item class="chat" @click="goToChat">
     <n-space :wrap-item="false" justify="start">
       <user-avatar round size="large" :avatar="members.join(' ')"/>
       <div v-if="!hideMessage" class="preview">
         <n-text class="topic">{{ chatTopic }}</n-text>
-        <n-tag round :title="uuid">{{ uuid.slice(0, 4) }}...</n-tag>
+        <div class="chat__right">
+          <n-tooltip>
+            <template #trigger>
+              <code style="text-decoration: underline" @click.stop="addToClipboard(uuid, notification)">
+                {{ uuid.slice(0, 8).toUpperCase() }}
+              </code>
+            </template>
+            {{ uuid }}
+          </n-tooltip>
+
+          <chat-status :chat="chat" />
+        </div>
         <n-text class="sub" depth="3">{{ sub }}</n-text>
-
-        <n-popover
-          placement="right"
-          trigger="manual"
-          :show="isVisible"
-          @clickoutside="isVisible = false"
-        >
-          <template #trigger>
-            <n-text class="status" @click.stop="isVisible = !isVisible">
-              {{ getStatus(chat.status) }}
-              <n-icon> <swap-icon /> </n-icon>
-            </n-text>
-          </template>
-
-          <div style="display: flex; gap: 5px">
-            <n-select style="min-width: 150px" v-model:value="status" :options="statuses" />
-            <n-button @click="updateChat">Ok</n-button>
-          </div>
-        </n-popover>
       </div>
 
-      <div style="position: absolute; right: 15px">
-        <!-- <n-icon @click.stop="goToChat('none')">
-          <enter-icon />
-        </n-icon> -->
+      <div style="position: absolute; right: 18px; top: -10px">
         <n-badge v-if="isUnreadMessages" :value="chat.meta!.unread" :max="99" size="24" :offset="[12, 12]"/>
       </div>
     </n-space>
@@ -38,15 +27,14 @@
 </template>
 
 <script setup lang="ts">
-import UserAvatar from "../ui/user_avatar.vue";
-import {NBadge, NListItem, NSpace, NText, NTag, NIcon, NSelect, NButton, NPopover} from "naive-ui";
-import {Chat, Status} from "../../connect/cc/cc_pb";
-import {computed, defineAsyncComponent, ref, toRefs} from "vue";
-import {useCcStore} from "../../store/chatting.ts";
+import {computed, toRefs} from "vue";
 import {useRouter} from "vue-router";
-
-const SwapIcon = defineAsyncComponent(() => import("@vicons/ionicons5/SwapHorizontal"));
-// const EnterIcon = defineAsyncComponent(() => import('@vicons/ionicons5/EnterOutline'));
+import {NBadge, NListItem, NSpace, NText, NTooltip, useNotification} from "naive-ui";
+import {Chat} from "../../connect/cc/cc_pb";
+import {useCcStore} from "../../store/chatting.ts";
+import {addToClipboard} from "../../functions.ts";
+import UserAvatar from "../ui/user_avatar.vue";
+import ChatStatus from "./chat_status.vue";
 
 interface ChatItemProps {
   chat: Chat
@@ -55,11 +43,11 @@ interface ChatItemProps {
 }
 
 const props = defineProps<ChatItemProps>()
-const emits = defineEmits(['update:mode'])
-const {chat, uuid} = toRefs(props)
+const { chat, uuid } = toRefs(props)
 
 const store = useCcStore()
 const router = useRouter()
+const notification = useNotification()
 
 const users = computed(() => chat.value.users.map(uuid => store.users.get(uuid)?.title ?? 'Unknown'))
 const admins = computed(() => chat.value.admins.map(uuid => store.users.get(uuid)?.title ?? 'Unknown'))
@@ -82,38 +70,13 @@ const chatTopic = computed(() => {
     return topic.slice(0, 509) + '...';
   else if (words.length > 16) return words.slice(0, 16).join(' ') + '...'
 
-  return topic
+  return topic || '-'
 })
-
 
 const isUnreadMessages = computed(() => chat.value.meta && chat.value.meta.unread > 0)
 
-const goToChat = (mode: string | null) => {
-  console.log(mode);
-  
-  if (mode) emits('update:mode', mode)
-  else emits('update:mode', 'half')
-  router.push({name: 'Chat', params: {uuid: uuid.value}})
-}
-
-const getStatus = (statusCode: Status | number) => {
-  const status = Status[statusCode].toLowerCase().replace('_', ' ')
-
-  return `${status[0].toUpperCase()}${status.slice(1)}`
-}
-
-const isVisible = ref(false)
-const status = ref(chat.value.status)
-
-const statuses = computed(() =>
-  Object.keys(Status).filter((key) => isFinite(+key)).map((key) => ({
-    label: getStatus(+key), value: +key
-  }))
-)
-
-const updateChat = () => {
-  store.update_chat({ ...chat.value, status: status.value } as Chat)
-  isVisible.value = false
+const goToChat = () => {
+  router.push({ name: 'Chat', params: { uuid: uuid.value }, state: { displayMode: 'none' } })
 }
 </script>
 
@@ -123,7 +86,7 @@ const updateChat = () => {
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 5px;
-    width: calc(100% - 80px);
+    width: calc(100% - 52px);
 
     *:nth-child(even) {
       justify-self: end;
@@ -141,12 +104,18 @@ const updateChat = () => {
     .topic {
       word-break: break-all;
     }
+  }
 
-    .status {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
+  &__right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    grid-row: 1 / 3;
+    grid-column: 2;
+    padding: 5px 10px;
+    border: 1px solid var(--n-border-color-popover);
+    border-radius: 15px;
   }
 }
 </style>

@@ -26,7 +26,8 @@ import { Chat, Status } from '../../connect/cc/cc_pb'
 import { useCcStore } from '../../store/chatting'
 
 interface ChatStatusProps {
-  chat: Chat
+  chat: Chat,
+  hiddenColor?: boolean
 }
 
 const props = defineProps<ChatStatusProps>()
@@ -49,6 +50,7 @@ function updateChat () {
 }
 
 const statusColor = computed(() => {
+  if (props.hiddenColor) return null
   switch (props.chat.status) {
     case 0:
       return '#5084ff'

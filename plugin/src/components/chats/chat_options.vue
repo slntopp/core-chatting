@@ -1,7 +1,7 @@
 <template>
   <template v-if="!isDefaultLoading">
     <n-space v-if="!isEdit" justify="start" align="center">
-      <n-button round quaternary @click="router.push({ name: 'Empty Chat' })">
+      <n-button round quaternary @click="cancel">
         <template #icon>
           <n-icon :component="CloseSharp"/>
         </template>
@@ -58,9 +58,10 @@ import {
 
 import {useRouter} from 'vue-router';
 import {useCcStore} from "../../store/chatting.ts";
+import {useAppStore} from '../../store/app.ts';
 import {Chat, Role} from "../../connect/cc/cc_pb";
-import MemberSelect from "../users/member_select.vue";
 import useDefaults from "../../hooks/useDefaults.ts";
+import MemberSelect from "../users/member_select.vue";
 
 interface ChatOptionsProps {
   isEdit?: boolean
@@ -74,8 +75,9 @@ const {isEdit, chat: oldChat} = toRefs(props)
 
 const emit = defineEmits(['close'])
 
-const router = useRouter();
-const store = useCcStore();
+const router = useRouter()
+const store = useCcStore()
+const appStore = useAppStore()
 const {admins, fetch_defaults, isDefaultLoading, users, gateways} = useDefaults()
 
 const form = ref<FormInst>()
@@ -153,20 +155,23 @@ function submit() {
       isEditLoading.value = true
 
       if (isEdit?.value) {
-        await store.update_chat(chat.value as Chat);
+        await store.update_chat(chat.value as Chat)
 
         emit('close')
       } else {
-        let result = await store.create_chat(chat.value as Chat);
+        let { uuid } = await store.create_chat(chat.value as Chat)
 
-        router.push({name: 'Chat', params: {uuid: result.uuid}})
+        router.push({name: 'Chat', params: {uuid}})
       }
     } finally {
       isEditLoading.value = false
     }
-
-
   })
+}
+
+function cancel() {
+  router.push({ name: 'Empty Chat' })
+  appStore.displayMode = 'half'
 }
 </script>
 

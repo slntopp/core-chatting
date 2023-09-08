@@ -15,9 +15,13 @@
 
       <n-list-item v-else v-for="message in messages" :key="message.uuid">
         <!-- @vue-ignore -->
-        <message-view :message="message" @approve="a => handle_approve(message, a)"
-                      @convert="kind => { updating = true; current_message = message; handle_send(kind, !messages['underReview']) }"
-                      @delete="handle_delete(message)" @edit="() => { updating = true; current_message = message; }"/>
+        <message-view
+          :message="message"
+          @approve="a => handle_approve(message, a)"
+          @convert="kind => { updating = true; current_message = message; handle_send(kind, !messages['underReview']) }"
+          @delete="handle_delete(message)"
+          @edit="() => { updating = true; current_message = message }"
+        />
       </n-list-item>
     </n-scrollbar>
 
@@ -46,7 +50,7 @@
                 v-model:value="current_message.content"
                 :autosize="{ minRows: 2, maxRows: 5 }"
 
-                @keypress.prevent.ctrl.enter.exact="handle_send"
+                @keypress.prevent.ctrl.enter.exact="handle_send()"
                 @keypress.prevent.ctrl.shift.enter.exact="handle_send(Kind.ADMIN_ONLY)"
                 @keyup.prevent.ctrl.up.exact="handle_begin_edit"
               />

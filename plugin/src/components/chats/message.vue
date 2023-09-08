@@ -153,12 +153,13 @@ function avatar() {
 }
 
 const container_style = computed(() => {
+  const is_sender = message.value.sender == store.me.uuid
   let style = {
     padding: '12px',
     borderRadius: theme.value.borderRadius,
     maxWidth: 'calc(100% - 45px)',
     border: `1px solid ${theme.value.borderColor}`,
-    backgroundColor: ''
+    backgroundColor: (is_sender) ? 'var(--n-color-hover)' : null
   }
 
   if (message.value.underReview)

@@ -23,7 +23,7 @@
           ghost
           type="success"
           :style="(isChatPanelOpen) ? 'margin-right: auto' : null"
-          @click="router.push({ name: 'Start Chat' })"
+          @click="startChat"
         >
           <n-icon :component="ChatbubbleEllipsesOutline" />
           <span v-if="isChatPanelOpen" style="margin-left: 5px">
@@ -127,7 +127,21 @@ const {makeDraggable} = useDraggable()
 const searchParam = ref('')
 
 async function sync() {
-  await store.list_chats();
+  try {
+    await store.list_chats()
+    const { users } = await store.get_members()
+
+    users.forEach((user) => {
+      store.users.set(user.uuid, user)
+    })
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+function startChat() {
+  router.push({ name: 'Start Chat' })
+  appStore.displayMode = 'none'
 }
 
 onMounted(() => {
@@ -211,6 +225,10 @@ function changePanelOpen() {
 }
 
 function changeMode(mode: string | null) {
+  if (mode === 'none' && appStore.displayMode === 'half') {
+    return
+  }
+
   if (mode) appStore.displayMode = mode
   else if (appStore.displayMode === 'half') {
     appStore.displayMode = 'full'

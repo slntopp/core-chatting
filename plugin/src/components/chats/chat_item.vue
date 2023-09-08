@@ -3,7 +3,7 @@
     <n-space :wrap-item="false" justify="start">
       <user-avatar round size="large" :avatar="members.join(' ')"/>
       <div v-if="!hideMessage" class="preview">
-        <n-text class="topic">{{ chatTopic }}</n-text>
+        <n-text class="sub" depth="3">{{ getUser(chat.owner)?.title }}</n-text>
         <div class="chat__right">
           <n-tooltip>
             <template #trigger>
@@ -16,7 +16,7 @@
 
           <chat-status :chat="chat" />
         </div>
-        <n-text class="sub" depth="3">{{ sub }}</n-text>
+        <n-text class="topic">{{ chatTopic }}</n-text>
       </div>
 
       <div style="position: absolute; right: 18px; top: -10px">
@@ -54,13 +54,13 @@ const admins = computed(() => chat.value.admins.map(uuid => store.users.get(uuid
 
 const members = computed(() => users.value.concat(admins.value))
 
-const sub = computed(() => {
-  if (chat.value.meta && chat.value.meta.lastMessage) {
-    return chat.value.meta.lastMessage!.content.replace(/(<([^>]+)>)/ig, "")
-  }
+// const sub = computed(() => {
+//   if (chat.value.meta && chat.value.meta.lastMessage) {
+//     return chat.value.meta.lastMessage!.content.replace(/(<([^>]+)>)/ig, "")
+//   }
 
-  return "No messages yet"
-})
+//   return "No messages yet"
+// })
 
 const chatTopic = computed(() => {
   const topic = chat.value.topic ?? members.value.join(', ')
@@ -78,6 +78,8 @@ const isUnreadMessages = computed(() => chat.value.meta && chat.value.meta.unrea
 const goToChat = () => {
   router.push({ name: 'Chat', params: { uuid: uuid.value }, state: { displayMode: 'none' } })
 }
+
+const getUser = (uuid: string) => (store.users.get(uuid))
 </script>
 
 <style scoped lang="scss">

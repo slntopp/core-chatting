@@ -158,6 +158,35 @@ func (m *ChatMeta) validate(all bool) error {
 	// no validation rules for Unread
 
 	if all {
+		switch v := interface{}(m.GetFirstMessage()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ChatMetaValidationError{
+					field:  "FirstMessage",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ChatMetaValidationError{
+					field:  "FirstMessage",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFirstMessage()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ChatMetaValidationError{
+				field:  "FirstMessage",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
 		switch v := interface{}(m.GetLastMessage()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {

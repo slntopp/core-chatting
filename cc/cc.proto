@@ -16,8 +16,9 @@ enum Role {
 
 message ChatMeta {
   int32 unread = 1;
-  Message last_message = 2;
-  map<string, google.protobuf.Value> data = 3;
+  Message first_message = 2;
+  Message last_message = 3;
+  map<string, google.protobuf.Value> data = 4;
 }
 
 enum Status {

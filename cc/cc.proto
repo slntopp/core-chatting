@@ -45,6 +45,8 @@ message Chat {
   int64 created = 9;
 
   Status status = 10;
+
+  string department = 11;
 }
 
 message Chats { repeated Chat chats = 1; }
@@ -106,9 +108,10 @@ message User {
 }
 
 message Department {
-  string title = 1;
-  string description = 2;
-  repeated string admins = 3;
+  string key = 1;
+  string title = 2;
+  string description = 3;
+  repeated string admins = 4;
 }
 
 message Defaults {

@@ -369,6 +369,8 @@ func (m *Chat) validate(all bool) error {
 
 	// no validation rules for Status
 
+	// no validation rules for Department
+
 	if m.Topic != nil {
 		// no validation rules for Topic
 	}
@@ -1199,6 +1201,8 @@ func (m *Department) validate(all bool) error {
 	}
 
 	var errors []error
+
+	// no validation rules for Key
 
 	// no validation rules for Title
 

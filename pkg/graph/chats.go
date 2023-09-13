@@ -211,6 +211,7 @@ const getChatMessages = `
 FOR m in @@messages
 	FILTER m.chat == @chat
 	%s
+	SORT m.sent ASC
 	RETURN m
 `
 

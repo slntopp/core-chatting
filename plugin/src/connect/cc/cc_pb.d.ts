@@ -480,6 +480,64 @@ export declare class Department extends Message$1<Department> {
 }
 
 /**
+ * @generated from message cc.Option
+ */
+export declare class Option extends Message$1<Option> {
+  /**
+   * @generated from field: string key = 1;
+   */
+  key: string;
+
+  /**
+   * @generated from field: google.protobuf.Value value = 2;
+   */
+  value?: Value;
+
+  constructor(data?: PartialMessage<Option>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.Option";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Option;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Option;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Option;
+
+  static equals(a: Option | PlainMessage<Option> | undefined, b: Option | PlainMessage<Option> | undefined): boolean;
+}
+
+/**
+ * @generated from message cc.Metric
+ */
+export declare class Metric extends Message$1<Metric> {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * @generated from field: repeated cc.Option options = 2;
+   */
+  options: Option[];
+
+  constructor(data?: PartialMessage<Metric>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.Metric";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Metric;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Metric;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Metric;
+
+  static equals(a: Metric | PlainMessage<Metric> | undefined, b: Metric | PlainMessage<Metric> | undefined): boolean;
+}
+
+/**
  * @generated from message cc.Defaults
  */
 export declare class Defaults extends Message$1<Defaults> {
@@ -497,6 +555,11 @@ export declare class Defaults extends Message$1<Defaults> {
    * @generated from field: repeated cc.Department departments = 3;
    */
   departments: Department[];
+
+  /**
+   * @generated from field: map<string, cc.Metric> metrics = 4;
+   */
+  metrics: { [key: string]: Metric };
 
   constructor(data?: PartialMessage<Defaults>);
 

@@ -114,10 +114,21 @@ message Department {
   repeated string admins = 4;
 }
 
+message Option{
+  string key = 1;
+  google.protobuf.Value value = 2;
+}
+
+message Metric{
+  string title = 1;
+  repeated Option options = 2;
+}
+
 message Defaults {
   repeated string gateways = 1;
   repeated string admins = 2;
   repeated Department departments = 3;
+  map<string, Metric> metrics = 4;
 }
 
 message Users { repeated User users = 1; }

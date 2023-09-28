@@ -59,7 +59,9 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 
 		if fields != nil {
 			for _, gate := range msg.GetGateways() {
+				log.Debug("gate", zap.String("g", gate))
 				if val, ok := fields[gate]; ok {
+					log.Debug("ok")
 					msg.Meta.Data[gate] = val
 				}
 			}

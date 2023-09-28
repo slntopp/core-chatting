@@ -90,7 +90,7 @@ const previewColumns = computed(() =>
 )
 
 const subDecoration = computed(() =>
-  (window.opener) ? 'underline' : 'none'
+  (window.top) ? 'underline' : 'none'
 )
 
 const chatRightColumn = computed(() =>
@@ -103,14 +103,16 @@ const lastUpdate = computed(() =>
 
 const goToChat = () => {
   router.push({ name: 'Chat', params: { uuid: uuid.value } })
-  window.opener?.postMessage({
+  console.log(window);
+
+  window.top?.postMessage({
     type: 'get-user',
     data: store.users.get(chat.value.owner)
   }, '*')
 }
 
 const openUser = (uuid: string) => {
-  window.opener?.postMessage({ type: 'open-user', data: { uuid } }, '*')
+  window.top?.postMessage({ type: 'open-user', data: { uuid } }, '*')
 }
 </script>
 

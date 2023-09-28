@@ -3,7 +3,15 @@
     <n-space :wrap-item="false" justify="start">
       <user-avatar round size="large" :avatar="members.join(' ')"/>
       <div v-if="!hideMessage" class="preview">
-        <n-text class="sub" depth="3">{{ getUser(chat.owner)?.title }}</n-text>
+        <n-text class="sub" depth="3" @click.stop="openUser(chat.owner)">
+          {{ store.users.get(chat.owner)?.title }}
+        </n-text>
+
+        <div class="time" v-show="appStore.displayMode === 'full'">
+          <div>Created: {{ new Date(Number(chat.created)).toLocaleDateString() }}</div>
+          <div>Last update: {{ new Date(Number(lastUpdate)).toLocaleDateString() }}</div>
+        </div>
+
         <div class="chat__right">
           <n-tooltip>
             <template #trigger>
@@ -35,6 +43,7 @@ import {useCcStore} from "../../store/chatting.ts";
 import {addToClipboard} from "../../functions.ts";
 import UserAvatar from "../ui/user_avatar.vue";
 import ChatStatus from "./chat_status.vue";
+import {useAppStore} from "../../store/app.ts";
 
 interface ChatItemProps {
   chat: Chat
@@ -46,6 +55,7 @@ const props = defineProps<ChatItemProps>()
 const { chat, uuid } = toRefs(props)
 
 const store = useCcStore()
+const appStore = useAppStore()
 const router = useRouter()
 const notification = useNotification()
 
@@ -75,36 +85,65 @@ const chatTopic = computed(() => {
 
 const isUnreadMessages = computed(() => chat.value.meta && chat.value.meta.unread > 0)
 
+const previewColumns = computed(() =>
+  (appStore.displayMode === 'full') ? '1fr auto auto' : '1fr auto'
+)
+
+const subDecoration = computed(() =>
+  (window.opener) ? 'underline' : 'none'
+)
+
+const chatRightColumn = computed(() =>
+  (appStore.displayMode === 'full') ? 3 : 2
+)
+
+const lastUpdate = computed(() =>
+  Number(chat.value.meta?.lastMessage?.edited || chat.value.meta?.lastMessage?.sent)
+)
+
 const goToChat = () => {
-  router.push({ name: 'Chat', params: { uuid: uuid.value }, state: { displayMode: 'none' } })
+  router.push({ name: 'Chat', params: { uuid: uuid.value } })
+  window.opener?.postMessage({
+    type: 'get-user',
+    data: store.users.get(chat.value.owner)
+  }, '*')
 }
 
-const getUser = (uuid: string) => (store.users.get(uuid))
+const openUser = (uuid: string) => {
+  window.opener?.postMessage({ type: 'open-user', data: { uuid } }, '*')
+}
 </script>
 
 <style scoped lang="scss">
 .chat {
   .preview {
     display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 5px;
+    grid-template-columns: v-bind(previewColumns);
+    align-items: center;
+    gap: 5px 15px;
     width: calc(100% - 52px);
-
-    *:nth-child(even) {
-      justify-self: end;
-    }
 
     .sub {
       display: block;
       display: -webkit-box;
       -webkit-line-clamp: 1;
       -webkit-box-orient: vertical;
+      width: fit-content;
       overflow: hidden;
       text-overflow: ellipsis;
+
+      &:hover {
+        text-decoration: v-bind(subDecoration);
+      }
     }
 
     .topic {
       word-break: break-all;
+    }
+
+    .time {
+      grid-row: 1 / 3;
+      grid-column: 2;
     }
   }
 
@@ -114,7 +153,7 @@ const getUser = (uuid: string) => (store.users.get(uuid))
     align-items: center;
     justify-content: center;
     grid-row: 1 / 3;
-    grid-column: 2;
+    grid-column: v-bind(chatRightColumn);
     padding: 5px 10px;
     border: 1px solid var(--n-border-color-popover);
     border-radius: 15px;

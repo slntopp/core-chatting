@@ -1,18 +1,19 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
 
-import { createPromiseClient } from "@connectrpc/connect";
+import { ConnectError, createPromiseClient } from "@connectrpc/connect";
 import { createGrpcWebTransport } from "@connectrpc/connect-web";
 
 import { useAppStore } from "./app";
 
 import {
-    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType, ChatMeta
+    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType, ChatMeta, Kind
 } from "../connect/cc/cc_pb"
 import {
     ChatsAPI, MessagesAPI, StreamService, UsersAPI
 } from "../connect/cc/cc_connect"
 import { useRoute, useRouter } from "vue-router";
+import { useNotification } from "naive-ui";
 
 export const useCcStore = defineStore('cc', () => {
     const app = useAppStore();
@@ -40,9 +41,16 @@ export const useCcStore = defineStore('cc', () => {
 
     const route = useRoute()
     const router = useRouter()
+    const notification = useNotification()
 
     const chats = ref<Map<string, Chat>>(new Map())
     const users = ref<Map<string, User>>(new Map())
+
+    const updating = ref(false)
+    const current_message = ref<Message>(new Message({
+      chat: route.params.uuid as string,
+      content: '',
+    }))
 
     const me = ref<User>(new User())
 
@@ -126,6 +134,44 @@ export const useCcStore = defineStore('cc', () => {
     }
     function delete_message(message: Message): Promise<Message> {
         return messages_c.delete(message)
+    }
+
+    async function handle_send(uuid: string, kind = Kind.DEFAULT, review = false) {
+      if (current_message.value.content == '') {
+        return
+      }
+
+      if (!current_message.value.chat) {
+        current_message.value.chat = route.params.uuid as string
+      }
+
+      try {
+        current_message.value.underReview = review
+        current_message.value.kind = kind
+
+        if (updating.value) {
+          await update_message(current_message.value as Message)
+          updating.value = false
+        } else {
+          current_message.value.chat = route.params.uuid as string
+          await send_message(current_message.value as Message)
+        }
+      } catch (e) {
+        if (e instanceof ConnectError) {
+          notification.error({
+            title: 'Error',
+            description: e.message,
+          })
+        }
+
+        get_messages(chats.value.get(uuid) as Chat, false)
+      }
+
+
+      updating.value = false
+      current_message.value = new Message({
+        content: '',
+      })
     }
 
     async function load_me() {
@@ -228,6 +274,7 @@ export const useCcStore = defineStore('cc', () => {
 
         chats, list_chats, create_chat, delete_chat, update_chat,
 
+        current_message, updating, handle_send,
         messages, chat_messages, get_messages,
         send_message, update_message, delete_message,
 

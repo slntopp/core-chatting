@@ -45,6 +45,8 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 	if user.GetData() != nil {
 		fields := user.GetData().GetFields()
 
+		log.Debug("Field", zap.Any("f", fields))
+
 		if msg.GetMeta() == nil {
 			msg.Meta = &cc.ChatMeta{
 				Data: map[string]*structpb.Value{},

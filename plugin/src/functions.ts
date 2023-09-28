@@ -22,20 +22,22 @@ export function addToClipboard (text: string, notification?: NotificationApi) {
   }
 }
 
-export function getRelativeTime(timestamp: number, now: number) {
+export function getRelativeTime(timestamp: number, now: number, isLifetime?: boolean) {
   const timeDifference = (now - timestamp) / 1000;
   const minutesDifference = Math.floor(timeDifference / 60);
 
-  if (minutesDifference >= 4320) {
+  if (minutesDifference >= 4320 && !isLifetime) {
     return new Date(timestamp).toLocaleDateString();
   } else if (minutesDifference >= 1440) {
     const daysDifference = Math.floor(minutesDifference / 1440);
-    return `${daysDifference} days ago`;
+
+    return `${daysDifference} days${(isLifetime) ? '' : ' ago'}`;
   } else if (minutesDifference >= 60) {
     const hoursDifference = Math.floor(minutesDifference / 60);
-    return `${hoursDifference} hours ago`;
+
+    return `${hoursDifference} hours${(isLifetime) ? '' : ' ago'}`;
   } else if (minutesDifference > 0) {
-    return `${minutesDifference} minutes ago`;
+    return `${minutesDifference} minutes${(isLifetime) ? '' : ' ago'}`;
   } else {
     return 'just now';
   }

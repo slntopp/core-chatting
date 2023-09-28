@@ -1,6 +1,7 @@
 <template>
   <n-dropdown :render-option="renderOption" trigger="hover" :options="membersOptions">
-    <n-text>{{ members.length }} members</n-text>
+    <n-text v-if="admin">{{ admin?.title }}</n-text>
+    <n-text v-else>{{ members.length }} members</n-text>
   </n-dropdown>
 </template>
 
@@ -12,11 +13,12 @@ import memberItem from './user_item.vue'
 import AddButton from "../ui/add_button.vue";
 
 interface MembersDropdownProps {
-  members: User[]
+  members: User[],
+  admins: String[]
 }
 
 const props = defineProps<MembersDropdownProps>()
-const {members} = toRefs(props)
+const { members, admins } = toRefs(props)
 
 const emit = defineEmits(['delete', 'add'])
 
@@ -30,9 +32,13 @@ const membersOptions = computed(() => {
   return membersOptions
 })
 
+const admin = computed(() =>
+  members.value.find(({ uuid }) => admins.value.includes(uuid))
+)
+
 const renderOption = ({option}: { option: DropdownOption }) => {
   if (option.key === 'add') {
-    return h(AddButton, {style: {width: '100%'}, onClick: addMember}, 'Add')
+    return h(AddButton, {style: {width: '100%'}, onClick: addMember}, () => 'Add')
   }
   return h(memberItem as any, {user: option.extra, onDelete: () => emit('delete', option.key),actions:true})
 }

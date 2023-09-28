@@ -75,18 +75,35 @@
               </n-space>
             </n-checkbox-group>
           </div>
+
+          <div style="margin-top: 10px">
+            <div>Filter by admin:</div>
+            <n-divider style="margin: 5px 0" />
+            <n-checkbox-group v-model:value="checkedAdmins">
+              <n-space>
+                <n-checkbox v-for="admin of admins" :value="admin.value" :label="admin.label" />
+              </n-space>
+            </n-checkbox-group>
+          </div>
         </n-popover>
       </n-space>
 
       <n-scrollbar style="height: calc(100vh - 100px); min-width: 150px">
+        <n-popover trigger="manual" :show="isFirstMessageVisible" :x="x" :y="y">
+          {{ firstMessage }}
+        </n-popover>
+
         <n-list hoverable clickable style="margin-bottom: 25px">
           <chat-item
             v-for="chat in chats"
+            :id="chat.uuid"
             :hide-message="!isChatPanelOpen"
             :uuid="chat.uuid"
             :chat="chat"
             :class="{ active: chat.uuid === router.currentRoute.value.params.uuid }"
             @click="changeMode('none')"
+            @mousemove="onMouseMove"
+            @mouseleave="isFirstMessageVisible = false"
           />
         </n-list>
       </n-scrollbar>
@@ -180,13 +197,19 @@ const chats = computed(() => {
   })
 
   result = result.filter((chat) => {
-    const isIncluded = checkedStatuses.value.includes(chat.status)
+    let isIncluded = checkedStatuses.value.includes(chat.status)
+    let isAdminsExist = !!checkedAdmins.value.find((uuid) =>
+      chat.admins.includes(uuid)
+    )
 
-    if (checkedStatuses.value.length > 0) {
-      return filterChat(chat, searchParam.value) && isIncluded
-    } else {
-      return filterChat(chat, searchParam.value)
+    if (checkedStatuses.value.length < 1) {
+      isIncluded = true
     }
+    if (checkedAdmins.value.length < 1) {
+      isAdminsExist = true
+    }
+
+    return filterChat(chat, searchParam.value) && isIncluded && isAdminsExist
   })
 
   let sortable = (chat: Chat) => {
@@ -215,6 +238,30 @@ function getStatus(statusCode: Status | number) {
   return `${status[0].toUpperCase()}${status.slice(1)}`
 }
 
+interface adminsType {
+  value: string
+  label: string
+}
+
+const checkedAdmins = ref<string[]>([])
+
+const admins = computed(() => {
+  const result: adminsType[] = []
+
+  store.chats.forEach((chat: Chat) => {
+    chat.admins.forEach((uuid) => {
+      const element = result.find(({ value }) => uuid === value)
+
+      if (element) return
+      else result.push({
+        value: uuid, label: store.users.get(uuid)?.title ?? uuid
+      })
+    })
+  })
+
+  return result
+})
+
 const isChatPanelOpen = ref(true)
 
 function changePanelOpen() {
@@ -236,6 +283,21 @@ function changeMode(mode: string | null) {
   } else {
     appStore.displayMode = 'half'
   }
+}
+
+const firstMessage = ref('gg')
+const isFirstMessageVisible = ref(false)
+const x = ref(0)
+const y = ref(0)
+
+function onMouseMove({ clientX, clientY, target }: MouseEvent) {
+  const chatElement = (target as HTMLElement).closest('.n-list-item.chat')
+  const chat = chats.value.find(({ uuid }) => uuid === chatElement?.id)
+
+  x.value = clientX
+  y.value = clientY - 10
+  firstMessage.value = chat?.meta?.firstMessage?.content ?? ''
+  isFirstMessageVisible.value = true
 }
 </script>
 

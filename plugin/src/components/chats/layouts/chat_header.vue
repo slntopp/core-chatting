@@ -30,14 +30,48 @@
       </n-button>
 
       <n-divider vertical/>
-      <members-dropdown @add="startAddMembers" @delete="deleteMember" :members="members"/>
+      <members-dropdown
+        :admins="chat.admins"
+        :members="members"
+        @add="startAddMembers"
+        @delete="deleteMember"
+      />
       <n-divider vertical/>
       <chat-status :chat="chat" />
 
       <n-divider vertical/>
-      <n-button type="info" size="small" ghost round @click="refresh">Refresh</n-button>
-      <n-divider vertical/>
-      <n-button type="error" size="small" ghost round @click="deleteChat">Delete</n-button>
+      <n-tooltip>
+        <template #trigger>
+          <n-button type="info" size="small" ghost circle @click="refresh">
+            <template #icon>
+              <refresh-icon />
+            </template>
+          </n-button>
+        </template>
+        Refresh chat
+      </n-tooltip>
+
+      <n-tooltip>
+        <template #trigger>
+          <n-button type="error" size="small" ghost circle @click="deleteChat">
+            <template #icon>
+              <delete-icon />
+            </template>
+          </n-button>
+        </template>
+        Delete chat
+      </n-tooltip>
+
+      <n-tooltip v-if="chat?.role == Role.ADMIN">
+        <template #trigger>
+          <n-button type="warning" ghost circle size="small" @click="store.handle_send(chat.uuid, Kind.ADMIN_ONLY)">
+            <template #icon>
+              <clipboard-icon />
+            </template>
+          </n-button>
+        </template>
+        Sent message as an Admin Note.
+      </n-tooltip>
 
       <n-divider vertical/>
       <n-space vertical style="gap: 0" :wrap-item="false">
@@ -62,6 +96,18 @@
               </code>
             </template>
             {{ new Date(lastUpdate).toLocaleString() }}
+          </n-tooltip>
+        </n-text>
+
+        <n-text>
+          Lifetime:
+          <n-tooltip>
+            <template #trigger>
+              <code style="text-decoration: underline">
+                {{ getRelativeTime(Number(chat.created), now, true) }}
+              </code>
+            </template>
+            {{ new Date(Number(chat.created)).toLocaleString() }}
           </n-tooltip>
         </n-text>
       </n-space>
@@ -96,7 +142,7 @@
 <script setup lang="ts">
 import {computed, defineAsyncComponent, ref, toRefs} from "vue";
 import {NButton, NCard, NDivider, NIcon, NModal, NSpace, NSpin, NTag, NText, NTooltip, SelectOption, useNotification} from "naive-ui";
-import {Chat, User} from "../../../connect/cc/cc_pb";
+import {Chat, Kind, Role, User} from "../../../connect/cc/cc_pb";
 import {useCcStore} from "../../../store/chatting.ts";
 import {useAppStore} from "../../../store/app";
 import {useRouter} from "vue-router";
@@ -110,6 +156,9 @@ import ChatStatus from "../chat_status.vue";
 
 const EditIcon = defineAsyncComponent(() => import('@vicons/ionicons5/PencilSharp'));
 const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
+const RefreshIcon = defineAsyncComponent(() => import('@vicons/ionicons5/RefreshOutline'));
+const DeleteIcon = defineAsyncComponent(() => import('@vicons/ionicons5/TrashBinOutline'));
+const ClipboardIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
 
 interface ChatHeaderProps {
   chat: Chat

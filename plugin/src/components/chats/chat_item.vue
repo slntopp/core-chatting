@@ -103,16 +103,15 @@ const lastUpdate = computed(() =>
 
 const goToChat = () => {
   router.push({ name: 'Chat', params: { uuid: uuid.value } })
-  console.log(window);
 
   window.top?.postMessage({
     type: 'get-user',
-    data: store.users.get(chat.value.owner)
+    value: { uuid: chat.value.owner }
   }, '*')
 }
 
 const openUser = (uuid: string) => {
-  window.top?.postMessage({ type: 'open-user', data: { uuid } }, '*')
+  window.top?.postMessage({ type: 'open-user', value: { uuid } }, '*')
 }
 </script>
 

@@ -489,9 +489,9 @@ export declare class Option extends Message$1<Option> {
   key: string;
 
   /**
-   * @generated from field: google.protobuf.Value value = 2;
+   * @generated from field: float value = 2;
    */
-  value?: Value;
+  value: number;
 
   constructor(data?: PartialMessage<Option>);
 

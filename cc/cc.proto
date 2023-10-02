@@ -116,7 +116,7 @@ message Department {
 
 message Option{
   string key = 1;
-  google.protobuf.Value value = 2;
+  float value = 2;
 }
 
 message Metric{

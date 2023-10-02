@@ -184,7 +184,7 @@ export const Option = proto3.makeMessageType(
   "cc.Option",
   () => [
     { no: 1, name: "key", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "value", kind: "message", T: Value },
+    { no: 2, name: "value", kind: "scalar", T: 2 /* ScalarType.FLOAT */ },
   ],
 );
 

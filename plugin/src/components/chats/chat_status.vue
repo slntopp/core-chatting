@@ -83,5 +83,6 @@ export default {
   display: flex;
   align-items: center;
   gap: 5px;
+  cursor: pointer;
 }
 </style>

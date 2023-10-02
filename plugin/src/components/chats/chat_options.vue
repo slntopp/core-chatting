@@ -29,6 +29,23 @@
         <n-form-item label="Gateways" label-align="left" label-width="75">
           <n-select v-model:value="chat.gateways" multiple :options="gateways_options" filterable/>
         </n-form-item>
+
+        <n-form-item
+          label-align="left"
+          label-width="75"
+          v-for="metric of metrics"
+          :label="metric.title"
+          :key="metric.key"
+        >
+          <n-select
+            filterable
+            label-field="key"
+            :value="getMetric(metric.key)"
+            :options="metric.options"
+            @update:value="(value) => setMetric(value, metric.key)"
+          />
+        </n-form-item>
+
         <n-space justify="end">
           <n-button :loading="isEditLoading" ghost type="success" @click="submit">
             {{ isEdit ? 'Edit chat' : 'Start chat' }}
@@ -59,9 +76,11 @@ import {
 import {useRouter} from 'vue-router';
 import {useCcStore} from "../../store/chatting.ts";
 import {useAppStore} from '../../store/app.ts';
-import {Chat, Role} from "../../connect/cc/cc_pb";
+import {Chat, ChatMeta, Role} from "../../connect/cc/cc_pb";
 import useDefaults from "../../hooks/useDefaults.ts";
 import MemberSelect from "../users/member_select.vue";
+import { ValueAtom } from 'naive-ui/es/select/src/interface';
+import { Value } from '@bufbuild/protobuf';
 
 interface ChatOptionsProps {
   isEdit?: boolean
@@ -78,7 +97,7 @@ const emit = defineEmits(['close'])
 const router = useRouter()
 const store = useCcStore()
 const appStore = useAppStore()
-const {admins, fetch_defaults, isDefaultLoading, users, gateways} = useDefaults()
+const {admins, fetch_defaults, isDefaultLoading, users, gateways, metrics} = useDefaults()
 
 const form = ref<FormInst>()
 const rules = {
@@ -166,6 +185,18 @@ function submit() {
     } finally {
       isEditLoading.value = false
     }
+  })
+}
+
+function getMetric(key: string) {
+  return chat.value.meta?.data[key].kind.value as ValueAtom
+}
+
+function setMetric(value: number, key: string) {
+  if (!chat.value.meta) chat.value.meta = new ChatMeta({})
+
+  chat.value.meta.data[key] = new Value({
+    kind: { case: 'numberValue', value }
   })
 }
 

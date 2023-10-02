@@ -1,15 +1,15 @@
 <template>
   <n-text v-if="!chat">Loading...</n-text>
-  <template v-else>
-    <n-space justify="start" align="center">
-      <n-button
-        ghost
-        v-if="appStore.displayMode === 'none'"
-        @click="appStore.displayMode = 'full'"
-      >
-        <n-icon> <open-icon /> </n-icon>
-      </n-button>
+  <div class="grid" v-else>
+    <n-button
+      ghost
+      v-if="appStore.displayMode === 'none'"
+      @click="appStore.displayMode = 'full'"
+    >
+      <n-icon> <open-icon /> </n-icon>
+    </n-button>
 
+    <n-space justify="start" align="center">
       <n-tooltip>
         <template #trigger>
           <n-tag round @click="addToClipboard(chat.uuid, notification)">
@@ -72,47 +72,75 @@
         </template>
         Sent message as an Admin Note.
       </n-tooltip>
-
-      <n-divider vertical/>
-      <n-space vertical style="gap: 0" :wrap-item="false">
-        <n-text>
-          Created:
-          <n-tooltip>
-            <template #trigger>
-              <code style="text-decoration: underline">
-                {{ getRelativeTime(Number(chat.created), now) }}
-              </code>
-            </template>
-            {{ new Date(Number(chat.created)).toLocaleString() }}
-          </n-tooltip>
-        </n-text>
-
-        <n-text>
-          Last update:
-          <n-tooltip>
-            <template #trigger>
-              <code style="text-decoration: underline">
-                {{ getRelativeTime(lastUpdate, now) }}
-              </code>
-            </template>
-            {{ new Date(lastUpdate).toLocaleString() }}
-          </n-tooltip>
-        </n-text>
-
-        <n-text>
-          Lifetime:
-          <n-tooltip>
-            <template #trigger>
-              <code style="text-decoration: underline">
-                {{ getRelativeTime(Number(chat.created), now, true) }}
-              </code>
-            </template>
-            {{ new Date(Number(chat.created)).toLocaleString() }}
-          </n-tooltip>
-        </n-text>
-      </n-space>
     </n-space>
-  </template>
+    <n-divider
+      vertical
+      :style="{
+        gridRow: (metricsOptions.length > 0) ? '1 / 3' : null, 
+        gridColumn: 3,
+        height: 'calc(100% - 10px)',
+        margin: '0 8px'
+      }"
+    />
+
+    <n-space
+      :wrap-item="false"
+      :style="{ gridColumn: (appStore.displayMode !== 'half') ? 2 : 1 }"
+    >
+      <n-text v-for="metric in metricsOptions">
+        {{ metric.title }}:
+        <n-tag round size="small" :type="getTagColor(metric.key)">
+          {{ metric.value }}
+        </n-tag>
+      </n-text>
+    </n-space>
+
+    <n-space
+      vertical
+      :wrap-item="false"
+      :style="{
+        gap: 0,
+        gridRow: (metricsOptions.length > 0) ? '1 / 3' : null,
+        gridColumn: (metricsOptions.length > 0) ? '4' : null
+      }"
+    >
+      <n-text>
+        Created:
+        <n-tooltip>
+          <template #trigger>
+            <code style="text-decoration: underline">
+              {{ getRelativeTime(Number(chat.created), now) }}
+            </code>
+          </template>
+          {{ new Date(Number(chat.created)).toLocaleString() }}
+        </n-tooltip>
+      </n-text>
+
+      <n-text>
+        Last update:
+        <n-tooltip>
+          <template #trigger>
+            <code style="text-decoration: underline">
+              {{ getRelativeTime(lastUpdate, now) }}
+            </code>
+          </template>
+          {{ new Date(lastUpdate).toLocaleString() }}
+        </n-tooltip>
+      </n-text>
+
+      <n-text>
+        Lifetime:
+        <n-tooltip>
+          <template #trigger>
+            <code style="text-decoration: underline">
+              {{ getRelativeTime(Number(chat.created), now, true) }}
+            </code>
+          </template>
+          {{ new Date(Number(chat.created)).toLocaleString() }}
+        </n-tooltip>
+      </n-text>
+    </n-space>
+  </div>
 
   <n-modal v-model:show="isEdit">
     <n-card title="Edit chat options" :bordered="false" size="huge" role="dialog" aria-modal="true"
@@ -164,6 +192,12 @@ interface ChatHeaderProps {
   chat: Chat
 }
 
+interface Metrics {
+  title: string
+  value?: string
+  key?: number
+}
+
 const props = defineProps<ChatHeaderProps>()
 const {chat} = toRefs(props)
 
@@ -171,7 +205,7 @@ const appStore = useAppStore()
 const store = useCcStore()
 const router = useRouter()
 const notification = useNotification()
-const {fetch_defaults, isDefaultLoading, users, admins} = useDefaults()
+const {fetch_defaults, isDefaultLoading, users, admins, metrics} = useDefaults()
 
 const isEdit = ref<boolean>(false)
 const isAddDialog = ref<boolean>(false)
@@ -190,6 +224,44 @@ const members = computed(() => {
   return result
 })
 const me = computed(() => store.me)
+
+fetch_defaults()
+
+const metricsOptions = computed(() => {
+  const metricsEntries = Object.entries(chat.value.meta?.data ?? {})
+  const result: Metrics[] = []
+
+  metricsEntries.forEach(([keyMetric, { kind }]) => {
+    const { title, options } = metrics.value.find(
+      (metric) => metric.key === keyMetric
+    ) ?? {}
+
+    const { key: value, value: key } = options?.find(
+      (option) => option.value === kind.value
+    ) ?? {}
+    
+    if (title) result.push({ title, value, key })
+  })
+
+  return result
+})
+
+const getTagColor = (value?: number) => {
+  switch (value) {
+    case 1:
+      return 'default'
+    case 2:
+      return 'info'
+    case 3:
+      return 'success'
+    case 4:
+      return 'warning'
+    case 5:
+      return 'error'
+    default:
+      return 'default'
+  }
+}
 
 const refresh = () => {
   if (chat) {
@@ -210,7 +282,6 @@ const deleteMember = (uuid: string) => {
 }
 
 const fetchAvailableUsers = async () => {
-  await fetch_defaults()
   availableMembersOptions.value = users.value.map(user => {
     return {
       label: user.title,
@@ -250,3 +321,12 @@ const lastUpdate = computed(() =>
   Number(chat.value.meta?.lastMessage?.edited || chat.value.meta?.lastMessage?.sent)
 )
 </script>
+
+<style scoped>
+.grid {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr;
+  align-items: center;
+  gap: 10px;
+}
+</style>

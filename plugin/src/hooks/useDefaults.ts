@@ -1,6 +1,10 @@
-import {Defaults, User, Users} from "../connect/cc/cc_pb.ts";
+import {Defaults, Metric, User, Users} from "../connect/cc/cc_pb.ts";
 import {ref} from "vue";
 import {useCcStore} from "../store/chatting.ts";
+
+export interface MetricWithKey extends Metric {
+  key: string
+}
 
 export default () => {
 
@@ -10,6 +14,7 @@ export default () => {
     const admins = ref<string[]>([])
     const users = ref<User[]>([])
     const gateways = ref<string[]>([])
+    const metrics = ref<MetricWithKey[]>([])
 
     async function fetch_defaults() {
         try {
@@ -24,10 +29,13 @@ export default () => {
             admins.value = defaults.admins
             gateways.value = defaults.gateways
             users.value = members.users
+            metrics.value = Object.entries(defaults.metrics).map(
+              ([key, value]) => ({ key, ...value })
+            ) as MetricWithKey[]
         } finally {
             isDefaultLoading.value = false
         }
     }
 
-    return {fetch_defaults, isDefaultLoading, admins, gateways, users}
+    return {fetch_defaults, isDefaultLoading, admins, gateways, users, metrics}
 }

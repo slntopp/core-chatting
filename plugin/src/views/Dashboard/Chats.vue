@@ -48,7 +48,7 @@
       >
         <n-input v-model:value="searchParam" type="text" placeholder="Search..."/>
 
-        <n-popover trigger="click" placement="bottom">
+        <n-popover trigger="click" placement="bottom" :width="500">
           <template #trigger>
             <n-icon size="24" style="vertical-align: middle; cursor: pointer">
               <sort-icon />
@@ -56,32 +56,42 @@
           </template>
 
           <div>
-            <div>Sort By:</div>
+            <n-text>Sort By:</n-text>
             <n-divider style="margin: 5px 0" />
             <n-radio-group v-model:value="sortBy">
-              <n-space>
+              <n-space :wrap-item="false">
                 <n-radio value="created" label="Created" />
                 <n-radio value="sent" label="Sent" />
               </n-space>
             </n-radio-group>
           </div>
 
-          <div style="margin-top: 10px">
-            <div>Filter by status:</div>
+          <div style="margin-top: 20px">
+            <n-text>Filter by status:</n-text>
             <n-divider style="margin: 5px 0" />
             <n-checkbox-group v-model:value="checkedStatuses">
-              <n-space>
+              <n-space :wrap-item="false">
                 <n-checkbox v-for="status of statuses" :value="status.value" :label="status.label" />
               </n-space>
             </n-checkbox-group>
           </div>
 
-          <div style="margin-top: 10px">
-            <div>Filter by admin:</div>
+          <div style="margin-top: 20px">
+            <n-text>Filter by admin:</n-text>
             <n-divider style="margin: 5px 0" />
             <n-checkbox-group v-model:value="checkedAdmins">
-              <n-space>
+              <n-space :wrap-item="false">
                 <n-checkbox v-for="admin of admins" :value="admin.value" :label="admin.label" />
+              </n-space>
+            </n-checkbox-group>
+          </div>
+
+          <div style="margin-top: 20px" v-for="metric of metrics" :key="metric.key">
+            <n-text>Filter by {{ metric.title.toLowerCase() }}:</n-text>
+            <n-divider style="margin: 5px 0" />
+            <n-checkbox-group v-model:value="metricsOptions[metric.key]">
+              <n-space :wrap-item="false">
+                <n-checkbox v-for="option of metric.options" :value="option.value" :label="option.key" />
               </n-space>
             </n-checkbox-group>
           </div>
@@ -119,8 +129,13 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, onMounted, ref} from 'vue';
-import {NButton, NIcon, NInput, NLayoutContent, NLayoutSider, NList, NScrollbar, NSpace, NPopover, NRadioGroup, NRadio, NDivider, NCheckboxGroup, NCheckbox} from 'naive-ui';
+import {computed, defineAsyncComponent, onMounted, ref, watch} from 'vue';
+import {
+  NButton, NIcon, NInput, NLayoutContent,
+  NLayoutSider, NList, NScrollbar, NSpace,
+  NPopover, NRadioGroup, NRadio, NDivider,
+  NCheckboxGroup, NCheckbox, NText
+} from 'naive-ui';
 
 import {useAppStore} from '../../store/app.ts';
 import {useCcStore} from '../../store/chatting.ts';
@@ -129,6 +144,7 @@ import {useRouter} from 'vue-router';
 import {Chat, Status} from '../../connect/cc/cc_pb';
 import ChatItem from "../../components/chats/chat_item.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
+import useDefaults from '../../hooks/useDefaults.ts';
 
 const ChatbubbleEllipsesOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ChatbubbleEllipsesOutline'));
 const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForward'));
@@ -140,6 +156,7 @@ const appStore = useAppStore()
 const store = useCcStore();
 const router = useRouter();
 const {makeDraggable} = useDraggable()
+const {metrics, fetch_defaults} = useDefaults()
 
 const searchParam = ref('')
 
@@ -190,6 +207,10 @@ const filterChat = (chat: Chat, val: string): boolean => {
 
 const sortBy = ref<'sent' | 'created'>('sent')
 
+interface optionsIncludedType {
+  [index: string]: boolean
+}
+
 const chats = computed(() => {
   let result: Chat[] = []
   store.chats.forEach((chat) => {
@@ -201,7 +222,18 @@ const chats = computed(() => {
     let isAdminsExist = !!checkedAdmins.value.find((uuid) =>
       chat.admins.includes(uuid)
     )
+    let isOptionsIncluded: optionsIncludedType = {}
 
+    Object.entries(metricsOptions.value).forEach(([key, value]) => {
+      if (value.length < 1) {
+        isOptionsIncluded[key] = true
+        return
+      }
+      const metric = chat.meta?.data[key]?.kind.value as never
+
+      isOptionsIncluded[key] = value.includes(metric)
+    })
+    
     if (checkedStatuses.value.length < 1) {
       isIncluded = true
     }
@@ -209,7 +241,9 @@ const chats = computed(() => {
       isAdminsExist = true
     }
 
-    return filterChat(chat, searchParam.value) && isIncluded && isAdminsExist
+    return filterChat(chat, searchParam.value) &&
+      isIncluded && isAdminsExist &&
+      Object.values(isOptionsIncluded).every((value) => value)
   })
 
   let sortable = (chat: Chat) => {
@@ -260,6 +294,24 @@ const admins = computed(() => {
   })
 
   return result
+})
+
+if (Object.keys(metrics.value).length < 1) fetch_defaults()
+
+interface metricsOptionsType {
+  [index: string]: []
+}
+
+const metricsOptions = ref<metricsOptionsType>(
+  Object.keys(metrics.value).reduce((result, key) => ({
+    ...result, [key]: []
+  }), {})
+)
+
+watch(metrics, (value) => {
+  Object.keys(value).reduce((result, key) => ({
+    ...result, [key]: []
+  }), {})
 })
 
 const isChatPanelOpen = ref(true)

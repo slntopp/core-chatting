@@ -28,6 +28,7 @@ func (s *UsersServer) FetchDefaults(ctx context.Context, req *connect.Request[cc
 
 	defaults, err := core.Config()
 	if err != nil {
+		s.log.Error("Failed get config", zap.Error(err))
 		return nil, fmt.Errorf("failed to fetch defaults: %w", err)
 	}
 
@@ -44,6 +45,7 @@ func (s *UsersServer) Resolve(ctx context.Context, req *connect.Request[cc.Users
 
 	conf, err := core.Config()
 	if err != nil {
+		s.log.Error("Failed get config", zap.Error(err))
 		return nil, fmt.Errorf("failed to fetch defaults: %w", err)
 	}
 

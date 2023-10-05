@@ -48,7 +48,7 @@
       >
         <n-input v-model:value="searchParam" type="text" placeholder="Search..."/>
 
-        <n-popover trigger="click" placement="bottom" :width="500">
+        <n-popover trigger="click" placement="bottom" :width="520">
           <template #trigger>
             <n-icon size="24" style="vertical-align: middle; cursor: pointer">
               <sort-icon />

@@ -61,17 +61,6 @@
         </template>
         Delete chat
       </n-tooltip>
-
-      <n-tooltip v-if="chat?.role == Role.ADMIN">
-        <template #trigger>
-          <n-button type="warning" ghost circle size="small" @click="store.handle_send(chat.uuid, Kind.ADMIN_ONLY)">
-            <template #icon>
-              <clipboard-icon />
-            </template>
-          </n-button>
-        </template>
-        Sent message as an Admin Note.
-      </n-tooltip>
     </n-space>
     <n-divider
       vertical
@@ -89,8 +78,8 @@
     >
       <n-text v-for="metric in metricsOptions">
         {{ metric.title }}:
-        <n-tag round size="small" :type="getTagColor(metric.key)">
-          {{ metric.value }}
+        <n-tag round size="small" type="error" :style="`filter: ${getTagColor(metric)}`">
+          {{ metric.key }}
         </n-tag>
       </n-text>
     </n-space>
@@ -100,6 +89,8 @@
       :wrap-item="false"
       :style="{
         gap: 0,
+        whiteSpace: 'nowrap',
+        paddingRight: '18px',
         gridRow: (metricsOptions.length > 0) ? '1 / 3' : null,
         gridColumn: (metricsOptions.length > 0) ? '4' : null
       }"
@@ -170,7 +161,7 @@
 <script setup lang="ts">
 import {computed, defineAsyncComponent, ref, toRefs} from "vue";
 import {NButton, NCard, NDivider, NIcon, NModal, NSpace, NSpin, NTag, NText, NTooltip, SelectOption, useNotification} from "naive-ui";
-import {Chat, Kind, Role, User} from "../../../connect/cc/cc_pb";
+import {Chat, User} from "../../../connect/cc/cc_pb";
 import {useCcStore} from "../../../store/chatting.ts";
 import {useAppStore} from "../../../store/app";
 import {useRouter} from "vue-router";
@@ -186,16 +177,17 @@ const EditIcon = defineAsyncComponent(() => import('@vicons/ionicons5/PencilShar
 const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
 const RefreshIcon = defineAsyncComponent(() => import('@vicons/ionicons5/RefreshOutline'));
 const DeleteIcon = defineAsyncComponent(() => import('@vicons/ionicons5/TrashBinOutline'));
-const ClipboardIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
 
 interface ChatHeaderProps {
   chat: Chat
 }
 
-interface Metrics {
+interface Metric {
   title: string
-  value?: string
-  key?: number
+  value: number
+  key: string
+  max: number
+  min: number
 }
 
 const props = defineProps<ChatHeaderProps>()
@@ -229,39 +221,30 @@ fetch_defaults()
 
 const metricsOptions = computed(() => {
   const metricsEntries = Object.entries(chat.value.meta?.data ?? {})
-  const result: Metrics[] = []
+  const result: Metric[] = []
 
   metricsEntries.forEach(([keyMetric, { kind }]) => {
     const { title, options } = metrics.value.find(
       (metric) => metric.key === keyMetric
     ) ?? {}
 
-    const { key: value, value: key } = options?.find(
+    const { key, value } = options?.find(
       (option) => option.value === kind.value
-    ) ?? {}
+    ) ?? { key: '', value: 0 }
+
+    const optionsValues = options?.map(({ value }) => value) ?? []
+    const min = Math.min(...optionsValues)
+    const max = Math.max(...optionsValues)
     
-    if (title) result.push({ title, value, key })
+    if (title) result.push({ title, value, key, min, max })
   })
 
   return result
 })
 
-const getTagColor = (value?: number) => {
-  switch (value) {
-    case 1:
-      return 'default'
-    case 2:
-      return 'info'
-    case 3:
-      return 'success'
-    case 4:
-      return 'warning'
-    case 5:
-      return 'error'
-    default:
-      return 'default'
-  }
-}
+const getTagColor = (metric: Metric) => (
+  `hue-rotate(${220 - 220 * (metric.value - metric.min) / (metric.max - metric.min)}deg)`
+)
 
 const refresh = () => {
   if (chat) {

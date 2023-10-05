@@ -33,12 +33,52 @@
 
     <template #footer>
       <div class="footer">
-        <div class="avatar">
-          <user-avatar round size="medium" avatar="M E"></user-avatar>
+        <div class="avatar" v-if="chat?.role == Role.ADMIN">
+          <n-tooltip placement="top-start">
+            <template #trigger>
+              <n-button
+                ghost
+                circle
+                type="warning"
+                size="small"
+                @click="sendMode = (sendMode === 'admin') ? 'default' : 'admin'"
+              >
+                <template #icon>
+                  <clipboard-icon />
+                </template>
+              </n-button>
+            </template>
+            Sent message as an Admin Note.
+          </n-tooltip>
+
+          <n-tooltip placement="top-start">
+            <template #trigger>
+              <n-button
+                quaternary
+                circle
+                type="info"
+                size="small"
+                @click="sendMode = (sendMode === 'approve') ? 'default' : 'approve'"
+              >
+                <template #icon>
+                  <n-icon :component="ReviewOutline" size="32"/>
+                </template>
+              </n-button>
+            </template>
+            Message will be put under moderation, thus not visible to user until one of the Admins approves it.
+          </n-tooltip>
         </div>
+
         <n-space class="textarea" vertical justify="center">
-          <n-alert style="min-width: 50vw;" title="Editing" type="info" closable v-if="store.updating"
-                   @close="handle_stop_edit"/>
+          <n-alert
+            closable
+            type="info"
+            title="Editing"
+            style="min-width: 50vw"
+            v-if="store.updating"
+            @close="handle_stop_edit"
+          />
+
           <n-tooltip placement="top-end">
             <template #trigger>
 
@@ -46,10 +86,13 @@
                 ref="input"
                 size="small"
                 type="textarea"
-                style="width: 100%" placeholder="Type your message"
+                style="width: 100%"
+                :style="textareaColors"
+                placeholder="Type your message"
                 v-model:value="store.current_message.content"
-                :autosize="{ minRows: 2, maxRows: 5 }"
+                :autosize="{ minRows: 3, maxRows: 15 }"
 
+                @keypress.prevent.enter.exact="handle_new_line"
                 @keypress.prevent.ctrl.enter.exact="store.handle_send(chat?.uuid ?? '')"
                 @keypress.prevent.ctrl.shift.enter.exact="store.handle_send(chat?.uuid ?? '', Kind.ADMIN_ONLY)"
                 @keyup.prevent.ctrl.up.exact="handle_begin_edit"
@@ -69,21 +112,11 @@
         </n-space>
 
         <n-space class="actions" style="flex-flow: nowrap">
-          <n-button type="success" ghost circle size="small" @click="store.handle_send(chat?.uuid ?? '')">
+          <n-button type="success" ghost circle size="small" @click="handle_send">
             <template #icon>
               <n-icon :component="SendOutline"/>
             </template>
           </n-button>
-          <n-tooltip v-if="chat?.role == Role.ADMIN">
-            <template #trigger>
-              <n-button type="info" quaternary circle size="small" @click="store.handle_send(chat.uuid ?? '', Kind.DEFAULT, true)">
-                <template #icon>
-                  <n-icon :component="ReviewOutline" size="32"/>
-                </template>
-              </n-button>
-            </template>
-            Message will be put under moderation, thus not visible to user until one of the Admins approves it.
-          </n-tooltip>
         </n-space>
       </div>
     </template>
@@ -109,10 +142,10 @@ import {useRoute, useRouter} from 'vue-router';
 import {useCcStore} from '../../../store/chatting';
 import {Chat, Kind, Message, Role} from '../../../connect/cc/cc_pb';
 import ChatHeader from "../../../components/chats/layouts/chat_header.vue";
-import UserAvatar from "../../../components/ui/user_avatar.vue";
 import MockMessage from "../../../components/chats/mock_message.vue";
 
 const SendOutline = defineAsyncComponent(() => import('@vicons/ionicons5/SendOutline'));
+const ClipboardIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
 const ReviewOutline = defineAsyncComponent(() => import('../../../assets/icons/ReviewOutline.svg')) as Component;
 
 const MessageView = defineAsyncComponent(() => import('../../../components/chats/message.vue'));
@@ -194,6 +227,43 @@ watch(messages, () => {
   scrollToBottom(true)
 }, {deep: true})
 
+const sendMode = ref('default')
+const textareaColors = computed(() => {
+  let color = ''
+
+  switch (sendMode.value) {
+    case 'admin':
+      color = '#f2c97d'
+      break
+    case 'approve':
+      color = '#70c0e8'
+      break
+    default:
+      return null
+  }
+
+  return {
+    '--n-caret-color': color,
+    '--n-color-focus': `${color}1a`,
+    '--n-border-hover': `1px solid ${color}`,
+    '--n-border-focus': `1px solid ${color}`
+  }
+})
+
+function handle_send() {
+  switch (sendMode.value) {
+    case 'admin':
+      store.handle_send(chat.value?.uuid ?? '', Kind.ADMIN_ONLY)
+      break;
+    case 'approve':
+      store.handle_send(chat.value?.uuid ?? '', Kind.DEFAULT, true)
+      break;
+    default:
+      store.handle_send(chat.value?.uuid ?? '')
+      break;
+  }
+}
+
 function handle_begin_edit() {
   for (let i = messages.value.length - 1; i >= 0; i--) {
     let msg = messages.value[i]
@@ -215,6 +285,11 @@ function handle_stop_edit() {
   })
 }
 
+function handle_new_line() {
+  const value = store.current_message.content
+
+  store.current_message.content = `${value}\n`
+}
 </script>
 
 <style scoped lang="scss">
@@ -247,11 +322,15 @@ textarea {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: calc(100% - 35px);
+  width: calc(100% - 20px);
   gap: 15px;
 
   .avatar {
     max-width: 35px;
+
+    *:not(:last-child) {
+      margin-bottom: 10px;
+    }
   }
 
   .textarea {

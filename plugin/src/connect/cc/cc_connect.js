@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, Chats, Defaults, Empty, Event, Message, Messages, User, Users } from "./cc_pb.js";
+import { Chat, Chats, Defaults, Devices, Empty, Event, Message, Messages, User, Users } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -148,6 +148,15 @@ export const UsersAPI = {
       name: "GetMembers",
       I: Empty,
       O: Users,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.UsersAPI.GetDevices
+     */
+    getDevices: {
+      name: "GetDevices",
+      I: Empty,
+      O: Devices,
       kind: MethodKind.Unary,
     },
   }

@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from core_chatting.cc import cc_pb2 as cc_dot_cc__pb2
+from cc import cc_pb2 as cc_dot_cc__pb2
 
 
 class ChatsAPIStub(object):
@@ -387,6 +387,11 @@ class UsersAPIStub(object):
                 request_serializer=cc_dot_cc__pb2.Empty.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Users.FromString,
                 )
+        self.GetDevices = channel.unary_unary(
+                '/cc.UsersAPI/GetDevices',
+                request_serializer=cc_dot_cc__pb2.Empty.SerializeToString,
+                response_deserializer=cc_dot_cc__pb2.Devices.FromString,
+                )
 
 
 class UsersAPIServicer(object):
@@ -418,6 +423,12 @@ class UsersAPIServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetDevices(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_UsersAPIServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -440,6 +451,11 @@ def add_UsersAPIServicer_to_server(servicer, server):
                     servicer.GetMembers,
                     request_deserializer=cc_dot_cc__pb2.Empty.FromString,
                     response_serializer=cc_dot_cc__pb2.Users.SerializeToString,
+            ),
+            'GetDevices': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetDevices,
+                    request_deserializer=cc_dot_cc__pb2.Empty.FromString,
+                    response_serializer=cc_dot_cc__pb2.Devices.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -516,6 +532,23 @@ class UsersAPI(object):
         return grpc.experimental.unary_unary(request, target, '/cc.UsersAPI/GetMembers',
             cc_dot_cc__pb2.Empty.SerializeToString,
             cc_dot_cc__pb2.Users.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetDevices(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cc.UsersAPI/GetDevices',
+            cc_dot_cc__pb2.Empty.SerializeToString,
+            cc_dot_cc__pb2.Devices.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

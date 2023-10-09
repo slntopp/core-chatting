@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, Chats, Defaults, Empty, Event, Message, Messages, User, Users } from "./cc_pb.js";
+import { Chat, Chats, Defaults, Devices, Empty, Event, Message, Messages, User, Users } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -148,6 +148,15 @@ export declare const UsersAPI: {
       readonly name: "GetMembers",
       readonly I: typeof Empty,
       readonly O: typeof Users,
+      readonly kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.UsersAPI.GetDevices
+     */
+    readonly getDevices: {
+      readonly name: "GetDevices",
+      readonly I: typeof Empty,
+      readonly O: typeof Devices,
       readonly kind: MethodKind.Unary,
     },
   }

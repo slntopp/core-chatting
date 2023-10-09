@@ -441,6 +441,40 @@ export declare class User extends Message$1<User> {
 }
 
 /**
+ * @generated from message cc.Device
+ */
+export declare class Device extends Message$1<Device> {
+  /**
+   * @generated from field: string uuid = 1;
+   */
+  uuid: string;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * @generated from field: bool enabled = 3;
+   */
+  enabled: boolean;
+
+  constructor(data?: PartialMessage<Device>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.Device";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Device;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Device;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Device;
+
+  static equals(a: Device | PlainMessage<Device> | undefined, b: Device | PlainMessage<Device> | undefined): boolean;
+}
+
+/**
  * @generated from message cc.Department
  */
 export declare class Department extends Message$1<Department> {
@@ -598,6 +632,30 @@ export declare class Users extends Message$1<Users> {
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Users;
 
   static equals(a: Users | PlainMessage<Users> | undefined, b: Users | PlainMessage<Users> | undefined): boolean;
+}
+
+/**
+ * @generated from message cc.Devices
+ */
+export declare class Devices extends Message$1<Devices> {
+  /**
+   * @generated from field: repeated cc.Device devices = 1;
+   */
+  devices: Device[];
+
+  constructor(data?: PartialMessage<Devices>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.Devices";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Devices;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Devices;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Devices;
+
+  static equals(a: Devices | PlainMessage<Devices> | undefined, b: Devices | PlainMessage<Devices> | undefined): boolean;
 }
 
 /**

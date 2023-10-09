@@ -1180,6 +1180,110 @@ var _ interface {
 	ErrorName() string
 } = UserValidationError{}
 
+// Validate checks the field values on Device with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Device) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Device with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in DeviceMultiError, or nil if none found.
+func (m *Device) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Device) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Uuid
+
+	// no validation rules for Title
+
+	// no validation rules for Enabled
+
+	if len(errors) > 0 {
+		return DeviceMultiError(errors)
+	}
+
+	return nil
+}
+
+// DeviceMultiError is an error wrapping multiple validation errors returned by
+// Device.ValidateAll() if the designated constraints aren't met.
+type DeviceMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DeviceMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DeviceMultiError) AllErrors() []error { return m }
+
+// DeviceValidationError is the validation error returned by Device.Validate if
+// the designated constraints aren't met.
+type DeviceValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeviceValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeviceValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeviceValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeviceValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeviceValidationError) ErrorName() string { return "DeviceValidationError" }
+
+// Error satisfies the builtin error interface
+func (e DeviceValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDevice.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeviceValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeviceValidationError{}
+
 // Validate checks the field values on Department with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -1831,6 +1935,138 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = UsersValidationError{}
+
+// Validate checks the field values on Devices with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Devices) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Devices with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in DevicesMultiError, or nil if none found.
+func (m *Devices) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Devices) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetDevices() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DevicesValidationError{
+						field:  fmt.Sprintf("Devices[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DevicesValidationError{
+						field:  fmt.Sprintf("Devices[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DevicesValidationError{
+					field:  fmt.Sprintf("Devices[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return DevicesMultiError(errors)
+	}
+
+	return nil
+}
+
+// DevicesMultiError is an error wrapping multiple validation errors returned
+// by Devices.ValidateAll() if the designated constraints aren't met.
+type DevicesMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DevicesMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DevicesMultiError) AllErrors() []error { return m }
+
+// DevicesValidationError is the validation error returned by Devices.Validate
+// if the designated constraints aren't met.
+type DevicesValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DevicesValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DevicesValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DevicesValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DevicesValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DevicesValidationError) ErrorName() string { return "DevicesValidationError" }
+
+// Error satisfies the builtin error interface
+func (e DevicesValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDevices.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DevicesValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DevicesValidationError{}
 
 // Validate checks the field values on Event with the rules defined in the
 // proto definition for this message. If any rules are violated, the first

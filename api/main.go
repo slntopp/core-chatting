@@ -36,6 +36,7 @@ var (
 	arangodbCred string
 	dbName       string
 	usersCol     string
+	devicesCol   string
 
 	rbmq string
 
@@ -55,10 +56,12 @@ func init() {
 	viper.SetDefault("DB_CRED", "root:password")
 	viper.SetDefault("DB_NAME", "chats")
 	viper.SetDefault("USERS_COL", "Accounts")
+	viper.SetDefault("DEVICES_COL", "Devices")
 	arangodbHost = viper.GetString("DB_HOST")
 	arangodbCred = viper.GetString("DB_CRED")
 	dbName = viper.GetString("DB_NAME")
 	usersCol = viper.GetString("USERS_COL")
+	devicesCol = viper.GetString("DEVICES_COL")
 
 	viper.SetDefault("RABBITMQ_CONN", "amqp://guest:guest@localhost:5672/")
 	rbmq = viper.GetString("RABBITMQ_CONN")
@@ -83,7 +86,7 @@ func main() {
 
 	chatCtrl := graph.NewChatsController(log, db)
 	msgCtrl := graph.NewMessagesController(log, db)
-	usersCtrl := graph.NewUsersController(log, db, usersCol)
+	usersCtrl := graph.NewUsersController(log, db, usersCol, devicesCol)
 
 	router := mux.NewRouter()
 	router.Use(func(h http.Handler) http.Handler {

@@ -65,6 +65,8 @@ const (
 	UsersAPIResolveProcedure = "/cc.UsersAPI/Resolve"
 	// UsersAPIGetMembersProcedure is the fully-qualified name of the UsersAPI's GetMembers RPC.
 	UsersAPIGetMembersProcedure = "/cc.UsersAPI/GetMembers"
+	// UsersAPIGetDevicesProcedure is the fully-qualified name of the UsersAPI's GetDevices RPC.
+	UsersAPIGetDevicesProcedure = "/cc.UsersAPI/GetDevices"
 	// StreamServiceStreamProcedure is the fully-qualified name of the StreamService's Stream RPC.
 	StreamServiceStreamProcedure = "/cc.StreamService/Stream"
 )
@@ -377,6 +379,7 @@ type UsersAPIClient interface {
 	// And returns all accessible Users for Requestor
 	Resolve(context.Context, *connect.Request[cc.Users]) (*connect.Response[cc.Users], error)
 	GetMembers(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Users], error)
+	GetDevices(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Devices], error)
 }
 
 // NewUsersAPIClient constructs a client for the cc.UsersAPI service. By default, it uses the
@@ -409,6 +412,11 @@ func NewUsersAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 			baseURL+UsersAPIGetMembersProcedure,
 			opts...,
 		),
+		getDevices: connect.NewClient[cc.Empty, cc.Devices](
+			httpClient,
+			baseURL+UsersAPIGetDevicesProcedure,
+			opts...,
+		),
 	}
 }
 
@@ -418,6 +426,7 @@ type usersAPIClient struct {
 	fetchDefaults *connect.Client[cc.Empty, cc.Defaults]
 	resolve       *connect.Client[cc.Users, cc.Users]
 	getMembers    *connect.Client[cc.Empty, cc.Users]
+	getDevices    *connect.Client[cc.Empty, cc.Devices]
 }
 
 // Me calls cc.UsersAPI.Me.
@@ -440,6 +449,11 @@ func (c *usersAPIClient) GetMembers(ctx context.Context, req *connect.Request[cc
 	return c.getMembers.CallUnary(ctx, req)
 }
 
+// GetDevices calls cc.UsersAPI.GetDevices.
+func (c *usersAPIClient) GetDevices(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.Devices], error) {
+	return c.getDevices.CallUnary(ctx, req)
+}
+
 // UsersAPIHandler is an implementation of the cc.UsersAPI service.
 type UsersAPIHandler interface {
 	Me(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.User], error)
@@ -448,6 +462,7 @@ type UsersAPIHandler interface {
 	// And returns all accessible Users for Requestor
 	Resolve(context.Context, *connect.Request[cc.Users]) (*connect.Response[cc.Users], error)
 	GetMembers(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Users], error)
+	GetDevices(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Devices], error)
 }
 
 // NewUsersAPIHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -476,6 +491,11 @@ func NewUsersAPIHandler(svc UsersAPIHandler, opts ...connect.HandlerOption) (str
 		svc.GetMembers,
 		opts...,
 	)
+	usersAPIGetDevicesHandler := connect.NewUnaryHandler(
+		UsersAPIGetDevicesProcedure,
+		svc.GetDevices,
+		opts...,
+	)
 	return "/cc.UsersAPI/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case UsersAPIMeProcedure:
@@ -486,6 +506,8 @@ func NewUsersAPIHandler(svc UsersAPIHandler, opts ...connect.HandlerOption) (str
 			usersAPIResolveHandler.ServeHTTP(w, r)
 		case UsersAPIGetMembersProcedure:
 			usersAPIGetMembersHandler.ServeHTTP(w, r)
+		case UsersAPIGetDevicesProcedure:
+			usersAPIGetDevicesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -509,6 +531,10 @@ func (UnimplementedUsersAPIHandler) Resolve(context.Context, *connect.Request[cc
 
 func (UnimplementedUsersAPIHandler) GetMembers(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Users], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.UsersAPI.GetMembers is not implemented"))
+}
+
+func (UnimplementedUsersAPIHandler) GetDevices(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Devices], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.UsersAPI.GetDevices is not implemented"))
 }
 
 // StreamServiceClient is a client for the cc.StreamService service.

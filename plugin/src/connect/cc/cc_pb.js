@@ -165,6 +165,18 @@ export const User = proto3.makeMessageType(
 );
 
 /**
+ * @generated from message cc.Device
+ */
+export const Device = proto3.makeMessageType(
+  "cc.Device",
+  () => [
+    { no: 1, name: "uuid", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ],
+);
+
+/**
  * @generated from message cc.Department
  */
 export const Department = proto3.makeMessageType(
@@ -219,6 +231,16 @@ export const Users = proto3.makeMessageType(
   "cc.Users",
   () => [
     { no: 1, name: "users", kind: "message", T: User, repeated: true },
+  ],
+);
+
+/**
+ * @generated from message cc.Devices
+ */
+export const Devices = proto3.makeMessageType(
+  "cc.Devices",
+  () => [
+    { no: 1, name: "devices", kind: "message", T: Device, repeated: true },
   ],
 );
 

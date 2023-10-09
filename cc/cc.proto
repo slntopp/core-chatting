@@ -107,6 +107,12 @@ message User {
   google.protobuf.Struct data = 3;
 }
 
+message Device {
+  string uuid = 1;
+  string title = 2;
+  bool enabled = 3;
+}
+
 message Department {
   string key = 1;
   string title = 2;
@@ -133,6 +139,8 @@ message Defaults {
 
 message Users { repeated User users = 1; }
 
+message Devices { repeated Device devices = 1; }
+
 service UsersAPI {
   rpc Me(Empty) returns (User);
   rpc FetchDefaults(Empty) returns (Defaults);
@@ -141,6 +149,8 @@ service UsersAPI {
   // And returns all accessible Users for Requestor
   rpc Resolve(Users) returns (Users);
   rpc GetMembers(Empty) returns (Users);
+
+  rpc GetDevices(Empty) returns (Devices);
 }
 
 enum EventType {

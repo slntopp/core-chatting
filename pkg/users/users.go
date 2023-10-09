@@ -105,3 +105,21 @@ func (s *UsersServer) GetMembers(ctx context.Context, req *connect.Request[cc.Em
 
 	return resp, nil
 }
+
+func (s *UsersServer) GetDevices(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.Devices], error) {
+	log := s.log.Named("Me")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	//requestor := ctx.Value(core.ChatAccount).(string)
+
+	devices, err := s.ctrl.GetDevices(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := connect.NewResponse[cc.Devices](&cc.Devices{
+		Devices: devices,
+	})
+
+	return resp, nil
+}

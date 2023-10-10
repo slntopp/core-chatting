@@ -100,7 +100,7 @@ func (c *UsersController) GetDevices(ctx context.Context) ([]*cc.Device, error) 
 	log.Debug("Request received")
 
 	cur, err := c.db.Query(ctx, getCollection, map[string]interface{}{
-		"@col": c.devicesCol,
+		"@col": c.devicesColname,
 	})
 	if err != nil {
 		return nil, err

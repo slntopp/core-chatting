@@ -96,7 +96,7 @@ func (c *UsersController) GetMembers(ctx context.Context) ([]*cc.User, error) {
 }
 
 func (c *UsersController) GetDevices(ctx context.Context) ([]*cc.Device, error) {
-	log := c.log.Named("GetMembers")
+	log := c.log.Named("Get devices")
 	log.Debug("Request received")
 
 	cur, err := c.db.Query(ctx, getCollection, map[string]interface{}{
@@ -106,20 +106,20 @@ func (c *UsersController) GetDevices(ctx context.Context) ([]*cc.Device, error) 
 		return nil, err
 	}
 
-	var members []*cc.Device
+	var devices []*cc.Device
 
 	for cur.HasMore() {
-		var member cc.Device
+		var device cc.Device
 
-		_, err := cur.ReadDocument(ctx, &member)
+		_, err := cur.ReadDocument(ctx, &device)
 		if err != nil {
 			return nil, err
 		}
 
-		members = append(members, &member)
+		devices = append(devices, &device)
 	}
 
-	log.Debug("Len", zap.Int("len", len(members)))
+	log.Debug("Len", zap.Int("len", len(devices)))
 
-	return members, nil
+	return devices, nil
 }

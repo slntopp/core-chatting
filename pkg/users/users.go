@@ -89,7 +89,7 @@ func (s *UsersServer) Me(ctx context.Context, req *connect.Request[cc.Empty]) (*
 }
 
 func (s *UsersServer) GetMembers(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.Users], error) {
-	log := s.log.Named("Me")
+	log := s.log.Named("Get members")
 	log.Debug("Request received", zap.Any("req", req.Msg))
 
 	//requestor := ctx.Value(core.ChatAccount).(string)
@@ -107,7 +107,7 @@ func (s *UsersServer) GetMembers(ctx context.Context, req *connect.Request[cc.Em
 }
 
 func (s *UsersServer) GetDevices(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.Devices], error) {
-	log := s.log.Named("Me")
+	log := s.log.Named("Get devices")
 	log.Debug("Request received", zap.Any("req", req.Msg))
 
 	//requestor := ctx.Value(core.ChatAccount).(string)

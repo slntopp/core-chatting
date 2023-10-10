@@ -61,6 +61,17 @@
         </template>
         Delete chat
       </n-tooltip>
+
+      <n-tooltip>
+        <template #trigger>
+          <n-button type="primary" size="small" ghost circle @click="isInfoVisible = !isInfoVisible">
+            <template #icon>
+              <info-icon />
+            </template>
+          </n-button>
+        </template>
+        Additional info
+      </n-tooltip>
     </n-space>
     <n-divider
       vertical
@@ -135,8 +146,20 @@
 
   <n-modal v-model:show="isEdit">
     <n-card title="Edit chat options" :bordered="false" size="huge" role="dialog" aria-modal="true"
-            style="width: 500px; height: 500px">
+            style="width: 500px">
       <chat-options @close="isEdit = false" is-edit :chat="chat"/>
+    </n-card>
+  </n-modal>
+
+  <n-modal v-model:show="isInfoVisible">
+    <n-card
+      title="Info"
+      role="dialog"
+      aria-modal="true"
+      style="width: 80%"
+      :bordered="false"
+    >
+      <chat-meta :chat="chat" />
     </n-card>
   </n-modal>
 
@@ -172,11 +195,13 @@ import useDefaults from "../../../hooks/useDefaults.ts";
 import MemberSelect from "../../users/member_select.vue";
 import {addToClipboard, getRelativeTime} from "../../../functions.ts";
 import ChatStatus from "../chat_status.vue";
+import ChatMeta from "../chat_meta.vue";
 
 const EditIcon = defineAsyncComponent(() => import('@vicons/ionicons5/PencilSharp'));
 const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
 const RefreshIcon = defineAsyncComponent(() => import('@vicons/ionicons5/RefreshOutline'));
 const DeleteIcon = defineAsyncComponent(() => import('@vicons/ionicons5/TrashBinOutline'));
+const InfoIcon = defineAsyncComponent(() => import('@vicons/ionicons5/InformationOutline'));
 
 interface ChatHeaderProps {
   chat: Chat
@@ -199,11 +224,12 @@ const router = useRouter()
 const notification = useNotification()
 const {fetch_defaults, isDefaultLoading, users, admins, metrics} = useDefaults()
 
-const isEdit = ref<boolean>(false)
-const isAddDialog = ref<boolean>(false)
+const isEdit = ref(false)
+const isAddDialog = ref(false)
 const chatWithNewMembers = ref<Chat>()
 const availableMembersOptions = ref<SelectOption[]>([])
-const isAddSaveLoading = ref<boolean>(false)
+const isAddSaveLoading = ref(false)
+const isInfoVisible = ref(false)
 
 const members = computed(() => {
   const uuids = new Set([...chat!.value.users, ...chat.value.admins])

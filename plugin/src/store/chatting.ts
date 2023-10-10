@@ -7,7 +7,7 @@ import { createGrpcWebTransport } from "@connectrpc/connect-web";
 import { useAppStore } from "./app";
 
 import {
-    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType, ChatMeta, Kind
+    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType, ChatMeta, Kind, Devices, Device
 } from "../connect/cc/cc_pb"
 import {
     ChatsAPI, MessagesAPI, StreamService, UsersAPI
@@ -45,6 +45,7 @@ export const useCcStore = defineStore('cc', () => {
 
     const chats = ref<Map<string, Chat>>(new Map())
     const users = ref<Map<string, User>>(new Map())
+    const devices = ref<Map<string, Device>>(new Map())
 
     const updating = ref(false)
     const current_message = ref<Message>(new Message({
@@ -96,6 +97,16 @@ export const useCcStore = defineStore('cc', () => {
 
     function fetch_defaults(): Promise<Defaults> {
         return users_c.fetchDefaults(new Empty())
+    }
+
+    async function fetch_devices(): Promise<Devices> {
+        const result = await users_c.getDevices(new Empty())
+
+        for (const device of result.devices) {
+          devices.value.set(device.uuid, device)
+        }
+
+        return result
     }
 
     async function resolve(req_users: string[] = []): Promise<Users> {
@@ -278,7 +289,7 @@ export const useCcStore = defineStore('cc', () => {
         messages, chat_messages, get_messages,
         send_message, update_message, delete_message,
 
-        fetch_defaults, resolve
+        fetch_defaults, fetch_devices, resolve, devices
     }
 })
 

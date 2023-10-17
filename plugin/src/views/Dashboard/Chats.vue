@@ -145,7 +145,7 @@ import ChatItem from "../../components/chats/chat_item.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
 import useDefaults from '../../hooks/useDefaults.ts';
 
-const emits = defineEmits(['hover', 'hoverEnd'])
+defineEmits(['hover', 'hoverEnd'])
 
 const ChatbubbleEllipsesOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ChatbubbleEllipsesOutline'));
 const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForward'));

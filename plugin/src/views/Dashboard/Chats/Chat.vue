@@ -20,7 +20,7 @@
           @approve="a => handle_approve(message, a)"
           @convert="kind => { store.updating = true; store.current_message = message; store.handle_send(kind, !messages['underReview']) }"
           @delete="handle_delete(message)"
-          @edit="() => { store.updating = true; store.current_message = message }"
+          @edit="handle_edit(message)"
         />
       </n-list-item>
     </n-scrollbar>
@@ -245,10 +245,22 @@ const textareaColors = computed(() => {
   return {
     '--n-caret-color': color,
     '--n-color-focus': `${color}1a`,
+    '--n-border': `1px solid ${color}`,
     '--n-border-hover': `1px solid ${color}`,
     '--n-border-focus': `1px solid ${color}`
   }
 })
+
+function handle_edit(message: Message) {
+  store.updating = true
+  store.current_message = message
+
+  if (message.underReview) {
+    sendMode.value = 'approve'
+  } else if (message.kind === Kind.ADMIN_ONLY) {
+    sendMode.value = 'admin'
+  }
+}
 
 function handle_send() {
   switch (sendMode.value) {

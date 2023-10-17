@@ -12,6 +12,14 @@
           <div>Last update: {{ new Date(Number(lastUpdate)).toLocaleDateString() }}</div>
         </div>
 
+        <n-icon
+          size="18"
+          @mouseenter="(e) => emits('hover', e.clientX, e.clientY, chat.uuid)"
+          @mouseleave="emits('hoverEnd')"
+        >
+          <mail-icon />
+        </n-icon>
+
         <div class="chat__right">
           <n-tooltip>
             <template #trigger>
@@ -35,15 +43,17 @@
 </template>
 
 <script setup lang="ts">
-import {computed, toRefs} from "vue";
+import {computed, defineAsyncComponent, toRefs} from "vue";
 import {useRouter} from "vue-router";
-import {NBadge, NListItem, NSpace, NText, NTooltip, useNotification} from "naive-ui";
+import {NBadge, NIcon, NListItem, NSpace, NText, NTooltip, useNotification} from "naive-ui";
 import {Chat} from "../../connect/cc/cc_pb";
 import {useCcStore} from "../../store/chatting.ts";
 import {addToClipboard} from "../../functions.ts";
 import UserAvatar from "../ui/user_avatar.vue";
 import ChatStatus from "./chat_status.vue";
 import {useAppStore} from "../../store/app.ts";
+
+const MailIcon = defineAsyncComponent(() => import('@vicons/ionicons5/MailOpenOutline'));
 
 interface ChatItemProps {
   chat: Chat
@@ -52,6 +62,7 @@ interface ChatItemProps {
 }
 
 const props = defineProps<ChatItemProps>()
+const emits = defineEmits(['hover', 'hoverEnd'])
 const { chat, uuid } = toRefs(props)
 
 const store = useCcStore()
@@ -86,7 +97,7 @@ const chatTopic = computed(() => {
 const isUnreadMessages = computed(() => chat.value.meta && chat.value.meta.unread > 0)
 
 const previewColumns = computed(() =>
-  (appStore.displayMode === 'full') ? '1fr auto auto' : '1fr auto'
+  (appStore.displayMode === 'full') ? '1fr auto auto auto' : '1fr auto auto'
 )
 
 const subDecoration = computed(() =>
@@ -94,7 +105,7 @@ const subDecoration = computed(() =>
 )
 
 const chatRightColumn = computed(() =>
-  (appStore.displayMode === 'full') ? 3 : 2
+  (appStore.displayMode === 'full') ? 4 : 3
 )
 
 const lastUpdate = computed(() =>

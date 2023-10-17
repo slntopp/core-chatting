@@ -2,7 +2,7 @@
   <div class="user__item">
     <div class="user__data">
       <user-avatar class="avatar" round :avatar="user.title"/>
-      <n-text>{{ props.user.title }}</n-text>
+      <n-text>{{ user.title }}</n-text>
     </div>
     <div class="actions" v-if="actions">
       <n-button text @click="emit('delete')">
@@ -25,7 +25,7 @@ interface UserItemProps {
   actions?:boolean
 }
 
-const props = defineProps<UserItemProps>()
+defineProps<UserItemProps>()
 const emit = defineEmits(['delete'])
 </script>
 

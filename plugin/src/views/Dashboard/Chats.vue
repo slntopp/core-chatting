@@ -106,14 +106,13 @@
         <n-list hoverable clickable style="margin-bottom: 25px">
           <chat-item
             v-for="chat in chats"
-            :id="chat.uuid"
             :hide-message="!isChatPanelOpen"
             :uuid="chat.uuid"
             :chat="chat"
             :class="{ active: chat.uuid === router.currentRoute.value.params.uuid }"
             @click="changeMode('none')"
-            @mousemove="onMouseMove"
-            @mouseleave="isFirstMessageVisible = false"
+            @hover="onMouseMove"
+            @hoverEnd="isFirstMessageVisible = false"
           />
         </n-list>
       </n-scrollbar>
@@ -145,6 +144,8 @@ import {Chat, Status} from '../../connect/cc/cc_pb';
 import ChatItem from "../../components/chats/chat_item.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
 import useDefaults from '../../hooks/useDefaults.ts';
+
+const emits = defineEmits(['hover', 'hoverEnd'])
 
 const ChatbubbleEllipsesOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ChatbubbleEllipsesOutline'));
 const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForward'));
@@ -342,9 +343,8 @@ const isFirstMessageVisible = ref(false)
 const x = ref(0)
 const y = ref(0)
 
-function onMouseMove({ clientX, clientY, target }: MouseEvent) {
-  const chatElement = (target as HTMLElement).closest('.n-list-item.chat')
-  const chat = chats.value.find(({ uuid }) => uuid === chatElement?.id)
+function onMouseMove(clientX: number, clientY: number, chatId: string) {
+  const chat = chats.value.find(({ uuid }) => uuid === chatId)
 
   x.value = clientX
   y.value = clientY - 10

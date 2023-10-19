@@ -22,6 +22,7 @@ import {
 const theme = ref(darkTheme)
 
 onMounted(() => {
+  window.top?.postMessage({ type: 'get-theme' }, '*')
   window.addEventListener('message', ({ data, origin }) => {
     if (origin.includes(location.host)) return
     if (data.theme === 'light') theme.value = lightTheme

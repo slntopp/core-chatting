@@ -78,6 +78,7 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 		return nil, err
 	}
 
+	go pubsub.HandleNotifyTicket(ctx, log, s.ps, chat)
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_CREATED)
 
 	resp := connect.NewResponse[cc.Chat](chat)

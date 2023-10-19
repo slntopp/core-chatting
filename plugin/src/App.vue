@@ -1,5 +1,5 @@
 <template>
-  <n-config-provider :theme="darkTheme" >
+  <n-config-provider :theme="theme" >
     <n-loading-bar-provider>
       <n-notification-provider>
 
@@ -13,10 +13,19 @@
 </template>
 
 <script setup lang="ts">
-
+import { onMounted, ref } from "vue";
 import {
   NConfigProvider, NGlobalStyle, NLoadingBarProvider, NNotificationProvider,
-  darkTheme
+  darkTheme, lightTheme
 } from "naive-ui"
 
+const theme = ref(darkTheme)
+
+onMounted(() => {
+  window.addEventListener('message', ({ data, origin }) => {
+    if (origin.includes(location.host)) return
+    if (data.theme === 'light') theme.value = lightTheme
+    else theme.value = darkTheme
+  })
+})
 </script>

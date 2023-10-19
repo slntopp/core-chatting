@@ -356,7 +356,7 @@ function onMouseMove({ clientX, clientY, target }: MouseEvent) {
 <style lang="scss">
 #separator {
   cursor: col-resize;
-  background-color: #18181C;
+  background-color: var(--n-color);
   background-repeat: no-repeat;
   background-position: center;
   width: 10px;
@@ -372,7 +372,7 @@ function onMouseMove({ clientX, clientY, target }: MouseEvent) {
   transition: .4s;
 
   .chat__actions {
-    padding: 10px 0px 10px 10px;
+    padding: 10px;
 
     &.hide {
       flex-flow: column-reverse !important;
@@ -382,9 +382,7 @@ function onMouseMove({ clientX, clientY, target }: MouseEvent) {
   }
 
   .search {
-    margin-top: 5px;
-    margin-bottom: 10px;
-    margin-left: 9px;
+    margin: 5px 9px 10px;
 
     div:first-child {
       width: 100%;

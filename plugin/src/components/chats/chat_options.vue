@@ -18,7 +18,7 @@
           <n-input v-model:value="chat.topic" clearable placeholder="What are we chatting about?"/>
         </n-form-item>
 
-        <n-form-item label="Members" label-align="left" label-width="100">
+        <n-form-item label="Responsible" label-align="left" label-width="100">
           <member-select v-model:value="chat.users" :options="membersWithoutDuplicates"/>
         </n-form-item>
 
@@ -26,7 +26,7 @@
           <n-select v-model:value="chat.admins" multiple :options="adminsWithoutDuplicates" filterable/>
         </n-form-item>
 
-        <n-form-item label="Gateways" label-align="left" label-width="100">
+        <n-form-item label="Gateways" label-align="left" label-width="100" v-if="gateways_options.length > 0">
           <n-select v-model:value="chat.gateways" multiple :options="gateways_options" filterable/>
         </n-form-item>
 
@@ -39,6 +39,15 @@
             :options="devices"
             :value="getMetaValue('devices')"
             @update:value="(value) => setMetaValue(value, 'devices')"
+          />
+        </n-form-item>
+
+        <n-form-item label="Estimate" label-align="left" label-width="100">
+          <n-time-picker
+            clearable
+            style="width: 100%"
+            :value="(getMetaValue('estimate') as number)"
+            @update:value="(value) => setMetaValue({ type: 'date', value }, 'estimate')"
           />
         </n-form-item>
 
@@ -103,6 +112,7 @@ import {
   NSpace,
   NSpin,
   NText,
+  NTimePicker,
   SelectOption,
 } from 'naive-ui';
 

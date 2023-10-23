@@ -137,7 +137,8 @@ FILTER @requestor in c.admins || @requestor in c.users
 		last_message: last_message,
 		first_message: first_message,
 		data: c.meta.data
-	  }
+	  },
+      uuid: c._key,
 	})
 `
 

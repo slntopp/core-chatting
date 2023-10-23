@@ -249,14 +249,19 @@ function getTimeValue(key: string) {
   if (!getMetaValue(key)) return Date.now()
   const date = new Date(new Date().toISOString().split('T')[0])
 
-  return date.getTime() + (date.getTimezoneOffset() * 60 * 1000) + getMetaValue(key) * 1000
+  return date.getTime() + (date.getTimezoneOffset() * 60 * 1000) + (getMetaValue(key) as number) * 1000
 }
 
-function setTimeValue(value: JsonObject, key: string) {
-  const [hours, minutes, seconds] = value.value.split(':')
+interface TimeValueType {
+  type: string
+  value: string | number | null
+}
 
-  value.value = hours * 3600 + minutes * 60 + +seconds
-  setMetaValue(value, key)
+function setTimeValue(value: TimeValueType, key: string) {
+  const [hours, minutes, seconds] = `${value.value}`.split(':')
+
+  value.value = +hours * 3600 + +minutes * 60 + +seconds
+  setMetaValue(value as unknown as JsonValue, key)
 }
 
 function getDateValue(key: string) {

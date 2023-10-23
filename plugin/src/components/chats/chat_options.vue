@@ -47,7 +47,7 @@
             clearable
             style="width: 100%"
             :value="(getMetaValue('estimate') as number)"
-            @update:value="(value) => setMetaValue({ type: 'date', value }, 'estimate')"
+            @update:value="(value) => setMetaValue({ type: 'date', value: (value ?? 0) / 1000 }, 'estimate')"
           />
         </n-form-item>
 
@@ -57,7 +57,7 @@
             type="datetime"
             style="width: 100%"
             :value="getMetaValue('deadline')"
-            @update:value="(value) => setMetaValue({ type: 'date', value }, 'deadline')"
+            @update:value="(value) => setMetaValue({ type: 'date', value: value / 1000 }, 'deadline')"
           />
         </n-form-item>
 
@@ -67,7 +67,10 @@
             type="datetimerange"
             style="width: 100%"
             :value="getMetaValue('plannedDate')"
-            @update:value="(value) => setMetaValue(value, 'plannedDate')"
+            @update:value="(value) => {
+              setMetaValue(value[0] / 1000, 'plannedDateStart');
+              setMetaValue(value[1] / 1000, 'plannedDateEnd')
+            }"
           />
         </n-form-item>
 

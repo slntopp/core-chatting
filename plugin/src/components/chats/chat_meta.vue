@@ -103,7 +103,7 @@ const metaOptions = computed(() => {
     } else if (isDate) {
       option.type = 'dateRange'
       option.value = (option.value as []).map(
-        (ts: number) => new Date(ts)
+        (ts: number) => new Date(ts * 1000)
       )
     } else if ((option.value as JsonObject).type === 'date') {
       option.value = (option.value as JsonObject).value

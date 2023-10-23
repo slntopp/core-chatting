@@ -8,8 +8,8 @@
         </n-text>
 
         <div class="time" v-show="appStore.displayMode === 'full'">
-          <div>Created: {{ new Date(Number(chat.created)).toLocaleDateString() }}</div>
-          <div>Last update: {{ new Date(Number(lastUpdate)).toLocaleDateString() }}</div>
+          <div>Created: {{ new Date(Number(chat.created) * 1000).toLocaleDateString() }}</div>
+          <div v-if="lastUpdate">Last update: {{ new Date(lastUpdate).toLocaleDateString() }}</div>
         </div>
 
         <div class="chat__right">

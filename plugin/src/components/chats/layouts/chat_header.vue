@@ -111,14 +111,14 @@
         <n-tooltip>
           <template #trigger>
             <code style="text-decoration: underline">
-              {{ getRelativeTime(Number(chat.created), now) }}
+              {{ getRelativeTime(Number(chat.created) * 1000, now) }}
             </code>
           </template>
-          {{ new Date(Number(chat.created)).toLocaleString() }}
+          {{ new Date(Number(chat.created) * 1000).toLocaleString() }}
         </n-tooltip>
       </n-text>
 
-      <n-text>
+      <n-text v-if="lastUpdate">
         Last update:
         <n-tooltip>
           <template #trigger>

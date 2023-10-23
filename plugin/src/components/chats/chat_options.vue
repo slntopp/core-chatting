@@ -45,9 +45,10 @@
         <n-form-item label="Estimate" label-align="left" label-width="100">
           <n-time-picker
             clearable
+            value-format="H:m:s"
             style="width: 100%"
-            :value="(getMetaValue('estimate') as number)"
-            @update:value="(value) => setMetaValue({ type: 'date', value: (value ?? 0) / 1000 }, 'estimate')"
+            :value="(getTimeValue('estimate') as number)"
+            @update:formatted-value="(value) => setTimeValue({ type: 'time', value }, 'estimate')"
           />
         </n-form-item>
 
@@ -56,7 +57,7 @@
             clearable
             type="datetime"
             style="width: 100%"
-            :value="getMetaValue('deadline')"
+            :value="getDateValue('deadline')"
             @update:value="(value) => setMetaValue({ type: 'date', value: value / 1000 }, 'deadline')"
           />
         </n-form-item>
@@ -66,10 +67,10 @@
             clearable
             type="datetimerange"
             style="width: 100%"
-            :value="getMetaValue('plannedDate')"
+            :value="([getDateValue('plannedDateStart'), getDateValue('plannedDateEnd')] as TimeValue)"
             @update:value="(value) => {
-              setMetaValue(value[0] / 1000, 'plannedDateStart');
-              setMetaValue(value[1] / 1000, 'plannedDateEnd')
+              setMetaValue({ type: 'date', value: value[0] / 1000 }, 'plannedDateStart');
+              setMetaValue({ type: 'date', value: value[1] / 1000 }, 'plannedDateEnd');
             }"
           />
         </n-form-item>
@@ -242,6 +243,25 @@ function submit() {
       isEditLoading.value = false
     }
   })
+}
+
+function getTimeValue(key: string) {
+  if (!getMetaValue(key)) return Date.now()
+  const date = new Date(new Date().toISOString().split('T')[0])
+
+  return date.getTime() + (date.getTimezoneOffset() * 60 * 1000) + getMetaValue(key) * 1000
+}
+
+function setTimeValue(value: JsonObject, key: string) {
+  const [hours, minutes, seconds] = value.value.split(':')
+
+  value.value = hours * 3600 + minutes * 60 + +seconds
+  setMetaValue(value, key)
+}
+
+function getDateValue(key: string) {
+  if (!getMetaValue(key)) return Date.now()
+  return (getMetaValue(key) as number) * 1000
 }
 
 function getMetaValue(key: string) {

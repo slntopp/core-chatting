@@ -249,7 +249,7 @@ function getTimeValue(key: string) {
   if (!getMetaValue(key)) return Date.now()
   const date = new Date(new Date().toISOString().split('T')[0])
 
-  return date.getTime() + (date.getTimezoneOffset() * 60 * 1000) + (getMetaValue(key) as number) * 1000
+  return date.getTime() + (date.getTimezoneOffset() * 60 * 1000) + ((getMetaValue(key) as unknown as JsonObject).value as number) * 1000
 }
 
 interface TimeValueType {

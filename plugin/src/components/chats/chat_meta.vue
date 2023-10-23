@@ -24,6 +24,11 @@
         </n-tag>
       </n-text>
 
+      <n-text v-else-if="option.type === 'time'">
+        {{ option.title }}:
+        <n-tag round>{{ new Date(option.value).toLocaleTimeString() }}</n-tag>
+      </n-text>
+
       <n-text v-else>
         {{ option.title }}:
         <n-tag round size="small">{{ option.value }}</n-tag>
@@ -106,8 +111,13 @@ const metaOptions = computed(() => {
         (ts: number) => new Date(ts * 1000)
       )
     } else if ((option.value as JsonObject).type === 'date') {
-      option.value = (option.value as JsonObject).value
+      option.value = ((option.value as JsonObject).value) as number * 1000
       option.type = 'date'
+    } else if ((option.value as JsonObject).type === 'time') {
+      const date = new Date(new Date().toISOString().split('T')[0])
+      
+      option.value = date.getTime() + (date.getTimezoneOffset() * 60 * 1000) + option.value.value * 1000
+      option.type = 'time'
     }
 
     result.push(option)

@@ -38,7 +38,7 @@ func (c *ChatsController) Create(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 	log := c.log.Named("Create")
 	log.Debug("Req received")
 
-	chat.Created = time.Now().UnixMilli()
+	chat.Created = time.Now().Unix()
 	chat.Status = cc.Status_NEW
 
 	document, err := c.col.CreateDocument(ctx, chat)

@@ -1,5 +1,5 @@
 <template>
-  <template v-if="!isDefaultLoading">
+  <div class="chat-options" v-if="!isDefaultLoading">
     <n-space v-if="!isEdit" justify="start" align="center">
       <n-button round quaternary @click="cancel">
         <template #icon>
@@ -12,7 +12,7 @@
       </n-text>
     </n-space>
 
-    <n-space vertical justify="start" style="padding-left: 16px; padding-top: 10%;max-width: 800px;margin: auto">
+    <n-space vertical justify="start" style="max-width: 800px; margin: auto; padding-left: 16px">
       <n-form :model="chat" ref="form" :rules="rules" label-placement="left">
         <n-form-item label="Topic" label-align="left" label-width="75">
           <n-input v-model:value="chat.topic" clearable placeholder="What are we chatting about?"/>
@@ -53,7 +53,7 @@
         </n-space>
       </n-form>
     </n-space>
-  </template>
+  </div>
   <n-spin style="width: 100%;height: 100%; margin: auto" size="large" v-else></n-spin>
 </template>
 
@@ -83,6 +83,7 @@ import { ValueAtom } from 'naive-ui/es/select/src/interface';
 import { Value } from '@bufbuild/protobuf';
 
 interface ChatOptionsProps {
+  minHeight?: string
   isEdit?: boolean
   chat?: Chat
 }
@@ -206,4 +207,10 @@ function cancel() {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.chat-options {
+  display: flex;
+  flex-direction: column;
+  min-height: v-bind('minHeight');
+}
+</style>

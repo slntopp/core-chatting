@@ -255,16 +255,18 @@ const refresh = () => {
 const deleteChat = async () => {
   if (chat) {
     await store.delete_chat(chat.value! as Chat)
+    appStore.displayMode = 'half'
     router.push({name: 'Empty Chat'})
   }
 }
 
 const deleteMember = (uuid: string) => {
-  const users = chat.value.users.filter((u) => u !== uuid)
-  store.update_chat({...chat.value, users} as Chat)
+  const users = chat.value.users.filter((userId) => userId !== uuid)
+
+  store.update_chat({ ...chat.value, users } as Chat)
 }
 
-const fetchAvailableUsers = async () => {
+const fetchAvailableUsers = () => {
   availableMembersOptions.value = users.value.map(user => {
     return {
       label: user.title,
@@ -275,10 +277,9 @@ const fetchAvailableUsers = async () => {
 }
 
 const startAddMembers = () => {
-  if (!users.value.length) {
-    fetchAvailableUsers()
-  }
-  chatWithNewMembers.value = {...chat.value} as Chat
+  fetchAvailableUsers()
+
+  chatWithNewMembers.value = { ...chat.value } as Chat
   isAddDialog.value = true
 }
 

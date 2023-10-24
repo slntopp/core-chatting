@@ -1,5 +1,5 @@
 <template>
-  <template v-if="!isDefaultLoading">
+  <div style="display: flex; flex-direction: column; min-height: 100vh" v-if="!isDefaultLoading">
     <n-space v-if="!isEdit" justify="start" align="center">
       <n-button round quaternary @click="cancel">
         <template #icon>
@@ -12,7 +12,7 @@
       </n-text>
     </n-space>
 
-    <n-space vertical justify="start" style="padding-left: 16px; padding-top: 10%;max-width: 800px;margin: auto">
+    <n-space vertical justify="start" style="max-width: 800px; margin: auto; padding-left: 16px">
       <n-form :model="chat" ref="form" :rules="rules" label-placement="left">
         <n-form-item label="Topic" label-align="left" label-width="100">
           <n-input v-model:value="chat.topic" clearable placeholder="What are we chatting about?"/>
@@ -67,7 +67,7 @@
             clearable
             type="datetimerange"
             style="width: 100%"
-            :value="([getDateValue('plannedDateStart'), getDateValue('plannedDateEnd')] as TimeValue)"
+            :value="(getDateValue('plannedDateStart')) ? ([getDateValue('plannedDateStart'), getDateValue('plannedDateEnd')] as TimeValue) : undefined"
             @update:value="(value) => {
               setMetaValue({ type: 'date', value: value[0] / 1000 }, 'plannedDateStart');
               setMetaValue({ type: 'date', value: value[1] / 1000 }, 'plannedDateEnd');
@@ -98,7 +98,7 @@
         </n-space>
       </n-form>
     </n-space>
-  </template>
+  </div>
   <n-spin style="width: 100%;height: 100%; margin: auto" size="large" v-else></n-spin>
 </template>
 
@@ -246,7 +246,7 @@ function submit() {
 }
 
 function getTimeValue(key: string) {
-  if (!getMetaValue(key)) return Date.now()
+  if (!getMetaValue(key)) return
   const date = new Date(new Date().toISOString().split('T')[0])
 
   return date.getTime() + (date.getTimezoneOffset() * 60 * 1000) + ((getMetaValue(key) as unknown as JsonObject).value as number) * 1000
@@ -265,7 +265,7 @@ function setTimeValue(value: TimeValueType, key: string) {
 }
 
 function getDateValue(key: string) {
-  if (!getMetaValue(key)) return Date.now()
+  if (!getMetaValue(key)) return
   return (getMetaValue(key) as number) * 1000
 }
 

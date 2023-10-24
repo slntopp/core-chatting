@@ -101,14 +101,15 @@ func (s *ChatsServer) Update(ctx context.Context, req *connect.Request[cc.Chat])
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
 	}
 
-	chat, err = s.ctrl.Update(ctx, req.Msg)
+	updated, err := s.ctrl.Update(ctx, req.Msg)
 	if err != nil {
 		return nil, err
 	}
 
-	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_UPDATED)
+	go pubsub.HandleNotifyChat(ctx, log, s.ps, updated, cc.EventType_CHAT_UPDATED)
+	go pubsub.HandleNotifyTicket(ctx, log, s.ps, chat)
 
-	resp := connect.NewResponse[cc.Chat](chat)
+	resp := connect.NewResponse[cc.Chat](updated)
 
 	return resp, nil
 }

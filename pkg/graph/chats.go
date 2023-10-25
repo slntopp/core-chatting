@@ -65,7 +65,7 @@ UPDATE @key WITH {
     meta: @meta,
 	gateways : @gateways,
     department: @department,
-    status: status,
+    status: @status,
 } IN @@chats
 `
 

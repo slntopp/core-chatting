@@ -1,5 +1,5 @@
 <template>
-  <div style="display: flex; flex-direction: column; min-height: 100vh" v-if="!isDefaultLoading">
+  <div class="chat-options" v-if="!isDefaultLoading">
     <n-space v-if="!isEdit" justify="start" align="center">
       <n-button round quaternary @click="cancel">
         <template #icon>
@@ -67,11 +67,8 @@
             clearable
             type="datetimerange"
             style="width: 100%"
-            :value="(getDateValue('plannedDateStart')) ? ([getDateValue('plannedDateStart'), getDateValue('plannedDateEnd')] as TimeValue) : undefined"
-            @update:value="(value) => {
-              setMetaValue({ type: 'date', value: value[0] / 1000 }, 'plannedDateStart');
-              setMetaValue({ type: 'date', value: value[1] / 1000 }, 'plannedDateEnd');
-            }"
+            :value="getPlannedDate"
+            @update:value="setPlannedDate"
           />
         </n-form-item>
 
@@ -130,6 +127,7 @@ import { Value as TimeValue } from 'naive-ui/es/date-picker/src/interface';
 import { JsonObject, JsonValue, Value } from '@bufbuild/protobuf';
 
 interface ChatOptionsProps {
+  minHeight?: string
   isEdit?: boolean
   chat?: Chat
 }
@@ -245,16 +243,34 @@ function submit() {
   })
 }
 
-function getTimeValue(key: string) {
-  if (!getMetaValue(key)) return
-  const date = new Date(new Date().toISOString().split('T')[0])
-
-  return date.getTime() + (date.getTimezoneOffset() * 60 * 1000) + ((getMetaValue(key) as unknown as JsonObject).value as number) * 1000
-}
-
 interface TimeValueType {
   type: string
   value: string | number | null
+}
+
+function getPlannedDate() {
+  if (!getDateValue('plannedDateStart')) return
+  return [
+    getDateValue('plannedDateStart'), getDateValue('plannedDateEnd')
+  ] as TimeValue
+}
+
+function setPlannedDate(value: TimeValue) {
+  if (!Array.isArray(value)) return
+  setMetaValue({ type: 'date', value: value[0] / 1000 }, 'plannedDateStart');
+
+  if (value[0] !== value[1]) {
+    setMetaValue({ type: 'date', value: value[1] / 1000 }, 'plannedDateEnd');
+  }
+}
+
+function getTimeValue(key: string) {
+  if (!getMetaValue(key)) return
+  const date = new Date(new Date().toISOString().split('T')[0])
+  const offset = date.getTimezoneOffset() * 60 * 1000
+  const value = (getMetaValue(key) as unknown as JsonObject).value as number
+
+  return date.getTime() + offset + value * 1000
 }
 
 function setTimeValue(value: TimeValueType, key: string) {
@@ -290,4 +306,10 @@ function cancel() {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.chat-options {
+  display: flex;
+  flex-direction: column;
+  min-height: v-bind('minHeight');
+}
+</style>

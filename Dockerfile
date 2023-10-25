@@ -1,4 +1,4 @@
-FROM node:latest AS app-builder
+FROM node:18 AS app-builder
 
 ADD plugin /app
 WORKDIR /app

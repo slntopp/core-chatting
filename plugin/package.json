@@ -29,7 +29,7 @@
     "@types/dompurify": "^3.0.2",
     "@types/marked": "^5.0.1",
     "@vitejs/plugin-vue": "^4.3.4",
-    "sass": "^1.66.1",
+    "sass": "^1.69.4",
     "typescript": "^5.2.2",
     "vite": "^4.4.9",
     "vue-tsc": "^1.8.8"

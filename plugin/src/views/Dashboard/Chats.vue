@@ -353,7 +353,7 @@ function onMouseMove(clientX: number, clientY: number, chatId: string) {
 }
 </script>
 
-<style lang="scss">
+<style>
 #separator {
   cursor: col-resize;
   background-color: #18181C;
@@ -370,46 +370,46 @@ function onMouseMove(clientX: number, clientY: number, chatId: string) {
   min-width: 450px;
   width: 450px;
   transition: .4s;
+}
 
-  .chat__actions {
-    padding: 10px 0px 10px 10px;
+.chats__panel.closed {
+  min-width: 70px !important;
+  width: 70px !important;
+  background-color: #18181C;
+}
 
-    &.hide {
-      flex-flow: column-reverse !important;
-      margin: 0px;
-      padding: 10px;
-    }
-  }
+.chats__panel.closed .n-layout-sider-scroll-container {
+  min-width: 70px !important;
+  width: 70px !important;
+}
 
-  .search {
-    margin-top: 5px;
-    margin-bottom: 10px;
-    margin-left: 9px;
+.chats__panel .search {
+  margin-top: 5px;
+  margin-bottom: 10px;
+  margin-left: 9px;
+}
 
-    div:first-child {
-      width: 100%;
-    }
-  }
+.chats__panel .search div:first-child {
+  width: 100%;
+}
 
-  &.closed {
-    min-width: 70px !important;
-    width: 70px !important;
-    background-color: #18181C;
+.chats__panel aside {
+  width: 100% !important;
+  max-width: 100% !important;
+}
 
-    .n-layout-sider-scroll-container {
-      min-width: 70px !important;
-      width: 70px !important;
-    }
-  }
+.chats__panel .n-list-item.active {
+  background: var(--n-color-hover-modal);
+}
 
-  aside {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
+.chats__panel .chat__actions {
+  padding: 10px 0px 10px 10px;
+}
 
-  .n-list-item.active {
-    background: var(--n-color-hover-modal);
-  }
+.chat__actions.hide {
+  flex-flow: column-reverse !important;
+  margin: 0px;
+  padding: 10px;
 }
 
 .chat__item {

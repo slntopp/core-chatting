@@ -57,11 +57,34 @@ func (c *ChatsController) Create(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 	return chat, nil
 }
 
+const updateChatQuery = `
+UPDATE @key WITH {
+    users: @users,
+    admins: @admins,
+    topic: @topic,
+    meta: @meta,
+	gateways : @gateways,
+    department: @department,
+    status: status,
+} IN @@chats
+`
+
 func (c *ChatsController) Update(ctx context.Context, chat *cc.Chat) (*cc.Chat, error) {
 	log := c.log.Named("Update")
 	log.Debug("Req received")
 
-	_, err := c.col.UpdateDocument(ctx, chat.GetUuid(), chat)
+	params := map[string]interface{}{
+		"users":      chat.GetUsers(),
+		"admins":     chat.GetAdmins(),
+		"topic":      chat.GetTopic(),
+		"meta":       chat.GetMeta(),
+		"gateways":   chat.GetGateways(),
+		"department": chat.GetDepartment(),
+		"status":     chat.GetStatus(),
+		"@chats":     CHATS_COLLECTION,
+	}
+
+	_, err := c.db.Query(ctx, updateChatQuery, params)
 
 	if err != nil {
 		return nil, err

@@ -84,9 +84,9 @@ func HandleNotifyChat(ctx context.Context, log *zap.Logger, ps *PubSub, chat *cc
 	go ps.PubGateway(ctx, event, chat.GetGateways())
 }
 
-func HandleNotifyTicket(ctx context.Context, log *zap.Logger, ps *PubSub, chat *cc.Chat) {
+func HandleNotifyTicket(ctx context.Context, log *zap.Logger, ps *PubSub, chat *cc.Chat, eventType cc.EventType) {
 	var event = &cc.Event{
-		Type: cc.EventType_CHAT_CREATED,
+		Type: eventType,
 		Item: &cc.Event_Chat{Chat: chat},
 	}
 

@@ -74,6 +74,7 @@ func (c *ChatsController) Update(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 	log.Debug("Req received")
 
 	params := map[string]interface{}{
+		"key":        chat.GetUuid(),
 		"users":      chat.GetUsers(),
 		"admins":     chat.GetAdmins(),
 		"topic":      chat.GetTopic(),

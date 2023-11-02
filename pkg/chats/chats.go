@@ -106,8 +106,11 @@ func (s *ChatsServer) Update(ctx context.Context, req *connect.Request[cc.Chat])
 		return nil, err
 	}
 
+	if chat.GetStatus() == cc.Status_NEW && updated.GetStatus() == cc.Status_OPEN {
+		go pubsub.HandleNotifyTicket(ctx, log, s.ps, updated, cc.EventType_CHAT_UPDATED)
+	}
+
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, updated, cc.EventType_CHAT_UPDATED)
-	go pubsub.HandleNotifyTicket(ctx, log, s.ps, updated, cc.EventType_CHAT_UPDATED)
 
 	resp := connect.NewResponse[cc.Chat](updated)
 

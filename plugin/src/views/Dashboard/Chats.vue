@@ -48,7 +48,12 @@
       >
         <n-input v-model:value="searchParam" type="text" placeholder="Search..."/>
 
-        <n-popover trigger="click" placement="bottom" :width="520">
+        <n-popover
+          scrollable
+          trigger="click"
+          placement="bottom"
+          style="max-height: 50vh"
+        >
           <template #trigger>
             <n-icon size="24" style="vertical-align: middle; cursor: pointer">
               <sort-icon />
@@ -62,8 +67,39 @@
               <n-space :wrap-item="false">
                 <n-radio value="created" label="Created" />
                 <n-radio value="sent" label="Sent" />
+                <n-radio value="status" label="Status" />
               </n-space>
             </n-radio-group>
+          </div>
+
+          <div style="margin-top: 20px">
+            <n-text>Status priority:</n-text>
+            <n-divider style="margin: 5px 0" />
+            <n-space :wrap-item="false" style="gap: 7px">
+              <div v-for="(status, i) of statusSorters" style="display: flex; align-items: center">
+                <n-icon v-if="i !== 0" @click="() => {
+                  const i = statusSorters.indexOf(status)
+
+                  if (!statusSorters[i - 1]) return
+                  [statusSorters[i], statusSorters[i- 1]] = [statusSorters[i- 1], statusSorters[i]]
+                }">
+                  <left-icon />
+                </n-icon>
+
+                <n-tag round style="margin: 0 3px">
+                  {{ statuses[status].label }}
+                </n-tag>
+
+                <n-icon v-if="i !== statusSorters.length - 1" @click="() => {
+                  const i = statusSorters.indexOf(status)
+                  
+                  if (!statusSorters[i + 1]) return
+                  [statusSorters[i], statusSorters[i + 1]] = [statusSorters[i + 1], statusSorters[i]]
+                }">
+                  <right-icon />
+                </n-icon>
+              </div>
+            </n-space>
           </div>
 
           <div style="margin-top: 20px">
@@ -98,14 +134,14 @@
         </n-popover>
       </n-space>
 
-      <n-scrollbar style="height: calc(100vh - 100px); min-width: 150px">
+      <n-scrollbar ref="scrollbar" style="height: calc(100vh - 100px); min-width: 150px">
         <n-popover trigger="manual" :show="isFirstMessageVisible" :x="x" :y="y">
           {{ firstMessage }}
         </n-popover>
 
         <n-list hoverable clickable style="margin-bottom: 25px">
           <chat-item
-            v-for="chat in chats"
+            v-for="chat in viewedChats"
             :hide-message="!isChatPanelOpen"
             :uuid="chat.uuid"
             :chat="chat"
@@ -115,6 +151,11 @@
             @hoverEnd="isFirstMessageVisible = false"
           />
         </n-list>
+        <n-spin
+          v-if="isLoading || viewedChats.length < chats.length"
+          ref="loading"
+          style="display: flex; margin: 0 auto 20px"
+        />
       </n-scrollbar>
     </n-layout-sider>
   </div>
@@ -133,7 +174,8 @@ import {
   NButton, NIcon, NInput, NLayoutContent,
   NLayoutSider, NList, NScrollbar, NSpace,
   NPopover, NRadioGroup, NRadio, NDivider,
-  NCheckboxGroup, NCheckbox, NText
+  NCheckboxGroup, NCheckbox, NText, NSpin,
+  NTag
 } from 'naive-ui';
 
 import {useAppStore} from '../../store/app.ts';
@@ -152,6 +194,8 @@ const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForwa
 const CloseIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
 const SortIcon = defineAsyncComponent(() => import('@vicons/ionicons5/SettingsOutline'));
 const SwitchIcon = defineAsyncComponent(() => import('@vicons/ionicons5/SwapHorizontal'));
+const rightIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForward'));
+const leftIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
 
 const appStore = useAppStore()
 const store = useCcStore();
@@ -160,9 +204,14 @@ const {makeDraggable} = useDraggable()
 const {metrics, fetch_defaults} = useDefaults()
 
 const searchParam = ref('')
+const scrollbar = ref<InstanceType<typeof NScrollbar>>()
+const loading = ref<InstanceType<typeof NSpin>>()
+const page = ref(1)
+const isLoading = ref(false)
 
 async function sync() {
   try {
+    isLoading.value = true
     await store.list_chats()
     const { users } = await store.get_members()
 
@@ -171,6 +220,8 @@ async function sync() {
     })
   } catch (error) {
     console.log(error);
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -179,12 +230,28 @@ function startChat() {
   appStore.displayMode = 'none'
 }
 
+
+
 onMounted(() => {
   makeDraggable({
     resizer: document.getElementById("separator")!,
-    first: document.getElementsByClassName("chats__panel").item(0) as HTMLElement,
-    second: document.getElementsByClassName("chat__item").item(0) as HTMLElement
+    first: document.querySelector(".chats__panel")!,
+    second: document.querySelector(".chat__item")!
   })
+
+  const options = {
+    root: scrollbar.value?.$el.nextElementSibling,
+    threshold: 1
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(async ({ isIntersecting }) => {
+      await new Promise((resolve) => setTimeout(resolve, 200))
+      if (isIntersecting) page.value += 1
+    })
+  }, options)
+
+  observer.observe(loading.value?.$el)
 })
 
 sync()
@@ -206,11 +273,27 @@ const filterChat = (chat: Chat, val: string): boolean => {
   return !!chat.users.find(u => u.startsWith(val) || store.users.get(u)?.title.toLowerCase().startsWith(val)) || !!chat.admins.find(u => u.startsWith(val) || store.users.get(u)?.title.toLocaleLowerCase().startsWith(val))
 }
 
-const sortBy = ref<'sent' | 'created'>('sent')
+const sortBy = ref<'sent' | 'created' | 'status'>('sent')
 
 interface optionsIncludedType {
   [index: string]: boolean
 }
+
+const checkedStatuses = ref<Status[]>([])
+
+const statuses = computed(() =>
+  Object.keys(Status).filter((key) => isFinite(+key)).map((key) => ({
+    label: getStatus(+key), value: +key
+  }))
+)
+
+function getStatus(statusCode: Status | number) {
+  const status = Status[statusCode].toLowerCase().replace('_', ' ')
+
+  return `${status[0].toUpperCase()}${status.slice(1)}`
+}
+
+const statusSorters = ref(statuses.value.map(({ value }) => value))
 
 const chats = computed(() => {
   let result: Chat[] = []
@@ -247,31 +330,24 @@ const chats = computed(() => {
       Object.values(isOptionsIncluded).every((value) => value)
   })
 
-  let sortable = (chat: Chat) => {
-    if (chat.meta?.lastMessage && sortBy.value === 'sent') {
-      return chat.meta.lastMessage.sent
+  const sortable = (chat: Chat) => {
+    if (sortBy.value === 'status') {
+      return statusSorters.value.indexOf(chat.status)
     }
-    return chat.created
+    if (chat.meta?.lastMessage && sortBy.value === 'sent') {
+      return Number(chat.meta.lastMessage.sent)
+    }
+    return Number(chat.created)
   }
 
-  return result.sort((a: Chat, b: Chat) => {
-    return Number(sortable(b) - sortable(a))
-  })
+  return result.sort((a: Chat, b: Chat) =>
+    sortable(b) - sortable(a)
+  )
 })
 
-const checkedStatuses = ref<Status[]>([])
-
-const statuses = computed(() =>
-  Object.keys(Status).filter((key) => isFinite(+key)).map((key) => ({
-    label: getStatus(+key), value: +key
-  }))
+const viewedChats = computed(() =>
+  chats.value.slice(0, 10 * page.value)
 )
-
-function getStatus(statusCode: Status | number) {
-  const status = Status[statusCode].toLowerCase().replace('_', ' ')
-
-  return `${status[0].toUpperCase()}${status.slice(1)}`
-}
 
 interface adminsType {
   value: string
@@ -356,7 +432,7 @@ function onMouseMove(clientX: number, clientY: number, chatId: string) {
 <style>
 #separator {
   cursor: col-resize;
-  background-color: #18181C;
+  background-color: var(--n-color);
   background-repeat: no-repeat;
   background-position: center;
   width: 10px;
@@ -384,9 +460,7 @@ function onMouseMove(clientX: number, clientY: number, chatId: string) {
 }
 
 .chats__panel .search {
-  margin-top: 5px;
-  margin-bottom: 10px;
-  margin-left: 9px;
+  margin: 5px 10px;
 }
 
 .chats__panel .search div:first-child {
@@ -403,7 +477,7 @@ function onMouseMove(clientX: number, clientY: number, chatId: string) {
 }
 
 .chats__panel .chat__actions {
-  padding: 10px 0px 10px 10px;
+  padding: 10px;
 }
 
 .chat__actions.hide {

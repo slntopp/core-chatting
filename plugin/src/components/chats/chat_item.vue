@@ -9,7 +9,7 @@
 
         <div class="time" v-show="appStore.displayMode === 'full'">
           <div>Created: {{ new Date(Number(chat.created)).toLocaleDateString() }}</div>
-          <div>Last update: {{ new Date(Number(lastUpdate)).toLocaleDateString() }}</div>
+          <div v-if="lastUpdate">Last update: {{ new Date(Number(lastUpdate)).toLocaleDateString() }}</div>
         </div>
 
         <n-icon
@@ -53,7 +53,7 @@ import UserAvatar from "../ui/user_avatar.vue";
 import ChatStatus from "./chat_status.vue";
 import {useAppStore} from "../../store/app.ts";
 
-const MailIcon = defineAsyncComponent(() => import('@vicons/ionicons5/MailOpenOutline'));
+const MailIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ChatbubbleEllipsesOutline'));
 
 interface ChatItemProps {
   chat: Chat

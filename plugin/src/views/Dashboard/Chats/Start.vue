@@ -8,7 +8,7 @@ import ChatOptions from "../../../components/chats/chat_options.vue";
 </script>
 
 <style>
-.n-layout:has(.chat-options) {
-  overflow-y: scroll;
+.chat__item .n-layout:has(.chat-options) {
+  overflow-y: auto;
 }
 </style>

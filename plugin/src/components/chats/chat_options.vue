@@ -248,12 +248,12 @@ interface TimeValueType {
   value: string | number | null
 }
 
-function getPlannedDate() {
+const getPlannedDate = computed(() => {
   if (!getDateValue('plannedDateStart')) return
   return [
     getDateValue('plannedDateStart'), getDateValue('plannedDateEnd')
   ] as TimeValue
-}
+})
 
 function setPlannedDate(value: TimeValue) {
   if (!Array.isArray(value)) return
@@ -266,11 +266,10 @@ function setPlannedDate(value: TimeValue) {
 
 function getTimeValue(key: string) {
   if (!getMetaValue(key)) return
-  const date = new Date(new Date().toISOString().split('T')[0])
-  const offset = date.getTimezoneOffset() * 60 * 1000
+  const date = new Date(new Date().toDateString())
   const value = (getMetaValue(key) as unknown as JsonObject).value as number
 
-  return date.getTime() + offset + value * 1000
+  return date.getTime() + value * 1000
 }
 
 function setTimeValue(value: TimeValueType, key: string) {

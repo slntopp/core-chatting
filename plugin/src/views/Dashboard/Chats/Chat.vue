@@ -112,9 +112,16 @@
         </n-space>
 
         <n-space class="actions" style="flex-flow: nowrap">
-          <n-button type="success" ghost circle size="small" @click="handle_send">
+          <n-button
+            ghost
+            circle
+            size="small"
+            type="success"
+            :color="(colorBySendMode as string)"
+            @click="handle_send"
+          >
             <template #icon>
-              <n-icon :component="SendOutline"/>
+              <n-icon :component="SendOutline" />
             </template>
           </n-button>
         </n-space>
@@ -184,21 +191,19 @@ async function handle_delete(msg: Message) {
   await store.delete_message(msg)
 }
 
-function scrollToBottom(smooth = false) {
+async function scrollToBottom(smooth = false) {
+  await nextTick()
+
   setTimeout(() => {
     if (!scrollbar.value) {
       console.warn('scrollbar not ready')
       return
     }
+    
+    const top = scrollbar.value.$el.nextSibling.firstChild.scrollHeight;
 
-    nextTick(() => {
-      setTimeout(() => {
-        const top = scrollbar.value.$el.nextSibling.firstChild.scrollHeight;
-
-        scrollbar.value.scrollTo({ top, behavior: smooth ? 'smooth' : undefined })
-      }, 300)
-    })
-  }, 0)
+    scrollbar.value.scrollTo({ top, behavior: smooth ? 'smooth' : 'instant' })
+  }, 500)
 }
 
 async function load_chat() {
@@ -211,7 +216,6 @@ async function load_chat() {
     ])
 
     handle_stop_edit()
-    scrollToBottom()
   } finally {
     isMessageLoading.value = false
   }
@@ -224,23 +228,16 @@ watch(messages, () => {
   if (chat.value?.meta) {
     chat.value.meta.unread = 0;
   }
-  scrollToBottom(true)
-}, {deep: true})
+
+  if (scrollbar.value) scrollToBottom()
+}, { deep: true })
+
+watch(isMessageLoading, scrollToBottom)
+watch(scrollbar, scrollToBottom)
 
 const sendMode = ref('default')
 const textareaColors = computed(() => {
-  let color = ''
-
-  switch (sendMode.value) {
-    case 'admin':
-      color = '#f2c97d'
-      break
-    case 'approve':
-      color = '#70c0e8'
-      break
-    default:
-      return null
-  }
+  const color = colorBySendMode.value
 
   return {
     '--n-caret-color': color,
@@ -248,6 +245,17 @@ const textareaColors = computed(() => {
     '--n-border': `1px solid ${color}`,
     '--n-border-hover': `1px solid ${color}`,
     '--n-border-focus': `1px solid ${color}`
+  }
+})
+
+const colorBySendMode = computed(() => {
+  switch (sendMode.value) {
+    case 'admin':
+      return '#f2c97d'
+    case 'approve':
+      return '#70c0e8'
+    default:
+      return null
   }
 })
 

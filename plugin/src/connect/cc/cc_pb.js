@@ -38,7 +38,8 @@ export const Kind = proto3.makeEnum(
   "cc.Kind",
   [
     {no: 0, name: "DEFAULT"},
-    {no: 1, name: "ADMIN_ONLY"},
+    {no: 1, name: "FOR_BOT"},
+    {no: 2, name: "ADMIN_ONLY"},
   ],
 );
 
@@ -162,6 +163,8 @@ export const User = proto3.makeMessageType(
     { no: 1, name: "uuid", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "data", kind: "message", T: Struct },
+    { no: 4, name: "cc_is_bot", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 5, name: "cc_username", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ],
 );
 

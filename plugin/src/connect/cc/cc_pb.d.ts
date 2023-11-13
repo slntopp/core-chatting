@@ -66,9 +66,14 @@ export declare enum Kind {
   DEFAULT = 0,
 
   /**
-   * @generated from enum value: ADMIN_ONLY = 1;
+   * @generated from enum value: FOR_BOT = 1;
    */
-  ADMIN_ONLY = 1,
+  FOR_BOT = 1,
+
+  /**
+   * @generated from enum value: ADMIN_ONLY = 2;
+   */
+  ADMIN_ONLY = 2,
 }
 
 /**
@@ -429,6 +434,16 @@ export declare class User extends Message$1<User> {
    * @generated from field: google.protobuf.Struct data = 3;
    */
   data?: Struct;
+
+  /**
+   * @generated from field: bool cc_is_bot = 4;
+   */
+  ccIsBot: boolean;
+
+  /**
+   * @generated from field: string cc_username = 5;
+   */
+  ccUsername: string;
 
   constructor(data?: PartialMessage<User>);
 

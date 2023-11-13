@@ -108,6 +108,9 @@ message User {
   string uuid = 1;
   string title = 2;
   google.protobuf.Struct data = 3;
+
+  bool cc_is_bot = 4;
+  string cc_username = 5;
 }
 
 message Department {

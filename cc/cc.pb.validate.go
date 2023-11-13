@@ -1103,6 +1103,10 @@ func (m *User) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for CcIsBot
+
+	// no validation rules for CcUsername
+
 	if len(errors) > 0 {
 		return UserMultiError(errors)
 	}

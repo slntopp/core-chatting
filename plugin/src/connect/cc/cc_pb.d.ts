@@ -367,6 +367,11 @@ export declare class Message extends Message$1<Message> {
    */
   meta: { [key: string]: Value };
 
+  /**
+   * @generated from field: repeated string mentioned = 13;
+   */
+  mentioned: string[];
+
   constructor(data?: PartialMessage<Message>);
 
   static readonly runtime: typeof proto3;

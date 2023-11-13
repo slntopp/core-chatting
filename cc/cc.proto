@@ -89,6 +89,8 @@ message Message {
   bool under_review = 10;
   repeated string readers = 11;
   map<string, google.protobuf.Value> meta = 12;
+
+  repeated string mentioned = 13;
 }
 message Messages { repeated Message messages = 1; }
 

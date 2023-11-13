@@ -63,7 +63,8 @@ service ChatsAPI {
 
 enum Kind {
   DEFAULT = 0;
-  ADMIN_ONLY = 1;
+  FOR_BOT = 1;
+  ADMIN_ONLY = 2;
 }
 
 message Attachment {

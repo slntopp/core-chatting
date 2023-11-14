@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/protobuf/types/known/structpb"
+	"slices"
 	"time"
 
 	"github.com/slntopp/core-chatting/cc"
@@ -41,6 +42,12 @@ func (c *ChatsController) Create(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 	chat.Created = time.Now().UnixMilli()
 	chat.Status = cc.Status_NEW
 
+	if chat.Responsible != nil {
+		if !slices.Contains(chat.GetAdmins(), chat.GetResponsible()) {
+			chat.Admins = append(chat.GetAdmins(), chat.GetResponsible())
+		}
+	}
+
 	document, err := c.col.CreateDocument(ctx, chat)
 	if err != nil {
 		return nil, err
@@ -60,6 +67,12 @@ func (c *ChatsController) Create(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 func (c *ChatsController) Update(ctx context.Context, chat *cc.Chat) (*cc.Chat, error) {
 	log := c.log.Named("Update")
 	log.Debug("Req received")
+
+	if chat.Responsible != nil {
+		if !slices.Contains(chat.GetAdmins(), chat.GetResponsible()) {
+			chat.Admins = append(chat.GetAdmins(), chat.GetResponsible())
+		}
+	}
 
 	_, err := c.col.UpdateDocument(ctx, chat.GetUuid(), chat)
 

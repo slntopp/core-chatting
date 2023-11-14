@@ -166,7 +166,7 @@ export const User = proto3.makeMessageType(
     { no: 3, name: "data", kind: "message", T: Struct },
     { no: 4, name: "cc_is_bot", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 5, name: "cc_username", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 6, name: "cc_comands", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
+    { no: 6, name: "cc_commands", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
   ],
 );
 

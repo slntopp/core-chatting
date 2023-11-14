@@ -1111,7 +1111,7 @@ func (m *User) validate(all bool) error {
 
 	// no validation rules for CcUsername
 
-	// no validation rules for CcComands
+	// no validation rules for CcCommands
 
 	if len(errors) > 0 {
 		return UserMultiError(errors)

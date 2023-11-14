@@ -112,7 +112,7 @@ message User {
 
   bool cc_is_bot = 4;
   string cc_username = 5;
-  map<string, string> cc_comands = 6;
+  map<string, string> cc_commands = 6;
 }
 
 message Department {

@@ -451,9 +451,9 @@ export declare class User extends Message$1<User> {
   ccUsername: string;
 
   /**
-   * @generated from field: map<string, string> cc_comands = 6;
+   * @generated from field: map<string, string> cc_commands = 6;
    */
-  ccComands: { [key: string]: string };
+  ccCommands: { [key: string]: string };
 
   constructor(data?: PartialMessage<User>);
 

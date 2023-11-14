@@ -91,11 +91,11 @@ func (c *UsersController) GetMembers(ctx context.Context) ([]*cc.User, error) {
 }
 
 const removeCommandsQuery = `
-UPDATE DOCUMENT(@key) WITH { cc_comands: null } IN @@collection 
+UPDATE DOCUMENT(@key) WITH { cc_commands: null } IN @@collection 
 `
 
 const updateCommandsQuery = `
-UPDATE DOCUMENT(@key) WITH { cc_comands: @commands } IN @@collection
+UPDATE DOCUMENT(@key) WITH { cc_commands: @commands } IN @@collection
 `
 
 func (c *UsersController) UpdateCommands(ctx context.Context, uuid string, commands map[string]string) error {

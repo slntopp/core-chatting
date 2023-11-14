@@ -73,7 +73,7 @@ func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.Strea
 start_stream:
 
 	if streamUser.GetCcIsBot() {
-		err := s.userCtrl.UpdateCommands(ctx, streamUser, req.Msg.GetCommands())
+		err := s.userCtrl.UpdateCommands(ctx, streamUser.GetUuid(), req.Msg.GetCommands())
 		if err != nil {
 			log.Error("Failed to update commands in bot", zap.Error(err))
 			return err

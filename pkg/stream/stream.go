@@ -45,7 +45,7 @@ func NewStreamServer(logger *zap.Logger, userCtrl *graph.UsersController, msgCtr
 	}
 }
 
-func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.Empty], serverStream *connect.ServerStream[cc.Event]) error {
+func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.StreamRequest], serverStream *connect.ServerStream[cc.Event]) error {
 	requestor := ctx.Value(core.ChatAccount).(string)
 
 	log := s.log.Named("Stream").Named(requestor)
@@ -58,8 +58,11 @@ func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.Empty
 		return err
 	}
 
+	var streamUser *cc.User
+
 	for _, user := range res {
 		if user.Uuid == requestor {
+			streamUser = user
 			goto start_stream
 		}
 	}
@@ -68,6 +71,16 @@ func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.Empty
 
 	return connect.NewError(connect.CodeUnauthenticated, errors.New("failed to resolve user"))
 start_stream:
+
+	if streamUser.GetCcIsBot() {
+		commands := req.Msg.GetCommands()
+		streamUser.CcComands = commands
+		err := s.userCtrl.UpdateCommands(ctx, streamUser)
+		if err != nil {
+			log.Error("Failed to update commands in bot", zap.Error(err))
+			return err
+		}
+	}
 
 	log.Info("Start stream", zap.String("user", requestor))
 

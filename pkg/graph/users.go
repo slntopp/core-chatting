@@ -89,3 +89,15 @@ func (c *UsersController) GetMembers(ctx context.Context) ([]*cc.User, error) {
 
 	return members, nil
 }
+
+func (c *UsersController) UpdateCommands(ctx context.Context, i *cc.User) error {
+	log := c.log.Named("GetCommands")
+	log.Debug("Request received")
+
+	_, err := c.col.UpdateDocument(ctx, i.GetUuid(), i)
+	if err != nil {
+		log.Error("Failed to update commands", zap.Error(err))
+		return err
+	}
+	return nil
+}

@@ -7,7 +7,7 @@ import { createGrpcWebTransport } from "@connectrpc/connect-web";
 import { useAppStore } from "./app";
 
 import {
-    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType, ChatMeta, Kind
+    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType, ChatMeta, Kind, StreamRequest,
 } from "../connect/cc/cc_pb"
 import {
     ChatsAPI, MessagesAPI, StreamService, UsersAPI
@@ -252,7 +252,7 @@ export const useCcStore = defineStore('cc', () => {
             if (!app.conf) continue;
 
             try {
-                const stream = streaming.stream(new Empty())
+                const stream = streaming.stream(new StreamRequest())
                 console.log("Subscribed");
                 for await (const event of stream) {
                     console.debug('Received Event', event)

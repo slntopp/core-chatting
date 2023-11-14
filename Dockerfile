@@ -6,7 +6,7 @@ WORKDIR /app
 RUN npm i -g pnpm
 RUN pnpm i && pnpm build
 
-FROM golang:1.19-alpine AS server-builder
+FROM golang:1.21-alpine AS server-builder
 
 RUN apk add upx
 

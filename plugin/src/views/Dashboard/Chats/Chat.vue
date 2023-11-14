@@ -82,16 +82,18 @@
           <n-tooltip placement="top-end">
             <template #trigger>
 
-              <n-input
+              <n-mention
                 ref="input"
                 size="small"
                 type="textarea"
                 style="width: 100%"
-                :style="textareaColors"
                 placeholder="Type your message"
                 v-model:value="store.current_message.content"
                 :autosize="{ minRows: 3, maxRows: 15 }"
+                :options="mentionsOptions"
 
+                @blur="check_mentioned"
+                @select="update_mentioned"
                 @keypress.prevent.enter.exact="handle_new_line"
                 @keypress.prevent.ctrl.enter.exact="store.handle_send(chat?.uuid ?? '')"
                 @keypress.prevent.ctrl.shift.enter.exact="store.handle_send(chat?.uuid ?? '', Kind.ADMIN_ONLY)"
@@ -133,16 +135,16 @@
 <script setup lang="ts">
 import {Component, computed, defineAsyncComponent, nextTick, ref, watch} from 'vue';
 import {
-  InputInst,
   NAlert,
   NButton,
   NIcon,
-  NInput,
+  NMention,
   NList,
   NListItem,
   NScrollbar,
   NSpace,
-  NTooltip
+  NTooltip,
+  MentionOption
 } from 'naive-ui';
 
 import {useRoute, useRouter} from 'vue-router';
@@ -162,7 +164,7 @@ const router = useRouter();
 
 const store = useCcStore()
 const scrollbar = ref()
-const input = ref<InputInst>()
+const input = ref()
 const isMessageLoading = ref(false)
 
 const chat = computed(() => {
@@ -181,6 +183,43 @@ const messages = computed(() => {
   chatMessages.sort((a, b) => Number(a.sent - b.sent))
   return chatMessages
 })
+
+const mentionsOptions = computed(() => {
+  if (!chat.value) return []
+  const uuids = new Set([...chat.value.users, ...chat.value.admins])
+  const result: MentionOption[] = []
+
+  uuids.forEach((uuid) => {
+    result.push({
+      label: store.users.get(uuid)?.title ?? uuid,
+      value: uuid
+    })
+  })
+
+  return result
+})
+
+function update_mentioned(option: MentionOption) {
+  if (!option.value) return
+  const i = store.current_message.mentioned.indexOf(option.value)
+
+  if (i !== -1) {
+    store.current_message.mentioned.splice(i, 1)
+  } else {
+    store.current_message.mentioned.push(option.value)
+  }
+}
+
+function check_mentioned() {
+  const users = store.current_message.content.match(/\@[\w\d-]{1,}/g)
+
+  users?.forEach((user) => {
+    const mention = store.current_message.mentioned.find((uuid) => user.includes(uuid))
+
+    if (mention) return
+    store.current_message.mentioned.push(user.replace('@', '')) 
+  })
+}
 
 async function handle_approve(msg: Message, approve: boolean) {
   msg.underReview = !approve
@@ -203,7 +242,7 @@ async function scrollToBottom(smooth = false) {
     const top = scrollbar.value.$el.nextSibling.firstChild.scrollHeight;
 
     scrollbar.value.scrollTo({ top, behavior: smooth ? 'smooth' : 'instant' })
-  }, 500)
+  }, 300)
 }
 
 async function load_chat() {
@@ -239,13 +278,14 @@ const sendMode = ref('default')
 const textareaColors = computed(() => {
   const color = colorBySendMode.value
 
-  return {
-    '--n-caret-color': color,
-    '--n-color-focus': `${color}1a`,
-    '--n-border': `1px solid ${color}`,
-    '--n-border-hover': `1px solid ${color}`,
-    '--n-border-focus': `1px solid ${color}`
-  }
+  if (!color) return ''
+  return `
+    --n-caret-color: ${color};
+    --n-color-focus: ${color}1a;
+    --n-border: 1px solid ${color};
+    --n-border-hover: 1px solid ${color};
+    --n-border-focus: 1px solid ${color};
+  `
 })
 
 const colorBySendMode = computed(() => {
@@ -257,6 +297,11 @@ const colorBySendMode = computed(() => {
     default:
       return null
   }
+})
+
+watch(textareaColors, (value) => {
+  if (!input.value?.inputInstRef?.$el.style) return
+  input.value.inputInstRef.$el.style.cssText += value
 })
 
 function handle_edit(message: Message) {

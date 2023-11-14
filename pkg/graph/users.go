@@ -94,7 +94,7 @@ func (c *UsersController) UpdateCommands(ctx context.Context, i *cc.User, comman
 	log := c.log.Named("GetCommands")
 	log.Debug("Request received")
 
-	i.CcComands = nil
+	i.CcComands = map[string]string{}
 
 	_, err := c.col.UpdateDocument(ctx, i.GetUuid(), i)
 	if err != nil {

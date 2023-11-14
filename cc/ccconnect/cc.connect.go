@@ -513,7 +513,7 @@ func (UnimplementedUsersAPIHandler) GetMembers(context.Context, *connect.Request
 
 // StreamServiceClient is a client for the cc.StreamService service.
 type StreamServiceClient interface {
-	Stream(context.Context, *connect.Request[cc.Empty]) (*connect.ServerStreamForClient[cc.Event], error)
+	Stream(context.Context, *connect.Request[cc.StreamRequest]) (*connect.ServerStreamForClient[cc.Event], error)
 }
 
 // NewStreamServiceClient constructs a client for the cc.StreamService service. By default, it uses
@@ -526,7 +526,7 @@ type StreamServiceClient interface {
 func NewStreamServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) StreamServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &streamServiceClient{
-		stream: connect.NewClient[cc.Empty, cc.Event](
+		stream: connect.NewClient[cc.StreamRequest, cc.Event](
 			httpClient,
 			baseURL+StreamServiceStreamProcedure,
 			opts...,
@@ -536,17 +536,17 @@ func NewStreamServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // streamServiceClient implements StreamServiceClient.
 type streamServiceClient struct {
-	stream *connect.Client[cc.Empty, cc.Event]
+	stream *connect.Client[cc.StreamRequest, cc.Event]
 }
 
 // Stream calls cc.StreamService.Stream.
-func (c *streamServiceClient) Stream(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.ServerStreamForClient[cc.Event], error) {
+func (c *streamServiceClient) Stream(ctx context.Context, req *connect.Request[cc.StreamRequest]) (*connect.ServerStreamForClient[cc.Event], error) {
 	return c.stream.CallServerStream(ctx, req)
 }
 
 // StreamServiceHandler is an implementation of the cc.StreamService service.
 type StreamServiceHandler interface {
-	Stream(context.Context, *connect.Request[cc.Empty], *connect.ServerStream[cc.Event]) error
+	Stream(context.Context, *connect.Request[cc.StreamRequest], *connect.ServerStream[cc.Event]) error
 }
 
 // NewStreamServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -573,6 +573,6 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect.HandlerOp
 // UnimplementedStreamServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedStreamServiceHandler struct{}
 
-func (UnimplementedStreamServiceHandler) Stream(context.Context, *connect.Request[cc.Empty], *connect.ServerStream[cc.Event]) error {
+func (UnimplementedStreamServiceHandler) Stream(context.Context, *connect.Request[cc.StreamRequest], *connect.ServerStream[cc.Event]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("cc.StreamService.Stream is not implemented"))
 }

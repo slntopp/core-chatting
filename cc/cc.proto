@@ -168,4 +168,8 @@ message Event {
   }
 }
 
-service StreamService { rpc Stream (Empty) returns (stream Event); }
+message StreamRequest{
+  map<string, string> commands = 1;
+}
+
+service StreamService { rpc Stream (StreamRequest) returns (stream Event); }

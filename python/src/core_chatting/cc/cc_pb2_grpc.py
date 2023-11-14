@@ -531,7 +531,7 @@ class StreamServiceStub(object):
         """
         self.Stream = channel.unary_stream(
                 '/cc.StreamService/Stream',
-                request_serializer=cc_dot_cc__pb2.Empty.SerializeToString,
+                request_serializer=cc_dot_cc__pb2.StreamRequest.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Event.FromString,
                 )
 
@@ -550,7 +550,7 @@ def add_StreamServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Stream': grpc.unary_stream_rpc_method_handler(
                     servicer.Stream,
-                    request_deserializer=cc_dot_cc__pb2.Empty.FromString,
+                    request_deserializer=cc_dot_cc__pb2.StreamRequest.FromString,
                     response_serializer=cc_dot_cc__pb2.Event.SerializeToString,
             ),
     }
@@ -575,7 +575,7 @@ class StreamService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/cc.StreamService/Stream',
-            cc_dot_cc__pb2.Empty.SerializeToString,
+            cc_dot_cc__pb2.StreamRequest.SerializeToString,
             cc_dot_cc__pb2.Event.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

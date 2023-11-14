@@ -661,3 +661,27 @@ export declare class Event extends Message$1<Event> {
   static equals(a: Event | PlainMessage<Event> | undefined, b: Event | PlainMessage<Event> | undefined): boolean;
 }
 
+/**
+ * @generated from message cc.StreamRequest
+ */
+export declare class StreamRequest extends Message$1<StreamRequest> {
+  /**
+   * @generated from field: map<string, string> commands = 1;
+   */
+  commands: { [key: string]: string };
+
+  constructor(data?: PartialMessage<StreamRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.StreamRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StreamRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StreamRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StreamRequest;
+
+  static equals(a: StreamRequest | PlainMessage<StreamRequest> | undefined, b: StreamRequest | PlainMessage<StreamRequest> | undefined): boolean;
+}
+

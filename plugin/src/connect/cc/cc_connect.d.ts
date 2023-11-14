@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, Chats, Defaults, Empty, Event, Message, Messages, User, Users } from "./cc_pb.js";
+import { Chat, Chats, Defaults, Empty, Event, Message, Messages, StreamRequest, User, Users } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -164,7 +164,7 @@ export declare const StreamService: {
      */
     readonly stream: {
       readonly name: "Stream",
-      readonly I: typeof Empty,
+      readonly I: typeof StreamRequest,
       readonly O: typeof Event,
       readonly kind: MethodKind.ServerStreaming,
     },

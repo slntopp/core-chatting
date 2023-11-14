@@ -238,3 +238,13 @@ export const Event = proto3.makeMessageType(
   ],
 );
 
+/**
+ * @generated from message cc.StreamRequest
+ */
+export const StreamRequest = proto3.makeMessageType(
+  "cc.StreamRequest",
+  () => [
+    { no: 1, name: "commands", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
+  ],
+);
+

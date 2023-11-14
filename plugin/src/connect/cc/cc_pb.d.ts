@@ -238,6 +238,11 @@ export declare class Chat extends Message$1<Chat> {
    */
   department: string;
 
+  /**
+   * @generated from field: optional string responsible = 12;
+   */
+  responsible?: string;
+
   constructor(data?: PartialMessage<Chat>);
 
   static readonly runtime: typeof proto3;
@@ -444,6 +449,11 @@ export declare class User extends Message$1<User> {
    * @generated from field: string cc_username = 5;
    */
   ccUsername: string;
+
+  /**
+   * @generated from field: map<string, string> cc_comands = 6;
+   */
+  ccComands: { [key: string]: string };
 
   constructor(data?: PartialMessage<User>);
 

@@ -408,6 +408,10 @@ func (m *Chat) validate(all bool) error {
 
 	}
 
+	if m.Responsible != nil {
+		// no validation rules for Responsible
+	}
+
 	if len(errors) > 0 {
 		return ChatMultiError(errors)
 	}
@@ -1106,6 +1110,8 @@ func (m *User) validate(all bool) error {
 	// no validation rules for CcIsBot
 
 	// no validation rules for CcUsername
+
+	// no validation rules for CcComands
 
 	if len(errors) > 0 {
 		return UserMultiError(errors)

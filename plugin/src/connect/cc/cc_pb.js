@@ -98,6 +98,7 @@ export const Chat = proto3.makeMessageType(
     { no: 9, name: "created", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 10, name: "status", kind: "enum", T: proto3.getEnumType(Status) },
     { no: 11, name: "department", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 12, name: "responsible", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ],
 );
 
@@ -165,6 +166,7 @@ export const User = proto3.makeMessageType(
     { no: 3, name: "data", kind: "message", T: Struct },
     { no: 4, name: "cc_is_bot", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 5, name: "cc_username", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "cc_comands", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
   ],
 );
 

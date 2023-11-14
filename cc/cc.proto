@@ -47,6 +47,7 @@ message Chat {
   Status status = 10;
 
   string department = 11;
+  optional string responsible = 12;
 }
 
 message Chats { repeated Chat chats = 1; }
@@ -111,6 +112,7 @@ message User {
 
   bool cc_is_bot = 4;
   string cc_username = 5;
+  map<string, string> cc_comands = 6;
 }
 
 message Department {

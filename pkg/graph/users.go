@@ -94,17 +94,9 @@ func (c *UsersController) UpdateCommands(ctx context.Context, i *cc.User, comman
 	log := c.log.Named("GetCommands")
 	log.Debug("Request received")
 
-	i.CcComands = map[string]string{}
-
-	_, err := c.col.UpdateDocument(ctx, i.GetUuid(), i)
-	if err != nil {
-		log.Error("Failed to clear commands", zap.Error(err))
-		return err
-	}
-
 	i.CcComands = commands
 
-	_, err = c.col.UpdateDocument(ctx, i.GetUuid(), i)
+	_, err := c.col.ReplaceDocument(ctx, i.GetUuid(), i)
 	if err != nil {
 		log.Error("Failed to update commands", zap.Error(err))
 		return err

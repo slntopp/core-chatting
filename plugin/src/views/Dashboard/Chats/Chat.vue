@@ -1,7 +1,7 @@
 <template>
   <n-list class="chat">
     <template #header>
-      <chat-header :chat="chat!" style="height: 5vh"/>
+      <chat-header :chat="chat!"/>
     </template>
 
     <n-scrollbar
@@ -81,7 +81,8 @@
 
           <n-tooltip placement="top-end">
             <template #trigger>
-
+                <!-- :value="get_mention_value(store.current_message.content)" -->
+                <!-- @update:value="set_mention_value($event)" -->
               <n-mention
                 ref="input"
                 size="small"
@@ -93,7 +94,6 @@
                 :options="mentionsOptions"
 
                 @blur="check_mentioned"
-                @select="update_mentioned"
                 @keypress.prevent.enter.exact="handle_new_line"
                 @keypress.prevent.ctrl.enter.exact="store.handle_send(chat?.uuid ?? '')"
                 @keypress.prevent.ctrl.shift.enter.exact="store.handle_send(chat?.uuid ?? '', Kind.ADMIN_ONLY)"
@@ -190,34 +190,30 @@ const mentionsOptions = computed(() => {
   const result: MentionOption[] = []
 
   uuids.forEach((uuid) => {
+    const { title } = store.users.get(uuid) ?? {}
+
     result.push({
-      label: store.users.get(uuid)?.title ?? uuid,
-      value: uuid
+      label: title ?? uuid,
+      value: title?.replace(' ', '_') ?? uuid
     })
   })
 
   return result
 })
 
-function update_mentioned(option: MentionOption) {
-  if (!option.value) return
-  const i = store.current_message.mentioned.indexOf(option.value)
-
-  if (i !== -1) {
-    store.current_message.mentioned.splice(i, 1)
-  } else {
-    store.current_message.mentioned.push(option.value)
-  }
-}
-
 function check_mentioned() {
-  const users = store.current_message.content.match(/\@[\w\d-]{1,}/g)
+  const users = Array.from(store.users.values())
+  const titles = store.current_message.content.match(/@[\w\d-]{1,}/g)
 
-  users?.forEach((user) => {
-    const mention = store.current_message.mentioned.find((uuid) => user.includes(uuid))
+  store.current_message.mentioned = []
+  titles?.forEach((title) => {
+    const { uuid } = users.find((user) =>
+      user.title.replace(' ', '_') === title.replace('@', '')
+    ) ?? {}
+    const mention = store.current_message.mentioned.includes(uuid ?? title)
 
     if (mention) return
-    store.current_message.mentioned.push(user.replace('@', '')) 
+    store.current_message.mentioned.push(uuid ?? title)
   })
 }
 

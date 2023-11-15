@@ -43,9 +43,7 @@
       <n-tooltip>
         <template #trigger>
           <n-button type="info" size="small" ghost circle @click="refresh">
-            <template #icon>
-              <refresh-icon />
-            </template>
+            <template #icon> <refresh-icon /> </template>
           </n-button>
         </template>
         Refresh chat
@@ -54,19 +52,61 @@
       <n-tooltip>
         <template #trigger>
           <n-button type="error" size="small" ghost circle @click="deleteChat">
-            <template #icon>
-              <delete-icon />
-            </template>
+            <template #icon> <delete-icon /> </template>
           </n-button>
         </template>
         Delete chat
       </n-tooltip>
+
+      <n-popover
+        scrollable
+        trigger="click"
+        placement="bottom"
+        content-style="padding: 0"
+        v-if="comands.length > 0"
+      >
+        <template #trigger>
+          <n-tooltip>
+            <template #trigger>
+              <n-button type="success" size="small" ghost circle>
+                <template #icon> <console-icon /> </template>
+              </n-button>
+            </template>
+            Comands
+          </n-tooltip>
+        </template>
+
+        <n-list hoverable clickable>
+          <n-list-item
+            v-for="comand of comands"
+            :key="comand.key"
+            @click="sendComand(comand.key)"
+          >
+            {{ comand.key }} ({{ comand.description }})
+          </n-list-item>
+        </n-list>
+      </n-popover>
     </n-space>
+
+    <n-divider vertical />
+    <n-space style="gap: 4px" :wrap-item="false">
+      <n-text>Gateway{{ (chat.gateways.length > 1) ? 's' : '' }}:</n-text>
+      <n-tooltip v-if="chat.gateways.length === 1" placement="bottom">
+        <template #trigger>
+          <img height="24" :src="`/icons/${chat.gateways[0]}.png`" :alt="chat.gateways[0]">
+        </template>
+        {{ chat.gateways[0] }}
+      </n-tooltip>
+      <n-text v-else italic style="font-weight: 700">
+        {{ (chat.gateways.length > 1) ? chat.gateways : 'none' }}
+      </n-text>
+    </n-space>
+
     <n-divider
       vertical
       :style="{
         gridRow: (metricsOptions.length > 0) ? '1 / 3' : null, 
-        gridColumn: 3,
+        gridColumn: 5,
         height: 'calc(100% - 10px)',
         margin: '0 8px'
       }"
@@ -160,8 +200,8 @@
 
 <script setup lang="ts">
 import {computed, defineAsyncComponent, ref, toRefs} from "vue";
-import {NButton, NCard, NDivider, NIcon, NModal, NSpace, NSpin, NTag, NText, NTooltip, SelectOption, useNotification} from "naive-ui";
-import {Chat, User} from "../../../connect/cc/cc_pb";
+import {NButton, NCard, NDivider, NIcon, NList, NListItem, NModal, NPopover, NSpace, NSpin, NTag, NText, NTooltip, SelectOption, useNotification} from "naive-ui";
+import {Chat, Message, User} from "../../../connect/cc/cc_pb";
 import {useCcStore} from "../../../store/chatting.ts";
 import {useAppStore} from "../../../store/app";
 import {useRouter} from "vue-router";
@@ -177,6 +217,7 @@ const EditIcon = defineAsyncComponent(() => import('@vicons/ionicons5/PencilShar
 const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
 const RefreshIcon = defineAsyncComponent(() => import('@vicons/ionicons5/RefreshOutline'));
 const DeleteIcon = defineAsyncComponent(() => import('@vicons/ionicons5/TrashBinOutline'));
+const consoleIcon = defineAsyncComponent(() => import('@vicons/ionicons5/TerminalOutline'));
 
 interface ChatHeaderProps {
   chat: Chat
@@ -260,6 +301,31 @@ const deleteChat = async () => {
   }
 }
 
+interface comandType {
+  key: string
+  description: string
+}
+
+const comands = computed(() => {
+  const result: comandType[] = []
+
+  chat.value.admins.forEach((uuid) => {
+    const bot = store.users.get(uuid)
+
+    if (!bot?.ccIsBot) return
+    Object.entries(bot.ccCommands).forEach(([key, description]) => {
+      result.push({ key: `/${key}`, description })
+    })
+  })
+
+  return result
+})
+
+const sendComand = (content: string) => {
+  store.current_message = new Message({ content })
+  store.handle_send(chat.value.uuid)
+}
+
 const deleteMember = (uuid: string) => {
   const users = chat.value.users.filter((userId) => userId !== uuid)
 
@@ -309,7 +375,7 @@ const lastUpdate = computed(() =>
 <style scoped>
 .grid {
   display: grid;
-  grid-template-columns: auto auto auto 1fr;
+  grid-template-columns: auto auto auto auto auto 1fr;
   align-items: center;
   gap: 10px;
 }

@@ -7,6 +7,23 @@
           {{ store.users.get(chat.owner)?.title }}
         </n-text>
 
+        <n-space
+          style="gap: 4px; margin-top: 5px"
+          :wrap-item="false"
+          v-if="appStore.displayMode === 'full'"
+        >
+          <n-text>Gateway{{ (chat.gateways.length > 1) ? 's' : '' }}:</n-text>
+          <n-tooltip v-if="chat.gateways.length === 1" placement="bottom">
+            <template #trigger>
+              <img height="24" :src="`/icons/${chat.gateways[0]}.png`" :alt="chat.gateways[0]">
+            </template>
+            {{ chat.gateways[0] }}
+          </n-tooltip>
+          <n-text v-else italic style="font-weight: 700">
+            {{ (chat.gateways.length > 1) ? chat.gateways : 'none' }}
+          </n-text>
+        </n-space>
+
         <div class="time" v-show="appStore.displayMode === 'full'">
           <div>Created: {{ new Date(Number(chat.created)).toLocaleDateString() }}</div>
           <div v-if="lastUpdate">Last update: {{ new Date(Number(lastUpdate)).toLocaleDateString() }}</div>
@@ -105,7 +122,7 @@ const subDecoration = computed(() =>
 )
 
 const chatRightColumn = computed(() =>
-  (appStore.displayMode === 'full') ? 4 : 3
+  (appStore.displayMode === 'full') ? 5 : 3
 )
 
 const lastUpdate = computed(() =>
@@ -155,7 +172,7 @@ const openUser = (uuid: string) => {
 
     .time {
       grid-row: 1 / 3;
-      grid-column: 2;
+      grid-column: 3;
     }
   }
 

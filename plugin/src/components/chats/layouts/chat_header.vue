@@ -63,50 +63,46 @@
         trigger="click"
         placement="bottom"
         content-style="padding: 0"
-        v-if="comands.length > 0"
+        v-if="commands.length > 0"
       >
         <template #trigger>
           <n-tooltip>
             <template #trigger>
-              <n-button type="success" size="small" ghost circle>
+              <n-button ref="commandsButton" type="success" size="small" ghost circle>
                 <template #icon> <console-icon /> </template>
               </n-button>
             </template>
-            Comands
+            Commands
           </n-tooltip>
         </template>
 
         <n-list hoverable clickable>
           <n-list-item
-            v-for="comand of comands"
-            :key="comand.key"
-            @click="sendComand(comand.key)"
+            v-for="command of commands"
+            :key="command.key"
+            @click="sendCommand(command.key)"
           >
-            {{ comand.key }} ({{ comand.description }})
+            {{ command.key }} ({{ command.description }})
           </n-list-item>
         </n-list>
       </n-popover>
     </n-space>
 
-    <n-divider vertical />
-    <n-space style="gap: 4px" :wrap-item="false">
-      <n-text>Gateway{{ (chat.gateways.length > 1) ? 's' : '' }}:</n-text>
-      <n-tooltip v-if="chat.gateways.length === 1" placement="bottom">
+    <n-divider vertical v-if="chat.gateways.length > 0" />
+    <n-space :wrap-item="false" v-if="chat.gateways.length > 0">
+      <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
         <template #trigger>
-          <img height="24" :src="`/icons/${chat.gateways[0]}.png`" :alt="chat.gateways[0]">
+          <img height="24" :src="`/${gateway}.png`" :alt="gateway">
         </template>
-        {{ chat.gateways[0] }}
+        {{ gateway }}
       </n-tooltip>
-      <n-text v-else italic style="font-weight: 700">
-        {{ (chat.gateways.length > 1) ? chat.gateways : 'none' }}
-      </n-text>
     </n-space>
 
     <n-divider
       vertical
       :style="{
         gridRow: (metricsOptions.length > 0) ? '1 / 3' : null, 
-        gridColumn: 5,
+        gridColumn: (chat.gateways.length > 0) ? 5 : '3 / 5',
         height: 'calc(100% - 10px)',
         margin: '0 8px'
       }"
@@ -301,13 +297,15 @@ const deleteChat = async () => {
   }
 }
 
-interface comandType {
+interface commandType {
   key: string
   description: string
 }
 
-const comands = computed(() => {
-  const result: comandType[] = []
+const commandsButton = ref()
+
+const commands = computed(() => {
+  const result: commandType[] = []
 
   chat.value.admins.forEach((uuid) => {
     const bot = store.users.get(uuid)
@@ -321,9 +319,10 @@ const comands = computed(() => {
   return result
 })
 
-const sendComand = (content: string) => {
+const sendCommand = (content: string) => {
   store.current_message = new Message({ content })
   store.handle_send(chat.value.uuid)
+  commandsButton.value.onClick()
 }
 
 const deleteMember = (uuid: string) => {

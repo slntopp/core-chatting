@@ -3,25 +3,26 @@
     <n-space :wrap-item="false" justify="start">
       <user-avatar round size="large" :avatar="members.join(' ')"/>
       <div v-if="!hideMessage" class="preview">
-        <n-text class="sub" depth="3" @click.stop="openUser(chat.owner)">
+        <n-text
+          depth="3"
+          class="sub"
+          :style="{ gridColumn: (chat.gateways.length < 1) ? '1 / 3' : null }"
+          @click.stop="openUser(chat.owner)"
+        >
           {{ store.users.get(chat.owner)?.title }}
         </n-text>
 
         <n-space
-          style="gap: 4px; margin-top: 5px"
+          style="margin-top: 5px"
           :wrap-item="false"
           v-if="appStore.displayMode === 'full'"
         >
-          <n-text>Gateway{{ (chat.gateways.length > 1) ? 's' : '' }}:</n-text>
-          <n-tooltip v-if="chat.gateways.length === 1" placement="bottom">
+          <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
             <template #trigger>
-              <img height="24" :src="`/icons/${chat.gateways[0]}.png`" :alt="chat.gateways[0]">
+              <img height="24" :src="`/${gateway}.png`" :alt="gateway">
             </template>
-            {{ chat.gateways[0] }}
+            {{ gateway }}
           </n-tooltip>
-          <n-text v-else italic style="font-weight: 700">
-            {{ (chat.gateways.length > 1) ? chat.gateways : 'none' }}
-          </n-text>
         </n-space>
 
         <div class="time" v-show="appStore.displayMode === 'full'">

@@ -57,6 +57,24 @@ export const ChatsAPI = {
       O: Chat,
       kind: MethodKind.Unary,
     },
+    /**
+     * @generated from rpc cc.ChatsAPI.SetBotState
+     */
+    setBotState: {
+      name: "SetBotState",
+      I: Chat,
+      O: Chat,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.ChatsAPI.GetBotState
+     */
+    getBotState: {
+      name: "GetBotState",
+      I: Chat,
+      O: Chat,
+      kind: MethodKind.Unary,
+    },
   }
 };
 
@@ -126,6 +144,24 @@ export const UsersAPI = {
     fetchDefaults: {
       name: "FetchDefaults",
       I: Empty,
+      O: Defaults,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.UsersAPI.GetConfig
+     */
+    getConfig: {
+      name: "GetConfig",
+      I: Empty,
+      O: Defaults,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.UsersAPI.SetConfig
+     */
+    setConfig: {
+      name: "SetConfig",
+      I: Defaults,
       O: Defaults,
       kind: MethodKind.Unary,
     },

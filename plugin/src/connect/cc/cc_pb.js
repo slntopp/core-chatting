@@ -99,6 +99,7 @@ export const Chat = proto3.makeMessageType(
     { no: 10, name: "status", kind: "enum", T: proto3.getEnumType(Status) },
     { no: 11, name: "department", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 12, name: "responsible", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 13, name: "bot_state", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
   ],
 );
 

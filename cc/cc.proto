@@ -48,6 +48,7 @@ message Chat {
 
   string department = 11;
   optional string responsible = 12;
+  map<string, google.protobuf.Value> bot_state = 13;
 }
 
 message Chats { repeated Chat chats = 1; }
@@ -60,6 +61,9 @@ service ChatsAPI {
   rpc List(Empty) returns (Chats);
 
   rpc Delete(Chat) returns (Chat);
+
+  rpc SetBotState(Chat) returns (Chat);
+  rpc GetBotState(Chat) returns (Chat);
 }
 
 enum Kind {
@@ -144,6 +148,9 @@ message Users { repeated User users = 1; }
 service UsersAPI {
   rpc Me(Empty) returns (User);
   rpc FetchDefaults(Empty) returns (Defaults);
+
+  rpc GetConfig(Empty) returns (Defaults);
+  rpc SetConfig(Defaults) returns (Defaults);
 
   // Resolves given Users data by their UUIDs
   // And returns all accessible Users for Requestor

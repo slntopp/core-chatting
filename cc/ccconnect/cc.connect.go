@@ -49,6 +49,10 @@ const (
 	ChatsAPIListProcedure = "/cc.ChatsAPI/List"
 	// ChatsAPIDeleteProcedure is the fully-qualified name of the ChatsAPI's Delete RPC.
 	ChatsAPIDeleteProcedure = "/cc.ChatsAPI/Delete"
+	// ChatsAPISetBotStateProcedure is the fully-qualified name of the ChatsAPI's SetBotState RPC.
+	ChatsAPISetBotStateProcedure = "/cc.ChatsAPI/SetBotState"
+	// ChatsAPIGetBotStateProcedure is the fully-qualified name of the ChatsAPI's GetBotState RPC.
+	ChatsAPIGetBotStateProcedure = "/cc.ChatsAPI/GetBotState"
 	// MessagesAPIGetProcedure is the fully-qualified name of the MessagesAPI's Get RPC.
 	MessagesAPIGetProcedure = "/cc.MessagesAPI/Get"
 	// MessagesAPISendProcedure is the fully-qualified name of the MessagesAPI's Send RPC.
@@ -61,6 +65,10 @@ const (
 	UsersAPIMeProcedure = "/cc.UsersAPI/Me"
 	// UsersAPIFetchDefaultsProcedure is the fully-qualified name of the UsersAPI's FetchDefaults RPC.
 	UsersAPIFetchDefaultsProcedure = "/cc.UsersAPI/FetchDefaults"
+	// UsersAPIGetConfigProcedure is the fully-qualified name of the UsersAPI's GetConfig RPC.
+	UsersAPIGetConfigProcedure = "/cc.UsersAPI/GetConfig"
+	// UsersAPISetConfigProcedure is the fully-qualified name of the UsersAPI's SetConfig RPC.
+	UsersAPISetConfigProcedure = "/cc.UsersAPI/SetConfig"
 	// UsersAPIResolveProcedure is the fully-qualified name of the UsersAPI's Resolve RPC.
 	UsersAPIResolveProcedure = "/cc.UsersAPI/Resolve"
 	// UsersAPIGetMembersProcedure is the fully-qualified name of the UsersAPI's GetMembers RPC.
@@ -76,6 +84,8 @@ type ChatsAPIClient interface {
 	Get(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	List(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Chats], error)
 	Delete(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
+	SetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
+	GetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 }
 
 // NewChatsAPIClient constructs a client for the cc.ChatsAPI service. By default, it uses the
@@ -113,16 +123,28 @@ func NewChatsAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 			baseURL+ChatsAPIDeleteProcedure,
 			opts...,
 		),
+		setBotState: connect.NewClient[cc.Chat, cc.Chat](
+			httpClient,
+			baseURL+ChatsAPISetBotStateProcedure,
+			opts...,
+		),
+		getBotState: connect.NewClient[cc.Chat, cc.Chat](
+			httpClient,
+			baseURL+ChatsAPIGetBotStateProcedure,
+			opts...,
+		),
 	}
 }
 
 // chatsAPIClient implements ChatsAPIClient.
 type chatsAPIClient struct {
-	create *connect.Client[cc.Chat, cc.Chat]
-	update *connect.Client[cc.Chat, cc.Chat]
-	get    *connect.Client[cc.Chat, cc.Chat]
-	list   *connect.Client[cc.Empty, cc.Chats]
-	delete *connect.Client[cc.Chat, cc.Chat]
+	create      *connect.Client[cc.Chat, cc.Chat]
+	update      *connect.Client[cc.Chat, cc.Chat]
+	get         *connect.Client[cc.Chat, cc.Chat]
+	list        *connect.Client[cc.Empty, cc.Chats]
+	delete      *connect.Client[cc.Chat, cc.Chat]
+	setBotState *connect.Client[cc.Chat, cc.Chat]
+	getBotState *connect.Client[cc.Chat, cc.Chat]
 }
 
 // Create calls cc.ChatsAPI.Create.
@@ -150,6 +172,16 @@ func (c *chatsAPIClient) Delete(ctx context.Context, req *connect.Request[cc.Cha
 	return c.delete.CallUnary(ctx, req)
 }
 
+// SetBotState calls cc.ChatsAPI.SetBotState.
+func (c *chatsAPIClient) SetBotState(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+	return c.setBotState.CallUnary(ctx, req)
+}
+
+// GetBotState calls cc.ChatsAPI.GetBotState.
+func (c *chatsAPIClient) GetBotState(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+	return c.getBotState.CallUnary(ctx, req)
+}
+
 // ChatsAPIHandler is an implementation of the cc.ChatsAPI service.
 type ChatsAPIHandler interface {
 	Create(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
@@ -157,6 +189,8 @@ type ChatsAPIHandler interface {
 	Get(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	List(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Chats], error)
 	Delete(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
+	SetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
+	GetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 }
 
 // NewChatsAPIHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -190,6 +224,16 @@ func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect.HandlerOption) (str
 		svc.Delete,
 		opts...,
 	)
+	chatsAPISetBotStateHandler := connect.NewUnaryHandler(
+		ChatsAPISetBotStateProcedure,
+		svc.SetBotState,
+		opts...,
+	)
+	chatsAPIGetBotStateHandler := connect.NewUnaryHandler(
+		ChatsAPIGetBotStateProcedure,
+		svc.GetBotState,
+		opts...,
+	)
 	return "/cc.ChatsAPI/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ChatsAPICreateProcedure:
@@ -202,6 +246,10 @@ func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect.HandlerOption) (str
 			chatsAPIListHandler.ServeHTTP(w, r)
 		case ChatsAPIDeleteProcedure:
 			chatsAPIDeleteHandler.ServeHTTP(w, r)
+		case ChatsAPISetBotStateProcedure:
+			chatsAPISetBotStateHandler.ServeHTTP(w, r)
+		case ChatsAPIGetBotStateProcedure:
+			chatsAPIGetBotStateHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -229,6 +277,14 @@ func (UnimplementedChatsAPIHandler) List(context.Context, *connect.Request[cc.Em
 
 func (UnimplementedChatsAPIHandler) Delete(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.Delete is not implemented"))
+}
+
+func (UnimplementedChatsAPIHandler) SetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.SetBotState is not implemented"))
+}
+
+func (UnimplementedChatsAPIHandler) GetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.GetBotState is not implemented"))
 }
 
 // MessagesAPIClient is a client for the cc.MessagesAPI service.
@@ -373,6 +429,8 @@ func (UnimplementedMessagesAPIHandler) Delete(context.Context, *connect.Request[
 type UsersAPIClient interface {
 	Me(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.User], error)
 	FetchDefaults(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Defaults], error)
+	GetConfig(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Defaults], error)
+	SetConfig(context.Context, *connect.Request[cc.Defaults]) (*connect.Response[cc.Defaults], error)
 	// Resolves given Users data by their UUIDs
 	// And returns all accessible Users for Requestor
 	Resolve(context.Context, *connect.Request[cc.Users]) (*connect.Response[cc.Users], error)
@@ -399,6 +457,16 @@ func NewUsersAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 			baseURL+UsersAPIFetchDefaultsProcedure,
 			opts...,
 		),
+		getConfig: connect.NewClient[cc.Empty, cc.Defaults](
+			httpClient,
+			baseURL+UsersAPIGetConfigProcedure,
+			opts...,
+		),
+		setConfig: connect.NewClient[cc.Defaults, cc.Defaults](
+			httpClient,
+			baseURL+UsersAPISetConfigProcedure,
+			opts...,
+		),
 		resolve: connect.NewClient[cc.Users, cc.Users](
 			httpClient,
 			baseURL+UsersAPIResolveProcedure,
@@ -416,6 +484,8 @@ func NewUsersAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 type usersAPIClient struct {
 	me            *connect.Client[cc.Empty, cc.User]
 	fetchDefaults *connect.Client[cc.Empty, cc.Defaults]
+	getConfig     *connect.Client[cc.Empty, cc.Defaults]
+	setConfig     *connect.Client[cc.Defaults, cc.Defaults]
 	resolve       *connect.Client[cc.Users, cc.Users]
 	getMembers    *connect.Client[cc.Empty, cc.Users]
 }
@@ -428,6 +498,16 @@ func (c *usersAPIClient) Me(ctx context.Context, req *connect.Request[cc.Empty])
 // FetchDefaults calls cc.UsersAPI.FetchDefaults.
 func (c *usersAPIClient) FetchDefaults(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.Defaults], error) {
 	return c.fetchDefaults.CallUnary(ctx, req)
+}
+
+// GetConfig calls cc.UsersAPI.GetConfig.
+func (c *usersAPIClient) GetConfig(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.Defaults], error) {
+	return c.getConfig.CallUnary(ctx, req)
+}
+
+// SetConfig calls cc.UsersAPI.SetConfig.
+func (c *usersAPIClient) SetConfig(ctx context.Context, req *connect.Request[cc.Defaults]) (*connect.Response[cc.Defaults], error) {
+	return c.setConfig.CallUnary(ctx, req)
 }
 
 // Resolve calls cc.UsersAPI.Resolve.
@@ -444,6 +524,8 @@ func (c *usersAPIClient) GetMembers(ctx context.Context, req *connect.Request[cc
 type UsersAPIHandler interface {
 	Me(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.User], error)
 	FetchDefaults(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Defaults], error)
+	GetConfig(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Defaults], error)
+	SetConfig(context.Context, *connect.Request[cc.Defaults]) (*connect.Response[cc.Defaults], error)
 	// Resolves given Users data by their UUIDs
 	// And returns all accessible Users for Requestor
 	Resolve(context.Context, *connect.Request[cc.Users]) (*connect.Response[cc.Users], error)
@@ -466,6 +548,16 @@ func NewUsersAPIHandler(svc UsersAPIHandler, opts ...connect.HandlerOption) (str
 		svc.FetchDefaults,
 		opts...,
 	)
+	usersAPIGetConfigHandler := connect.NewUnaryHandler(
+		UsersAPIGetConfigProcedure,
+		svc.GetConfig,
+		opts...,
+	)
+	usersAPISetConfigHandler := connect.NewUnaryHandler(
+		UsersAPISetConfigProcedure,
+		svc.SetConfig,
+		opts...,
+	)
 	usersAPIResolveHandler := connect.NewUnaryHandler(
 		UsersAPIResolveProcedure,
 		svc.Resolve,
@@ -482,6 +574,10 @@ func NewUsersAPIHandler(svc UsersAPIHandler, opts ...connect.HandlerOption) (str
 			usersAPIMeHandler.ServeHTTP(w, r)
 		case UsersAPIFetchDefaultsProcedure:
 			usersAPIFetchDefaultsHandler.ServeHTTP(w, r)
+		case UsersAPIGetConfigProcedure:
+			usersAPIGetConfigHandler.ServeHTTP(w, r)
+		case UsersAPISetConfigProcedure:
+			usersAPISetConfigHandler.ServeHTTP(w, r)
 		case UsersAPIResolveProcedure:
 			usersAPIResolveHandler.ServeHTTP(w, r)
 		case UsersAPIGetMembersProcedure:
@@ -501,6 +597,14 @@ func (UnimplementedUsersAPIHandler) Me(context.Context, *connect.Request[cc.Empt
 
 func (UnimplementedUsersAPIHandler) FetchDefaults(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Defaults], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.UsersAPI.FetchDefaults is not implemented"))
+}
+
+func (UnimplementedUsersAPIHandler) GetConfig(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Defaults], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.UsersAPI.GetConfig is not implemented"))
+}
+
+func (UnimplementedUsersAPIHandler) SetConfig(context.Context, *connect.Request[cc.Defaults]) (*connect.Response[cc.Defaults], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.UsersAPI.SetConfig is not implemented"))
 }
 
 func (UnimplementedUsersAPIHandler) Resolve(context.Context, *connect.Request[cc.Users]) (*connect.Response[cc.Users], error) {

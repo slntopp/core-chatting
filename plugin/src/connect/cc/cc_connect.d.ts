@@ -57,6 +57,24 @@ export declare const ChatsAPI: {
       readonly O: typeof Chat,
       readonly kind: MethodKind.Unary,
     },
+    /**
+     * @generated from rpc cc.ChatsAPI.SetBotState
+     */
+    readonly setBotState: {
+      readonly name: "SetBotState",
+      readonly I: typeof Chat,
+      readonly O: typeof Chat,
+      readonly kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.ChatsAPI.GetBotState
+     */
+    readonly getBotState: {
+      readonly name: "GetBotState",
+      readonly I: typeof Chat,
+      readonly O: typeof Chat,
+      readonly kind: MethodKind.Unary,
+    },
   }
 };
 
@@ -126,6 +144,24 @@ export declare const UsersAPI: {
     readonly fetchDefaults: {
       readonly name: "FetchDefaults",
       readonly I: typeof Empty,
+      readonly O: typeof Defaults,
+      readonly kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.UsersAPI.GetConfig
+     */
+    readonly getConfig: {
+      readonly name: "GetConfig",
+      readonly I: typeof Empty,
+      readonly O: typeof Defaults,
+      readonly kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.UsersAPI.SetConfig
+     */
+    readonly setConfig: {
+      readonly name: "SetConfig",
+      readonly I: typeof Defaults,
       readonly O: typeof Defaults,
       readonly kind: MethodKind.Unary,
     },

@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from core_chatting.cc import cc_pb2 as cc_dot_cc__pb2
+from cc import cc_pb2 as cc_dot_cc__pb2
 
 
 class ChatsAPIStub(object):
@@ -36,6 +36,16 @@ class ChatsAPIStub(object):
                 )
         self.Delete = channel.unary_unary(
                 '/cc.ChatsAPI/Delete',
+                request_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
+                response_deserializer=cc_dot_cc__pb2.Chat.FromString,
+                )
+        self.SetBotState = channel.unary_unary(
+                '/cc.ChatsAPI/SetBotState',
+                request_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
+                response_deserializer=cc_dot_cc__pb2.Chat.FromString,
+                )
+        self.GetBotState = channel.unary_unary(
+                '/cc.ChatsAPI/GetBotState',
                 request_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Chat.FromString,
                 )
@@ -74,6 +84,18 @@ class ChatsAPIServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SetBotState(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetBotState(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ChatsAPIServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -99,6 +121,16 @@ def add_ChatsAPIServicer_to_server(servicer, server):
             ),
             'Delete': grpc.unary_unary_rpc_method_handler(
                     servicer.Delete,
+                    request_deserializer=cc_dot_cc__pb2.Chat.FromString,
+                    response_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
+            ),
+            'SetBotState': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetBotState,
+                    request_deserializer=cc_dot_cc__pb2.Chat.FromString,
+                    response_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
+            ),
+            'GetBotState': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetBotState,
                     request_deserializer=cc_dot_cc__pb2.Chat.FromString,
                     response_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
             ),
@@ -192,6 +224,40 @@ class ChatsAPI(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/cc.ChatsAPI/Delete',
+            cc_dot_cc__pb2.Chat.SerializeToString,
+            cc_dot_cc__pb2.Chat.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SetBotState(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cc.ChatsAPI/SetBotState',
+            cc_dot_cc__pb2.Chat.SerializeToString,
+            cc_dot_cc__pb2.Chat.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetBotState(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cc.ChatsAPI/GetBotState',
             cc_dot_cc__pb2.Chat.SerializeToString,
             cc_dot_cc__pb2.Chat.FromString,
             options, channel_credentials,
@@ -377,6 +443,16 @@ class UsersAPIStub(object):
                 request_serializer=cc_dot_cc__pb2.Empty.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Defaults.FromString,
                 )
+        self.GetConfig = channel.unary_unary(
+                '/cc.UsersAPI/GetConfig',
+                request_serializer=cc_dot_cc__pb2.Empty.SerializeToString,
+                response_deserializer=cc_dot_cc__pb2.Defaults.FromString,
+                )
+        self.SetConfig = channel.unary_unary(
+                '/cc.UsersAPI/SetConfig',
+                request_serializer=cc_dot_cc__pb2.Defaults.SerializeToString,
+                response_deserializer=cc_dot_cc__pb2.Defaults.FromString,
+                )
         self.Resolve = channel.unary_unary(
                 '/cc.UsersAPI/Resolve',
                 request_serializer=cc_dot_cc__pb2.Users.SerializeToString,
@@ -399,6 +475,18 @@ class UsersAPIServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def FetchDefaults(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetConfig(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SetConfig(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -429,6 +517,16 @@ def add_UsersAPIServicer_to_server(servicer, server):
             'FetchDefaults': grpc.unary_unary_rpc_method_handler(
                     servicer.FetchDefaults,
                     request_deserializer=cc_dot_cc__pb2.Empty.FromString,
+                    response_serializer=cc_dot_cc__pb2.Defaults.SerializeToString,
+            ),
+            'GetConfig': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetConfig,
+                    request_deserializer=cc_dot_cc__pb2.Empty.FromString,
+                    response_serializer=cc_dot_cc__pb2.Defaults.SerializeToString,
+            ),
+            'SetConfig': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetConfig,
+                    request_deserializer=cc_dot_cc__pb2.Defaults.FromString,
                     response_serializer=cc_dot_cc__pb2.Defaults.SerializeToString,
             ),
             'Resolve': grpc.unary_unary_rpc_method_handler(
@@ -481,6 +579,40 @@ class UsersAPI(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/cc.UsersAPI/FetchDefaults',
             cc_dot_cc__pb2.Empty.SerializeToString,
+            cc_dot_cc__pb2.Defaults.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetConfig(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cc.UsersAPI/GetConfig',
+            cc_dot_cc__pb2.Empty.SerializeToString,
+            cc_dot_cc__pb2.Defaults.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SetConfig(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cc.UsersAPI/SetConfig',
+            cc_dot_cc__pb2.Defaults.SerializeToString,
             cc_dot_cc__pb2.Defaults.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -243,6 +243,11 @@ export declare class Chat extends Message$1<Chat> {
    */
   responsible?: string;
 
+  /**
+   * @generated from field: map<string, google.protobuf.Value> bot_state = 13;
+   */
+  botState: { [key: string]: Value };
+
   constructor(data?: PartialMessage<Chat>);
 
   static readonly runtime: typeof proto3;

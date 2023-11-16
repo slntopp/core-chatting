@@ -37,6 +37,40 @@ func (s *UsersServer) FetchDefaults(ctx context.Context, req *connect.Request[cc
 	return resp, nil
 }
 
+func (s *UsersServer) GetConfig(ctx context.Context, req *connect.Request[cc.Empty]) (
+	*connect.Response[cc.Defaults], error) {
+	log := s.log.Named("GetConfig")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	defaults, err := core.Config()
+	if err != nil {
+		s.log.Error("Failed get config", zap.Error(err))
+		return nil, fmt.Errorf("failed to fetch defaults: %w", err)
+	}
+
+	resp := connect.NewResponse[cc.Defaults](defaults)
+
+	return resp, nil
+}
+
+func (s *UsersServer) SetConfig(ctx context.Context, req *connect.Request[cc.Defaults]) (
+	*connect.Response[cc.Defaults], error) {
+	log := s.log.Named("Set config")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	defaults, err := core.SetConfig(requestor, req.Msg)
+	if err != nil {
+		s.log.Error("Failed set config", zap.Error(err))
+		return nil, fmt.Errorf("failed to fetch defaults: %w", err)
+	}
+
+	resp := connect.NewResponse[cc.Defaults](defaults)
+
+	return resp, nil
+}
+
 func (s *UsersServer) Resolve(ctx context.Context, req *connect.Request[cc.Users]) (*connect.Response[cc.Users], error) {
 	log := s.log.Named("Resolve")
 	log.Debug("Request received", zap.Any("req", req.Msg))

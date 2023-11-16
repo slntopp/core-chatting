@@ -21,7 +21,7 @@ func HandleSpecialNotify(ctx context.Context, log *zap.Logger, ps *PubSub, msg *
 		go ps.Pub(ctx, admin, adminEvent)
 	}
 
-	go ps.PubGateway(ctx, adminEvent, chat.GetGateways())
+	go ps.PubGateway(ctx, adminEvent, append(chat.GetGateways(), "whmcs"))
 
 	diffKinds := msg.GetKind() != oldMsg.GetKind()
 	diffReviews := msg.GetUnderReview() != oldMsg.GetUnderReview()
@@ -62,7 +62,7 @@ func HandleNotifyMessage(ctx context.Context, log *zap.Logger, ps *PubSub, msg *
 		go ps.Pub(ctx, admin, event)
 	}
 
-	go ps.PubGateway(ctx, event, chat.GetGateways())
+	go ps.PubGateway(ctx, event, append(chat.GetGateways(), "whmcs"))
 }
 
 func HandleNotifyChat(ctx context.Context, log *zap.Logger, ps *PubSub, chat *cc.Chat, eventType cc.EventType) {
@@ -81,7 +81,5 @@ func HandleNotifyChat(ctx context.Context, log *zap.Logger, ps *PubSub, chat *cc
 		go ps.Pub(ctx, admin, event)
 	}
 
-	chat.Gateways = append(chat.Gateways, "whmcs")
-
-	go ps.PubGateway(ctx, event, chat.GetGateways())
+	go ps.PubGateway(ctx, event, append(chat.GetGateways(), "whmcs"))
 }

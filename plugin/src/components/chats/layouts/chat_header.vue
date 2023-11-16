@@ -197,7 +197,7 @@
 <script setup lang="ts">
 import {computed, defineAsyncComponent, ref, toRefs} from "vue";
 import {NButton, NCard, NDivider, NIcon, NList, NListItem, NModal, NPopover, NSpace, NSpin, NTag, NText, NTooltip, SelectOption, useNotification} from "naive-ui";
-import {Chat, Message, User} from "../../../connect/cc/cc_pb";
+import {Chat, Kind, Message, User} from "../../../connect/cc/cc_pb";
 import {useCcStore} from "../../../store/chatting.ts";
 import {useAppStore} from "../../../store/app";
 import {useRouter} from "vue-router";
@@ -320,7 +320,7 @@ const commands = computed(() => {
 })
 
 const sendCommand = (content: string) => {
-  store.current_message = new Message({ content })
+  store.current_message = new Message({ content, kind: Kind.FOR_BOT })
   store.handle_send(chat.value.uuid)
   commandsButton.value.onClick()
 }

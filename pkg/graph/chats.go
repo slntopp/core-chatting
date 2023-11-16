@@ -310,6 +310,14 @@ FOR c in @@chats
 	UPDATE c with {meta: {data: {@gate : @null_value }}} in @@chats
 `
 
+const resetState = `
+UPDATE DOCUMENT(@key) WITH { bot_state: null } IN @@chats 
+`
+
+const setState = `
+UPDATE DOCUMENT(@key) WITH { bot_state: @bot_state } IN @@chats 
+`
+
 func (c *ChatsController) DeleteGateways(ctx context.Context, fields map[string]*structpb.Value) error {
 	for key, val := range fields {
 		numValue := val.GetNumberValue()
@@ -334,4 +342,32 @@ func (c *ChatsController) DeleteGateways(ctx context.Context, fields map[string]
 		}
 	}
 	return nil
+}
+
+func (c *ChatsController) SetBotState(ctx context.Context, chat *cc.Chat) (*cc.Chat, error) {
+	log := c.log.Named("Set state")
+	log.Debug("Req received")
+
+	_, err := c.col.Database().Query(ctx, resetState, map[string]interface{}{
+		"key":    driver.NewDocumentID(CHATS_COLLECTION, chat.GetUuid()),
+		"@chats": CHATS_COLLECTION,
+	})
+
+	if err != nil {
+		log.Error("Failed to reset state", zap.Error(err))
+		return nil, err
+	}
+
+	_, err = c.col.Database().Query(ctx, setState, map[string]interface{}{
+		"key":       driver.NewDocumentID(CHATS_COLLECTION, chat.GetUuid()),
+		"@chats":    CHATS_COLLECTION,
+		"bot_state": chat.GetBotState(),
+	})
+
+	if err != nil {
+		log.Error("Failed to set state", zap.Error(err))
+		return nil, err
+	}
+
+	return chat, nil
 }

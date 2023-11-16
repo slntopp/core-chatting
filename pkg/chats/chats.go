@@ -176,3 +176,50 @@ func (s *ChatsServer) Delete(ctx context.Context, req *connect.Request[cc.Chat])
 
 	return resp, nil
 }
+
+func (s *ChatsServer) SetBotState(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+	log := s.log.Named("SetBotState")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	chat, err := s.ctrl.Get(ctx, req.Msg.Uuid, requestor)
+	if err != nil {
+		return nil, err
+	}
+
+	if chat.Role < cc.Role_OWNER {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
+	}
+
+	chat, err = s.ctrl.SetBotState(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+
+	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_UPDATED)
+
+	resp := connect.NewResponse[cc.Chat](chat)
+
+	return resp, nil
+}
+
+func (s *ChatsServer) GetBotState(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+	log := s.log.Named("GetBotState")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	chat, err := s.ctrl.Get(ctx, req.Msg.Uuid, requestor)
+	if err != nil {
+		return nil, err
+	}
+
+	if chat.Role == cc.Role_NOACCESS {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
+	}
+
+	resp := connect.NewResponse[cc.Chat](chat)
+
+	return resp, nil
+}

@@ -81,5 +81,7 @@ func HandleNotifyChat(ctx context.Context, log *zap.Logger, ps *PubSub, chat *cc
 		go ps.Pub(ctx, admin, event)
 	}
 
+	chat.Gateways = append(chat.Gateways, "whmcs")
+
 	go ps.PubGateway(ctx, event, chat.GetGateways())
 }

@@ -66,14 +66,14 @@ export declare enum Kind {
   DEFAULT = 0,
 
   /**
-   * @generated from enum value: FOR_BOT = 1;
+   * @generated from enum value: ADMIN_ONLY = 1;
    */
-  FOR_BOT = 1,
+  ADMIN_ONLY = 1,
 
   /**
-   * @generated from enum value: ADMIN_ONLY = 2;
+   * @generated from enum value: FOR_BOT = 2;
    */
-  ADMIN_ONLY = 2,
+  FOR_BOT = 2,
 }
 
 /**

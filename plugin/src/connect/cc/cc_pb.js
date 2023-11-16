@@ -38,8 +38,8 @@ export const Kind = proto3.makeEnum(
   "cc.Kind",
   [
     {no: 0, name: "DEFAULT"},
-    {no: 1, name: "FOR_BOT"},
-    {no: 2, name: "ADMIN_ONLY"},
+    {no: 1, name: "ADMIN_ONLY"},
+    {no: 2, name: "FOR_BOT"},
   ],
 );
 

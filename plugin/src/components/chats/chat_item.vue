@@ -19,7 +19,7 @@
         >
           <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
             <template #trigger>
-              <img height="24" :src="`/${gateway}.png`" :alt="gateway">
+              <img height="24" :src="`/assets/icons/${gateway}.png`" :alt="gateway">
             </template>
             {{ gateway }}
           </n-tooltip>

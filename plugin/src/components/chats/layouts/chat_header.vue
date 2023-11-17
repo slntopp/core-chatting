@@ -92,7 +92,7 @@
     <n-space :wrap-item="false" v-if="chat.gateways.length > 0">
       <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
         <template #trigger>
-          <img height="24" :src="`/assets/icons/${gateway}.png`" :alt="gateway">
+          <img height="24" :src="`assets/icons/${gateway}.png`" :alt="gateway">
         </template>
         {{ gateway }}
       </n-tooltip>
@@ -320,8 +320,11 @@ const commands = computed(() => {
 })
 
 const sendCommand = (content: string) => {
-  store.current_message = new Message({ content, kind: Kind.FOR_BOT })
-  store.handle_send(chat.value.uuid)
+  store.send_message(new Message({
+    content,
+    kind: Kind.FOR_BOT,
+    chat: router.currentRoute.value.params.uuid as string
+  }))
   commandsButton.value.onClick()
 }
 

@@ -98,6 +98,10 @@ export const useCcStore = defineStore('cc', () => {
         return users_c.fetchDefaults(new Empty())
     }
 
+    function update_defaults(config: Defaults): Promise<Defaults> {
+        return users_c.setConfig(config)
+    }
+
     async function resolve(req_users: string[] = []): Promise<Users> {
         let result = await users_c.resolve(new Users({ users: req_users.map((uuid) => new User({ uuid })) }))
         console.debug('Got Users', result.users)
@@ -278,7 +282,7 @@ export const useCcStore = defineStore('cc', () => {
         messages, chat_messages, get_messages,
         send_message, update_message, delete_message,
 
-        fetch_defaults, resolve
+        fetch_defaults, update_defaults, resolve
     }
 })
 

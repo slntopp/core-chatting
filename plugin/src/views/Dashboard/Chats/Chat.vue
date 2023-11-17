@@ -274,13 +274,12 @@ const sendMode = ref('default')
 const textareaColors = computed(() => {
   const color = colorBySendMode.value
 
-  if (!color) return ''
   return `
-    --n-caret-color: ${color};
-    --n-color-focus: ${color}1a;
+    --n-caret-color: ${color ?? '#63e2b7'};
+    --n-color-focus: ${color ?? '#63e2b7'}1a;
     --n-border: 1px solid ${color};
-    --n-border-hover: 1px solid ${color};
-    --n-border-focus: 1px solid ${color};
+    --n-border-hover: 1px solid ${color ?? '#63e2b7'};
+    --n-border-focus: 1px solid ${color ?? '#63e2b7'};
   `
 })
 

@@ -50,10 +50,14 @@ function handler() {
 
     store.conf = data
 
-    router.push('/dashboard')
+    if (store.conf?.params?.redirect) {
+        router.push(`/${store.conf.params.redirect}`)
+    } else {
+        router.push('/dashboard')
+    }
 
     return h(NAlert, {
         title: 'Success', type: 'success', style: { minWidth: '30vw' }
-    }, () => 'Redirecting to dashboard...')
+    }, () => `Redirecting to ${store.conf?.params?.redirect || 'dashboard'}...`)
 }
 </script>

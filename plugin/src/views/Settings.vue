@@ -298,11 +298,10 @@ const metricsOptions = computed(() => ({
 
       onClick(metricIndex: number) {
         if (inputs.metrics.index === metricIndex) {
-          inputs.metrics.index = -1
+          inputs.metrics = { index: -1, key: '', value: 0 }
         } else {
           inputs.metrics.index = metricIndex
         }
-        inputs.metrics = { index: -1, key: '', value: 0 }
       },
       onSave(i: number) {
         config.metrics[i].options.push(new Option({

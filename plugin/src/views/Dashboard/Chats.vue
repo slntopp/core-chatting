@@ -307,6 +307,7 @@ const chats = computed(() => {
       chat.admins.includes(uuid)
     )
     let isOptionsIncluded: optionsIncludedType = {}
+    let isAccountOwner = true
 
     Object.entries(metricsOptions.value).forEach(([key, value]) => {
       if (value.length < 1) {
@@ -324,9 +325,13 @@ const chats = computed(() => {
     if (checkedAdmins.value.length < 1) {
       isAdminsExist = true
     }
+    if (appStore.conf?.params?.filterByAccount) {
+      isAccountOwner = [...chat.users, ...chat.admins]
+        .includes(appStore.conf.params.filterByAccount)
+    }
 
     return filterChat(chat, searchParam.value) &&
-      isIncluded && isAdminsExist &&
+      isIncluded && isAdminsExist && isAccountOwner &&
       Object.values(isOptionsIncluded).every((value) => value)
   })
 

@@ -92,7 +92,7 @@
     <n-space :wrap-item="false" v-if="chat.gateways.length > 0">
       <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
         <template #trigger>
-          <img height="24" :src="`assets/icons/${gateway}.png`" :alt="gateway">
+          <img height="24" :src="getImageUrl(gateway)" :alt="gateway">
         </template>
         {{ gateway }}
       </n-tooltip>
@@ -206,7 +206,7 @@ import UserAvatar from "../../ui/user_avatar.vue";
 import MembersDropdown from "../../users/members_dropdown.vue";
 import useDefaults from "../../../hooks/useDefaults.ts";
 import MemberSelect from "../../users/member_select.vue";
-import {addToClipboard, getRelativeTime} from "../../../functions.ts";
+import {addToClipboard, getImageUrl, getRelativeTime} from "../../../functions.ts";
 import ChatStatus from "../chat_status.vue";
 
 const EditIcon = defineAsyncComponent(() => import('@vicons/ionicons5/PencilSharp'));

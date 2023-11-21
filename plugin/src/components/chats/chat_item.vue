@@ -19,7 +19,7 @@
         >
           <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
             <template #trigger>
-              <img height="24" :src="`assets/icons/${gateway}.png`" :alt="gateway">
+              <img height="24" :src="getImageUrl(gateway)" :alt="gateway">
             </template>
             {{ gateway }}
           </n-tooltip>
@@ -66,7 +66,7 @@ import {useRouter} from "vue-router";
 import {NBadge, NIcon, NListItem, NSpace, NText, NTooltip, useNotification} from "naive-ui";
 import {Chat} from "../../connect/cc/cc_pb";
 import {useCcStore} from "../../store/chatting.ts";
-import {addToClipboard} from "../../functions.ts";
+import {addToClipboard,getImageUrl} from "../../functions.ts";
 import UserAvatar from "../ui/user_avatar.vue";
 import ChatStatus from "./chat_status.vue";
 import {useAppStore} from "../../store/app.ts";
@@ -130,7 +130,7 @@ const lastUpdate = computed(() =>
   Number(chat.value.meta?.lastMessage?.edited || chat.value.meta?.lastMessage?.sent)
 )
 
-const goToChat = () => {
+function goToChat() {
   router.push({ name: 'Chat', params: { uuid: uuid.value } })
 
   window.top?.postMessage({
@@ -139,7 +139,7 @@ const goToChat = () => {
   }, '*')
 }
 
-const openUser = (uuid: string) => {
+function openUser(uuid: string) {
   window.top?.postMessage({ type: 'open-user', value: { uuid } }, '*')
 }
 </script>

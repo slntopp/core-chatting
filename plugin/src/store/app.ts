@@ -7,6 +7,9 @@ export interface PluginConf {
     theme: string
     title: string
     token: string
+    params: {
+        [key: string]: any
+    }
     vars: {
         [key: string]: string
     }

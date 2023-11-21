@@ -22,6 +22,12 @@ export function addToClipboard (text: string, notification?: NotificationApi) {
   }
 }
 
+export function getImageUrl(name: string) {
+  const source = import.meta.glob(`/**/icons/*.png`)
+  
+  return Object.keys(source).find((key) => key.includes(`icons/${name}`))
+}
+
 export function getRelativeTime(timestamp: number, now: number, isLifetime?: boolean) {
   const timeDifference = (now - timestamp) / 1000;
   const minutesDifference = Math.floor(timeDifference / 60);

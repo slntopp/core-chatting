@@ -36,6 +36,23 @@
         @add="startAddMembers"
         @delete="deleteMember"
       />
+
+      <n-divider vertical/>
+      <n-tooltip>
+        <template #trigger>
+          <n-select
+            label-field="title"
+            value-field="uuid"
+            placeholder="Responsible"
+            style="min-width: 200px; width: 100%"
+            :value="chat.responsible"
+            :options="users"
+            @update:value="changeResponsible"
+          />
+        </template>
+        Responsible
+      </n-tooltip>
+
       <n-divider vertical/>
       <chat-status :chat="chat" />
 
@@ -171,8 +188,8 @@
 
   <n-modal v-model:show="isEdit">
     <n-card title="Edit chat options" :bordered="false" size="huge" role="dialog" aria-modal="true"
-            style="width: 500px; height: 500px">
-      <chat-options @close="isEdit = false" is-edit :chat="chat"/>
+            style="width: 500px; min-height: 500px">
+      <chat-options @close="isEdit = false" is-edit :chat="chat" style="width: 100%" />
     </n-card>
   </n-modal>
 
@@ -196,7 +213,12 @@
 
 <script setup lang="ts">
 import {computed, defineAsyncComponent, ref, toRefs} from "vue";
-import {NButton, NCard, NDivider, NIcon, NList, NListItem, NModal, NPopover, NSpace, NSpin, NTag, NText, NTooltip, SelectOption, useNotification} from "naive-ui";
+import {
+  NButton, NCard, NDivider, NIcon,
+  NList, NListItem, NModal, NPopover,
+  NSpace, NSpin, NTag, NText, NTooltip,
+  NSelect, SelectOption, useNotification
+} from "naive-ui";
 import {Chat, Kind, Message, User} from "../../../connect/cc/cc_pb";
 import {useCcStore} from "../../../store/chatting.ts";
 import {useAppStore} from "../../../store/app";
@@ -282,6 +304,12 @@ const metricsOptions = computed(() => {
 const getTagColor = (metric: Metric) => (
   `hue-rotate(${220 - 220 * (metric.value - metric.min) / (metric.max - metric.min)}deg)`
 )
+
+const changeResponsible = (uuid: string) => {
+  store.update_chat(new Chat({
+    ...chat.value, responsible: uuid
+  }))
+}
 
 const refresh = () => {
   if (chat) {
@@ -377,7 +405,7 @@ const lastUpdate = computed(() =>
 <style scoped>
 .grid {
   display: grid;
-  grid-template-columns: auto auto auto auto auto 1fr;
+  grid-template-columns: repeat(4, auto) 1fr;
   align-items: center;
   gap: 10px;
 }

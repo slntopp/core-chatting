@@ -1,5 +1,5 @@
 <template>
-  <chat-options min-height="100vh" />
+  <chat-options min-height="100vh" style="padding: 15px" />
 </template>
 
 <script setup lang="ts">

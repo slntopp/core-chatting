@@ -3,27 +3,37 @@
     placement="right"
     trigger="manual"
     :show="isVisible"
-    @clickoutside="isVisible = false"
+    @clickoutside="clickOutside"
   >
     <template #trigger>
       <n-text class="status" @click.stop="isVisible = !isVisible">
-        <span :style="({ color: statusColor } as StyleValue)">{{ getStatus(chat.status) }}</span>
+        <span :style="{ color: getStatusColor(chat.status) }">
+          {{ getStatus(chat.status) }}
+        </span>
         <n-icon> <swap-icon /> </n-icon>
       </n-text>
     </template>
 
     <div style="display: flex; gap: 5px">
-      <n-select style="min-width: 150px" v-model:value="status" :options="statuses" />
-      <n-button @click="updateChat">Ok</n-button>
+      <n-button
+        ghost
+        v-for="item of statuses"
+        :key="item.value"
+        :disabled="chat.status === item.value"
+        :color="getStatusColor(item.value)"
+        @click="updateChat(item.value)"
+      >
+        {{ item.label }}
+      </n-button>
     </div>
   </n-popover>
 </template>
 
 <script setup lang="ts">
-import { StyleValue, computed, defineAsyncComponent, ref } from 'vue'
-import { NIcon, NSelect, NButton, NPopover, NText } from 'naive-ui'
+import { computed, defineAsyncComponent, ref } from 'vue'
+import { NIcon, NButton, NPopover, NText } from 'naive-ui'
 import { Chat, Status } from '../../connect/cc/cc_pb'
-import { useCcStore } from '../../store/chatting'
+import { useCcStore } from '../../store/chatting.ts'
 
 interface ChatStatusProps {
   chat: Chat,
@@ -33,10 +43,11 @@ interface ChatStatusProps {
 const props = defineProps<ChatStatusProps>()
 const store = useCcStore()
 
-const SwapIcon = defineAsyncComponent(() => import('@vicons/ionicons5/SwapHorizontal'));
+const SwapIcon = defineAsyncComponent(
+  () => import('@vicons/ionicons5/SwapHorizontal')
+);
 
 const isVisible = ref(false)
-const status = ref(props.chat.status)
 
 const statuses = computed(() =>
   Object.keys(Status).filter((key) => isFinite(+key)).map((key) => ({
@@ -44,14 +55,14 @@ const statuses = computed(() =>
   }))
 )
 
-function updateChat () {
-  store.update_chat({ ...props.chat, status: status.value } as Chat)
+function updateChat (status: Status) {
+  store.update_chat({ ...props.chat, status } as Chat)
   isVisible.value = false
 }
 
-const statusColor = computed(() => {
-  if (props.hiddenColor) return null
-  switch (props.chat.status) {
+function getStatusColor (status: Status) {
+  if (props.hiddenColor) return undefined
+  switch (status) {
     case 0:
       return '#5084ff'
     case 1:
@@ -61,14 +72,18 @@ const statusColor = computed(() => {
     case 3:
       return '#e23535'
     default:
-      return null
+      return undefined
   }
-})
+}
 
 function getStatus (statusCode: Status | number) {
   const status = Status[statusCode].toLowerCase().replace('_', ' ')
 
   return `${status[0].toUpperCase()}${status.slice(1)}`
+}
+
+function clickOutside () {
+  setTimeout(() => { isVisible.value = false })
 }
 </script>
 

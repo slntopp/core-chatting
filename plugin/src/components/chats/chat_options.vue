@@ -12,7 +12,7 @@
       </n-text>
     </n-space>
 
-    <n-space vertical justify="start" style="max-width: 800px; margin: auto; padding-left: 16px">
+    <n-space vertical justify="start" style="max-width: 800px; margin: auto; width: 100%">
       <n-form :model="chat" ref="form" :rules="rules" label-placement="left">
         <n-form-item label="Topic" label-align="left" label-width="75">
           <n-input v-model:value="chat.topic" clearable placeholder="What are we chatting about?"/>
@@ -190,7 +190,7 @@ function submit() {
 }
 
 function getMetric(key: string) {
-  return chat.value.meta?.data[key].kind.value as ValueAtom
+  return chat.value.meta?.data[key]?.kind.value as ValueAtom
 }
 
 function setMetric(value: number, key: string) {

@@ -23,9 +23,13 @@ export function addToClipboard (text: string, notification?: NotificationApi) {
 }
 
 export function getImageUrl(name: string) {
-  const source = import.meta.glob(`/**/icons/*.png`)
-  
-  return Object.keys(source).find((key) => key.includes(`icons/${name}`))
+  const icons = import.meta.glob(`./**/icons/*.png`)
+  const source = Object.keys(icons).find((key) => key.includes(`icons/${name}`)) ?? ''
+
+  console.log('Icons:', icons);
+  console.log('URL:', import.meta.url);
+
+  return new URL(source, import.meta.url).href
 }
 
 export function getRelativeTime(timestamp: number, now: number, isLifetime?: boolean) {

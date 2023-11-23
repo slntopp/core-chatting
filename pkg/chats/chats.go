@@ -3,10 +3,9 @@ package chats
 import (
 	"context"
 	"errors"
-	"google.golang.org/protobuf/types/known/structpb"
-
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/graph"
@@ -218,6 +217,51 @@ func (s *ChatsServer) GetBotState(ctx context.Context, req *connect.Request[cc.C
 	if chat.Role == cc.Role_NOACCESS {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
 	}
+
+	resp := connect.NewResponse[cc.Chat](chat)
+
+	return resp, nil
+}
+
+func (s *ChatsServer) ChangeDepartment(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+	log := s.log.Named("GetBotState")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	chat, err := s.ctrl.Get(ctx, req.Msg.Uuid, requestor)
+	if err != nil {
+		return nil, err
+	}
+
+	if chat.Role == cc.Role_NOACCESS {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
+	}
+
+	if chat.GetRole() != cc.Role_ADMIN {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("not enough rights"))
+	}
+
+	newDepartment := req.Msg.GetDepartment()
+
+	config, err := core.Config()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, department := range config.GetDepartments() {
+		if department.GetKey() == newDepartment {
+			chat.Admins = department.GetAdmins()
+			break
+		}
+	}
+
+	chat, err = s.ctrl.Update(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+
+	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_UPDATED)
 
 	resp := connect.NewResponse[cc.Chat](chat)
 

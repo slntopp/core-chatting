@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from core_chatting.cc import cc_pb2 as cc_dot_cc__pb2
+from cc import cc_pb2 as cc_dot_cc__pb2
 
 
 class ChatsAPIStub(object):
@@ -46,6 +46,11 @@ class ChatsAPIStub(object):
                 )
         self.GetBotState = channel.unary_unary(
                 '/cc.ChatsAPI/GetBotState',
+                request_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
+                response_deserializer=cc_dot_cc__pb2.Chat.FromString,
+                )
+        self.ChangeDepartment = channel.unary_unary(
+                '/cc.ChatsAPI/ChangeDepartment',
                 request_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Chat.FromString,
                 )
@@ -96,6 +101,12 @@ class ChatsAPIServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ChangeDepartment(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ChatsAPIServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -131,6 +142,11 @@ def add_ChatsAPIServicer_to_server(servicer, server):
             ),
             'GetBotState': grpc.unary_unary_rpc_method_handler(
                     servicer.GetBotState,
+                    request_deserializer=cc_dot_cc__pb2.Chat.FromString,
+                    response_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
+            ),
+            'ChangeDepartment': grpc.unary_unary_rpc_method_handler(
+                    servicer.ChangeDepartment,
                     request_deserializer=cc_dot_cc__pb2.Chat.FromString,
                     response_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
             ),
@@ -258,6 +274,23 @@ class ChatsAPI(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/cc.ChatsAPI/GetBotState',
+            cc_dot_cc__pb2.Chat.SerializeToString,
+            cc_dot_cc__pb2.Chat.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ChangeDepartment(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cc.ChatsAPI/ChangeDepartment',
             cc_dot_cc__pb2.Chat.SerializeToString,
             cc_dot_cc__pb2.Chat.FromString,
             options, channel_credentials,

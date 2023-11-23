@@ -75,6 +75,15 @@ export const ChatsAPI = {
       O: Chat,
       kind: MethodKind.Unary,
     },
+    /**
+     * @generated from rpc cc.ChatsAPI.ChangeDepartment
+     */
+    changeDepartment: {
+      name: "ChangeDepartment",
+      I: Chat,
+      O: Chat,
+      kind: MethodKind.Unary,
+    },
   }
 };
 

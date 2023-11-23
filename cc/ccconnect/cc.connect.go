@@ -53,6 +53,9 @@ const (
 	ChatsAPISetBotStateProcedure = "/cc.ChatsAPI/SetBotState"
 	// ChatsAPIGetBotStateProcedure is the fully-qualified name of the ChatsAPI's GetBotState RPC.
 	ChatsAPIGetBotStateProcedure = "/cc.ChatsAPI/GetBotState"
+	// ChatsAPIChangeDepartmentProcedure is the fully-qualified name of the ChatsAPI's ChangeDepartment
+	// RPC.
+	ChatsAPIChangeDepartmentProcedure = "/cc.ChatsAPI/ChangeDepartment"
 	// MessagesAPIGetProcedure is the fully-qualified name of the MessagesAPI's Get RPC.
 	MessagesAPIGetProcedure = "/cc.MessagesAPI/Get"
 	// MessagesAPISendProcedure is the fully-qualified name of the MessagesAPI's Send RPC.
@@ -86,6 +89,7 @@ type ChatsAPIClient interface {
 	Delete(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	SetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	GetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
+	ChangeDepartment(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 }
 
 // NewChatsAPIClient constructs a client for the cc.ChatsAPI service. By default, it uses the
@@ -133,18 +137,24 @@ func NewChatsAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 			baseURL+ChatsAPIGetBotStateProcedure,
 			opts...,
 		),
+		changeDepartment: connect.NewClient[cc.Chat, cc.Chat](
+			httpClient,
+			baseURL+ChatsAPIChangeDepartmentProcedure,
+			opts...,
+		),
 	}
 }
 
 // chatsAPIClient implements ChatsAPIClient.
 type chatsAPIClient struct {
-	create      *connect.Client[cc.Chat, cc.Chat]
-	update      *connect.Client[cc.Chat, cc.Chat]
-	get         *connect.Client[cc.Chat, cc.Chat]
-	list        *connect.Client[cc.Empty, cc.Chats]
-	delete      *connect.Client[cc.Chat, cc.Chat]
-	setBotState *connect.Client[cc.Chat, cc.Chat]
-	getBotState *connect.Client[cc.Chat, cc.Chat]
+	create           *connect.Client[cc.Chat, cc.Chat]
+	update           *connect.Client[cc.Chat, cc.Chat]
+	get              *connect.Client[cc.Chat, cc.Chat]
+	list             *connect.Client[cc.Empty, cc.Chats]
+	delete           *connect.Client[cc.Chat, cc.Chat]
+	setBotState      *connect.Client[cc.Chat, cc.Chat]
+	getBotState      *connect.Client[cc.Chat, cc.Chat]
+	changeDepartment *connect.Client[cc.Chat, cc.Chat]
 }
 
 // Create calls cc.ChatsAPI.Create.
@@ -182,6 +192,11 @@ func (c *chatsAPIClient) GetBotState(ctx context.Context, req *connect.Request[c
 	return c.getBotState.CallUnary(ctx, req)
 }
 
+// ChangeDepartment calls cc.ChatsAPI.ChangeDepartment.
+func (c *chatsAPIClient) ChangeDepartment(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+	return c.changeDepartment.CallUnary(ctx, req)
+}
+
 // ChatsAPIHandler is an implementation of the cc.ChatsAPI service.
 type ChatsAPIHandler interface {
 	Create(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
@@ -191,6 +206,7 @@ type ChatsAPIHandler interface {
 	Delete(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	SetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	GetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
+	ChangeDepartment(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 }
 
 // NewChatsAPIHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -234,6 +250,11 @@ func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect.HandlerOption) (str
 		svc.GetBotState,
 		opts...,
 	)
+	chatsAPIChangeDepartmentHandler := connect.NewUnaryHandler(
+		ChatsAPIChangeDepartmentProcedure,
+		svc.ChangeDepartment,
+		opts...,
+	)
 	return "/cc.ChatsAPI/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ChatsAPICreateProcedure:
@@ -250,6 +271,8 @@ func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect.HandlerOption) (str
 			chatsAPISetBotStateHandler.ServeHTTP(w, r)
 		case ChatsAPIGetBotStateProcedure:
 			chatsAPIGetBotStateHandler.ServeHTTP(w, r)
+		case ChatsAPIChangeDepartmentProcedure:
+			chatsAPIChangeDepartmentHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -285,6 +308,10 @@ func (UnimplementedChatsAPIHandler) SetBotState(context.Context, *connect.Reques
 
 func (UnimplementedChatsAPIHandler) GetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.GetBotState is not implemented"))
+}
+
+func (UnimplementedChatsAPIHandler) ChangeDepartment(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.ChangeDepartment is not implemented"))
 }
 
 // MessagesAPIClient is a client for the cc.MessagesAPI service.

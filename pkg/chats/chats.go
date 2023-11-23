@@ -244,6 +244,8 @@ func (s *ChatsServer) ChangeDepartment(ctx context.Context, req *connect.Request
 
 	newDepartment := req.Msg.GetDepartment()
 
+	chat.Department = newDepartment
+
 	config, err := core.Config()
 	if err != nil {
 		return nil, err

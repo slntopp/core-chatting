@@ -54,6 +54,22 @@
       </n-tooltip>
 
       <n-divider vertical/>
+      <n-tooltip>
+        <template #trigger>
+          <n-select
+            label-field="title"
+            value-field="key"
+            placeholder="Department"
+            style="min-width: 200px; width: 100%"
+            :value="chat.department"
+            :options="departments"
+            @update:value="changeDepartment"
+          />
+        </template>
+        Department
+      </n-tooltip>
+
+      <n-divider vertical/>
       <chat-status :chat="chat" />
 
       <n-divider vertical/>
@@ -256,7 +272,7 @@ const appStore = useAppStore()
 const store = useCcStore()
 const router = useRouter()
 const notification = useNotification()
-const {fetch_defaults, isDefaultLoading, users, admins, metrics} = useDefaults()
+const {fetch_defaults, isDefaultLoading, users, admins, metrics, departments} = useDefaults()
 
 const isEdit = ref<boolean>(false)
 const isAddDialog = ref<boolean>(false)
@@ -308,6 +324,12 @@ const getTagColor = (metric: Metric) => (
 const changeResponsible = (uuid: string) => {
   store.update_chat(new Chat({
     ...chat.value, responsible: uuid
+  }))
+}
+
+const changeDepartment = (key: string) => {
+  store.change_department(new Chat({
+    ...chat.value, department: key
   }))
 }
 
@@ -405,7 +427,7 @@ const lastUpdate = computed(() =>
 <style scoped>
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, auto) 1fr;
+  grid-template-columns: repeat(6, auto) 1fr;
   align-items: center;
   gap: 10px;
 }

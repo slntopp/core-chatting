@@ -6,23 +6,28 @@
         <n-text
           depth="3"
           class="sub"
-          :style="{ gridColumn: (chat.gateways.length < 1) ? '1 / 3' : null }"
           @click.stop="openUser(chat.owner)"
         >
           {{ store.users.get(chat.owner)?.title }}
         </n-text>
 
         <n-space
-          style="margin-top: 5px"
-          :wrap-item="false"
           v-if="appStore.displayMode === 'full'"
+          style="flex-direction: column; gap: 0; grid-row: 1 / 3; grid-column: 2"
+          :wrap-item="false"
         >
-          <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
-            <template #trigger>
-              <img height="24" :src="getImageUrl(gateway)" :alt="gateway">
-            </template>
-            {{ gateway }}
-          </n-tooltip>
+          <n-space :wrap-item="false">
+            <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
+              <template #trigger>
+                <img height="24" :src="getImageUrl(gateway)" :alt="gateway">
+              </template>
+              {{ gateway }}
+            </n-tooltip>
+          </n-space>
+          <span>
+            Department:
+            <n-text italic style="margin-left: 4px">{{ chat.department || 'none' }}</n-text>
+          </span>
         </n-space>
 
         <div class="time" v-show="appStore.displayMode === 'full'">

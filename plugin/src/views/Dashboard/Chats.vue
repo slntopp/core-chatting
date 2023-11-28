@@ -65,6 +65,7 @@
             <n-divider style="margin: 5px 0" />
             <n-radio-group v-model:value="sortBy">
               <n-space :wrap-item="false">
+                <n-radio value="none" label="None" />
                 <n-radio value="created" label="Created" />
                 <n-radio value="sent" label="Sent" />
                 <n-radio value="status" label="Status" />
@@ -273,7 +274,7 @@ const filterChat = (chat: Chat, val: string): boolean => {
   return !!chat.users.find(u => u.startsWith(val) || store.users.get(u)?.title.toLowerCase().startsWith(val)) || !!chat.admins.find(u => u.startsWith(val) || store.users.get(u)?.title.toLocaleLowerCase().startsWith(val))
 }
 
-const sortBy = ref<'sent' | 'created' | 'status'>('sent')
+const sortBy = ref<'none' | 'sent' | 'created' | 'status'>('sent')
 
 interface optionsIncludedType {
   [index: string]: boolean
@@ -341,6 +342,9 @@ const chats = computed(() => {
     }
     if (chat.meta?.lastMessage && sortBy.value === 'sent') {
       return Number(chat.meta.lastMessage.sent)
+    }
+    if (sortBy.value === 'none') {
+      return ((chat.meta?.unread ?? 0) > 0) ? Date.now() : Number(chat.created)
     }
     return Number(chat.created)
   }

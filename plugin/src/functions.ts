@@ -29,7 +29,7 @@ export function getImageUrl(name: string) {
   console.log('Icons:', icons);
   console.log('URL:', import.meta.url);
 
-  return new URL(source, import.meta.url).href
+  return `/cc.ui/assets/icons/${name}.png`
 }
 
 export function getRelativeTime(timestamp: number, now: number, isLifetime?: boolean) {

@@ -56,6 +56,8 @@ const (
 	// ChatsAPIChangeDepartmentProcedure is the fully-qualified name of the ChatsAPI's ChangeDepartment
 	// RPC.
 	ChatsAPIChangeDepartmentProcedure = "/cc.ChatsAPI/ChangeDepartment"
+	// ChatsAPIChangeGatewayProcedure is the fully-qualified name of the ChatsAPI's ChangeGateway RPC.
+	ChatsAPIChangeGatewayProcedure = "/cc.ChatsAPI/ChangeGateway"
 	// MessagesAPIGetProcedure is the fully-qualified name of the MessagesAPI's Get RPC.
 	MessagesAPIGetProcedure = "/cc.MessagesAPI/Get"
 	// MessagesAPISendProcedure is the fully-qualified name of the MessagesAPI's Send RPC.
@@ -90,6 +92,7 @@ type ChatsAPIClient interface {
 	SetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	GetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	ChangeDepartment(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
+	ChangeGateway(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 }
 
 // NewChatsAPIClient constructs a client for the cc.ChatsAPI service. By default, it uses the
@@ -142,6 +145,11 @@ func NewChatsAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 			baseURL+ChatsAPIChangeDepartmentProcedure,
 			opts...,
 		),
+		changeGateway: connect.NewClient[cc.Chat, cc.Chat](
+			httpClient,
+			baseURL+ChatsAPIChangeGatewayProcedure,
+			opts...,
+		),
 	}
 }
 
@@ -155,6 +163,7 @@ type chatsAPIClient struct {
 	setBotState      *connect.Client[cc.Chat, cc.Chat]
 	getBotState      *connect.Client[cc.Chat, cc.Chat]
 	changeDepartment *connect.Client[cc.Chat, cc.Chat]
+	changeGateway    *connect.Client[cc.Chat, cc.Chat]
 }
 
 // Create calls cc.ChatsAPI.Create.
@@ -197,6 +206,11 @@ func (c *chatsAPIClient) ChangeDepartment(ctx context.Context, req *connect.Requ
 	return c.changeDepartment.CallUnary(ctx, req)
 }
 
+// ChangeGateway calls cc.ChatsAPI.ChangeGateway.
+func (c *chatsAPIClient) ChangeGateway(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+	return c.changeGateway.CallUnary(ctx, req)
+}
+
 // ChatsAPIHandler is an implementation of the cc.ChatsAPI service.
 type ChatsAPIHandler interface {
 	Create(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
@@ -207,6 +221,7 @@ type ChatsAPIHandler interface {
 	SetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	GetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	ChangeDepartment(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
+	ChangeGateway(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 }
 
 // NewChatsAPIHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -255,6 +270,11 @@ func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect.HandlerOption) (str
 		svc.ChangeDepartment,
 		opts...,
 	)
+	chatsAPIChangeGatewayHandler := connect.NewUnaryHandler(
+		ChatsAPIChangeGatewayProcedure,
+		svc.ChangeGateway,
+		opts...,
+	)
 	return "/cc.ChatsAPI/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ChatsAPICreateProcedure:
@@ -273,6 +293,8 @@ func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect.HandlerOption) (str
 			chatsAPIGetBotStateHandler.ServeHTTP(w, r)
 		case ChatsAPIChangeDepartmentProcedure:
 			chatsAPIChangeDepartmentHandler.ServeHTTP(w, r)
+		case ChatsAPIChangeGatewayProcedure:
+			chatsAPIChangeGatewayHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -312,6 +334,10 @@ func (UnimplementedChatsAPIHandler) GetBotState(context.Context, *connect.Reques
 
 func (UnimplementedChatsAPIHandler) ChangeDepartment(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.ChangeDepartment is not implemented"))
+}
+
+func (UnimplementedChatsAPIHandler) ChangeGateway(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.ChangeGateway is not implemented"))
 }
 
 // MessagesAPIClient is a client for the cc.MessagesAPI service.

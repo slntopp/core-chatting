@@ -84,6 +84,15 @@ export declare const ChatsAPI: {
       readonly O: typeof Chat,
       readonly kind: MethodKind.Unary,
     },
+    /**
+     * @generated from rpc cc.ChatsAPI.ChangeGateway
+     */
+    readonly changeGateway: {
+      readonly name: "ChangeGateway",
+      readonly I: typeof Chat,
+      readonly O: typeof Chat,
+      readonly kind: MethodKind.Unary,
+    },
   }
 };
 

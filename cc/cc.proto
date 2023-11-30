@@ -66,6 +66,7 @@ service ChatsAPI {
   rpc GetBotState(Chat) returns (Chat);
 
   rpc ChangeDepartment(Chat) returns (Chat);
+  rpc ChangeGateway(Chat) returns (Chat);
 }
 
 enum Kind {

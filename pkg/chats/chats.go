@@ -269,3 +269,68 @@ func (s *ChatsServer) ChangeDepartment(ctx context.Context, req *connect.Request
 
 	return resp, nil
 }
+
+func (s *ChatsServer) ChangeGateway(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+	log := s.log.Named("ChangeGateway")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	chat, err := s.ctrl.Get(ctx, req.Msg.Uuid, requestor)
+	if err != nil {
+		return nil, err
+	}
+
+	if chat.Role == cc.Role_NOACCESS {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
+	}
+
+	msg := req.Msg
+	resolve, err := s.users_ctrl.Resolve(ctx, []string{requestor})
+	if err != nil {
+		return nil, err
+	}
+	user := resolve[0]
+
+	if user.GetData() != nil {
+		fields := user.GetData().GetFields()
+
+		log.Debug("Field", zap.Any("f", fields))
+
+		if msg.GetMeta() == nil {
+			msg.Meta = &cc.ChatMeta{
+				Data: map[string]*structpb.Value{},
+			}
+		}
+
+		if msg.GetMeta().GetData() == nil {
+			msg.Meta.Data = map[string]*structpb.Value{}
+		}
+
+		if fields != nil {
+			for _, gate := range msg.GetGateways() {
+				log.Debug("gate", zap.String("g", gate))
+				if val, ok := fields[gate]; ok {
+					log.Debug("ok")
+					msg.Meta.Data[gate] = val
+				}
+			}
+		}
+		err := s.ctrl.DeleteGateways(ctx, fields)
+		if err != nil {
+			log.Error("Failed to delete old gates", zap.Error(err))
+			return nil, err
+		}
+	}
+
+	update, err := s.ctrl.Update(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	go pubsub.HandleNotifyChat(ctx, log, s.ps, update, cc.EventType_CHAT_UPDATED)
+
+	resp := connect.NewResponse[cc.Chat](update)
+
+	return resp, nil
+}

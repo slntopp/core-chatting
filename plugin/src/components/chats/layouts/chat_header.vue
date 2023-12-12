@@ -125,7 +125,7 @@
     <n-space :wrap-item="false" v-if="chat.gateways.length > 0">
       <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
         <template #trigger>
-          <img height="24" :src="getImageUrl(gateway)" :alt="gateway">
+          <img height="24" :src="`/cc.ui/assets/${gateway}.png`" :alt="gateway">
         </template>
         {{ gateway }}
       </n-tooltip>
@@ -200,6 +200,10 @@
         </n-tooltip>
       </n-text>
     </n-space>
+
+    <n-button ghost type="success" style="margin-right: 15px" @click="sendMessage">
+      {{ buttonTitle }}
+    </n-button>
   </div>
 
   <n-modal v-model:show="isEdit">
@@ -244,7 +248,7 @@ import UserAvatar from "../../ui/user_avatar.vue";
 import MembersDropdown from "../../users/members_dropdown.vue";
 import useDefaults from "../../../hooks/useDefaults.ts";
 import MemberSelect from "../../users/member_select.vue";
-import {addToClipboard, getImageUrl, getRelativeTime} from "../../../functions.ts";
+import {addToClipboard, getRelativeTime} from "../../../functions.ts";
 import ChatStatus from "../chat_status.vue";
 
 const EditIcon = defineAsyncComponent(() => import('@vicons/ionicons5/PencilSharp'));
@@ -422,12 +426,29 @@ setInterval(() => now.value = Date.now(), 1000)
 const lastUpdate = computed(() =>
   Number(chat.value.meta?.lastMessage?.edited || chat.value.meta?.lastMessage?.sent)
 )
+
+const buttonTitle = ref('')
+const gridColumns = computed(() =>
+  `repeat(${(chat.value.gateways.length > 0) ? 5 : 4}, auto) 1fr auto`
+)
+window.addEventListener('message', ({ data, origin }) => {
+  if (origin.includes('localhost')) return
+  buttonTitle.value = data
+})
+
+const sendMessage = (event: MouseEvent) => {
+  const button = (event.target as HTMLElement).closest('.n-button') as HTMLButtonElement
+
+  window.top?.postMessage({
+    type: 'click-on-button', value: { x: button?.offsetLeft, y: button?.offsetTop }
+  }, '*')
+}
 </script>
 
 <style scoped>
 .grid {
   display: grid;
-  grid-template-columns: repeat(6, auto) 1fr;
+  grid-template-columns: v-bind('gridColumns');
   align-items: center;
   gap: 10px;
 }

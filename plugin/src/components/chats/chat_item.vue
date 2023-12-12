@@ -19,7 +19,7 @@
           <n-space :wrap-item="false">
             <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
               <template #trigger>
-                <img height="24" :src="getImageUrl(gateway)" :alt="gateway">
+                <img height="24" :src="`/cc.ui/assets/${gateway}.png`" :alt="gateway">
               </template>
               {{ gateway }}
             </n-tooltip>
@@ -71,7 +71,7 @@ import {useRouter} from "vue-router";
 import {NBadge, NIcon, NListItem, NSpace, NText, NTooltip, useNotification} from "naive-ui";
 import {Chat} from "../../connect/cc/cc_pb";
 import {useCcStore} from "../../store/chatting.ts";
-import {addToClipboard,getImageUrl} from "../../functions.ts";
+import {addToClipboard} from "../../functions.ts";
 import UserAvatar from "../ui/user_avatar.vue";
 import ChatStatus from "./chat_status.vue";
 import {useAppStore} from "../../store/app.ts";

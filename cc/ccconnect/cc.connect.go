@@ -18,7 +18,7 @@ import (
 // generated with a version of connect newer than the one compiled into your binary. You can fix the
 // problem by either regenerating this code with an older version of connect or updating the connect
 // version compiled into your binary.
-const _ = connect.IsAtLeastVersion0_1_0
+const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// ChatsAPIName is the fully-qualified name of the ChatsAPI service.
@@ -82,6 +82,34 @@ const (
 	StreamServiceStreamProcedure = "/cc.StreamService/Stream"
 )
 
+// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
+var (
+	chatsAPIServiceDescriptor                = cc.File_cc_cc_proto.Services().ByName("ChatsAPI")
+	chatsAPICreateMethodDescriptor           = chatsAPIServiceDescriptor.Methods().ByName("Create")
+	chatsAPIUpdateMethodDescriptor           = chatsAPIServiceDescriptor.Methods().ByName("Update")
+	chatsAPIGetMethodDescriptor              = chatsAPIServiceDescriptor.Methods().ByName("Get")
+	chatsAPIListMethodDescriptor             = chatsAPIServiceDescriptor.Methods().ByName("List")
+	chatsAPIDeleteMethodDescriptor           = chatsAPIServiceDescriptor.Methods().ByName("Delete")
+	chatsAPISetBotStateMethodDescriptor      = chatsAPIServiceDescriptor.Methods().ByName("SetBotState")
+	chatsAPIGetBotStateMethodDescriptor      = chatsAPIServiceDescriptor.Methods().ByName("GetBotState")
+	chatsAPIChangeDepartmentMethodDescriptor = chatsAPIServiceDescriptor.Methods().ByName("ChangeDepartment")
+	chatsAPIChangeGatewayMethodDescriptor    = chatsAPIServiceDescriptor.Methods().ByName("ChangeGateway")
+	messagesAPIServiceDescriptor             = cc.File_cc_cc_proto.Services().ByName("MessagesAPI")
+	messagesAPIGetMethodDescriptor           = messagesAPIServiceDescriptor.Methods().ByName("Get")
+	messagesAPISendMethodDescriptor          = messagesAPIServiceDescriptor.Methods().ByName("Send")
+	messagesAPIUpdateMethodDescriptor        = messagesAPIServiceDescriptor.Methods().ByName("Update")
+	messagesAPIDeleteMethodDescriptor        = messagesAPIServiceDescriptor.Methods().ByName("Delete")
+	usersAPIServiceDescriptor                = cc.File_cc_cc_proto.Services().ByName("UsersAPI")
+	usersAPIMeMethodDescriptor               = usersAPIServiceDescriptor.Methods().ByName("Me")
+	usersAPIFetchDefaultsMethodDescriptor    = usersAPIServiceDescriptor.Methods().ByName("FetchDefaults")
+	usersAPIGetConfigMethodDescriptor        = usersAPIServiceDescriptor.Methods().ByName("GetConfig")
+	usersAPISetConfigMethodDescriptor        = usersAPIServiceDescriptor.Methods().ByName("SetConfig")
+	usersAPIResolveMethodDescriptor          = usersAPIServiceDescriptor.Methods().ByName("Resolve")
+	usersAPIGetMembersMethodDescriptor       = usersAPIServiceDescriptor.Methods().ByName("GetMembers")
+	streamServiceServiceDescriptor           = cc.File_cc_cc_proto.Services().ByName("StreamService")
+	streamServiceStreamMethodDescriptor      = streamServiceServiceDescriptor.Methods().ByName("Stream")
+)
+
 // ChatsAPIClient is a client for the cc.ChatsAPI service.
 type ChatsAPIClient interface {
 	Create(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
@@ -108,47 +136,56 @@ func NewChatsAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 		create: connect.NewClient[cc.Chat, cc.Chat](
 			httpClient,
 			baseURL+ChatsAPICreateProcedure,
-			opts...,
+			connect.WithSchema(chatsAPICreateMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		update: connect.NewClient[cc.Chat, cc.Chat](
 			httpClient,
 			baseURL+ChatsAPIUpdateProcedure,
-			opts...,
+			connect.WithSchema(chatsAPIUpdateMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		get: connect.NewClient[cc.Chat, cc.Chat](
 			httpClient,
 			baseURL+ChatsAPIGetProcedure,
-			opts...,
+			connect.WithSchema(chatsAPIGetMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		list: connect.NewClient[cc.Empty, cc.Chats](
 			httpClient,
 			baseURL+ChatsAPIListProcedure,
-			opts...,
+			connect.WithSchema(chatsAPIListMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		delete: connect.NewClient[cc.Chat, cc.Chat](
 			httpClient,
 			baseURL+ChatsAPIDeleteProcedure,
-			opts...,
+			connect.WithSchema(chatsAPIDeleteMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		setBotState: connect.NewClient[cc.Chat, cc.Chat](
 			httpClient,
 			baseURL+ChatsAPISetBotStateProcedure,
-			opts...,
+			connect.WithSchema(chatsAPISetBotStateMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		getBotState: connect.NewClient[cc.Chat, cc.Chat](
 			httpClient,
 			baseURL+ChatsAPIGetBotStateProcedure,
-			opts...,
+			connect.WithSchema(chatsAPIGetBotStateMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		changeDepartment: connect.NewClient[cc.Chat, cc.Chat](
 			httpClient,
 			baseURL+ChatsAPIChangeDepartmentProcedure,
-			opts...,
+			connect.WithSchema(chatsAPIChangeDepartmentMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		changeGateway: connect.NewClient[cc.Chat, cc.Chat](
 			httpClient,
 			baseURL+ChatsAPIChangeGatewayProcedure,
-			opts...,
+			connect.WithSchema(chatsAPIChangeGatewayMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 	}
 }
@@ -233,47 +270,56 @@ func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect.HandlerOption) (str
 	chatsAPICreateHandler := connect.NewUnaryHandler(
 		ChatsAPICreateProcedure,
 		svc.Create,
-		opts...,
+		connect.WithSchema(chatsAPICreateMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	chatsAPIUpdateHandler := connect.NewUnaryHandler(
 		ChatsAPIUpdateProcedure,
 		svc.Update,
-		opts...,
+		connect.WithSchema(chatsAPIUpdateMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	chatsAPIGetHandler := connect.NewUnaryHandler(
 		ChatsAPIGetProcedure,
 		svc.Get,
-		opts...,
+		connect.WithSchema(chatsAPIGetMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	chatsAPIListHandler := connect.NewUnaryHandler(
 		ChatsAPIListProcedure,
 		svc.List,
-		opts...,
+		connect.WithSchema(chatsAPIListMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	chatsAPIDeleteHandler := connect.NewUnaryHandler(
 		ChatsAPIDeleteProcedure,
 		svc.Delete,
-		opts...,
+		connect.WithSchema(chatsAPIDeleteMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	chatsAPISetBotStateHandler := connect.NewUnaryHandler(
 		ChatsAPISetBotStateProcedure,
 		svc.SetBotState,
-		opts...,
+		connect.WithSchema(chatsAPISetBotStateMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	chatsAPIGetBotStateHandler := connect.NewUnaryHandler(
 		ChatsAPIGetBotStateProcedure,
 		svc.GetBotState,
-		opts...,
+		connect.WithSchema(chatsAPIGetBotStateMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	chatsAPIChangeDepartmentHandler := connect.NewUnaryHandler(
 		ChatsAPIChangeDepartmentProcedure,
 		svc.ChangeDepartment,
-		opts...,
+		connect.WithSchema(chatsAPIChangeDepartmentMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	chatsAPIChangeGatewayHandler := connect.NewUnaryHandler(
 		ChatsAPIChangeGatewayProcedure,
 		svc.ChangeGateway,
-		opts...,
+		connect.WithSchema(chatsAPIChangeGatewayMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	return "/cc.ChatsAPI/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
@@ -361,22 +407,26 @@ func NewMessagesAPIClient(httpClient connect.HTTPClient, baseURL string, opts ..
 		get: connect.NewClient[cc.Chat, cc.Messages](
 			httpClient,
 			baseURL+MessagesAPIGetProcedure,
-			opts...,
+			connect.WithSchema(messagesAPIGetMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		send: connect.NewClient[cc.Message, cc.Message](
 			httpClient,
 			baseURL+MessagesAPISendProcedure,
-			opts...,
+			connect.WithSchema(messagesAPISendMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		update: connect.NewClient[cc.Message, cc.Message](
 			httpClient,
 			baseURL+MessagesAPIUpdateProcedure,
-			opts...,
+			connect.WithSchema(messagesAPIUpdateMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		delete: connect.NewClient[cc.Message, cc.Message](
 			httpClient,
 			baseURL+MessagesAPIDeleteProcedure,
-			opts...,
+			connect.WithSchema(messagesAPIDeleteMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 	}
 }
@@ -426,22 +476,26 @@ func NewMessagesAPIHandler(svc MessagesAPIHandler, opts ...connect.HandlerOption
 	messagesAPIGetHandler := connect.NewUnaryHandler(
 		MessagesAPIGetProcedure,
 		svc.Get,
-		opts...,
+		connect.WithSchema(messagesAPIGetMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	messagesAPISendHandler := connect.NewUnaryHandler(
 		MessagesAPISendProcedure,
 		svc.Send,
-		opts...,
+		connect.WithSchema(messagesAPISendMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	messagesAPIUpdateHandler := connect.NewUnaryHandler(
 		MessagesAPIUpdateProcedure,
 		svc.Update,
-		opts...,
+		connect.WithSchema(messagesAPIUpdateMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	messagesAPIDeleteHandler := connect.NewUnaryHandler(
 		MessagesAPIDeleteProcedure,
 		svc.Delete,
-		opts...,
+		connect.WithSchema(messagesAPIDeleteMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	return "/cc.MessagesAPI/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
@@ -503,32 +557,38 @@ func NewUsersAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 		me: connect.NewClient[cc.Empty, cc.User](
 			httpClient,
 			baseURL+UsersAPIMeProcedure,
-			opts...,
+			connect.WithSchema(usersAPIMeMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		fetchDefaults: connect.NewClient[cc.Empty, cc.Defaults](
 			httpClient,
 			baseURL+UsersAPIFetchDefaultsProcedure,
-			opts...,
+			connect.WithSchema(usersAPIFetchDefaultsMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		getConfig: connect.NewClient[cc.Empty, cc.Defaults](
 			httpClient,
 			baseURL+UsersAPIGetConfigProcedure,
-			opts...,
+			connect.WithSchema(usersAPIGetConfigMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		setConfig: connect.NewClient[cc.Defaults, cc.Defaults](
 			httpClient,
 			baseURL+UsersAPISetConfigProcedure,
-			opts...,
+			connect.WithSchema(usersAPISetConfigMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		resolve: connect.NewClient[cc.Users, cc.Users](
 			httpClient,
 			baseURL+UsersAPIResolveProcedure,
-			opts...,
+			connect.WithSchema(usersAPIResolveMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 		getMembers: connect.NewClient[cc.Empty, cc.Users](
 			httpClient,
 			baseURL+UsersAPIGetMembersProcedure,
-			opts...,
+			connect.WithSchema(usersAPIGetMembersMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 	}
 }
@@ -594,32 +654,38 @@ func NewUsersAPIHandler(svc UsersAPIHandler, opts ...connect.HandlerOption) (str
 	usersAPIMeHandler := connect.NewUnaryHandler(
 		UsersAPIMeProcedure,
 		svc.Me,
-		opts...,
+		connect.WithSchema(usersAPIMeMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	usersAPIFetchDefaultsHandler := connect.NewUnaryHandler(
 		UsersAPIFetchDefaultsProcedure,
 		svc.FetchDefaults,
-		opts...,
+		connect.WithSchema(usersAPIFetchDefaultsMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	usersAPIGetConfigHandler := connect.NewUnaryHandler(
 		UsersAPIGetConfigProcedure,
 		svc.GetConfig,
-		opts...,
+		connect.WithSchema(usersAPIGetConfigMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	usersAPISetConfigHandler := connect.NewUnaryHandler(
 		UsersAPISetConfigProcedure,
 		svc.SetConfig,
-		opts...,
+		connect.WithSchema(usersAPISetConfigMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	usersAPIResolveHandler := connect.NewUnaryHandler(
 		UsersAPIResolveProcedure,
 		svc.Resolve,
-		opts...,
+		connect.WithSchema(usersAPIResolveMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	usersAPIGetMembersHandler := connect.NewUnaryHandler(
 		UsersAPIGetMembersProcedure,
 		svc.GetMembers,
-		opts...,
+		connect.WithSchema(usersAPIGetMembersMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	return "/cc.UsersAPI/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
@@ -686,7 +752,8 @@ func NewStreamServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 		stream: connect.NewClient[cc.StreamRequest, cc.Event](
 			httpClient,
 			baseURL+StreamServiceStreamProcedure,
-			opts...,
+			connect.WithSchema(streamServiceStreamMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 	}
 }
@@ -715,7 +782,8 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect.HandlerOp
 	streamServiceStreamHandler := connect.NewServerStreamHandler(
 		StreamServiceStreamProcedure,
 		svc.Stream,
-		opts...,
+		connect.WithSchema(streamServiceStreamMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	return "/cc.StreamService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

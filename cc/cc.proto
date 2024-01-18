@@ -127,6 +127,7 @@ message Department {
   string title = 2;
   string description = 3;
   repeated string admins = 4;
+  bool public = 5;
 }
 
 message Option{

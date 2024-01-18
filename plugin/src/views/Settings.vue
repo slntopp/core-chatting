@@ -100,8 +100,8 @@
                 </n-space>
 
                 <n-select
-                  tag
                   multiple
+                  filterable
                   v-else-if="Array.isArray(item[header.value])"
                   v-model:value="item[header.value]"
                   value-field="uuid"
@@ -110,6 +110,7 @@
                   style="min-width: 200px"
                 />
 
+                <NSwitch v-else-if="header.isBool" v-model:value="item[header.value]" />
                 <n-input v-else clearable v-model:value="item[header.value]" />
               </td>
               <td>
@@ -131,8 +132,8 @@
 
         <n-select
           v-else-if="option.items"
-          tag
           multiple
+          filterable
           v-model:value="(config[key as keyof configType] as Value)"
           value-field="uuid"
           label-field="title"
@@ -154,7 +155,7 @@
         </n-space>
       </div>
 
-      <n-space justify="end">
+      <n-space justify="end" style="margin-bottom: 10px">
         <n-button :loading="isEditLoading" ghost type="success" @click="submit">
           Update
         </n-button>
@@ -172,6 +173,7 @@ import {
   NInputNumber,
   NTable,
   NSelect,
+  NSwitch,
   NSpace,
   NSpin,
   NText,
@@ -253,11 +255,12 @@ const departmentsOptions = computed(() => ({
       options: config.admins.map((uuid) =>
         users.value.find((user) => user.uuid === uuid)
       )
-    }
+    },
+    { title: 'Public', value: 'public', isBool: true }
   ],
   onClick() {
     config.departments.push(new Department({
-      key: '', title: '', description: '', admins: []
+      key: '', title: '', description: '', admins: [], public: true
     }))
   },
   onClose(i: number) {
@@ -333,6 +336,7 @@ interface optionsType {
       title: string
       value: string
       options?: any[]
+      isBool?: boolean
       isEditable: boolean
 
       onClick?: (metricIndex: number) => void

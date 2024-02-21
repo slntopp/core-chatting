@@ -95,7 +95,7 @@
 
                 @blur="check_mentioned"
                 @keypress.prevent.enter.exact="handle_new_line"
-                @keypress.prevent.ctrl.enter.exact="store.handle_send(chat?.uuid ?? '')"
+                @keypress.prevent.ctrl.enter.exact="handle_send"
                 @keypress.prevent.ctrl.shift.enter.exact="store.handle_send(chat?.uuid ?? '', Kind.ADMIN_ONLY)"
                 @keyup.prevent.ctrl.up.exact="handle_begin_edit"
               />

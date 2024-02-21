@@ -27,7 +27,7 @@ export function getImageUrl(name: string) {
   let key = Object.keys(icons).find((key) => key.includes(`/${name}`)) ?? ''
 
   if (!key.includes('cc.ui')) key = `/cc.ui${key}`
-  return key.replace('/dist', '')
+  return key.replace('/dist', '').replace('/public', '')
 }
 
 export function getRelativeTime(timestamp: number, now: number, isLifetime?: boolean) {

@@ -41,6 +41,7 @@
       <n-tooltip>
         <template #trigger>
           <n-select
+            filterable
             label-field="title"
             value-field="uuid"
             placeholder="Responsible"
@@ -57,6 +58,7 @@
       <n-tooltip>
         <template #trigger>
           <n-select
+            filterable
             label-field="title"
             value-field="key"
             placeholder="Department"

@@ -48,7 +48,7 @@
 
         <n-space justify="end">
           <n-button :loading="isEditLoading" ghost type="success" @click="submit">
-            {{ isEdit ? 'Edit chat' : 'Start chat' }}
+            {{ isEdit ? 'Save' : 'Start chat' }}
           </n-button>
         </n-space>
       </n-form>

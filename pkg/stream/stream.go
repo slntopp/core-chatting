@@ -90,6 +90,7 @@ start_stream:
 	}
 
 	defer func() {
+		log.Debug("Queue termination")
 		queueError := queueTerminator()
 		if queueError != nil {
 			log.Error("Failed to delete queue", zap.Error(queueError))
@@ -132,6 +133,7 @@ start_stream:
 				Type: cc.EventType_PING,
 			})
 			if err != nil {
+				log.Error("Failed to send message", zap.Error(err))
 				return nil
 			}
 		}

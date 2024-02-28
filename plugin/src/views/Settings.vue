@@ -7,7 +7,7 @@
     <n-space
       vertical
       justify="start"
-      style="max-width: 800px; margin: auto; padding-left: 16px; gap: 20px"
+      style="max-width: 1200px; margin: auto; padding-left: 16px; gap: 20px"
       :wrap-item="false"
     >
       <div v-for="(option, key) in options" :key="option.key">
@@ -51,7 +51,7 @@
             <!-- @vue-ignore -->
             <tr v-for="(item, i) of config[key]">
               <td v-for="header of option.headers">
-                <n-space v-if="header.isEditable" style="max-width: 350px" :wrap-item="false">
+                <n-space v-if="header.isEditable" :wrap-item="false">
                   <n-tag
                     round
                     closable
@@ -180,6 +180,7 @@ import {
   NTag
 } from 'naive-ui';
 import { Value } from 'naive-ui/es/select/src/interface';
+import { JsonObject } from '@bufbuild/protobuf';
 import { Defaults, Department, Metric, Option } from '../connect/cc/cc_pb'
 import { useCcStore } from '../store/chatting.ts'
 import useDefaults, { MetricWithKey } from '../hooks/useDefaults.ts'
@@ -252,9 +253,12 @@ const departmentsOptions = computed(() => ({
     {
       title: 'Admins',
       value:'admins',
-      options: config.admins.map((uuid) =>
-        users.value.find((user) => user.uuid === uuid)
-      )
+      options: config.admins.map((uuid) => {
+        const user = users.value.find((user) => user.uuid === uuid)
+        const { email } = user?.data?.toJson() as JsonObject ?? {}
+
+        return { ...user, title: `${user?.title} ${(email) ? `(${email})` : ''}` }
+      })
     },
     { title: 'Public', value: 'public', isBool: true }
   ],
@@ -269,7 +273,11 @@ const departmentsOptions = computed(() => ({
 }))
 
 const adminsOptions = computed(() => ({
-  key: 'Admins', items: users.value
+  key: 'Admins', items: users.value.map((user) => {
+    const { email } = user.data?.toJson() as JsonObject ?? {}
+
+    return { ...user, title: `${user.title} ${(email) ? `(${email})` : ''}` }
+  })
 }))
 
 const gatewaysOptions = computed(() => ({

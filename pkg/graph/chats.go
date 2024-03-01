@@ -2,8 +2,9 @@ package graph
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"google.golang.org/protobuf/types/known/structpb"
+	"slices"
 	"time"
 
 	"github.com/slntopp/core-chatting/cc"
@@ -39,6 +40,13 @@ func (c *ChatsController) Create(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 	log.Debug("Req received")
 
 	chat.Created = time.Now().UnixMilli()
+	chat.Status = cc.Status_NEW
+
+	if chat.Responsible != nil {
+		if !slices.Contains(chat.GetAdmins(), chat.GetResponsible()) {
+			chat.Admins = append(chat.GetAdmins(), chat.GetResponsible())
+		}
+	}
 
 	document, err := c.col.CreateDocument(ctx, chat)
 	if err != nil {
@@ -59,6 +67,12 @@ func (c *ChatsController) Create(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 func (c *ChatsController) Update(ctx context.Context, chat *cc.Chat) (*cc.Chat, error) {
 	log := c.log.Named("Update")
 	log.Debug("Req received")
+
+	if chat.Responsible != nil {
+		if !slices.Contains(chat.GetAdmins(), chat.GetResponsible()) {
+			chat.Admins = append(chat.GetAdmins(), chat.GetResponsible())
+		}
+	}
 
 	_, err := c.col.UpdateDocument(ctx, chat.GetUuid(), chat)
 
@@ -119,7 +133,9 @@ FILTER @requestor in c.admins || @requestor in c.users
       )
      )
     )
-	LET message = LAST(FOR m in @@messages FILTER m.chat == c._key SORT m.sent ASC RETURN m)
+	LET messages = (FOR m in @@messages FILTER m.chat == c._key SORT m.sent ASC RETURN m)
+	LET first_message = FIRST(messages)
+	LET last_message = LAST(messages)
 	LET unread = LENGTH(
 		FOR m in @@messages 
 			FILTER m.chat == c._key
@@ -131,7 +147,8 @@ FILTER @requestor in c.admins || @requestor in c.users
 	  role: role,
       meta: {
 		unread: unread,
-		last_message: message,
+		last_message: last_message,
+		first_message: first_message,
 		data: c.meta.data
 	  }
 	})
@@ -207,6 +224,7 @@ const getChatMessages = `
 FOR m in @@messages
 	FILTER m.chat == @chat
 	%s
+	SORT m.sent ASC
 	RETURN m
 `
 
@@ -249,39 +267,107 @@ func (c *ChatsController) GetMessages(ctx context.Context, chat *cc.Chat, is_adm
 	return messages, nil
 }
 
-const getChatByGateway = `
+const getByGatewayQuery = `
 FOR c in @@chats
-    FILTER c.meta.data[@gateway] == @id
-    RETURN c
+	FILTER c.meta.data["@gate"] == @gate_id
+	RETURN c
 `
 
-func (c *ChatsController) GetByGateway(ctx context.Context, req *cc.GetawayRequest) (*cc.Chat, error) {
-	log := c.log.Named("GetByGateway")
-	log.Debug("Req received")
+func (c *ChatsController) GetByGateway(ctx context.Context, gate string, gateId *structpb.Value) (*cc.Chat, error) {
+	value := gateId.GetNumberValue()
+	stringValue := gateId.GetStringValue()
 
-	queryContext := driver.WithQueryCount(ctx)
+	var queryId interface{}
+	if stringValue == "" {
+		queryId = value
+	} else {
+		queryId = stringValue
+	}
 
-	cur, err := c.db.Query(queryContext, getChatByGateway, map[string]interface{}{
+	cur, err := c.db.Query(ctx, getByGatewayQuery, map[string]interface{}{
 		"@chats":  CHATS_COLLECTION,
-		"id":      req.GatewayChatId,
-		"gateway": req.Gateway,
+		"gate":    gate,
+		"gate_id": queryId,
 	})
 
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close()
 
-	if cur.Count() == 0 {
-		return nil, errors.New("no chat")
-	}
+	var gateChat cc.Chat
 
-	var chat cc.Chat
-
-	_, err = cur.ReadDocument(ctx, &chat)
+	_, err = cur.ReadDocument(ctx, &gateChat)
 	if err != nil {
 		return nil, err
 	}
 
-	return &chat, nil
+	return &gateChat, nil
+}
+
+const deleteGateways = `
+FOR c in @@chats
+	FILTER c.meta.data[@gate] == @gate_id
+	UPDATE c with {meta: {data: {@gate : @null_value }}} in @@chats
+`
+
+const resetState = `
+UPDATE DOCUMENT(@key) WITH { bot_state: null } IN @@chats 
+`
+
+const setState = `
+UPDATE DOCUMENT(@key) WITH { bot_state: @bot_state } IN @@chats 
+`
+
+func (c *ChatsController) DeleteGateways(ctx context.Context, fields map[string]*structpb.Value) error {
+	for key, val := range fields {
+		numValue := val.GetNumberValue()
+		stringValue := val.GetStringValue()
+
+		var queryValue interface{}
+
+		if stringValue == "" {
+			queryValue = numValue
+		} else {
+			queryValue = stringValue
+		}
+
+		_, err := c.db.Query(ctx, deleteGateways, map[string]interface{}{
+			"@chats":     CHATS_COLLECTION,
+			"gate":       key,
+			"gate_id":    queryValue,
+			"null_value": structpb.NewNullValue(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *ChatsController) SetBotState(ctx context.Context, chat *cc.Chat) (*cc.Chat, error) {
+	log := c.log.Named("Set state")
+	log.Debug("Req received")
+
+	_, err := c.col.Database().Query(ctx, resetState, map[string]interface{}{
+		"key":    driver.NewDocumentID(CHATS_COLLECTION, chat.GetUuid()),
+		"@chats": CHATS_COLLECTION,
+	})
+
+	if err != nil {
+		log.Error("Failed to reset state", zap.Error(err))
+		return nil, err
+	}
+
+	_, err = c.col.Database().Query(ctx, setState, map[string]interface{}{
+		"key":       driver.NewDocumentID(CHATS_COLLECTION, chat.GetUuid()),
+		"@chats":    CHATS_COLLECTION,
+		"bot_state": chat.GetBotState(),
+	})
+
+	if err != nil {
+		log.Error("Failed to set state", zap.Error(err))
+		return nil, err
+	}
+
+	return chat, nil
 }

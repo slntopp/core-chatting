@@ -19,7 +19,7 @@ import (
 	"github.com/slntopp/core-chatting/pkg/messages"
 	"github.com/slntopp/core-chatting/pkg/users"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/rs/cors"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -101,7 +101,7 @@ func main() {
 
 	interceptors := connect.WithInterceptors(authInterceptor)
 
-	chatServer := chats.NewChatsServer(log, chatCtrl, ps)
+	chatServer := chats.NewChatsServer(log, chatCtrl, usersCtrl, ps)
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 

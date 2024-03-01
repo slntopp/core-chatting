@@ -59,7 +59,8 @@ UPDATE @key WITH {
     content: @content,
     edited: @edited,
     under_review: @under_review,
-	readers : @readers
+	readers : @readers,
+	meta: @meta
 } IN @@messages
 `
 
@@ -67,15 +68,18 @@ func (c *MessagesController) Update(ctx context.Context, msg *cc.Message) (*cc.M
 	log := c.log.Named("Update")
 	log.Debug("Req received")
 
-	_, err := c.db.Query(ctx, updateMessageQuery, map[string]interface{}{
+	params := map[string]interface{}{
 		"kind":         msg.GetKind(),
 		"content":      msg.GetContent(),
 		"edited":       msg.GetEdited(),
 		"under_review": msg.GetUnderReview(),
 		"key":          msg.GetUuid(),
 		"readers":      msg.GetReaders(),
+		"meta":         msg.GetMeta(),
 		"@messages":    MESSAGES_COLLECTION,
-	})
+	}
+
+	_, err := c.db.Query(ctx, updateMessageQuery, params)
 
 	if err != nil {
 		return nil, err

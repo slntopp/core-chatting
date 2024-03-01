@@ -3,7 +3,6 @@ package stream
 import (
 	"context"
 	"errors"
-	"github.com/bufbuild/connect-go"
 	"net/http"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
 
+	"connectrpc.com/connect"
 	"github.com/slntopp/core-chatting/pkg/graph"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
 	"go.uber.org/zap"
@@ -45,7 +45,7 @@ func NewStreamServer(logger *zap.Logger, userCtrl *graph.UsersController, msgCtr
 	}
 }
 
-func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.Empty], serverStream *connect.ServerStream[cc.Event]) error {
+func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.StreamRequest], serverStream *connect.ServerStream[cc.Event]) error {
 	requestor := ctx.Value(core.ChatAccount).(string)
 
 	log := s.log.Named("Stream").Named(requestor)
@@ -58,8 +58,11 @@ func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.Empty
 		return err
 	}
 
+	var streamUser *cc.User
+
 	for _, user := range res {
 		if user.Uuid == requestor {
+			streamUser = user
 			goto start_stream
 		}
 	}
@@ -69,20 +72,30 @@ func (s *StreamServer) Stream(ctx context.Context, req *connect.Request[cc.Empty
 	return connect.NewError(connect.CodeUnauthenticated, errors.New("failed to resolve user"))
 start_stream:
 
+	if streamUser.GetCcIsBot() {
+		log.Debug("Stream requestor is a bot", zap.String("username", streamUser.GetCcUsername()), zap.Any("commands", req.Msg.GetCommands()))
+		err := s.userCtrl.UpdateCommands(ctx, streamUser.GetUuid(), req.Msg.GetCommands())
+		if err != nil {
+			log.Error("Failed to update commands in bot", zap.Error(err))
+			return err
+		}
+	}
+
 	log.Info("Start stream", zap.String("user", requestor))
 
 	msgs, queueTerminator, err := s.ps.Sub(requestor)
 
+	if err != nil {
+		return connect.NewError(connect.CodeInternal, err)
+	}
+
 	defer func() {
+		log.Debug("Queue termination")
 		queueError := queueTerminator()
 		if queueError != nil {
 			log.Error("Failed to delete queue", zap.Error(queueError))
 		}
 	}()
-
-	if err != nil {
-		return connect.NewError(connect.CodeInternal, err)
-	}
 
 	var event = &cc.Event{}
 
@@ -120,6 +133,7 @@ start_stream:
 				Type: cc.EventType_PING,
 			})
 			if err != nil {
+				log.Error("Failed to send message", zap.Error(err))
 				return nil
 			}
 		}

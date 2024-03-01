@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/golang-jwt/jwt"
 	"github.com/slntopp/core-chatting/pkg/core"
 	"go.uber.org/zap"

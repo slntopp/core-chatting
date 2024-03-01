@@ -89,3 +89,33 @@ func (c *UsersController) GetMembers(ctx context.Context) ([]*cc.User, error) {
 
 	return members, nil
 }
+
+const removeCommandsQuery = `
+UPDATE DOCUMENT(@key) WITH { cc_commands: null } IN @@collection 
+`
+
+const updateCommandsQuery = `
+UPDATE DOCUMENT(@key) WITH { cc_commands: @commands } IN @@collection
+`
+
+func (c *UsersController) UpdateCommands(ctx context.Context, uuid string, commands map[string]string) error {
+	log := c.log.Named("GetCommands")
+	log.Debug("Request received")
+
+	_, err := c.db.Query(ctx, removeCommandsQuery, map[string]interface{}{
+		"@collection": c.colname,
+		"key":         driver.NewDocumentID(c.colname, uuid),
+	})
+	if err != nil {
+		log.Error("Failed to clear commands", zap.Error(err))
+		return err
+	}
+
+	_, err = c.db.Query(ctx, updateCommandsQuery, map[string]interface{}{
+		"@collection": c.colname,
+		"key":         driver.NewDocumentID(c.colname, uuid),
+		"commands":    commands,
+	})
+
+	return nil
+}

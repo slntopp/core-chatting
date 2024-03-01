@@ -3,6 +3,8 @@ package messages
 import (
 	"context"
 	"errors"
+	"fmt"
+	"google.golang.org/protobuf/types/known/structpb"
 	"time"
 
 	"github.com/slntopp/core-chatting/pkg/pubsub"
@@ -11,7 +13,7 @@ import (
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/graph"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"go.uber.org/zap"
 )
 
@@ -92,12 +94,33 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 
 	msg.Sent = time.Now().UnixMilli()
 
+	if chat.GetGateways() != nil {
+		if msg.GetMeta() == nil {
+			msg.Meta = map[string]*structpb.Value{}
+		}
+		data := chat.GetMeta().GetData()
+		if data != nil {
+			for _, gate := range chat.GetGateways() {
+				msg.Meta[fmt.Sprintf("%s_chat_id", gate)] = data[gate]
+			}
+		}
+	}
+
 	message, err := s.msgCtrl.Send(ctx, msg)
 	if err != nil {
 		return nil, err
 	}
 
-	go handleNotify(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_SENT)
+	go pubsub.HandleNotifyMessage(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_SENT)
+
+	if chat.GetStatus() == cc.Status_NEW {
+		chat.Status = cc.Status_OPEN
+		update, err := s.chatCtrl.Update(ctx, chat)
+		if err != nil {
+			return nil, err
+		}
+		go pubsub.HandleNotifyChat(ctx, log, s.ps, update, cc.EventType_CHAT_UPDATED)
+	}
 
 	resp := connect.NewResponse[cc.Message](message)
 
@@ -141,9 +164,9 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 	}
 
 	if oldMessage.GetKind() != message.GetKind() || oldMessage.GetUnderReview() != message.GetUnderReview() {
-		go handleSpecialNotify(ctx, log, s.ps, message, oldMessage, chat)
+		go pubsub.HandleSpecialNotify(ctx, log, s.ps, message, oldMessage, chat)
 	} else {
-		go handleNotify(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_UPDATED)
+		go pubsub.HandleNotifyMessage(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_UPDATED)
 	}
 
 	resp := connect.NewResponse[cc.Message](message)
@@ -175,68 +198,9 @@ func (s *MessagesServer) Delete(ctx context.Context, req *connect.Request[cc.Mes
 		return nil, err
 	}
 
-	go handleNotify(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_DELETED)
+	go pubsub.HandleNotifyMessage(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_DELETED)
 
 	resp := connect.NewResponse[cc.Message](message)
 
 	return resp, nil
-}
-
-func handleSpecialNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub, msg *cc.Message, oldMsg *cc.Message, chat *cc.Chat) {
-
-	var adminEvent = &cc.Event{
-		Type: cc.EventType_MESSAGE_UPDATED,
-		Item: &cc.Event_Msg{Msg: msg},
-	}
-
-	var userEvent = &cc.Event{
-		Item: &cc.Event_Msg{Msg: msg},
-	}
-
-	for _, admin := range chat.GetAdmins() {
-		go ps.Pub(ctx, admin, adminEvent)
-	}
-
-	go ps.PubGateway(ctx, adminEvent, chat.GetGateways())
-
-	diffKinds := msg.GetKind() != oldMsg.GetKind()
-	diffReviews := msg.GetUnderReview() != oldMsg.GetUnderReview()
-
-	sendEvent := (diffKinds || diffReviews) && msg.GetKind() == cc.Kind_DEFAULT && !msg.GetUnderReview()
-
-	deleteEvent := (diffKinds && msg.GetKind() == cc.Kind_ADMIN_ONLY) ||
-		(diffReviews && msg.GetUnderReview())
-
-	skip := msg.GetKind() == cc.Kind_DEFAULT && oldMsg.GetKind() == cc.Kind_ADMIN_ONLY && msg.GetUnderReview() && !oldMsg.GetUnderReview()
-
-	if sendEvent {
-		userEvent.Type = cc.EventType_MESSAGE_SENT
-	} else if deleteEvent && !skip {
-		userEvent.Type = cc.EventType_MESSAGE_DELETED
-	} else {
-		return
-	}
-
-	for _, user := range chat.GetUsers() {
-		go ps.Pub(ctx, user, userEvent)
-	}
-}
-
-func handleNotify(ctx context.Context, log *zap.Logger, ps *pubsub.PubSub, msg *cc.Message, chat *cc.Chat, eventType cc.EventType) {
-	var event = &cc.Event{
-		Type: eventType,
-		Item: &cc.Event_Msg{Msg: msg},
-	}
-
-	if msg.Kind == cc.Kind_DEFAULT && !msg.UnderReview {
-		for _, user := range chat.GetUsers() {
-			go ps.Pub(ctx, user, event)
-		}
-	}
-
-	for _, admin := range chat.GetAdmins() {
-		go ps.Pub(ctx, admin, event)
-	}
-
-	go ps.PubGateway(ctx, event, chat.GetGateways())
 }

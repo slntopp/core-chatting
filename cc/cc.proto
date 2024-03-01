@@ -16,8 +16,16 @@ enum Role {
 
 message ChatMeta {
   int32 unread = 1;
-  Message last_message = 2;
-  map<string, google.protobuf.Value> data = 3;
+  Message first_message = 2;
+  Message last_message = 3;
+  map<string, google.protobuf.Value> data = 4;
+}
+
+enum Status {
+  NEW = 0;
+  OPEN = 1;
+  RESOLVE = 2;
+  CLOSE = 3;
 }
 
 message Chat {
@@ -35,14 +43,15 @@ message Chat {
   optional ChatMeta meta = 8;
 
   int64 created = 9;
+
+  Status status = 10;
+
+  string department = 11;
+  optional string responsible = 12;
+  map<string, google.protobuf.Value> bot_state = 13;
 }
 
 message Chats { repeated Chat chats = 1; }
-
-message GetawayRequest {
-  string gateway = 1;
-  int64 gateway_chat_id = 2;
-}
 
 service ChatsAPI {
   rpc Create(Chat) returns (Chat);
@@ -50,14 +59,20 @@ service ChatsAPI {
 
   rpc Get(Chat) returns (Chat);
   rpc List(Empty) returns (Chats);
-  rpc GetByGateway(GetawayRequest) returns (Chat);
 
   rpc Delete(Chat) returns (Chat);
+
+  rpc SetBotState(Chat) returns (Chat);
+  rpc GetBotState(Chat) returns (Chat);
+
+  rpc ChangeDepartment(Chat) returns (Chat);
+  rpc ChangeGateway(Chat) returns (Chat);
 }
 
 enum Kind {
   DEFAULT = 0;
   ADMIN_ONLY = 1;
+  FOR_BOT = 2;
 }
 
 message Attachment {
@@ -83,6 +98,8 @@ message Message {
   bool under_review = 10;
   repeated string readers = 11;
   map<string, google.protobuf.Value> meta = 12;
+
+  repeated string mentioned = 13;
 }
 message Messages { repeated Message messages = 1; }
 
@@ -98,11 +115,36 @@ service MessagesAPI {
 message User {
   string uuid = 1;
   string title = 2;
+  google.protobuf.Struct data = 3;
+
+  bool cc_is_bot = 4;
+  string cc_username = 5;
+  map<string, string> cc_commands = 6;
+}
+
+message Department {
+  string key = 1;
+  string title = 2;
+  string description = 3;
+  repeated string admins = 4;
+  bool public = 5;
+}
+
+message Option{
+  string key = 1;
+  float value = 2;
+}
+
+message Metric{
+  string title = 1;
+  repeated Option options = 2;
 }
 
 message Defaults {
   repeated string gateways = 1;
   repeated string admins = 2;
+  repeated Department departments = 3;
+  map<string, Metric> metrics = 4;
 }
 
 message Users { repeated User users = 1; }
@@ -110,6 +152,9 @@ message Users { repeated User users = 1; }
 service UsersAPI {
   rpc Me(Empty) returns (User);
   rpc FetchDefaults(Empty) returns (Defaults);
+
+  rpc GetConfig(Empty) returns (Defaults);
+  rpc SetConfig(Defaults) returns (Defaults);
 
   // Resolves given Users data by their UUIDs
   // And returns all accessible Users for Requestor
@@ -136,4 +181,8 @@ message Event {
   }
 }
 
-service StreamService { rpc Stream (Empty) returns (stream Event); }
+message StreamRequest{
+  map<string, string> commands = 1;
+}
+
+service StreamService { rpc Stream (StreamRequest) returns (stream Event); }

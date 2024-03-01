@@ -1,7 +1,7 @@
 <template>
-  <template v-if="!isDefaultLoading">
+  <div class="chat-options" v-if="!isDefaultLoading">
     <n-space v-if="!isEdit" justify="start" align="center">
-      <n-button round quaternary @click="router.push({ name: 'Empty Chat' })">
+      <n-button round quaternary @click="cancel">
         <template #icon>
           <n-icon :component="CloseSharp"/>
         </template>
@@ -12,7 +12,7 @@
       </n-text>
     </n-space>
 
-    <n-space vertical justify="start" style="padding-left: 16px; padding-top: 10%;max-width: 800px;margin: auto">
+    <n-space vertical justify="start" style="max-width: 800px; margin: auto; width: 100%">
       <n-form :model="chat" ref="form" :rules="rules" label-placement="left">
         <n-form-item label="Topic" label-align="left" label-width="75">
           <n-input v-model:value="chat.topic" clearable placeholder="What are we chatting about?"/>
@@ -29,14 +29,31 @@
         <n-form-item label="Gateways" label-align="left" label-width="75">
           <n-select v-model:value="chat.gateways" multiple :options="gateways_options" filterable/>
         </n-form-item>
+
+        <n-form-item
+          label-align="left"
+          label-width="75"
+          v-for="metric of metrics"
+          :label="metric.title"
+          :key="metric.key"
+        >
+          <n-select
+            filterable
+            label-field="key"
+            :value="getMetric(metric.key)"
+            :options="metric.options"
+            @update:value="(value) => setMetric(value, metric.key)"
+          />
+        </n-form-item>
+
         <n-space justify="end">
           <n-button :loading="isEditLoading" ghost type="success" @click="submit">
-            {{ isEdit ? 'Edit chat' : 'Start chat' }}
+            {{ isEdit ? 'Save' : 'Start chat' }}
           </n-button>
         </n-space>
       </n-form>
     </n-space>
-  </template>
+  </div>
   <n-spin style="width: 100%;height: 100%; margin: auto" size="large" v-else></n-spin>
 </template>
 
@@ -58,11 +75,15 @@ import {
 
 import {useRouter} from 'vue-router';
 import {useCcStore} from "../../store/chatting.ts";
-import {Chat, Role} from "../../connect/cc/cc_pb";
-import MemberSelect from "../users/member_select.vue";
+import {useAppStore} from '../../store/app.ts';
+import {Chat, ChatMeta, Role} from "../../connect/cc/cc_pb";
 import useDefaults from "../../hooks/useDefaults.ts";
+import MemberSelect from "../users/member_select.vue";
+import { ValueAtom } from 'naive-ui/es/select/src/interface';
+import { Value } from '@bufbuild/protobuf';
 
 interface ChatOptionsProps {
+  minHeight?: string
   isEdit?: boolean
   chat?: Chat
 }
@@ -74,9 +95,10 @@ const {isEdit, chat: oldChat} = toRefs(props)
 
 const emit = defineEmits(['close'])
 
-const router = useRouter();
-const store = useCcStore();
-const {admins, fetch_defaults, isDefaultLoading, users, gateways} = useDefaults()
+const router = useRouter()
+const store = useCcStore()
+const appStore = useAppStore()
+const {admins, fetch_defaults, isDefaultLoading, users, gateways, metrics} = useDefaults()
 
 const form = ref<FormInst>()
 const rules = {
@@ -153,21 +175,42 @@ function submit() {
       isEditLoading.value = true
 
       if (isEdit?.value) {
-        await store.update_chat(chat.value as Chat);
+        await store.update_chat(chat.value as Chat)
 
         emit('close')
       } else {
-        let result = await store.create_chat(chat.value as Chat);
+        let { uuid } = await store.create_chat(chat.value as Chat)
 
-        router.push({name: 'Chat', params: {uuid: result.uuid}})
+        router.push({name: 'Chat', params: {uuid}})
       }
     } finally {
       isEditLoading.value = false
     }
-
-
   })
+}
+
+function getMetric(key: string) {
+  return chat.value.meta?.data[key]?.kind.value as ValueAtom
+}
+
+function setMetric(value: number, key: string) {
+  if (!chat.value.meta) chat.value.meta = new ChatMeta({})
+
+  chat.value.meta.data[key] = new Value({
+    kind: { case: 'numberValue', value }
+  })
+}
+
+function cancel() {
+  router.push({ name: 'Empty Chat' })
+  appStore.displayMode = 'half'
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.chat-options {
+  display: flex;
+  flex-direction: column;
+  min-height: v-bind('minHeight');
+}
+</style>

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/graph"
@@ -28,6 +28,41 @@ func (s *UsersServer) FetchDefaults(ctx context.Context, req *connect.Request[cc
 
 	defaults, err := core.Config()
 	if err != nil {
+		s.log.Error("Failed get config", zap.Error(err))
+		return nil, fmt.Errorf("failed to fetch defaults: %w", err)
+	}
+
+	resp := connect.NewResponse[cc.Defaults](defaults)
+
+	return resp, nil
+}
+
+func (s *UsersServer) GetConfig(ctx context.Context, req *connect.Request[cc.Empty]) (
+	*connect.Response[cc.Defaults], error) {
+	log := s.log.Named("GetConfig")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	defaults, err := core.Config()
+	if err != nil {
+		s.log.Error("Failed get config", zap.Error(err))
+		return nil, fmt.Errorf("failed to fetch defaults: %w", err)
+	}
+
+	resp := connect.NewResponse[cc.Defaults](defaults)
+
+	return resp, nil
+}
+
+func (s *UsersServer) SetConfig(ctx context.Context, req *connect.Request[cc.Defaults]) (
+	*connect.Response[cc.Defaults], error) {
+	log := s.log.Named("Set config")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	defaults, err := core.SetConfig(requestor, req.Msg)
+	if err != nil {
+		s.log.Error("Failed set config", zap.Error(err))
 		return nil, fmt.Errorf("failed to fetch defaults: %w", err)
 	}
 
@@ -44,6 +79,7 @@ func (s *UsersServer) Resolve(ctx context.Context, req *connect.Request[cc.Users
 
 	conf, err := core.Config()
 	if err != nil {
+		s.log.Error("Failed get config", zap.Error(err))
 		return nil, fmt.Errorf("failed to fetch defaults: %w", err)
 	}
 

@@ -1,19 +1,27 @@
 <template>
-  <n-list style="padding-left: 16px;min-height: 100vh">
+  <n-list class="chat">
     <template #header>
-      <chat-header :chat="chat!" style="height: 5vh"/>
+      <chat-header :chat="chat!"/>
     </template>
 
-    <n-scrollbar style="max-height: 80vh !important;" v-if="isMessageLoading || messages.length>0" ref="scrollbar">
-      <template  v-if="isMessageLoading">
-          <mock-message v-for="(_,index) in 5" :key="index+ (chat?.topic || '')"/>
+    <n-scrollbar
+      ref="scrollbar"
+      style="max-height: calc(100vh - 66px - 77px); margin-bottom: auto"
+      v-if="isMessageLoading || messages.length>0"
+    >
+      <template v-if="isMessageLoading">
+        <mock-message v-for="(_,index) in 5" :key="index+ (chat?.topic || '')"/>
       </template>
 
       <n-list-item v-else v-for="message in messages" :key="message.uuid">
         <!-- @vue-ignore -->
-        <message-view :message="message" @approve="a => handle_approve(message, a)"
-                      @convert="kind => { updating = true; current_message = message; handle_send(kind, !messages['underReview']) }"
-                      @delete="handle_delete(message)" @edit="() => { updating = true; current_message = message; }"/>
+        <message-view
+          :message="message"
+          @approve="a => handle_approve(message, a)"
+          @convert="kind => { store.updating = true; store.current_message = message; store.handle_send(kind, !messages['underReview']) }"
+          @delete="handle_delete(message)"
+          @edit="handle_edit(message)"
+        />
       </n-list-item>
     </n-scrollbar>
 
@@ -24,27 +32,76 @@
     </n-space>
 
     <template #footer>
-      <n-space class="footer" align="center">
-        <user-avatar class="avatar" round size="medium" avatar="M E"></user-avatar>
+      <div class="footer">
+        <div class="avatar" v-if="chat?.role == Role.ADMIN">
+          <n-tooltip placement="top-start">
+            <template #trigger>
+              <n-button
+                ghost
+                circle
+                type="warning"
+                size="small"
+                @click="sendMode = (sendMode === 'admin') ? 'default' : 'admin'"
+              >
+                <template #icon>
+                  <clipboard-icon />
+                </template>
+              </n-button>
+            </template>
+            Sent message as an Admin Note.
+          </n-tooltip>
+
+          <n-tooltip placement="top-start">
+            <template #trigger>
+              <n-button
+                quaternary
+                circle
+                type="info"
+                size="small"
+                @click="sendMode = (sendMode === 'approve') ? 'default' : 'approve'"
+              >
+                <template #icon>
+                  <n-icon :component="ReviewOutline" size="32"/>
+                </template>
+              </n-button>
+            </template>
+            Message will be put under moderation, thus not visible to user until one of the Admins approves it.
+          </n-tooltip>
+        </div>
 
         <n-space class="textarea" vertical justify="center">
-          <n-alert style="min-width: 50vw;" title="Editing" type="info" closable v-if="updating"
-                   @close="handle_stop_edit"/>
+          <n-alert
+            closable
+            type="info"
+            title="Editing"
+            style="min-width: 50vw"
+            v-if="store.updating"
+            @close="handle_stop_edit"
+          />
+
           <n-tooltip placement="top-end">
             <template #trigger>
+                <!-- :value="get_mention_value(store.current_message.content)" -->
+                <!-- @update:value="set_mention_value($event)" -->
+              <n-mention
+                ref="input"
+                size="small"
+                type="textarea"
+                style="width: 100%"
+                placeholder="Type your message"
+                v-model:value="store.current_message.content"
+                :autosize="{ minRows: 3, maxRows: 15 }"
+                :options="mentionsOptions"
 
-              <n-input type="textarea" size="small" :autosize="{
-                                minRows: 2,
-                                maxRows: 5
-                            }
-                                " style="min-width: 50vw; max-width: 60vw;" placeholder="Type your message"
-                       v-model:value="current_message.content" ref="input"
-                       @keypress.ctrl.enter.exact="e => { e.preventDefault(); handle_send() }"
-                       @keypress.ctrl.shift.enter.exact="e => { e.preventDefault(); handle_send(Kind.ADMIN_ONLY) }"
-                       @keyup.ctrl.up.exact="e => { e.preventDefault(); handle_begin_edit() }"/>
+                @blur="check_mentioned"
+                @keypress.prevent.enter.exact="handle_new_line"
+                @keypress.prevent.ctrl.enter.exact="handle_send"
+                @keypress.prevent.ctrl.shift.enter.exact="store.handle_send(chat?.uuid ?? '', Kind.ADMIN_ONLY)"
+                @keyup.prevent.ctrl.up.exact="handle_begin_edit"
+              />
             </template>
 
-            <ul>
+            <ul style="padding: 0 0 0 10px">
               <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to send message</li>
               <li v-if="chat?.role == Role.ADMIN"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Enter</kbd> to
                 send
@@ -56,34 +113,21 @@
           </n-tooltip>
         </n-space>
 
-        <n-space class="actions">
-          <n-button type="success" ghost circle size="small" @click="handle_send()">
+        <n-space class="actions" style="flex-flow: nowrap">
+          <n-button
+            ghost
+            circle
+            size="small"
+            type="success"
+            :color="(colorBySendMode as string)"
+            @click="handle_send"
+          >
             <template #icon>
-              <n-icon :component="SendOutline"/>
+              <n-icon :component="SendOutline" />
             </template>
           </n-button>
-          <n-tooltip v-if="chat?.role == Role.ADMIN">
-            <template #trigger>
-              <n-button type="warning" ghost circle size="small" @click="handle_send(Kind.ADMIN_ONLY)">
-                <template #icon>
-                  <n-icon :component="ClipboardOutline"/>
-                </template>
-              </n-button>
-            </template>
-            Message will be sent as an Admin Note, thus visible only to Admins.
-          </n-tooltip>
-          <n-tooltip v-if="chat?.role == Role.ADMIN">
-            <template #trigger>
-              <n-button type="info" quaternary circle size="small" @click="handle_send(Kind.DEFAULT, true)">
-                <template #icon>
-                  <n-icon :component="ReviewOutline" size="32"/>
-                </template>
-              </n-button>
-            </template>
-            Message will be put under moderation, thus not visible to user until one of the Admins approves it.
-          </n-tooltip>
         </n-space>
-      </n-space>
+      </div>
     </template>
   </n-list>
 </template>
@@ -91,29 +135,26 @@
 <script setup lang="ts">
 import {Component, computed, defineAsyncComponent, nextTick, ref, watch} from 'vue';
 import {
-  InputInst,
   NAlert,
   NButton,
   NIcon,
-  NInput,
+  NMention,
   NList,
   NListItem,
   NScrollbar,
   NSpace,
   NTooltip,
-  useNotification
+  MentionOption
 } from 'naive-ui';
 
 import {useRoute, useRouter} from 'vue-router';
 import {useCcStore} from '../../../store/chatting';
 import {Chat, Kind, Message, Role} from '../../../connect/cc/cc_pb';
-import {ConnectError} from '@bufbuild/connect';
 import ChatHeader from "../../../components/chats/layouts/chat_header.vue";
-import UserAvatar from "../../../components/ui/user_avatar.vue";
 import MockMessage from "../../../components/chats/mock_message.vue";
 
 const SendOutline = defineAsyncComponent(() => import('@vicons/ionicons5/SendOutline'));
-const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
+const ClipboardIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
 const ReviewOutline = defineAsyncComponent(() => import('../../../assets/icons/ReviewOutline.svg')) as Component;
 
 const MessageView = defineAsyncComponent(() => import('../../../components/chats/message.vue'));
@@ -123,7 +164,7 @@ const router = useRouter();
 
 const store = useCcStore()
 const scrollbar = ref()
-const input = ref<InputInst>()
+const input = ref()
 const isMessageLoading = ref(false)
 
 const chat = computed(() => {
@@ -136,80 +177,80 @@ const chat = computed(() => {
   }
 })
 
-const notify = useNotification()
-
 const messages = computed(() => {
-  return store.chat_messages(chat.value! as Chat)
+  const chatMessages = store.chat_messages(chat.value! as Chat)
+
+  chatMessages.sort((a, b) => Number(a.sent - b.sent))
+  return chatMessages
 })
 
-const updating = ref(false)
-const current_message = ref<Message>(new Message({
-  chat: route.params.uuid as string,
-  content: '',
-}))
+const mentionsOptions = computed(() => {
+  if (!chat.value) return []
+  const uuids = new Set([...chat.value.users, ...chat.value.admins])
+  const result: MentionOption[] = []
+
+  uuids.forEach((uuid) => {
+    const { title } = store.users.get(uuid) ?? {}
+
+    result.push({
+      label: title ?? uuid,
+      value: title?.replace(' ', '_') ?? uuid
+    })
+  })
+
+  return result
+})
+
+function check_mentioned() {
+  const users = Array.from(store.users.values())
+  const titles = store.current_message.content.match(/@[\w\d-]{1,}/g)
+
+  store.current_message.mentioned = []
+  titles?.forEach((title) => {
+    const { uuid } = users.find((user) =>
+      user.title.replace(' ', '_') === title.replace('@', '')
+    ) ?? {}
+    const mention = store.current_message.mentioned.includes(uuid ?? title)
+
+    if (mention) return
+    store.current_message.mentioned.push(uuid ?? title)
+  })
+}
 
 async function handle_approve(msg: Message, approve: boolean) {
   msg.underReview = !approve
   await store.update_message(msg)
 }
 
-async function handle_send(kind = Kind.DEFAULT, review = false) {
-  if (current_message.value.content == '') {
-    return
-  }
-
-  try {
-    current_message.value.underReview = review
-    current_message.value.kind = kind
-
-    if (updating.value) {
-      await store.update_message(current_message.value as Message)
-      updating.value = false
-    } else {
-      current_message.value.chat = route.params.uuid as string
-      await store.send_message(current_message.value as Message)
-    }
-  } catch (e) {
-    if (e instanceof ConnectError) {
-      notify.error({
-        title: 'Error',
-        description: e.message,
-      })
-    }
-
-    store.get_messages(chat.value! as Chat, false)
-  }
-
-
-  updating.value = false
-  current_message.value = new Message({
-    content: '',
-  })
-}
-
 async function handle_delete(msg: Message) {
   await store.delete_message(msg)
 }
 
-function scrollToBottom(smooth=false) {
+async function scrollToBottom(smooth = false) {
+  await nextTick()
+
   setTimeout(() => {
     if (!scrollbar.value) {
       console.warn('scrollbar not ready')
       return
     }
-    nextTick(() => {
-      scrollbar.value.scrollTo({top: Number.MAX_SAFE_INTEGER,behavior:smooth?'smooth':undefined})
-    })
-  }, 0)
+    
+    const top = scrollbar.value.$el.nextSibling.firstChild.scrollHeight;
+
+    scrollbar.value.scrollTo({ top, behavior: smooth ? 'smooth' : 'instant' })
+  }, 300)
 }
 
 async function load_chat() {
   if (!chat.value) return
   try {
     isMessageLoading.value = true
-    await Promise.all([store.resolve([...chat.value.users, ...chat.value.admins]),
-      store.get_messages(chat.value as Chat)])
-    scrollToBottom()
+    await Promise.all([
+      store.resolve([...chat.value.users, ...chat.value.admins]),
+      store.get_messages(chat.value as Chat)
+    ])
+
+    handle_stop_edit()
   } finally {
     isMessageLoading.value = false
   }
@@ -218,19 +259,77 @@ async function load_chat() {
 watch(chat, load_chat)
 load_chat()
 
-watch(messages, ()=>{
-  if(chat.value?.meta){
-    chat.value.meta.unread=0;
+watch(messages, () => {
+  if (chat.value?.meta) {
+    chat.value.meta.unread = 0;
   }
-  scrollToBottom(true)
-},{deep:true})
+
+  if (scrollbar.value) scrollToBottom()
+}, { deep: true })
+
+watch(isMessageLoading, scrollToBottom)
+watch(scrollbar, scrollToBottom)
+
+const sendMode = ref('default')
+const textareaColors = computed(() => {
+  const color = colorBySendMode.value
+
+  return `
+    --n-caret-color: ${color ?? '#63e2b7'};
+    --n-color-focus: ${color ?? '#63e2b7'}1a;
+    --n-border: 1px solid ${color};
+    --n-border-hover: 1px solid ${color ?? '#63e2b7'};
+    --n-border-focus: 1px solid ${color ?? '#63e2b7'};
+  `
+})
+
+const colorBySendMode = computed(() => {
+  switch (sendMode.value) {
+    case 'admin':
+      return '#f2c97d'
+    case 'approve':
+      return '#70c0e8'
+    default:
+      return null
+  }
+})
+
+watch(textareaColors, (value) => {
+  if (!input.value?.inputInstRef?.$el.style) return
+  input.value.inputInstRef.$el.style.cssText += value
+})
+
+function handle_edit(message: Message) {
+  store.updating = true
+  store.current_message = message
+
+  if (message.underReview) {
+    sendMode.value = 'approve'
+  } else if (message.kind === Kind.ADMIN_ONLY) {
+    sendMode.value = 'admin'
+  }
+}
+
+function handle_send() {
+  switch (sendMode.value) {
+    case 'admin':
+      store.handle_send(chat.value?.uuid ?? '', Kind.ADMIN_ONLY)
+      break;
+    case 'approve':
+      store.handle_send(chat.value?.uuid ?? '', Kind.DEFAULT, true)
+      break;
+    default:
+      store.handle_send(chat.value?.uuid ?? '')
+      break;
+  }
+}
 
 function handle_begin_edit() {
   for (let i = messages.value.length - 1; i >= 0; i--) {
     let msg = messages.value[i]
     if (msg.sender == store.me.uuid) {
-      updating.value = true
-      current_message.value = msg
+      store.updating = true
+      store.current_message = msg
       nextTick(() => {
         input.value?.focus()
       })
@@ -240,15 +339,20 @@ function handle_begin_edit() {
 }
 
 function handle_stop_edit() {
-  updating.value = false
-  current_message.value = new Message({
+  store.updating = false
+  store.current_message = new Message({
     content: '',
   })
 }
 
+function handle_new_line() {
+  const value = store.current_message.content
+
+  store.current_message.content = `${value}\n`
+}
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 kbd {
   background-color: #eee;
   border-radius: 3px;
@@ -267,12 +371,45 @@ textarea {
   overflow-wrap: anywhere;
 }
 
-.footer{
-  .actions{
+.chat {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding-left: 16px;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: calc(100% - 20px);
+  gap: 15px;
+
+  .avatar {
+    max-width: 35px;
+
+    *:not(:last-child) {
+      margin-bottom: 10px;
+    }
   }
-  .avatar{
+
+  .textarea {
+    min-width: 100px;
+    width: 100%;
   }
-  .textarea{
+  
+  .actions {
+    justify-content: space-between;
+  }
+
+  @media (max-width: 600px) {
+    flex-wrap: wrap;
+    .textarea {
+      width: 60%;
+    }
+    .actions {
+      margin: 20px auto;
+    }
   }
 }
 </style>

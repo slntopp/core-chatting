@@ -1,5 +1,5 @@
 Metadata-Version: 2.1
-Name: core-chatting
+Name: core_chatting
 Version: 0.0.1
 Summary: Core Chatting gRPC Client for Python
 Author-email: Mikita Iwanowski <info@slnt-opp.xyz>

@@ -22,12 +22,26 @@
         <n-button
           ghost
           type="success"
-          :style="(isChatPanelOpen) ? 'margin-right: auto' : null"
+          :style="(isChatPanelOpen && selectedChats.length < 1) ? 'margin-right: auto': null"
           @click="startChat"
         >
           <n-icon :component="ChatbubbleEllipsesOutline" />
           <span v-if="isChatPanelOpen" style="margin-left: 5px">
             Start Chat
+          </span>
+        </n-button>
+
+        <n-button
+          ghost
+          type="error"
+          v-if="selectedChats.length > 0"
+          :loading="deleteLoading"
+          :style="(isChatPanelOpen) ? 'margin-right: auto' : null"
+          @click="deleteChats"
+        >
+          <n-icon :component="deleteIcon" />
+          <span v-if="isChatPanelOpen" style="margin-left: 5px">
+            Delete Chats
           </span>
         </n-button>
 
@@ -143,6 +157,7 @@
         <n-list hoverable clickable style="margin-bottom: 25px">
           <chat-item
             v-for="chat in viewedChats"
+            :selected="selectedChats"
             :hide-message="!isChatPanelOpen"
             :uuid="chat.uuid"
             :chat="chat"
@@ -150,6 +165,7 @@
             @click="changeMode('none')"
             @hover="onMouseMove"
             @hoverEnd="isFirstMessageVisible = false"
+            @select="selectChat"
           />
         </n-list>
         <n-spin
@@ -176,13 +192,13 @@ import {
   NLayoutSider, NList, NScrollbar, NSpace,
   NPopover, NRadioGroup, NRadio, NDivider,
   NCheckboxGroup, NCheckbox, NText, NSpin,
-  NTag
+  NTag, useNotification
 } from 'naive-ui';
 
 import {useAppStore} from '../../store/app.ts';
 import {useCcStore} from '../../store/chatting.ts';
 
-import {useRouter} from 'vue-router';
+import {useRoute, useRouter} from 'vue-router';
 import {Chat, Status} from '../../connect/cc/cc_pb';
 import ChatItem from "../../components/chats/chat_item.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
@@ -197,13 +213,18 @@ const SortIcon = defineAsyncComponent(() => import('@vicons/ionicons5/EllipsisVe
 const SwitchIcon = defineAsyncComponent(() => import('@vicons/ionicons5/SwapHorizontal'));
 const rightIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForward'));
 const leftIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
+const deleteIcon = defineAsyncComponent(() => import('@vicons/ionicons5/CloseCircle'))
 
 const appStore = useAppStore()
-const store = useCcStore();
-const router = useRouter();
+const store = useCcStore()
+const router = useRouter()
+const route = useRoute()
 const {makeDraggable} = useDraggable()
 const {metrics, fetch_defaults} = useDefaults()
+const notification = useNotification()
 
+const selectedChats = ref<string[]>([])
+const deleteLoading = ref(false)
 const searchParam = ref('')
 const scrollbar = ref<InstanceType<typeof NScrollbar>>()
 const loading = ref<InstanceType<typeof NSpin>>()
@@ -231,7 +252,32 @@ function startChat() {
   appStore.displayMode = 'none'
 }
 
+async function deleteChats () {
+  deleteLoading.value = true
+  try {
+    const current = route.params.uuid as string
+    if (selectedChats.value.includes(current)) {
+      await router.push({ name: 'Dashboard' })
+      changePanelOpen()
+    }
 
+    const promises = selectedChats.value.map((uuid) =>
+      store.delete_chat(new Chat(store.chats.get(uuid)))
+    )
+
+    await Promise.all(promises)
+    notification.success({
+      title: 'Chats successfully deleted'
+    })
+  } catch (error: any) {
+    notification.error({
+      title: error.response?.data.message ?? error.message ?? error
+    })
+    console.error(error)
+  } finally {
+    deleteLoading.value = false
+  }
+}
 
 onMounted(() => {
   makeDraggable({
@@ -257,7 +303,17 @@ onMounted(() => {
 
 sync()
 
-const filterChat = (chat: Chat, val: string): boolean => {
+function selectChat(uuid: string) {
+  if (selectedChats.value.includes(uuid)) {
+    const i = selectedChats.value.indexOf(uuid)
+
+    selectedChats.value.splice(i, 1)
+  } else {
+    selectedChats.value.push(uuid)
+  }
+}
+
+function filterChat (chat: Chat, val: string): boolean {
   if (!val) {
     return true
   }
@@ -499,5 +555,15 @@ function onMouseMove(clientX: number, clientY: number, chatId: string) {
   height: 100%;
   min-width: 50%;
   width: 100%;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

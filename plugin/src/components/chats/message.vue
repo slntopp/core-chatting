@@ -241,6 +241,16 @@ function timestamp() {
   })
 }
 
+const subStyle = computed(() =>
+  (window.top) ? {
+    decoration: 'underline',
+    cursor: 'pointer'
+  } : {
+    decoration: 'none',
+    cursor: 'default'
+  }
+)
+
 function render(_props: any, {slots}: any) {
   const is_sender = message.value.sender == store.me.uuid
 
@@ -250,7 +260,18 @@ function render(_props: any, {slots}: any) {
         {
           style: "margin: 0",
         },
-        () => h(NText, {}, () => sender())
+        () => h(
+          NText,
+          {
+            class: 'sub',
+            onClick() {
+              const { uuid } = store.me
+
+              window.top?.postMessage({ type: 'open-user', value: { uuid } }, '*')
+            }
+          },
+          () => sender()
+        )
     ),
     timestamp()
   ]
@@ -305,5 +326,13 @@ div.code {
 
 .n-space span img {
   max-width: 50vw;
+}
+
+.sub {
+  cursor: v-bind('subStyle.cursor');
+}
+
+.sub:hover {
+  text-decoration: v-bind('subStyle.decoration');
 }
 </style>

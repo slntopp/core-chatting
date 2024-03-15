@@ -1,5 +1,9 @@
 <template>
-  <n-avatar :round="round" :size="props.size!">{{ avatarPreview }}</n-avatar>
+  <n-avatar :round="round" :size="props.size!">
+    <transition name="fade">
+      <span v-if="avatarPreview">{{ avatarPreview }}</span>
+    </transition>
+  </n-avatar>
 </template>
 
 <script setup lang="ts">

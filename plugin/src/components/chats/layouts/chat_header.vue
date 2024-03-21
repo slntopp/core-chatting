@@ -327,7 +327,8 @@ const gridColumns = computed(() =>
 )
 window.addEventListener('message', ({ data, origin }) => {
   if (origin.includes('localhost')) return
-  buttonTitle.value = data
+  if (data.type !== 'button-title') return
+  buttonTitle.value = data.value
 })
 
 const sendMessage = (event: MouseEvent) => {

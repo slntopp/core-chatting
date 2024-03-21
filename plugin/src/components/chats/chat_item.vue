@@ -163,7 +163,7 @@ function goToChat() {
   router.push({ name: 'Chat', params: { uuid: uuid.value } })
 
   window.top?.postMessage({
-    type: 'get-user',
+    type: 'send-user',
     value: { uuid: chat.value.owner }
   }, '*')
 }

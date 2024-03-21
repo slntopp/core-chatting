@@ -44,6 +44,9 @@ router.beforeResolve((to, from, next) => {
   if (to.params.uuid) {
     store.displayMode = 'none'
   }
+  if (to.path === '/dashboard') {
+    store.displayMode = 'full'
+  }
   next()
 })
 </script>

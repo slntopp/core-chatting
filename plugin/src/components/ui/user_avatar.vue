@@ -1,31 +1,32 @@
 <template>
-  <n-avatar :round="round" :size="props.size!">
+  <n-avatar v-if="avatarPreview" :round="round ?? true" :size="size">
     <transition name="fade">
-      <span v-if="avatarPreview">{{ avatarPreview }}</span>
+      <span v-if="typeof avatarPreview === 'string'">{{ avatarPreview }}</span>
+      <n-icon :size="iconSize" v-else>
+        <component :is="avatarPreview" />
+      </n-icon>
     </transition>
   </n-avatar>
 </template>
 
 <script setup lang="ts">
-import {NAvatar} from "naive-ui";
-import {computed, toRefs} from "vue";
+import { DefineComponent, computed } from 'vue'
+import { NAvatar, NIcon } from 'naive-ui'
 
 interface AvatarProps {
   size?: 'medium' | 'large' | 'small' | number
-  avatar: string
+  iconSize?: number
+  avatar: string | DefineComponent
   round: boolean
 }
 
 const props = defineProps<AvatarProps>()
 
-// @ts-ignore
-const {size = 'medium', round = true, avatar} = toRefs(props)
-
 const avatarPreview = computed(() => {
-  return avatar.value.split(" ").map((s: string) => s?.[0]).join('').toUpperCase()
+  if (typeof props.avatar !== 'string') {
+    return props.avatar
+  }
+
+  return props.avatar.split(' ').map((s: string) => s?.[0]).join('').toUpperCase()
 })
 </script>
-
-<style scoped>
-
-</style>

@@ -1,5 +1,5 @@
 <template>
-  <render messagePlacement="left" @contextmenu="show_dropdown">
+  <render :settingsAvatar="true" messagePlacement="left" @contextmenu="show_dropdown">
     <span v-html="content()"></span>
   </render>
 
@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, h, nextTick, ref, toRefs} from 'vue';
+import {Component, computed, defineAsyncComponent, h, nextTick, ref, toRefs} from 'vue';
 import {NButton, NDivider, NDropdown, NH2, NIcon, NSpace, NText, NTooltip, useThemeVars} from 'naive-ui'
 
 import {Kind, Message, Role, User} from '../../connect/cc/cc_pb'
@@ -31,11 +31,9 @@ import json from 'highlight.js/lib/languages/json'
 import markdown from 'highlight.js/lib/languages/markdown'
 
 import {marked, Renderer} from 'marked'
-
-// @ts-ignore
 import {mangle} from 'marked-mangle'
-// @ts-ignore
 import DOMPurify from 'dompurify'
+
 import UserAvatar from "../ui/user_avatar.vue";
 import UserItem from "../users/user_item.vue";
 import {getRelativeTime} from '../../functions.ts';
@@ -44,6 +42,7 @@ interface MessageProps {
   message: Message
 }
 
+const CogIcon = defineAsyncComponent(() => import('@vicons/ionicons5/CogOutline'));
 const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
 const PencilOutline = defineAsyncComponent(() => import('@vicons/ionicons5/PencilOutline'));
 const TrashOutline = defineAsyncComponent(() => import('@vicons/ionicons5/TrashOutline'));
@@ -60,9 +59,9 @@ const theme = useThemeVars()
 
 const store = useCcStore()
 
-function sender(): string {
-  return store.users.get(message.value.sender)?.title ?? 'Unknown'
-}
+const sender = computed(() =>
+  store.users.get(message.value.sender)?.title ?? 'Unknown'
+)
 
 const x = ref(0)
 const y = ref(0)
@@ -136,9 +135,8 @@ function show_dropdown(e: MouseEvent) {
 
 
 function avatar() {
-
-  let elements = [
-    h(UserAvatar, {round: true, size: 64, avatar: sender()})
+  const elements = [
+    h(UserAvatar, {round: true, size: 64, avatar: sender.value})
   ]
 
   if (message.value.kind == Kind.ADMIN_ONLY) {
@@ -253,6 +251,7 @@ const subStyle = computed(() =>
 
 interface RenderProps {
   messagePlacement?: 'left' | 'right' | 'auto'
+  settingsAvatar?: boolean
 }
 
 function render(props: RenderProps, { slots }: any) {
@@ -285,7 +284,7 @@ function render(props: RenderProps, { slots }: any) {
               window.top?.postMessage({ type: 'open-user', value: { uuid } }, '*')
             }
           },
-          () => sender()
+          () => sender.value
         )
     ),
     timestamp()
@@ -304,7 +303,32 @@ function render(props: RenderProps, { slots }: any) {
   }
 
   let elements = [
-    avatar(),
+    (props.settingsAvatar)
+      ? h(UserAvatar as Component, {
+        id: 'chat-message',
+        style: 'cursor: pointer',
+        round: true,
+        size: 50,
+        iconSize: 28,
+        onClick: (e: MouseEvent) => {
+          let avatar = (e.target as HTMLElement)
+
+          if (avatar.id !== 'chat-message') {
+            avatar = avatar.closest('#chat-message') as HTMLElement
+          }
+          const isOpen = JSON.parse(avatar.dataset.open ?? 'false')
+          
+          if (show.value || isOpen) {
+            show.value = false
+            delete avatar.dataset.open
+          } else {
+            show_dropdown(e)
+            avatar.dataset.open = 'true'
+          }
+        },
+        avatar: CogIcon
+      })
+      : avatar(),
     h(NSpace,
       {
         vertical: true,

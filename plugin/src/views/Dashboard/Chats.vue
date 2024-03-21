@@ -66,7 +66,7 @@
           scrollable
           trigger="click"
           placement="bottom"
-          style="max-height: 50vh"
+          style="max-height: 50vh; max-width: 768px"
         >
           <template #trigger>
             <n-icon size="24" style="vertical-align: middle; cursor: pointer">
@@ -146,6 +146,15 @@
               </n-space>
             </n-checkbox-group>
           </div>
+
+          <n-button
+            ghost
+            type="primary"
+            style="display: block; margin: 10px 0 5px auto"
+            @click="resetFilters"
+          >
+            Reset
+          </n-button>
         </n-popover>
       </n-space>
 
@@ -186,7 +195,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, onMounted, ref, watch} from 'vue';
+import {computed, defineAsyncComponent, nextTick, onMounted, ref, watch} from 'vue';
 import {
   NButton, NIcon, NInput, NLayoutContent,
   NLayoutSider, NList, NScrollbar, NSpace,
@@ -285,6 +294,18 @@ onMounted(() => {
     first: document.querySelector(".chats__panel")!,
     second: document.querySelector(".chat__item")!
   })
+
+  const sorting = JSON.parse(localStorage.getItem('sorting') ?? 'null')
+  const filters = JSON.parse(localStorage.getItem('filters') ?? 'null')
+
+  if (sorting) {
+    sortBy.value = sorting.sortBy
+    statusSorters.value = sorting.statuses
+  }
+  if (filters) {
+    checkedStatuses.value = filters.statuses
+    checkedAdmins.value = filters.admins
+  }
 
   const options = {
     root: scrollbar.value?.$el.nextElementSibling,
@@ -445,17 +466,49 @@ interface metricsOptionsType {
   [index: string]: []
 }
 
-const metricsOptions = ref<metricsOptionsType>(
-  Object.keys(metrics.value).reduce((result, key) => ({
-    ...result, [key]: []
-  }), {})
+const filters = JSON.parse(localStorage.getItem('filters') ?? 'null')
+const metricsOptions = ref<metricsOptionsType>((filters)
+  ? filters.metrics
+  : metrics.value.reduce((result, { key }) => ({ ...result, [key]: [] }), {})
 )
 
 watch(metrics, (value) => {
-  Object.keys(value).reduce((result, key) => ({
-    ...result, [key]: []
-  }), {})
+  const filters = JSON.parse(localStorage.getItem('filters') ?? 'null')
+
+  metricsOptions.value = (filters)
+    ? filters.metrics
+    : value.reduce((result, { key }) => ({ ...result, [key]: [] }), {})
 })
+
+watch([sortBy, statusSorters], () => {
+  localStorage.setItem('sorting', JSON.stringify({
+    sortBy: sortBy.value,
+    statuses: statusSorters.value
+  }))
+}, { deep: true })
+
+watch([checkedStatuses, checkedAdmins, metricsOptions], () => {
+  localStorage.setItem('filters', JSON.stringify({
+    statuses: checkedStatuses.value,
+    admins: checkedAdmins.value,
+    metrics: metricsOptions.value
+  }))
+}, { deep: true })
+
+async function resetFilters() {
+  sortBy.value = 'sent'
+  statusSorters.value = statuses.value.map(({ value }) => value)
+
+  checkedStatuses.value = []
+  checkedAdmins.value = []
+  metricsOptions.value = metrics.value.reduce(
+    (result, { key }) => ({ ...result, [key]: [] }), {}
+  )
+
+  await nextTick()
+  localStorage.removeItem('sorting')
+  localStorage.removeItem('filters')
+}
 
 const isChatPanelOpen = ref(true)
 

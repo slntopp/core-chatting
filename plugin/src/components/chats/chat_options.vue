@@ -118,7 +118,7 @@ const chat = ref<Chat>(new Chat({
 window.addEventListener('message', ({ data, origin }) => {
   if (origin.includes('localhost')) return
   if (data.type !== 'user-uuid') return
-  chat.value.uuid = data.value
+  chat.value.users.push(data.value)
 })
 
 const admins_options = ref<SelectOption[]>([])

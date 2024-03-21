@@ -43,9 +43,7 @@
                 size="small"
                 @click="sendMode = (sendMode === 'admin') ? 'default' : 'admin'"
               >
-                <template #icon>
-                  <clipboard-icon />
-                </template>
+                <template #icon> <clipboard-icon /> </template>
               </n-button>
             </template>
             Sent message as an Admin Note.

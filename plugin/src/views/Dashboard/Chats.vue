@@ -298,6 +298,7 @@ onMounted(() => {
     })
   }, options)
 
+  if (!loading.value?.$el) return
   observer.observe(loading.value?.$el)
 })
 

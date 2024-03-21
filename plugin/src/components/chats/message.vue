@@ -1,5 +1,5 @@
 <template>
-  <render @contextmenu="show_dropdown">
+  <render messagePlacement="left" @contextmenu="show_dropdown">
     <span v-html="content()"></span>
   </render>
 
@@ -251,9 +251,24 @@ const subStyle = computed(() =>
   }
 )
 
-function render(_props: any, {slots}: any) {
-  const is_sender = message.value.sender == store.me.uuid
+interface RenderProps {
+  messagePlacement?: 'left' | 'right' | 'auto'
+}
 
+function render(props: RenderProps, { slots }: any) {
+  let is_sender: boolean
+
+  switch (props.messagePlacement) {
+    case 'left':
+      is_sender = false
+      break
+    case 'right':
+      is_sender = true
+      break
+    case 'auto':
+    default:
+      is_sender = message.value.sender === store.me.uuid
+  }
   let title = [
     h(
         NH2,

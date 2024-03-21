@@ -203,7 +203,13 @@
       </n-text>
     </n-space>
 
-    <n-button ghost type="success" style="margin-right: 15px" @click="sendMessage">
+    <n-button
+      ghost
+      type="success"
+      style="margin-right: 15px"
+      v-if="buttonTitle"
+      @click="sendMessage"
+    >
       {{ buttonTitle }}
     </n-button>
   </div>
@@ -431,7 +437,7 @@ const lastUpdate = computed(() =>
 
 const buttonTitle = ref('')
 const gridColumns = computed(() =>
-  `repeat(${(chat.value.gateways.length > 0) ? 5 : 4}, auto) 1fr auto`
+  `repeat(${(chat.value?.gateways.length > 0) ? 5 : 4}, auto) 1fr auto`
 )
 window.addEventListener('message', ({ data, origin }) => {
   if (origin.includes('localhost')) return

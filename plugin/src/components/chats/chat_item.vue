@@ -1,7 +1,29 @@
 <template>
   <n-list-item class="chat" @click="goToChat">
     <n-space :wrap-item="false" justify="start">
-      <user-avatar round size="large" :avatar="members.join(' ')"/>
+      <span
+        class="chat__avatar-wrapper"
+        @mouseenter="hovered = true"
+        @mouseleave="hovered = false"
+      >
+        <user-avatar
+          round
+          size="large"
+          class="chat__avatar"
+          :avatar="(hovered) ? '' : members.join(' ')"
+        />
+
+        <transition name="fade">
+          <n-checkbox
+            v-if="hovered"
+            style="position: absolute; left: 32px; top: 20px"
+            :checked="selected.includes(chat.uuid)"
+            @update:checked="emits('select', chat.uuid)"
+            @click.stop
+          />
+        </transition>
+      </span>
+
       <div v-if="!hideMessage" class="preview">
         <n-text
           depth="3"
@@ -66,9 +88,9 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, toRefs} from "vue";
+import {computed, defineAsyncComponent, ref, toRefs} from "vue";
 import {useRouter} from "vue-router";
-import {NBadge, NIcon, NListItem, NSpace, NText, NTooltip, useNotification} from "naive-ui";
+import {NBadge, NCheckbox, NIcon, NListItem, NSpace, NText, NTooltip, useNotification} from "naive-ui";
 import {Chat} from "../../connect/cc/cc_pb";
 import {useCcStore} from "../../store/chatting.ts";
 import {addToClipboard, getImageUrl} from "../../functions.ts";
@@ -82,10 +104,11 @@ interface ChatItemProps {
   chat: Chat
   uuid: string
   hideMessage: boolean
+  selected: string[]
 }
 
 const props = defineProps<ChatItemProps>()
-const emits = defineEmits(['hover', 'hoverEnd'])
+const emits = defineEmits(['hover', 'hoverEnd', 'select'])
 const { chat, uuid } = toRefs(props)
 
 const store = useCcStore()
@@ -105,6 +128,7 @@ const members = computed(() => users.value.concat(admins.value))
 
 //   return "No messages yet"
 // })
+const hovered = ref(false)
 
 const chatTopic = computed(() => {
   const topic = chat.value.topic ?? members.value.join(', ')
@@ -139,7 +163,7 @@ function goToChat() {
   router.push({ name: 'Chat', params: { uuid: uuid.value } })
 
   window.top?.postMessage({
-    type: 'get-user',
+    type: 'send-user',
     value: { uuid: chat.value.owner }
   }, '*')
 }
@@ -199,5 +223,17 @@ function openUser(uuid: string) {
 <style>
 .n-list .n-list-item .n-list-item__main {
   overflow: hidden;
+}
+
+.chat__avatar-wrapper {
+  height: fit-content;
+}
+
+.chat__avatar {
+  transition: 0.3s;
+}
+
+.chat__avatar-wrapper:hover .chat__avatar {
+  transform: scale(0.5);
 }
 </style>

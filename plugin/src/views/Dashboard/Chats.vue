@@ -22,12 +22,26 @@
         <n-button
           ghost
           type="success"
-          :style="(isChatPanelOpen) ? 'margin-right: auto' : null"
+          :style="(isChatPanelOpen && selectedChats.length < 1) ? 'margin-right: auto': null"
           @click="startChat"
         >
           <n-icon :component="ChatbubbleEllipsesOutline" />
           <span v-if="isChatPanelOpen" style="margin-left: 5px">
             Start Chat
+          </span>
+        </n-button>
+
+        <n-button
+          ghost
+          type="error"
+          v-if="selectedChats.length > 0"
+          :loading="deleteLoading"
+          :style="(isChatPanelOpen) ? 'margin-right: auto' : null"
+          @click="deleteChats"
+        >
+          <n-icon :component="deleteIcon" />
+          <span v-if="isChatPanelOpen" style="margin-left: 5px">
+            Delete Chats
           </span>
         </n-button>
 
@@ -52,7 +66,7 @@
           scrollable
           trigger="click"
           placement="bottom"
-          style="max-height: 50vh"
+          style="max-height: 50vh; max-width: 768px"
         >
           <template #trigger>
             <n-icon size="24" style="vertical-align: middle; cursor: pointer">
@@ -132,6 +146,15 @@
               </n-space>
             </n-checkbox-group>
           </div>
+
+          <n-button
+            ghost
+            type="primary"
+            style="display: block; margin: 10px 0 5px auto"
+            @click="resetFilters"
+          >
+            Reset
+          </n-button>
         </n-popover>
       </n-space>
 
@@ -143,6 +166,7 @@
         <n-list hoverable clickable style="margin-bottom: 25px">
           <chat-item
             v-for="chat in viewedChats"
+            :selected="selectedChats"
             :hide-message="!isChatPanelOpen"
             :uuid="chat.uuid"
             :chat="chat"
@@ -150,6 +174,7 @@
             @click="changeMode('none')"
             @hover="onMouseMove"
             @hoverEnd="isFirstMessageVisible = false"
+            @select="selectChat"
           />
         </n-list>
         <n-spin
@@ -170,19 +195,19 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, onMounted, ref, watch} from 'vue';
+import {computed, defineAsyncComponent, nextTick, onMounted, ref, watch} from 'vue';
 import {
   NButton, NIcon, NInput, NLayoutContent,
   NLayoutSider, NList, NScrollbar, NSpace,
   NPopover, NRadioGroup, NRadio, NDivider,
   NCheckboxGroup, NCheckbox, NText, NSpin,
-  NTag
+  NTag, useNotification
 } from 'naive-ui';
 
 import {useAppStore} from '../../store/app.ts';
 import {useCcStore} from '../../store/chatting.ts';
 
-import {useRouter} from 'vue-router';
+import {useRoute, useRouter} from 'vue-router';
 import {Chat, Status} from '../../connect/cc/cc_pb';
 import ChatItem from "../../components/chats/chat_item.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
@@ -197,13 +222,18 @@ const SortIcon = defineAsyncComponent(() => import('@vicons/ionicons5/EllipsisVe
 const SwitchIcon = defineAsyncComponent(() => import('@vicons/ionicons5/SwapHorizontal'));
 const rightIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForward'));
 const leftIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
+const deleteIcon = defineAsyncComponent(() => import('@vicons/ionicons5/CloseCircle'))
 
 const appStore = useAppStore()
-const store = useCcStore();
-const router = useRouter();
+const store = useCcStore()
+const router = useRouter()
+const route = useRoute()
 const {makeDraggable} = useDraggable()
 const {metrics, fetch_defaults} = useDefaults()
+const notification = useNotification()
 
+const selectedChats = ref<string[]>([])
+const deleteLoading = ref(false)
 const searchParam = ref('')
 const scrollbar = ref<InstanceType<typeof NScrollbar>>()
 const loading = ref<InstanceType<typeof NSpin>>()
@@ -231,7 +261,32 @@ function startChat() {
   appStore.displayMode = 'none'
 }
 
+async function deleteChats () {
+  deleteLoading.value = true
+  try {
+    const current = route.params.uuid as string
+    if (selectedChats.value.includes(current)) {
+      await router.push({ name: 'Dashboard' })
+      changePanelOpen()
+    }
 
+    const promises = selectedChats.value.map((uuid) =>
+      store.delete_chat(new Chat(store.chats.get(uuid)))
+    )
+
+    await Promise.all(promises)
+    notification.success({
+      title: 'Chats successfully deleted'
+    })
+  } catch (error: any) {
+    notification.error({
+      title: error.response?.data.message ?? error.message ?? error
+    })
+    console.error(error)
+  } finally {
+    deleteLoading.value = false
+  }
+}
 
 onMounted(() => {
   makeDraggable({
@@ -239,6 +294,18 @@ onMounted(() => {
     first: document.querySelector(".chats__panel")!,
     second: document.querySelector(".chat__item")!
   })
+
+  const sorting = JSON.parse(localStorage.getItem('sorting') ?? 'null')
+  const filters = JSON.parse(localStorage.getItem('filters') ?? 'null')
+
+  if (sorting) {
+    sortBy.value = sorting.sortBy
+    statusSorters.value = sorting.statuses
+  }
+  if (filters) {
+    checkedStatuses.value = filters.statuses
+    checkedAdmins.value = filters.admins
+  }
 
   const options = {
     root: scrollbar.value?.$el.nextElementSibling,
@@ -252,12 +319,23 @@ onMounted(() => {
     })
   }, options)
 
+  if (!loading.value?.$el) return
   observer.observe(loading.value?.$el)
 })
 
 sync()
 
-const filterChat = (chat: Chat, val: string): boolean => {
+function selectChat(uuid: string) {
+  if (selectedChats.value.includes(uuid)) {
+    const i = selectedChats.value.indexOf(uuid)
+
+    selectedChats.value.splice(i, 1)
+  } else {
+    selectedChats.value.push(uuid)
+  }
+}
+
+function filterChat (chat: Chat, val: string): boolean {
   if (!val) {
     return true
   }
@@ -388,17 +466,49 @@ interface metricsOptionsType {
   [index: string]: []
 }
 
-const metricsOptions = ref<metricsOptionsType>(
-  Object.keys(metrics.value).reduce((result, key) => ({
-    ...result, [key]: []
-  }), {})
+const filters = JSON.parse(localStorage.getItem('filters') ?? 'null')
+const metricsOptions = ref<metricsOptionsType>((filters)
+  ? filters.metrics
+  : metrics.value.reduce((result, { key }) => ({ ...result, [key]: [] }), {})
 )
 
 watch(metrics, (value) => {
-  Object.keys(value).reduce((result, key) => ({
-    ...result, [key]: []
-  }), {})
+  const filters = JSON.parse(localStorage.getItem('filters') ?? 'null')
+
+  metricsOptions.value = (filters)
+    ? filters.metrics
+    : value.reduce((result, { key }) => ({ ...result, [key]: [] }), {})
 })
+
+watch([sortBy, statusSorters], () => {
+  localStorage.setItem('sorting', JSON.stringify({
+    sortBy: sortBy.value,
+    statuses: statusSorters.value
+  }))
+}, { deep: true })
+
+watch([checkedStatuses, checkedAdmins, metricsOptions], () => {
+  localStorage.setItem('filters', JSON.stringify({
+    statuses: checkedStatuses.value,
+    admins: checkedAdmins.value,
+    metrics: metricsOptions.value
+  }))
+}, { deep: true })
+
+async function resetFilters() {
+  sortBy.value = 'sent'
+  statusSorters.value = statuses.value.map(({ value }) => value)
+
+  checkedStatuses.value = []
+  checkedAdmins.value = []
+  metricsOptions.value = metrics.value.reduce(
+    (result, { key }) => ({ ...result, [key]: [] }), {}
+  )
+
+  await nextTick()
+  localStorage.removeItem('sorting')
+  localStorage.removeItem('filters')
+}
 
 const isChatPanelOpen = ref(true)
 
@@ -499,5 +609,15 @@ function onMouseMove(clientX: number, clientY: number, chatId: string) {
   height: 100%;
   min-width: 50%;
   width: 100%;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

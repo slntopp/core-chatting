@@ -115,6 +115,12 @@ const chat = ref<Chat>(new Chat({
   role: Role.OWNER,
 }))
 
+window.addEventListener('message', ({ data, origin }) => {
+  if (origin.includes('localhost')) return
+  if (data.type !== 'user-uuid') return
+  chat.value.users.push(data.value)
+})
+
 const admins_options = ref<SelectOption[]>([])
 const gateways_options = ref<SelectOption[]>([])
 const members_options = ref<SelectOption[]>([])
@@ -135,6 +141,7 @@ onMounted(() => {
   if (isEdit?.value && oldChat?.value) {
     chat.value = {...oldChat.value} as Chat
   }
+  window.top?.postMessage({ type: 'get-user' }, '*')
 })
 
 onMounted(async () => {

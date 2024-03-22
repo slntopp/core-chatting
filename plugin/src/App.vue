@@ -37,9 +37,15 @@ watch(() => store.displayMode, (_, value) => {
   mode.value = value
 })
 
-router.beforeResolve((_, from, next) => {
+router.beforeResolve((to, from, next) => {
   if (from.name === 'Start Chat') {
     store.displayMode = mode.value
+  }
+  if (to.params.uuid) {
+    store.displayMode = 'none'
+  }
+  if (to.path === '/dashboard') {
+    store.displayMode = 'full'
   }
   next()
 })

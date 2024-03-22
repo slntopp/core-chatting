@@ -18,7 +18,7 @@
         <message-view
           :message="message"
           @approve="a => handle_approve(message, a)"
-          @convert="kind => { store.updating = true; store.current_message = message; store.handle_send(kind, !messages['underReview']) }"
+          @convert="kind => { store.updating = true; store.current_message = message; store.handle_send(chat?.uuid, kind) }"
           @delete="handle_delete(message)"
           @edit="handle_edit(message)"
         />
@@ -43,9 +43,7 @@
                 size="small"
                 @click="sendMode = (sendMode === 'admin') ? 'default' : 'admin'"
               >
-                <template #icon>
-                  <clipboard-icon />
-                </template>
+                <template #icon> <clipboard-icon /> </template>
               </n-button>
             </template>
             Sent message as an Admin Note.

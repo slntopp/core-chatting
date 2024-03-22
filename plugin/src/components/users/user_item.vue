@@ -2,12 +2,13 @@
   <div class="user__item">
     <div class="user__data">
       <user-avatar class="avatar" round :avatar="user.title"/>
-      <n-text>{{ user.title }}</n-text>
+      <n-text style="color: inherit">{{ user.title }}</n-text>
     </div>
     <div class="actions" v-if="actions">
-      <n-button text @click="emit('delete')">
+      <n-button text style="color: inherit" @click="emits(action ?? 'delete')">
         <n-icon size="20">
-          <trash-icon/>
+          <sync-icon v-if="action === 'change'" />
+          <trash-icon v-else />
         </n-icon>
       </n-button>
     </div>
@@ -15,18 +16,26 @@
 </template>
 
 <script setup lang="ts">
-import {NButton, NIcon, NText} from 'naive-ui'
+import { defineAsyncComponent } from 'vue'
+import { NButton, NIcon, NText } from 'naive-ui'
+import { User } from "../../connect/cc/cc_pb.ts"
 import userAvatar from '../ui/user_avatar.vue'
-import {User} from "../../connect/cc/cc_pb.ts";
-import {Trash as TrashIcon} from '@vicons/ionicons5'
+
+const trashIcon = defineAsyncComponent(
+  () => import('@vicons/ionicons5/Trash')
+)
+const syncIcon = defineAsyncComponent(
+  () => import('@vicons/ionicons5/Sync')
+)
 
 interface UserItemProps {
   user: User
-  actions?:boolean
+  actions?: boolean,
+  action?: 'delete' | 'change'
 }
 
 defineProps<UserItemProps>()
-const emit = defineEmits(['delete'])
+const emits = defineEmits(['delete', 'change'])
 </script>
 
 <style scoped lang="scss">
@@ -47,6 +56,7 @@ const emit = defineEmits(['delete'])
   }
 
   .actions {
+    display: flex;
     margin-left: 5px;
     margin-right: 5px;
   }

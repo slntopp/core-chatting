@@ -10,7 +10,7 @@
           round
           size="large"
           class="chat__avatar"
-          :avatar="(hovered) ? '' : members.join(' ')"
+          :avatar="(hovered) ? ' ' : members.join(' ')"
         />
 
         <transition name="fade">
@@ -25,17 +25,31 @@
       </span>
 
       <div v-if="!hideMessage" class="preview">
-        <n-text
-          depth="3"
-          class="sub"
-          @click.stop="openUser(chat.owner)"
-        >
-          {{ store.users.get(chat.owner)?.title }}
+        <n-space align="center" :wrap-item="false">
+          <n-text
+            depth="3"
+            class="sub"
+            @click.stop="openUser(chat.owner)"
+          >
+            {{ store.users.get(chat.owner)?.title }}
+          </n-text>
+
+          <n-icon size="20" @click.stop="openChat">
+            <login-icon />
+          </n-icon>
+        </n-space>
+
+        <n-text v-if="appStore.displayMode === 'full'" depth="3" class="responsible">
+          Responsible:
+          <template v-if="chat.responsible">
+            {{ store.users.get(chat.responsible ?? '')?.title }}
+          </template>
+          <template v-else>-</template>
         </n-text>
 
         <n-space
           v-if="appStore.displayMode === 'full'"
-          style="flex-direction: column; gap: 0; grid-row: 1 / 3; grid-column: 2"
+          style="flex-direction: column; gap: 0; grid-row: 1 / 3; grid-column: 3"
           :wrap-item="false"
         >
           <n-space :wrap-item="false">
@@ -53,8 +67,8 @@
         </n-space>
 
         <div class="time" v-show="appStore.displayMode === 'full'">
-          <div>Created: {{ new Date(Number(chat.created)).toLocaleDateString() }}</div>
-          <div v-if="lastUpdate">Last update: {{ new Date(Number(lastUpdate)).toLocaleDateString() }}</div>
+          <div>Created: {{ new Date(Number(chat.created)).toLocaleString() }}</div>
+          <div v-if="lastUpdate">Last update: {{ new Date(Number(lastUpdate)).toLocaleString() }}</div>
         </div>
 
         <n-icon
@@ -98,7 +112,12 @@ import UserAvatar from "../ui/user_avatar.vue";
 import ChatStatus from "./chat_status.vue";
 import {useAppStore} from "../../store/app.ts";
 
-const MailIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ChatbubbleEllipsesOutline'));
+const MailIcon = defineAsyncComponent(
+  () => import('@vicons/ionicons5/ChatbubbleEllipsesOutline')
+);
+const LoginIcon = defineAsyncComponent(
+  () => import('@vicons/ionicons5/LogInOutline')
+);
 
 interface ChatItemProps {
   chat: Chat
@@ -144,7 +163,7 @@ const chatTopic = computed(() => {
 const isUnreadMessages = computed(() => chat.value.meta && chat.value.meta.unread > 0)
 
 const previewColumns = computed(() =>
-  (appStore.displayMode === 'full') ? '1fr auto auto auto' : '1fr auto auto'
+  (appStore.displayMode === 'full') ? '1fr repeat(4, auto)' : '1fr auto auto'
 )
 
 const subDecoration = computed(() =>
@@ -152,7 +171,7 @@ const subDecoration = computed(() =>
 )
 
 const chatRightColumn = computed(() =>
-  (appStore.displayMode === 'full') ? 5 : 3
+  (appStore.displayMode === 'full') ? 6 : 3
 )
 
 const lastUpdate = computed(() =>
@@ -163,13 +182,18 @@ function goToChat() {
   router.push({ name: 'Chat', params: { uuid: uuid.value } })
 
   window.top?.postMessage({
-    type: 'send-user',
-    value: { uuid: chat.value.owner }
+    type: 'send-user', value: { uuid: chat.value.owner }
   }, '*')
 }
 
 function openUser(uuid: string) {
   window.top?.postMessage({ type: 'open-user', value: { uuid } }, '*')
+}
+
+function openChat() {
+  window.top?.postMessage({
+    type: 'open-chat', value: { uuid: chat.value.uuid }
+  }, '*')
 }
 </script>
 
@@ -200,9 +224,16 @@ function openUser(uuid: string) {
       word-break: break-all;
     }
 
+    .responsible {
+      grid-column: 2;
+      grid-row: 1 / 3;
+      align-self: center;
+      padding-right: 10px;
+    }
+
     .time {
       grid-row: 1 / 3;
-      grid-column: 3;
+      grid-column: 4;
     }
   }
 

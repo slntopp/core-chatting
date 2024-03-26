@@ -22,6 +22,15 @@
     Delete chat
   </n-tooltip>
 
+  <n-tooltip v-if="buttonTitle">
+    <template #trigger>
+      <n-button type="warning" size="small" ghost circle @click="sendMessage">
+        <template #icon> <list-icon /> </template>
+      </n-button>
+    </template>
+    Instances list
+  </n-tooltip>
+
   <n-popover
     scrollable
     trigger="click"
@@ -73,11 +82,14 @@ const notification = useNotification()
 const props = defineProps<ChatActionsProps>()
 const router = useRouter()
 
-const RefreshIcon = defineAsyncComponent(
+const refreshIcon = defineAsyncComponent(
   () => import('@vicons/ionicons5/RefreshOutline')
 )
-const DeleteIcon = defineAsyncComponent(
+const deleteIcon = defineAsyncComponent(
   () => import('@vicons/ionicons5/TrashBinOutline')
+)
+const listIcon = defineAsyncComponent(
+  () => import('@vicons/ionicons5/ListOutline')
 )
 const consoleIcon = defineAsyncComponent(
   () => import('@vicons/ionicons5/TerminalOutline')
@@ -105,6 +117,22 @@ async function deleteChat () {
       title: (error as ConnectError).message ?? '[Error]: Unknown'
     })
   }
+}
+
+const buttonTitle = ref('')
+
+window.addEventListener('message', ({ data, origin }) => {
+  if (origin.includes('localhost')) return
+  if (data.type !== 'button-title') return
+  buttonTitle.value = data.value
+})
+
+const sendMessage = (event: MouseEvent) => {
+  const button = (event.target as HTMLElement).closest('.n-button') as HTMLButtonElement
+
+  window.top?.postMessage({
+    type: 'click-on-button', value: { x: button?.offsetLeft, y: button?.offsetTop }
+  }, '*')
 }
 
 interface commandType {

@@ -31,29 +31,28 @@
 
       <n-divider vertical/>
       <members-dropdown
+        :visible="isVisible"
         :responsible="responsible"
         :admins="chat.admins"
         :members="members"
         @add="startAddMembers"
         @delete="deleteMember"
         @change="openResponsible"
-      />
-      <n-tooltip v-if="isResponsibleVisible || !chat.responsible">
-        <template #trigger>
-          <n-select
-            filterable
-            ref="responsibleSelect"
-            label-field="title"
-            value-field="uuid"
-            placeholder="Responsible"
-            style="min-width: 200px; width: 100%"
-            :value="chat.responsible"
-            :options="adminsItems"
-            @update:value="changeResponsible"
-          />
-        </template>
-        Responsible
-      </n-tooltip>
+      >
+        <n-select
+          v-if="isResponsibleVisible || !chat.responsible"
+          filterable
+          ref="responsibleSelect"
+          label-field="title"
+          value-field="uuid"
+          placeholder="Responsible"
+          style="min-width: 200px; width: 100%"
+          :value="chat.responsible"
+          :options="adminsItems"
+          @update:value="changeResponsible"
+          @update:show="isVisible = ($event) ? true : undefined"
+        />
+      </members-dropdown>
 
       <n-divider vertical/>
       <n-tooltip>
@@ -108,16 +107,6 @@
         </n-tag>
       </n-text>
     </n-space>
-
-    <n-button
-      ghost
-      type="success"
-      style="margin-right: 15px; grid-area: 2 / -2 / 3; justify-self: end;"
-      v-if="buttonTitle"
-      @click="sendMessage"
-    >
-      {{ buttonTitle }}
-    </n-button>
   </div>
 
   <n-modal v-model:show="isEdit">
@@ -243,7 +232,7 @@ const changeResponsible = async (uuid: string) => {
       ...chat.value, responsible: uuid
     }))
 
-    notification.success({ title: 'Done' })
+    notification.success({ title: 'Done', duration: 3000 })
   } catch (error) {
     notification.error({
       title: (error as ConnectError).message ?? '[Error]: Unknown'
@@ -259,7 +248,7 @@ const changeDepartment = async (key: string) => {
       ...chat.value, department: key
     }))
 
-    notification.success({ title: 'Done' })
+    notification.success({ title: 'Done', duration: 3000 })
   } catch (error) {
     notification.error({
       title: (error as ConnectError).message ?? '[Error]: Unknown'
@@ -275,11 +264,13 @@ const adminsItems = computed(() =>
 const responsible = computed(() =>
   users.value.find(({ uuid }) => uuid === chat.value.responsible) as User
 )
+
+const isVisible = ref<boolean>()
 const isResponsibleVisible = ref(false)
 const responsibleSelect = ref<SelectInst>()
 
 const openResponsible = async () => {
-  isResponsibleVisible.value = true
+  isResponsibleVisible.value = !isResponsibleVisible.value
   await nextTick()
   responsibleSelect.value?.focus()
 }
@@ -321,23 +312,9 @@ const saveMembers = async () => {
   }
 }
 
-const buttonTitle = ref('')
 const gridColumns = computed(() =>
   `repeat(${(chat.value?.gateways.length > 0) ? 3 : 2}, auto) 1fr auto`
 )
-window.addEventListener('message', ({ data, origin }) => {
-  if (origin.includes('localhost')) return
-  if (data.type !== 'button-title') return
-  buttonTitle.value = data.value
-})
-
-const sendMessage = (event: MouseEvent) => {
-  const button = (event.target as HTMLElement).closest('.n-button') as HTMLButtonElement
-
-  window.top?.postMessage({
-    type: 'click-on-button', value: { x: button?.offsetLeft, y: button?.offsetTop }
-  }, '*')
-}
 </script>
 
 <style scoped>

@@ -37,6 +37,12 @@ watch(() => store.displayMode, (_, value) => {
   mode.value = value
 })
 
+window.addEventListener('message', ({ data, origin }) => {
+  if (origin.includes('localhost')) return
+  if (data.type !== 'start-page') return
+  router.push({ path: '/dashboard' })
+})
+
 router.beforeResolve((to, from, next) => {
   if (from.name === 'Start Chat') {
     store.displayMode = mode.value

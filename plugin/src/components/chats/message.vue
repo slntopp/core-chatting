@@ -217,7 +217,7 @@ function timestamp() {
   result += getRelativeTime(Number(message.value.edited ? message.value.edited : message.value.sent), now.value)
 
   let tooltip = [
-    h(NText, {}, () =>
+    h(() =>
       `Sent: ${new Date(Number(message.value.sent)).toLocaleString()}`
     )
   ]
@@ -225,7 +225,7 @@ function timestamp() {
   if (message.value.edited) {
     tooltip.push(
       h(NDivider, { style: { margin: '5px 0' } }),
-      h(NText, {}, () =>
+      h(() =>
         `Edited: ${new Date(Number(message.value.edited)).toLocaleString()}`
       )
     )

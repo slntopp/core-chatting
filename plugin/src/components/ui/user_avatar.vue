@@ -17,7 +17,7 @@ interface AvatarProps {
   size?: 'medium' | 'large' | 'small' | number
   iconSize?: number
   avatar: string | DefineComponent
-  round: boolean
+  round?: boolean
 }
 
 const props = defineProps<AvatarProps>()
@@ -27,6 +27,7 @@ const avatarPreview = computed(() => {
     return props.avatar
   }
 
+  if (props.avatar === ' ') return ' '
   return props.avatar.split(' ').map((s: string) => s?.[0]).join('').toUpperCase()
 })
 </script>

@@ -1,7 +1,14 @@
 <template>
-  <n-dropdown :render-option="renderOption" trigger="hover" :options="membersOptions">
-    <n-text v-if="admin?.title">{{ admin.title }}</n-text>
-    <n-text v-else>{{ members.length }} members</n-text>
+  <n-dropdown
+    trigger="hover"
+    :render-option="renderOption"
+    :options="membersOptions"
+    :show="visible"
+  >
+    <slot>
+      <n-text v-if="admin?.title">{{ admin.title }}</n-text>
+      <n-text v-else>{{ members.length }} members</n-text>
+    </slot>
   </n-dropdown>
 </template>
 
@@ -13,8 +20,9 @@ import memberItem from './user_item.vue'
 import AddButton from '../ui/add_button.vue'
 
 interface MembersDropdownProps {
+  visible?: boolean
   responsible?: User
-  members: User[],
+  members: User[]
   admins: String[]
 }
 
@@ -59,8 +67,8 @@ const renderOption = ({ option }: { option: DropdownOption }) => {
     ),
     onDelete: () => emits('delete', option.key),
     onChange: () => emits('change', option.key),
-    actions: true,
-    action: (option.key === props.responsible?.uuid) ? 'change' : 'delete'
+    action: (option.key === props.responsible?.uuid) ? 'change' : 'delete',
+    actions: true
   })
 }
 </script>

@@ -41,6 +41,8 @@ var (
 
 	dist string
 
+	whmcsTickets bool
+
 	SIGNING_KEY []byte
 )
 
@@ -65,6 +67,9 @@ func init() {
 
 	viper.SetDefault("DIST", "dist")
 	dist = viper.GetString("DIST")
+
+	viper.SetDefault("WHMCS_TICKETS", "true")
+	whmcsTickets = viper.GetBool("WHMCS_TICKETS")
 
 	viper.SetDefault("SIGNING_KEY", "secret")
 	SIGNING_KEY = []byte(viper.GetString("SIGNING_KEY"))
@@ -101,11 +106,11 @@ func main() {
 
 	interceptors := connect.WithInterceptors(authInterceptor)
 
-	chatServer := chats.NewChatsServer(log, chatCtrl, usersCtrl, ps)
+	chatServer := chats.NewChatsServer(log, chatCtrl, usersCtrl, ps, whmcsTickets)
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 
-	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrl, ps)
+	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrl, ps, whmcsTickets)
 	path, handler = cc.NewMessagesAPIHandler(messagesServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 

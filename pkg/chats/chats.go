@@ -3,6 +3,7 @@ package chats
 import (
 	"context"
 	"errors"
+
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -20,10 +21,12 @@ type ChatsServer struct {
 	ctrl       *graph.ChatsController
 	users_ctrl *graph.UsersController
 	ps         *pubsub.PubSub
+
+	whmcsTickets bool
 }
 
-func NewChatsServer(logger *zap.Logger, ctrl *graph.ChatsController, users_ctrl *graph.UsersController, ps *pubsub.PubSub) *ChatsServer {
-	return &ChatsServer{log: logger.Named("ChatsServer"), ctrl: ctrl, users_ctrl: users_ctrl, ps: ps}
+func NewChatsServer(logger *zap.Logger, ctrl *graph.ChatsController, users_ctrl *graph.UsersController, ps *pubsub.PubSub, whmcsTickets bool) *ChatsServer {
+	return &ChatsServer{log: logger.Named("ChatsServer"), ctrl: ctrl, users_ctrl: users_ctrl, ps: ps, whmcsTickets: whmcsTickets}
 }
 
 func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
@@ -79,6 +82,13 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_CREATED)
 
+	if s.whmcsTickets {
+		go s.ps.PubWhmcs(ctx, &cc.Event{
+			Type: cc.EventType_CHAT_CREATED,
+			Item: &cc.Event_Chat{Chat: chat},
+		})
+	}
+
 	resp := connect.NewResponse[cc.Chat](chat)
 
 	return resp, nil
@@ -105,6 +115,13 @@ func (s *ChatsServer) Update(ctx context.Context, req *connect.Request[cc.Chat])
 	}
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_UPDATED)
+
+	if s.whmcsTickets {
+		go s.ps.PubWhmcs(ctx, &cc.Event{
+			Type: cc.EventType_CHAT_UPDATED,
+			Item: &cc.Event_Chat{Chat: chat},
+		})
+	}
 
 	resp := connect.NewResponse[cc.Chat](chat)
 
@@ -170,6 +187,13 @@ func (s *ChatsServer) Delete(ctx context.Context, req *connect.Request[cc.Chat])
 	}
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_DELETED)
+
+	if s.whmcsTickets {
+		go s.ps.PubWhmcs(ctx, &cc.Event{
+			Type: cc.EventType_CHAT_DELETED,
+			Item: &cc.Event_Chat{Chat: chat},
+		})
+	}
 
 	resp := connect.NewResponse[cc.Chat](chat)
 

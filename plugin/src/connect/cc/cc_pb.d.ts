@@ -504,6 +504,11 @@ export declare class Department extends Message$1<Department> {
    */
   public: boolean;
 
+  /**
+   * @generated from field: optional string whmcs_id = 6;
+   */
+  whmcsId?: string;
+
   constructor(data?: PartialMessage<Department>);
 
   static readonly runtime: typeof proto3;

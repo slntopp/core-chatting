@@ -51,7 +51,9 @@ message Chat {
   map<string, google.protobuf.Value> bot_state = 13;
 }
 
-message Chats { repeated Chat chats = 1; }
+message Chats {
+  repeated Chat chats = 1;
+}
 
 service ChatsAPI {
   rpc Create(Chat) returns (Chat);
@@ -101,7 +103,9 @@ message Message {
 
   repeated string mentioned = 13;
 }
-message Messages { repeated Message messages = 1; }
+message Messages {
+  repeated Message messages = 1;
+}
 
 service MessagesAPI {
   rpc Get(Chat) returns (Messages);
@@ -128,14 +132,15 @@ message Department {
   string description = 3;
   repeated string admins = 4;
   bool public = 5;
+  optional string whmcs_id = 6;
 }
 
-message Option{
+message Option {
   string key = 1;
   float value = 2;
 }
 
-message Metric{
+message Metric {
   string title = 1;
   repeated Option options = 2;
 }
@@ -147,7 +152,9 @@ message Defaults {
   map<string, Metric> metrics = 4;
 }
 
-message Users { repeated User users = 1; }
+message Users {
+  repeated User users = 1;
+}
 
 service UsersAPI {
   rpc Me(Empty) returns (User);
@@ -181,8 +188,10 @@ message Event {
   }
 }
 
-message StreamRequest{
+message StreamRequest {
   map<string, string> commands = 1;
 }
 
-service StreamService { rpc Stream (StreamRequest) returns (stream Event); }
+service StreamService {
+  rpc Stream(StreamRequest) returns (stream Event);
+}

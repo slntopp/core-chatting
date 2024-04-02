@@ -4,11 +4,20 @@
       <user-avatar class="avatar" round :avatar="user.title"/>
       <n-text style="color: inherit">{{ user.title }}</n-text>
     </div>
+
     <div class="actions" v-if="actions">
-      <n-button text style="color: inherit" @click="emits(action ?? 'delete')">
+      <n-popover v-if="action === 'change'" trigger="click" placement="right">
+        <template #trigger>
+          <n-button text style="color: inherit" @click="emits(action)">
+            <n-icon size="20"> <sync-icon /> </n-icon>
+          </n-button>
+        </template>
+        <slot name="popover-content">Do you want to do this?</slot>
+      </n-popover>
+
+      <n-button v-else text style="color: inherit" @click="emits(action ?? 'delete')">
         <n-icon size="20">
-          <sync-icon v-if="action === 'change'" />
-          <trash-icon v-else />
+          <trash-icon />
         </n-icon>
       </n-button>
     </div>
@@ -17,7 +26,7 @@
 
 <script setup lang="ts">
 import { defineAsyncComponent } from 'vue'
-import { NButton, NIcon, NText } from 'naive-ui'
+import { NButton, NIcon, NPopover, NText } from 'naive-ui'
 import { User } from "../../connect/cc/cc_pb.ts"
 import userAvatar from '../ui/user_avatar.vue'
 

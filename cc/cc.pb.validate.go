@@ -1266,6 +1266,10 @@ func (m *Department) validate(all bool) error {
 
 	// no validation rules for Public
 
+	if m.WhmcsId != nil {
+		// no validation rules for WhmcsId
+	}
+
 	if len(errors) > 0 {
 		return DepartmentMultiError(errors)
 	}

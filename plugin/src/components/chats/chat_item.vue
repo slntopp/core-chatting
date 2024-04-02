@@ -39,20 +39,21 @@
           </n-icon>
         </n-space>
 
-        <n-text v-if="appStore.displayMode === 'full'" depth="3" class="responsible">
-          Responsible:
-          <template v-if="chat.responsible">
-            {{ store.users.get(chat.responsible ?? '')?.title }}
-          </template>
-          <template v-else>-</template>
+        <n-text
+          v-if="appStore.displayMode === 'full'"
+          class="responsible"
+          depth="3"
+        >
+          {{ store.users.get(chat.responsible ?? '')?.title }}
         </n-text>
 
         <n-space
           v-if="appStore.displayMode === 'full'"
+          class="department"
           style="flex-direction: column; gap: 0; grid-row: 1 / 3; grid-column: 3"
           :wrap-item="false"
         >
-          <n-space :wrap-item="false">
+          <n-space :wrap="false" :wrap-item="false">
             <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
               <template #trigger>
                 <img height="24" :src="getImageUrl(gateway)" :alt="gateway">
@@ -60,15 +61,26 @@
               {{ gateway }}
             </n-tooltip>
           </n-space>
-          <span>
-            Department:
-            <n-text italic style="margin-left: 4px">{{ chat.department || 'none' }}</n-text>
-          </span>
+          <n-text italic v-if="chat.department">{{ chat.department }}</n-text>
         </n-space>
 
         <div class="time" v-show="appStore.displayMode === 'full'">
-          <div>Created: {{ new Date(Number(chat.created)).toLocaleString() }}</div>
-          <div v-if="lastUpdate">Last update: {{ new Date(Number(lastUpdate)).toLocaleString() }}</div>
+          <div>
+            Created:
+            <code style="margin-left: 5px">
+              {{ (Number(chat.created) > 864e5)
+                ? new Date(Number(chat.created)).toLocaleDateString()
+                : getRelativeTime(Number(chat.created), now)
+              }}
+            </code>
+          </div>
+          <div v-if="lastUpdate">
+            Last update:
+            <code style="margin-left: 5px">
+              {{ getRelativeTime(Number(lastUpdate), now, true) }}
+              {{ (now - lastUpdate > 6e4) ? 'ago' : '' }}
+            </code>
+          </div>
         </div>
 
         <n-icon
@@ -102,12 +114,12 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, ref, toRefs} from "vue";
+import {computed, defineAsyncComponent, nextTick, onMounted, ref, toRefs, watch} from "vue";
 import {useRouter} from "vue-router";
 import {NBadge, NCheckbox, NIcon, NListItem, NSpace, NText, NTooltip, useNotification} from "naive-ui";
 import {Chat} from "../../connect/cc/cc_pb";
 import {useCcStore} from "../../store/chatting.ts";
-import {addToClipboard, getImageUrl} from "../../functions.ts";
+import {addToClipboard, getImageUrl, getRelativeTime} from "../../functions.ts";
 import UserAvatar from "../ui/user_avatar.vue";
 import ChatStatus from "./chat_status.vue";
 import {useAppStore} from "../../store/app.ts";
@@ -116,7 +128,7 @@ const MailIcon = defineAsyncComponent(
   () => import('@vicons/ionicons5/ChatbubbleEllipsesOutline')
 );
 const LoginIcon = defineAsyncComponent(
-  () => import('@vicons/ionicons5/LogInOutline')
+  () => import('../../assets/icons/LoginOutline.svg')
 );
 
 interface ChatItemProps {
@@ -124,11 +136,12 @@ interface ChatItemProps {
   uuid: string
   hideMessage: boolean
   selected: string[]
+  chats: Chat[]
 }
 
 const props = defineProps<ChatItemProps>()
 const emits = defineEmits(['hover', 'hoverEnd', 'select'])
-const { chat, uuid } = toRefs(props)
+const { chat, uuid, chats } = toRefs(props)
 
 const store = useCcStore()
 const appStore = useAppStore()
@@ -159,11 +172,43 @@ const chatTopic = computed(() => {
 
   return topic || '-'
 })
-
 const isUnreadMessages = computed(() => chat.value.meta && chat.value.meta.unread > 0)
 
+const responsibleColsWidth = ref('auto')
+const departmentColsWidth = ref('auto')
+
+onMounted(setColumns)
+watch(chats, setColumns)
+
+async function setColumns () {
+  await nextTick()
+  await new Promise((resolve) => setTimeout(resolve, 200))
+
+  const responsibles = document.querySelectorAll('.preview > .responsible')
+  const departments = document.querySelectorAll('.preview > .department')
+  let resWidth = 0
+  let depWidth = 0
+  
+  responsibles.forEach((element) => {
+    if (resWidth < element.clientWidth) {
+      resWidth = element.clientWidth
+    }
+  })
+
+  departments.forEach((element) => {
+    if (depWidth < element.clientWidth) {
+      depWidth = element.clientWidth
+    }
+  })
+
+  if (resWidth > 0) responsibleColsWidth.value = `${resWidth}px`
+  if (depWidth > 0) departmentColsWidth.value = `${depWidth}px`
+}
+
 const previewColumns = computed(() =>
-  (appStore.displayMode === 'full') ? '1fr repeat(4, auto)' : '1fr auto auto'
+  (appStore.displayMode === 'full')
+    ? `1fr ${responsibleColsWidth.value} ${departmentColsWidth.value} 200px`
+    : '1fr auto auto'
 )
 
 const subDecoration = computed(() =>
@@ -173,6 +218,9 @@ const subDecoration = computed(() =>
 const chatRightColumn = computed(() =>
   (appStore.displayMode === 'full') ? 6 : 3
 )
+const now = ref(Date.now())
+
+setInterval(() => now.value = Date.now(), 1000)
 
 const lastUpdate = computed(() =>
   Number(chat.value.meta?.lastMessage?.edited || chat.value.meta?.lastMessage?.sent)
@@ -229,6 +277,7 @@ function openChat() {
       grid-row: 1 / 3;
       align-self: center;
       padding-right: 10px;
+      white-space: nowrap;
     }
 
     .time {

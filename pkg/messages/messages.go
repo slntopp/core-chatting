@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"google.golang.org/protobuf/types/known/structpb"
 	"time"
+
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/slntopp/core-chatting/pkg/pubsub"
 
@@ -23,10 +24,12 @@ type MessagesServer struct {
 	chatCtrl *graph.ChatsController
 	msgCtrl  *graph.MessagesController
 	ps       *pubsub.PubSub
+
+	whmcsTickets bool
 }
 
-func NewMessagesServer(logger *zap.Logger, chatCtrl *graph.ChatsController, msgCtrl *graph.MessagesController, ps *pubsub.PubSub) *MessagesServer {
-	return &MessagesServer{log: logger.Named("MessagesServer"), chatCtrl: chatCtrl, msgCtrl: msgCtrl, ps: ps}
+func NewMessagesServer(logger *zap.Logger, chatCtrl *graph.ChatsController, msgCtrl *graph.MessagesController, ps *pubsub.PubSub, whmcsTickets bool) *MessagesServer {
+	return &MessagesServer{log: logger.Named("MessagesServer"), chatCtrl: chatCtrl, msgCtrl: msgCtrl, ps: ps, whmcsTickets: whmcsTickets}
 }
 
 func (s *MessagesServer) Get(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Messages], error) {
@@ -113,6 +116,13 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 
 	go pubsub.HandleNotifyMessage(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_SENT)
 
+	if s.whmcsTickets {
+		go s.ps.PubWhmcs(ctx, &cc.Event{
+			Type: cc.EventType_MESSAGE_SENT,
+			Item: &cc.Event_Msg{Msg: message},
+		})
+	}
+
 	if chat.GetStatus() == cc.Status_NEW {
 		chat.Status = cc.Status_OPEN
 		update, err := s.chatCtrl.Update(ctx, chat)
@@ -169,6 +179,13 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 		go pubsub.HandleNotifyMessage(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_UPDATED)
 	}
 
+	if s.whmcsTickets {
+		go s.ps.PubWhmcs(ctx, &cc.Event{
+			Type: cc.EventType_MESSAGE_UPDATED,
+			Item: &cc.Event_Msg{Msg: message},
+		})
+	}
+
 	resp := connect.NewResponse[cc.Message](message)
 
 	return resp, nil
@@ -199,6 +216,13 @@ func (s *MessagesServer) Delete(ctx context.Context, req *connect.Request[cc.Mes
 	}
 
 	go pubsub.HandleNotifyMessage(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_DELETED)
+
+	if s.whmcsTickets {
+		go s.ps.PubWhmcs(ctx, &cc.Event{
+			Type: cc.EventType_MESSAGE_DELETED,
+			Item: &cc.Event_Msg{Msg: message},
+		})
+	}
 
 	resp := connect.NewResponse[cc.Message](message)
 

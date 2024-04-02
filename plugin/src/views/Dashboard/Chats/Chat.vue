@@ -33,17 +33,16 @@
 
     <template #footer>
       <div class="footer">
-        <div class="avatar" v-if="chat?.role == Role.ADMIN">
+        <n-space v-if="chat?.role == Role.ADMIN" style="grid-column: 1 / 3; gap: 5px" :wrap-item="false">
           <n-tooltip placement="top-start">
             <template #trigger>
               <n-button
                 ghost
-                circle
-                type="warning"
                 size="small"
+                :type="(sendMode === 'admin') ? 'warning' : undefined"
                 @click="sendMode = (sendMode === 'admin') ? 'default' : 'admin'"
               >
-                <template #icon> <clipboard-icon /> </template>
+                Notes
               </n-button>
             </template>
             Sent message as an Admin Note.
@@ -52,20 +51,17 @@
           <n-tooltip placement="top-start">
             <template #trigger>
               <n-button
-                quaternary
-                circle
-                type="info"
+                ghost
                 size="small"
+                :type="(sendMode === 'approve') ? 'info' : undefined"
                 @click="sendMode = (sendMode === 'approve') ? 'default' : 'approve'"
               >
-                <template #icon>
-                  <n-icon :component="ReviewOutline" size="32"/>
-                </template>
+                Premoderate
               </n-button>
             </template>
             Message will be put under moderation, thus not visible to user until one of the Admins approves it.
           </n-tooltip>
-        </div>
+        </n-space>
 
         <n-space class="textarea" vertical justify="center">
           <n-alert
@@ -90,11 +86,13 @@
                 v-model:value="store.current_message.content"
                 :autosize="{ minRows: 3, maxRows: 15 }"
                 :options="mentionsOptions"
+                :prefix="(isMentionVisible) ? '@' : ' @'"
 
+                @input="onInput"
                 @blur="check_mentioned"
                 @keypress.prevent.enter.exact="handle_new_line"
-                @keypress.prevent.ctrl.enter.exact="handle_send"
-                @keypress.prevent.ctrl.shift.enter.exact="store.handle_send(chat?.uuid ?? '', Kind.ADMIN_ONLY)"
+                @keyup.prevent.ctrl.enter.exact="handle_send"
+                @keyup.prevent.ctrl.shift.enter.exact="store.handle_send(chat?.uuid ?? '', Kind.ADMIN_ONLY)"
                 @keyup.prevent.ctrl.up.exact="handle_begin_edit"
               />
             </template>
@@ -131,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import {Component, computed, defineAsyncComponent, nextTick, ref, watch} from 'vue';
+import {computed, defineAsyncComponent, nextTick, ref, watch} from 'vue';
 import {
   NAlert,
   NButton,
@@ -152,9 +150,6 @@ import ChatHeader from "../../../components/chats/layouts/chat_header.vue";
 import MockMessage from "../../../components/chats/mock_message.vue";
 
 const SendOutline = defineAsyncComponent(() => import('@vicons/ionicons5/SendOutline'));
-const ClipboardIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
-const ReviewOutline = defineAsyncComponent(() => import('../../../assets/icons/ReviewOutline.svg')) as Component;
-
 const MessageView = defineAsyncComponent(() => import('../../../components/chats/message.vue'));
 
 const route = useRoute();
@@ -182,6 +177,7 @@ const messages = computed(() => {
   return chatMessages
 })
 
+const isMentionVisible = ref(false)
 const mentionsOptions = computed(() => {
   if (!chat.value) return []
   const uuids = new Set([...chat.value.users, ...chat.value.admins])
@@ -198,6 +194,18 @@ const mentionsOptions = computed(() => {
 
   return result
 })
+
+function onInput({ target }: { target: HTMLTextAreaElement }) {
+  if (target.selectionStart !== target.selectionEnd) return
+  const symbol = target.value[target.selectionEnd - 1]
+  const prevSymbol = target.value[target.selectionEnd - 2]
+
+  if (symbol === '@' && prevSymbol === ' ') {
+    isMentionVisible.value = true
+  } else {
+    isMentionVisible.value = false
+  }
+}
 
 function check_mentioned() {
   const users = Array.from(store.users.values())
@@ -344,9 +352,9 @@ function handle_stop_edit() {
 }
 
 function handle_new_line() {
-  const value = store.current_message.content
+  const textarea = input.value.$el.querySelector('textarea')
 
-  store.current_message.content = `${value}\n`
+  textarea.setRangeText('\n', textarea.selectionStart, textarea.selectionEnd, 'end')
 }
 </script>
 
@@ -377,19 +385,11 @@ textarea {
 }
 
 .footer {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
   width: calc(100% - 20px);
-  gap: 15px;
-
-  .avatar {
-    max-width: 35px;
-
-    *:not(:last-child) {
-      margin-bottom: 10px;
-    }
-  }
+  gap: 5px 15px;
 
   .textarea {
     min-width: 100px;

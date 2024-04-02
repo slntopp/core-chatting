@@ -39,19 +39,19 @@
         @delete="deleteMember"
         @change="openResponsible"
       >
-        <n-select
-          v-if="isResponsibleVisible || !chat.responsible"
-          filterable
-          ref="responsibleSelect"
-          label-field="title"
-          value-field="uuid"
-          placeholder="Responsible"
-          style="min-width: 200px; width: 100%"
-          :value="chat.responsible"
-          :options="adminsItems"
-          @update:value="changeResponsible"
-          @update:show="isVisible = ($event) ? true : undefined"
-        />
+        <template #popover-content>
+          <n-select
+            filterable
+            ref="responsibleSelect"
+            label-field="title"
+            value-field="uuid"
+            placeholder="Responsible"
+            style="min-width: 200px; width: 100%"
+            :value="chat.responsible"
+            :options="adminsItems"
+            @update:value="changeResponsible"
+          />
+        </template>
       </members-dropdown>
 
       <n-divider vertical/>
@@ -139,7 +139,7 @@ import {computed, defineAsyncComponent, nextTick, ref, toRefs} from "vue";
 import {
   NButton, NCard, NDivider, NIcon, NModal,
   NSpace, NSpin, NTag, NText, NTooltip,
-  NSelect, SelectOption, useNotification, SelectInst
+  NSelect, SelectOption, useNotification
 } from "naive-ui";
 import { ConnectError } from "@connectrpc/connect";
 import {Chat, User} from "../../../connect/cc/cc_pb";
@@ -237,8 +237,6 @@ const changeResponsible = async (uuid: string) => {
     notification.error({
       title: (error as ConnectError).message ?? '[Error]: Unknown'
     })
-  } finally {
-    isResponsibleVisible.value = false
   }
 }
 
@@ -266,13 +264,12 @@ const responsible = computed(() =>
 )
 
 const isVisible = ref<boolean>()
-const isResponsibleVisible = ref(false)
-const responsibleSelect = ref<SelectInst>()
+const responsibleSelect = ref<any>()
 
 const openResponsible = async () => {
-  isResponsibleVisible.value = !isResponsibleVisible.value
   await nextTick()
-  responsibleSelect.value?.focus()
+  await new Promise((resolve) => setTimeout(resolve, 100))
+  responsibleSelect.value?.handleTriggerClick()
 }
 
 const deleteMember = (uuid: string) => {

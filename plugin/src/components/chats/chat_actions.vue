@@ -24,7 +24,13 @@
 
   <n-tooltip v-if="buttonTitle">
     <template #trigger>
-      <n-button type="warning" size="small" ghost circle @click="sendMessage">
+      <n-button
+        ghost
+        circle
+        type="warning"
+        size="small"
+        @mouseenter="hoverInstancesButton"
+      >
         <template #icon> <list-icon /> </template>
       </n-button>
     </template>
@@ -122,12 +128,12 @@ async function deleteChat () {
 const buttonTitle = ref('')
 
 window.addEventListener('message', ({ data, origin }) => {
-  if (origin.includes('localhost')) return
+  if (origin.includes('localhost:8081')) return
   if (data.type !== 'button-title') return
   buttonTitle.value = data.value
 })
 
-const sendMessage = (event: MouseEvent) => {
+const hoverInstancesButton = (event: MouseEvent) => {
   const button = (event.target as HTMLElement).closest('.n-button') as HTMLButtonElement
 
   window.top?.postMessage({

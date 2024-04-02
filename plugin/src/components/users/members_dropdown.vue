@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { Component, computed, h } from 'vue'
+import { Component, computed, h, useSlots } from 'vue'
 import { DropdownOption, NDropdown, NText } from 'naive-ui'
 import { User } from '../../connect/cc/cc_pb.ts'
 import memberItem from './user_item.vue'
@@ -28,6 +28,7 @@ interface MembersDropdownProps {
 
 const props = defineProps<MembersDropdownProps>()
 const emits = defineEmits(['delete', 'add', 'change'])
+const slots = useSlots()
 
 const membersOptions = computed(() => {
   const membersOptions: DropdownOption[] = []
@@ -69,6 +70,6 @@ const renderOption = ({ option }: { option: DropdownOption }) => {
     onChange: () => emits('change', option.key),
     action: (option.key === props.responsible?.uuid) ? 'change' : 'delete',
     actions: true
-  })
+  }, slots)
 }
 </script>

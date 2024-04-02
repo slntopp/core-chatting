@@ -170,6 +170,7 @@
             :hide-message="!isChatPanelOpen"
             :uuid="chat.uuid"
             :chat="chat"
+            :chats="viewedChats"
             :class="{ active: chat.uuid === router.currentRoute.value.params.uuid }"
             @click="changeMode('none')"
             @hover="onMouseMove"

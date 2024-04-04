@@ -30,16 +30,8 @@
       </n-button>
 
       <n-divider vertical/>
-      <members-dropdown
-        :visible="isVisible"
-        :responsible="responsible"
-        :admins="chat.admins"
-        :members="members"
-        @add="startAddMembers"
-        @delete="deleteMember"
-        @change="openResponsible"
-      >
-        <template #popover-content>
+      <n-tooltip>
+        <template #trigger>
           <n-select
             filterable
             ref="responsibleSelect"
@@ -52,7 +44,8 @@
             @update:value="changeResponsible"
           />
         </template>
-      </members-dropdown>
+        Responsible
+      </n-tooltip>
 
       <n-divider vertical/>
       <n-tooltip>
@@ -84,7 +77,17 @@
 
     <n-space align="center" justify="end" :wrap-item="false">
       <n-divider vertical />
-      <chat-status :chat="chat" />
+      <div>
+        <chat-status :chat="chat" />
+        <members-dropdown
+          :visible="isVisible"
+          :admins="chat.admins"
+          :members="members"
+          @add="startAddMembers"
+          @delete="deleteMember"
+          @change="openResponsible"
+        />
+      </div>
 
       <n-divider vertical />
       <chat-actions :chat="chat" />
@@ -259,9 +262,9 @@ const adminsItems = computed(() =>
     users.value.find(({ uuid }) => uuid === admin) ?? { uuid: admin }
   )
 )
-const responsible = computed(() =>
-  users.value.find(({ uuid }) => uuid === chat.value.responsible) as User
-)
+// const responsible = computed(() =>
+//   users.value.find(({ uuid }) => uuid === chat.value.responsible) as User
+// )
 
 const isVisible = ref<boolean>()
 const responsibleSelect = ref<any>()

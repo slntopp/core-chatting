@@ -34,7 +34,7 @@
             {{ store.users.get(chat.owner)?.title }}
           </n-text>
 
-          <n-icon size="20" @click.stop="openChat">
+          <n-icon size="20" @click.stop="openChat(chat.owner)">
             <login-icon />
           </n-icon>
         </n-space>
@@ -61,7 +61,7 @@
               {{ gateway }}
             </n-tooltip>
           </n-space>
-          <n-text italic v-if="chat.department">{{ chat.department }}</n-text>
+          <n-text italic v-if="chat.department" style="white-space: nowrap">{{ chat.department }}</n-text>
         </n-space>
 
         <div class="time" v-show="appStore.displayMode === 'full'">
@@ -238,9 +238,9 @@ function openUser(uuid: string) {
   window.top?.postMessage({ type: 'open-user', value: { uuid } }, '*')
 }
 
-function openChat() {
+function openChat(user: string) {
   window.top?.postMessage({
-    type: 'open-chat', value: { uuid: chat.value.uuid }
+    type: 'open-chat', value: { uuid: chat.value.uuid, user }
   }, '*')
 }
 </script>

@@ -279,7 +279,7 @@ function render(props: RenderProps, { slots }: any) {
           {
             class: 'sub',
             onClick() {
-              const { uuid } = store.me
+              const uuid = message.value.sender
 
               window.top?.postMessage({ type: 'open-user', value: { uuid } }, '*')
             }

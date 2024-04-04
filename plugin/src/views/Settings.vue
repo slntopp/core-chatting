@@ -50,7 +50,7 @@
           <tbody>
             <!-- @vue-ignore -->
             <tr v-for="(item, i) of config[key]">
-              <td v-for="header of option.headers">
+              <td v-for="header of option.headers" :style="header.style">
                 <n-space v-if="header.isEditable" :wrap-item="false">
                   <n-tag
                     round
@@ -110,7 +110,7 @@
                   style="min-width: 200px"
                 />
 
-                <NSwitch v-else-if="header.isBool" v-model:value="item[header.value]" />
+                <n-switch v-else-if="header.isBool" v-model:value="item[header.value]" />
                 <n-input v-else clearable v-model:value="item[header.value]" />
               </td>
               <td>
@@ -177,10 +177,11 @@ import {
   NSpace,
   NSpin,
   NText,
-  NTag
-} from 'naive-ui';
-import { Value } from 'naive-ui/es/select/src/interface';
-import { JsonObject } from '@bufbuild/protobuf';
+  NTag,
+  useNotification
+} from 'naive-ui'
+import { Value } from 'naive-ui/es/select/src/interface'
+import { JsonObject } from '@bufbuild/protobuf'
 import { Defaults, Department, Metric, Option } from '../connect/cc/cc_pb'
 import { useCcStore } from '../store/chatting.ts'
 import useDefaults, { MetricWithKey } from '../hooks/useDefaults.ts'
@@ -196,6 +197,7 @@ const deleteIcon = defineAsyncComponent(() =>
 )
 
 const store = useCcStore()
+const notification = useNotification()
 const {
   fetch_defaults,
   users,
@@ -260,11 +262,12 @@ const departmentsOptions = computed(() => ({
         return { ...user, title: `${user?.title} ${(email) ? `(${email})` : ''}` }
       })
     },
+    { title: 'WHMCS id', value: 'whmcsId', style: 'width: 50px' },
     { title: 'Public', value: 'public', isBool: true }
   ],
   onClick() {
     config.departments.push(new Department({
-      key: '', title: '', description: '', admins: [], public: true
+      key: '', title: '', description: '', whmcsId: '', admins: [], public: true
     }))
   },
   onClose(i: number) {
@@ -346,6 +349,7 @@ interface optionsType {
       options?: any[]
       isBool?: boolean
       isEditable: boolean
+      style?: string
 
       onClick?: (metricIndex: number) => void
       onSave?: (i: number) => void
@@ -376,6 +380,10 @@ async function submit() {
         ...result, [metric.key]: metric
       }), {})
     }))
+
+    notification.success({ title: 'Done' })
+  } catch (error) {
+    notification.error({ title: (error as Error).message ?? error })
   } finally {
     isEditLoading.value = false
   }

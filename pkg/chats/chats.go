@@ -111,6 +111,7 @@ func (s *ChatsServer) Update(ctx context.Context, req *connect.Request[cc.Chat])
 
 	chat, err = s.ctrl.Update(ctx, req.Msg)
 	if err != nil {
+		log.Error("Failed to update chat", zap.Error(err))
 		return nil, err
 	}
 
@@ -123,7 +124,7 @@ func (s *ChatsServer) Update(ctx context.Context, req *connect.Request[cc.Chat])
 		})
 	}
 
-	resp := connect.NewResponse[cc.Chat](chat)
+	resp := connect.NewResponse(chat)
 
 	return resp, nil
 }

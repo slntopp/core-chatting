@@ -89,7 +89,7 @@ message Message {
   string sender = 3;
   string content = 4;
 
-  repeated Attachment attachments = 5;
+  repeated string attachments = 5;
   repeated string gateways = 6;
 
   optional string chat = 7; // Required for Send, Update and Delete requests

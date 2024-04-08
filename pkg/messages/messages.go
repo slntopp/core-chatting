@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
@@ -21,15 +22,16 @@ import (
 type MessagesServer struct {
 	log *zap.Logger
 
-	chatCtrl *graph.ChatsController
-	msgCtrl  *graph.MessagesController
-	ps       *pubsub.PubSub
+	chatCtrl        *graph.ChatsController
+	msgCtrl         *graph.MessagesController
+	attachmentsCtrl *graph.AttachmentsController
+	ps              *pubsub.PubSub
 
 	whmcsTickets bool
 }
 
-func NewMessagesServer(logger *zap.Logger, chatCtrl *graph.ChatsController, msgCtrl *graph.MessagesController, ps *pubsub.PubSub, whmcsTickets bool) *MessagesServer {
-	return &MessagesServer{log: logger.Named("MessagesServer"), chatCtrl: chatCtrl, msgCtrl: msgCtrl, ps: ps, whmcsTickets: whmcsTickets}
+func NewMessagesServer(logger *zap.Logger, chatCtrl *graph.ChatsController, msgCtrl *graph.MessagesController, attachmentsCtrl *graph.AttachmentsController, ps *pubsub.PubSub, whmcsTickets bool) *MessagesServer {
+	return &MessagesServer{log: logger.Named("MessagesServer"), chatCtrl: chatCtrl, msgCtrl: msgCtrl, attachmentsCtrl: attachmentsCtrl, ps: ps, whmcsTickets: whmcsTickets}
 }
 
 func (s *MessagesServer) Get(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Messages], error) {
@@ -164,6 +166,23 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 
 	oldMessage, err := s.msgCtrl.Get(ctx, req.Msg.GetUuid())
 
+	if !reflect.DeepEqual(oldMessage.GetAttachments(), req.Msg.GetAttachments()) {
+		oldAttachments := map[string]struct{}{}
+		newAttachments := map[string]struct{}{}
+
+		for _, attachment := range oldMessage.GetAttachments() {
+			oldAttachments[attachment] = struct{}{}
+		}
+		for _, attachment := range req.Msg.GetAttachments() {
+			newAttachments[attachment] = struct{}{}
+		}
+		for key := range oldAttachments {
+			if _, ok := newAttachments[key]; !ok {
+				s.attachmentsCtrl.Delete(ctx, key)
+			}
+		}
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -208,6 +227,15 @@ func (s *MessagesServer) Delete(ctx context.Context, req *connect.Request[cc.Mes
 
 	if requestor != req.Msg.GetSender() && !core.In(requestor, chat.GetAdmins()) {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("you are not message sender or chat admin"))
+	}
+
+	msg, err := s.msgCtrl.Get(ctx, req.Msg.GetUuid())
+	if err != nil {
+		return nil, err
+	}
+
+	for _, attachment := range msg.GetAttachments() {
+		s.attachmentsCtrl.Delete(ctx, attachment)
 	}
 
 	message, err := s.msgCtrl.Delete(ctx, req.Msg)

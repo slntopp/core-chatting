@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/slntopp/core-chatting/pkg/attachments"
 	"github.com/slntopp/core-chatting/pkg/core/auth"
 
 	"github.com/rabbitmq/amqp091-go"
@@ -43,6 +44,8 @@ var (
 
 	whmcsTickets bool
 
+	host, bucket string
+
 	SIGNING_KEY []byte
 )
 
@@ -73,6 +76,11 @@ func init() {
 
 	viper.SetDefault("SIGNING_KEY", "secret")
 	SIGNING_KEY = []byte(viper.GetString("SIGNING_KEY"))
+
+	viper.SetDefault("HOST", "host")
+	viper.SetDefault("BUCKET", "BUCKET")
+	host = viper.GetString("HOST")
+	bucket = viper.GetString("BUCKET")
 }
 
 func main() {
@@ -89,6 +97,7 @@ func main() {
 	chatCtrl := graph.NewChatsController(log, db)
 	msgCtrl := graph.NewMessagesController(log, db)
 	usersCtrl := graph.NewUsersController(log, db, usersCol)
+	attachmentsCtrl := graph.NewAttachmentsController(log, db)
 
 	router := mux.NewRouter()
 	router.Use(func(h http.Handler) http.Handler {
@@ -110,7 +119,7 @@ func main() {
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 
-	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrl, ps, whmcsTickets)
+	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrl, attachmentsCtrl, ps, whmcsTickets)
 	path, handler = cc.NewMessagesAPIHandler(messagesServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 
@@ -121,6 +130,9 @@ func main() {
 	streamServer := stream.NewStreamServer(log, usersCtrl, msgCtrl, ps, SIGNING_KEY)
 	path, handler = cc.NewStreamServiceHandler(streamServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
+
+	attServer := attachments.NewAttacmentsServer(log, attachmentsCtrl, host, bucket)
+	attServer.Hander(router)
 
 	host := fmt.Sprintf("0.0.0.0:%s", port)
 

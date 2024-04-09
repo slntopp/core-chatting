@@ -24,7 +24,7 @@ type AttachmentsServer struct {
 }
 
 func NewAttacmentsServer(logger *zap.Logger, ctrl *graph.AttachmentsController, host, port, bucket, accessKey, secretKey string) *AttachmentsServer {
-	client, err := minio.New(fmt.Sprintf(fmt.Sprintf("%s:%s", host, port)), &minio.Options{
+	client, err := minio.New(fmt.Sprintf("%s:%s", host, port), &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
 		Secure: true,
 	})

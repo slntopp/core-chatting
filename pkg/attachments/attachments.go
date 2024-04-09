@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/slntopp/core-chatting/pkg/graph"
 	"go.uber.org/zap"
 )
@@ -16,11 +19,19 @@ type AttachmentsServer struct {
 
 	host, bucket, port string
 
-	ctrl *graph.AttachmentsController
+	ctrl     *graph.AttachmentsController
+	s3Client *minio.Client
 }
 
-func NewAttacmentsServer(logger *zap.Logger, ctrl *graph.AttachmentsController, host, port, bucket string) *AttachmentsServer {
-	return &AttachmentsServer{log: logger.Named("AttachmentsServer"), ctrl: ctrl, host: host, port: port, bucket: bucket}
+func NewAttacmentsServer(logger *zap.Logger, ctrl *graph.AttachmentsController, host, port, bucket, accessKey, secretKey string) *AttachmentsServer {
+	client, err := minio.New(fmt.Sprintf(fmt.Sprintf("%s:%s", host, port)), &minio.Options{
+		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
+		Secure: true,
+	})
+	if err != nil {
+		logger.Error("S3 Client not defined", zap.Error(err))
+	}
+	return &AttachmentsServer{log: logger.Named("AttachmentsServer"), ctrl: ctrl, host: host, port: port, bucket: bucket, s3Client: client}
 }
 
 func (s *AttachmentsServer) Hander(router *mux.Router) {
@@ -59,7 +70,15 @@ func (s *AttachmentsServer) upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result.ObjectId = fmt.Sprintf("%s:%s/%s/%s", s.host, s.port, s.bucket, result.Uuid)
+	presignedUrl, err := s.s3Client.PresignedPutObject(ctx, s.bucket, fmt.Sprintf("%s%s", result.Uuid, result.Ext), time.Second*60)
+	if err != nil {
+		log.Error("Failed to create url", zap.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+		return
+	}
+
+	result.ObjectId = presignedUrl.String()
 
 	response, err := json.Marshal(result)
 	if err != nil {
@@ -89,7 +108,7 @@ func (s *AttachmentsServer) download(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf(`{"url": "%s:%s/%s/%s"}`, s.host, s.port, s.bucket, result.Uuid)))
+	w.Write([]byte(fmt.Sprintf(`{"url": "%s:%s/%s/%s%s"}`, s.host, s.port, s.bucket, result.Uuid, result.Ext)))
 
 	//http.Redirect(w, r, fmt.Sprintf("%s/%s/%s", s.host, s.bucket, result.Uuid), http.StatusPermanentRedirect)
 }

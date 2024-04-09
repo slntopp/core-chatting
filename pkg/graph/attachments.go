@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"path/filepath"
 
 	"github.com/arangodb/go-driver"
 	"go.uber.org/zap"
@@ -11,7 +12,8 @@ type Attachment struct {
 	Uuid     string `json:"uuid"`
 	Title    string `json:"title"`
 	Chat     string `json:"chat"`
-	ObjectId string `json:"-"`
+	ObjectId string `json:"object_id"`
+	Ext      string `json:"ext"`
 }
 
 type AttachmentsController struct {
@@ -37,6 +39,9 @@ func NewAttachmentsController(logger *zap.Logger, db driver.Database) *Attachmen
 
 func (c *AttachmentsController) Upload(ctx context.Context, a *Attachment) (*Attachment, error) {
 	log := c.log.Named("Upload")
+	a.ObjectId = ""
+	a.Ext = filepath.Ext(a.Title)
+
 	document, err := c.col.CreateDocument(ctx, a)
 	if err != nil {
 		log.Error("Failed to create document", zap.Error(err))

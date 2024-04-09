@@ -1,6 +1,7 @@
 package attachments
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -27,6 +28,9 @@ func NewAttacmentsServer(logger *zap.Logger, ctrl *graph.AttachmentsController, 
 	client, err := minio.New(fmt.Sprintf("%s:%s", host, port), &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
 		Secure: true,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
 	})
 	if err != nil {
 		logger.Error("S3 Client not defined", zap.Error(err))

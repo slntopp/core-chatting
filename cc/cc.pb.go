@@ -601,7 +601,7 @@ type Message struct {
 	Kind        Kind                       `protobuf:"varint,2,opt,name=kind,proto3,enum=cc.Kind" json:"kind,omitempty"`
 	Sender      string                     `protobuf:"bytes,3,opt,name=sender,proto3" json:"sender,omitempty"`
 	Content     string                     `protobuf:"bytes,4,opt,name=content,proto3" json:"content,omitempty"`
-	Attachments []*Attachment              `protobuf:"bytes,5,rep,name=attachments,proto3" json:"attachments,omitempty"`
+	Attachments []string                   `protobuf:"bytes,5,rep,name=attachments,proto3" json:"attachments,omitempty"`
 	Gateways    []string                   `protobuf:"bytes,6,rep,name=gateways,proto3" json:"gateways,omitempty"`
 	Chat        *string                    `protobuf:"bytes,7,opt,name=chat,proto3,oneof" json:"chat,omitempty"` // Required for Send, Update and Delete requests
 	Sent        int64                      `protobuf:"varint,8,opt,name=sent,proto3" json:"sent,omitempty"`
@@ -672,7 +672,7 @@ func (x *Message) GetContent() string {
 	return ""
 }
 
-func (x *Message) GetAttachments() []*Attachment {
+func (x *Message) GetAttachments() []string {
 	if x != nil {
 		return x.Attachments
 	}
@@ -1382,16 +1382,15 @@ var file_cc_cc_proto_rawDesc = []byte{
 	0x6e, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
 	0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e,
 	0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74,
-	0x22, 0xe0, 0x03, 0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x12, 0x0a, 0x04,
+	0x22, 0xd0, 0x03, 0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x12, 0x0a, 0x04,
 	0x75, 0x75, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x75, 0x75, 0x69, 0x64,
 	0x12, 0x1c, 0x0a, 0x04, 0x6b, 0x69, 0x6e, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x08,
 	0x2e, 0x63, 0x63, 0x2e, 0x4b, 0x69, 0x6e, 0x64, 0x52, 0x04, 0x6b, 0x69, 0x6e, 0x64, 0x12, 0x16,
 	0x0a, 0x06, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06,
 	0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e,
 	0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74,
-	0x12, 0x30, 0x0a, 0x0b, 0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x18,
-	0x05, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0e, 0x2e, 0x63, 0x63, 0x2e, 0x41, 0x74, 0x74, 0x61, 0x63,
-	0x68, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x0b, 0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x6d, 0x65, 0x6e,
+	0x12, 0x20, 0x0a, 0x0b, 0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x18,
+	0x05, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0b, 0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x6d, 0x65, 0x6e,
 	0x74, 0x73, 0x12, 0x1a, 0x0a, 0x08, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x73, 0x18, 0x06,
 	0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x73, 0x12, 0x17,
 	0x0a, 0x04, 0x63, 0x68, 0x61, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x04,
@@ -1610,68 +1609,67 @@ var file_cc_cc_proto_depIdxs = []int32{
 	20, // 6: cc.Chat.bot_state:type_name -> cc.Chat.BotStateEntry
 	6,  // 7: cc.Chats.chats:type_name -> cc.Chat
 	2,  // 8: cc.Message.kind:type_name -> cc.Kind
-	8,  // 9: cc.Message.attachments:type_name -> cc.Attachment
-	21, // 10: cc.Message.meta:type_name -> cc.Message.MetaEntry
-	9,  // 11: cc.Messages.messages:type_name -> cc.Message
-	25, // 12: cc.User.data:type_name -> google.protobuf.Struct
-	22, // 13: cc.User.cc_commands:type_name -> cc.User.CcCommandsEntry
-	13, // 14: cc.Metric.options:type_name -> cc.Option
-	12, // 15: cc.Defaults.departments:type_name -> cc.Department
-	23, // 16: cc.Defaults.metrics:type_name -> cc.Defaults.MetricsEntry
-	11, // 17: cc.Users.users:type_name -> cc.User
-	3,  // 18: cc.Event.type:type_name -> cc.EventType
-	6,  // 19: cc.Event.chat:type_name -> cc.Chat
-	9,  // 20: cc.Event.msg:type_name -> cc.Message
-	24, // 21: cc.StreamRequest.commands:type_name -> cc.StreamRequest.CommandsEntry
-	26, // 22: cc.ChatMeta.DataEntry.value:type_name -> google.protobuf.Value
-	26, // 23: cc.Chat.BotStateEntry.value:type_name -> google.protobuf.Value
-	26, // 24: cc.Message.MetaEntry.value:type_name -> google.protobuf.Value
-	14, // 25: cc.Defaults.MetricsEntry.value:type_name -> cc.Metric
-	6,  // 26: cc.ChatsAPI.Create:input_type -> cc.Chat
-	6,  // 27: cc.ChatsAPI.Update:input_type -> cc.Chat
-	6,  // 28: cc.ChatsAPI.Get:input_type -> cc.Chat
-	4,  // 29: cc.ChatsAPI.List:input_type -> cc.Empty
-	6,  // 30: cc.ChatsAPI.Delete:input_type -> cc.Chat
-	6,  // 31: cc.ChatsAPI.SetBotState:input_type -> cc.Chat
-	6,  // 32: cc.ChatsAPI.GetBotState:input_type -> cc.Chat
-	6,  // 33: cc.ChatsAPI.ChangeDepartment:input_type -> cc.Chat
-	6,  // 34: cc.ChatsAPI.ChangeGateway:input_type -> cc.Chat
-	6,  // 35: cc.MessagesAPI.Get:input_type -> cc.Chat
-	9,  // 36: cc.MessagesAPI.Send:input_type -> cc.Message
-	9,  // 37: cc.MessagesAPI.Update:input_type -> cc.Message
-	9,  // 38: cc.MessagesAPI.Delete:input_type -> cc.Message
-	4,  // 39: cc.UsersAPI.Me:input_type -> cc.Empty
-	4,  // 40: cc.UsersAPI.FetchDefaults:input_type -> cc.Empty
-	4,  // 41: cc.UsersAPI.GetConfig:input_type -> cc.Empty
-	15, // 42: cc.UsersAPI.SetConfig:input_type -> cc.Defaults
-	16, // 43: cc.UsersAPI.Resolve:input_type -> cc.Users
-	4,  // 44: cc.UsersAPI.GetMembers:input_type -> cc.Empty
-	18, // 45: cc.StreamService.Stream:input_type -> cc.StreamRequest
-	6,  // 46: cc.ChatsAPI.Create:output_type -> cc.Chat
-	6,  // 47: cc.ChatsAPI.Update:output_type -> cc.Chat
-	6,  // 48: cc.ChatsAPI.Get:output_type -> cc.Chat
-	7,  // 49: cc.ChatsAPI.List:output_type -> cc.Chats
-	6,  // 50: cc.ChatsAPI.Delete:output_type -> cc.Chat
-	6,  // 51: cc.ChatsAPI.SetBotState:output_type -> cc.Chat
-	6,  // 52: cc.ChatsAPI.GetBotState:output_type -> cc.Chat
-	6,  // 53: cc.ChatsAPI.ChangeDepartment:output_type -> cc.Chat
-	6,  // 54: cc.ChatsAPI.ChangeGateway:output_type -> cc.Chat
-	10, // 55: cc.MessagesAPI.Get:output_type -> cc.Messages
-	9,  // 56: cc.MessagesAPI.Send:output_type -> cc.Message
-	9,  // 57: cc.MessagesAPI.Update:output_type -> cc.Message
-	9,  // 58: cc.MessagesAPI.Delete:output_type -> cc.Message
-	11, // 59: cc.UsersAPI.Me:output_type -> cc.User
-	15, // 60: cc.UsersAPI.FetchDefaults:output_type -> cc.Defaults
-	15, // 61: cc.UsersAPI.GetConfig:output_type -> cc.Defaults
-	15, // 62: cc.UsersAPI.SetConfig:output_type -> cc.Defaults
-	16, // 63: cc.UsersAPI.Resolve:output_type -> cc.Users
-	16, // 64: cc.UsersAPI.GetMembers:output_type -> cc.Users
-	17, // 65: cc.StreamService.Stream:output_type -> cc.Event
-	46, // [46:66] is the sub-list for method output_type
-	26, // [26:46] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	21, // 9: cc.Message.meta:type_name -> cc.Message.MetaEntry
+	9,  // 10: cc.Messages.messages:type_name -> cc.Message
+	25, // 11: cc.User.data:type_name -> google.protobuf.Struct
+	22, // 12: cc.User.cc_commands:type_name -> cc.User.CcCommandsEntry
+	13, // 13: cc.Metric.options:type_name -> cc.Option
+	12, // 14: cc.Defaults.departments:type_name -> cc.Department
+	23, // 15: cc.Defaults.metrics:type_name -> cc.Defaults.MetricsEntry
+	11, // 16: cc.Users.users:type_name -> cc.User
+	3,  // 17: cc.Event.type:type_name -> cc.EventType
+	6,  // 18: cc.Event.chat:type_name -> cc.Chat
+	9,  // 19: cc.Event.msg:type_name -> cc.Message
+	24, // 20: cc.StreamRequest.commands:type_name -> cc.StreamRequest.CommandsEntry
+	26, // 21: cc.ChatMeta.DataEntry.value:type_name -> google.protobuf.Value
+	26, // 22: cc.Chat.BotStateEntry.value:type_name -> google.protobuf.Value
+	26, // 23: cc.Message.MetaEntry.value:type_name -> google.protobuf.Value
+	14, // 24: cc.Defaults.MetricsEntry.value:type_name -> cc.Metric
+	6,  // 25: cc.ChatsAPI.Create:input_type -> cc.Chat
+	6,  // 26: cc.ChatsAPI.Update:input_type -> cc.Chat
+	6,  // 27: cc.ChatsAPI.Get:input_type -> cc.Chat
+	4,  // 28: cc.ChatsAPI.List:input_type -> cc.Empty
+	6,  // 29: cc.ChatsAPI.Delete:input_type -> cc.Chat
+	6,  // 30: cc.ChatsAPI.SetBotState:input_type -> cc.Chat
+	6,  // 31: cc.ChatsAPI.GetBotState:input_type -> cc.Chat
+	6,  // 32: cc.ChatsAPI.ChangeDepartment:input_type -> cc.Chat
+	6,  // 33: cc.ChatsAPI.ChangeGateway:input_type -> cc.Chat
+	6,  // 34: cc.MessagesAPI.Get:input_type -> cc.Chat
+	9,  // 35: cc.MessagesAPI.Send:input_type -> cc.Message
+	9,  // 36: cc.MessagesAPI.Update:input_type -> cc.Message
+	9,  // 37: cc.MessagesAPI.Delete:input_type -> cc.Message
+	4,  // 38: cc.UsersAPI.Me:input_type -> cc.Empty
+	4,  // 39: cc.UsersAPI.FetchDefaults:input_type -> cc.Empty
+	4,  // 40: cc.UsersAPI.GetConfig:input_type -> cc.Empty
+	15, // 41: cc.UsersAPI.SetConfig:input_type -> cc.Defaults
+	16, // 42: cc.UsersAPI.Resolve:input_type -> cc.Users
+	4,  // 43: cc.UsersAPI.GetMembers:input_type -> cc.Empty
+	18, // 44: cc.StreamService.Stream:input_type -> cc.StreamRequest
+	6,  // 45: cc.ChatsAPI.Create:output_type -> cc.Chat
+	6,  // 46: cc.ChatsAPI.Update:output_type -> cc.Chat
+	6,  // 47: cc.ChatsAPI.Get:output_type -> cc.Chat
+	7,  // 48: cc.ChatsAPI.List:output_type -> cc.Chats
+	6,  // 49: cc.ChatsAPI.Delete:output_type -> cc.Chat
+	6,  // 50: cc.ChatsAPI.SetBotState:output_type -> cc.Chat
+	6,  // 51: cc.ChatsAPI.GetBotState:output_type -> cc.Chat
+	6,  // 52: cc.ChatsAPI.ChangeDepartment:output_type -> cc.Chat
+	6,  // 53: cc.ChatsAPI.ChangeGateway:output_type -> cc.Chat
+	10, // 54: cc.MessagesAPI.Get:output_type -> cc.Messages
+	9,  // 55: cc.MessagesAPI.Send:output_type -> cc.Message
+	9,  // 56: cc.MessagesAPI.Update:output_type -> cc.Message
+	9,  // 57: cc.MessagesAPI.Delete:output_type -> cc.Message
+	11, // 58: cc.UsersAPI.Me:output_type -> cc.User
+	15, // 59: cc.UsersAPI.FetchDefaults:output_type -> cc.Defaults
+	15, // 60: cc.UsersAPI.GetConfig:output_type -> cc.Defaults
+	15, // 61: cc.UsersAPI.SetConfig:output_type -> cc.Defaults
+	16, // 62: cc.UsersAPI.Resolve:output_type -> cc.Users
+	16, // 63: cc.UsersAPI.GetMembers:output_type -> cc.Users
+	17, // 64: cc.StreamService.Stream:output_type -> cc.Event
+	45, // [45:65] is the sub-list for method output_type
+	25, // [25:45] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_cc_cc_proto_init() }

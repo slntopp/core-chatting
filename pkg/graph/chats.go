@@ -3,9 +3,10 @@ package graph
 import (
 	"context"
 	"fmt"
-	"google.golang.org/protobuf/types/known/structpb"
 	"slices"
 	"time"
+
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/slntopp/core-chatting/cc"
 
@@ -77,6 +78,7 @@ func (c *ChatsController) Update(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 	_, err := c.col.UpdateDocument(ctx, chat.GetUuid(), chat)
 
 	if err != nil {
+		log.Error("Failed to update chat", zap.Error(err))
 		return nil, err
 	}
 
@@ -187,6 +189,9 @@ func (c *ChatsController) List(ctx context.Context, requestor string) ([]*cc.Cha
 const deleteChatMessages = `
 FOR m in @@messages
 	FILTER m.chat == @chat
+	LET attachments = m.attachments == null ? [] : m.attachments 
+	FOR a in attachments	
+		REMOVE a in @@attachments
 	REMOVE m IN @@messages
 `
 
@@ -209,8 +214,9 @@ func (c *ChatsController) Delete(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 	}
 
 	_, err = c.db.Query(ctx, deleteChatMessages, map[string]interface{}{
-		"chat":      chat.GetUuid(),
-		"@messages": MESSAGES_COLLECTION,
+		"chat":         chat.GetUuid(),
+		"@messages":    MESSAGES_COLLECTION,
+		"@attachments": ATTACHMENTS_COLLECTION,
 	})
 
 	if err != nil {

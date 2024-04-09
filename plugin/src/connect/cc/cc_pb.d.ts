@@ -341,9 +341,9 @@ export declare class Message extends Message$1<Message> {
   content: string;
 
   /**
-   * @generated from field: repeated cc.Attachment attachments = 5;
+   * @generated from field: repeated string attachments = 5;
    */
-  attachments: Attachment[];
+  attachments: string[];
 
   /**
    * @generated from field: repeated string gateways = 6;

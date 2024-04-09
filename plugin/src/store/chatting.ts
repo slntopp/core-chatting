@@ -80,7 +80,10 @@ export const useCcStore = defineStore('cc', () => {
         return chat
     }
 
-    async function update_chat(chat:Chat){
+    async function update_chat(chat: Chat){
+        Object.entries(chat.meta?.data ?? {}).forEach(([key, value]) => {
+          if (!value.kind.value) delete chat.meta?.data[key]
+        })
         chat = await chats_c.update(chat)
 
         chats.value.set(chat.uuid, chat)

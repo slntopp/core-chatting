@@ -207,7 +207,7 @@ async function setColumns () {
 
 const previewColumns = computed(() =>
   (appStore.displayMode === 'full')
-    ? `1fr ${responsibleColsWidth.value} ${departmentColsWidth.value} 200px`
+    ? `1fr ${responsibleColsWidth.value} ${departmentColsWidth.value} 210px`
     : '1fr auto auto'
 )
 

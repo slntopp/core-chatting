@@ -14,13 +14,13 @@ import (
 type AttachmentsServer struct {
 	log *zap.Logger
 
-	host, bucket string
+	host, bucket, port string
 
 	ctrl *graph.AttachmentsController
 }
 
-func NewAttacmentsServer(logger *zap.Logger, ctrl *graph.AttachmentsController, host, bucket string) *AttachmentsServer {
-	return &AttachmentsServer{log: logger.Named("AttachmentsServer"), ctrl: ctrl, host: host, bucket: bucket}
+func NewAttacmentsServer(logger *zap.Logger, ctrl *graph.AttachmentsController, host, port, bucket string) *AttachmentsServer {
+	return &AttachmentsServer{log: logger.Named("AttachmentsServer"), ctrl: ctrl, host: host, port: port, bucket: bucket}
 }
 
 func (s *AttachmentsServer) Hander(router *mux.Router) {
@@ -59,6 +59,8 @@ func (s *AttachmentsServer) upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	result.ObjectId = fmt.Sprintf("%s:%s/%s/%s", s.host, s.port, s.bucket, result.Uuid)
+
 	response, err := json.Marshal(result)
 	if err != nil {
 		log.Error("Failed to parse response", zap.Error(err))
@@ -86,7 +88,10 @@ func (s *AttachmentsServer) download(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("%s/%s/%s", s.host, s.bucket, result.Uuid), http.StatusPermanentRedirect)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(fmt.Sprintf(`{"url": "%s:%s/%s/%s"}`, s.host, s.port, s.bucket, result.Uuid)))
+
+	//http.Redirect(w, r, fmt.Sprintf("%s/%s/%s", s.host, s.bucket, result.Uuid), http.StatusPermanentRedirect)
 }
 
 func (s *AttachmentsServer) delete(w http.ResponseWriter, r *http.Request) {

@@ -8,9 +8,10 @@ import (
 )
 
 type Attachment struct {
-	Uuid    string `json:"uuid"`
-	Title   string `json:"title"`
-	Message string `json:"message"`
+	Uuid     string `json:"uuid"`
+	Title    string `json:"title"`
+	Chat     string `json:"chat"`
+	ObjectId string `json:"-"`
 }
 
 type AttachmentsController struct {

@@ -44,7 +44,7 @@ var (
 
 	whmcsTickets bool
 
-	host, bucket string
+	s3host, s3bucket, s3port string
 
 	SIGNING_KEY []byte
 )
@@ -77,10 +77,12 @@ func init() {
 	viper.SetDefault("SIGNING_KEY", "secret")
 	SIGNING_KEY = []byte(viper.GetString("SIGNING_KEY"))
 
-	viper.SetDefault("HOST", "host")
-	viper.SetDefault("BUCKET", "BUCKET")
-	host = viper.GetString("HOST")
-	bucket = viper.GetString("BUCKET")
+	viper.SetDefault("S3_HOST", "host")
+	viper.SetDefault("S3_BUCKET", "bucket")
+	viper.SetDefault("S3_PORT", "port")
+	s3host = viper.GetString("S3_HOST")
+	s3bucket = viper.GetString("S3_BUCKET")
+	s3port = viper.GetString("S3_PORT")
 }
 
 func main() {
@@ -131,7 +133,7 @@ func main() {
 	path, handler = cc.NewStreamServiceHandler(streamServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 
-	attServer := attachments.NewAttacmentsServer(log, attachmentsCtrl, host, bucket)
+	attServer := attachments.NewAttacmentsServer(log, attachmentsCtrl, s3host, s3port, s3bucket)
 	attServer.Hander(router)
 
 	host := fmt.Sprintf("0.0.0.0:%s", port)

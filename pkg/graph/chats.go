@@ -138,7 +138,7 @@ FILTER @requestor in c.admins || @requestor in c.users
 	LET messages = (FOR m in @@messages FILTER m.chat == c._key SORT m.sent ASC RETURN m)
 	LET first_message = FIRST(messages)
 	LET last_message = LAST(messages)
-	LET unread = LENGTH(
+	LET unread = c.status == @closed_status ? 0 : LENGTH(
 		FOR m in @@messages 
 			FILTER m.chat == c._key
 			FILTER @requestor not in m.readers
@@ -161,9 +161,10 @@ func (c *ChatsController) List(ctx context.Context, requestor string) ([]*cc.Cha
 	log.Debug("Req received")
 
 	cur, err := c.db.Query(ctx, listChatsQuery, map[string]interface{}{
-		"@chats":    CHATS_COLLECTION,
-		"@messages": MESSAGES_COLLECTION,
-		"requestor": requestor,
+		"@chats":        CHATS_COLLECTION,
+		"@messages":     MESSAGES_COLLECTION,
+		"requestor":     requestor,
+		"closed_status": cc.Status_CLOSE,
 	})
 
 	if err != nil {

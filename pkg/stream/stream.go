@@ -117,8 +117,21 @@ start_stream:
 				newMessage, err := s.msgCtrl.Read(ctx, message, requestor)
 				if err != nil {
 					log.Error("Failed to update readers", zap.Error(err))
+					return err
 				}
 				event.Item = &cc.Event_Msg{Msg: newMessage}
+
+				readEvent := &cc.Event{
+					Type: cc.EventType_CHAT_READ,
+					Item: &cc.Event_Msg{
+						Msg: newMessage,
+					},
+				}
+				err = serverStream.Send(readEvent)
+				if err != nil {
+					log.Error("Failed to send read event", zap.Error(err))
+					return err
+				}
 			}
 
 			err = serverStream.Send(event)

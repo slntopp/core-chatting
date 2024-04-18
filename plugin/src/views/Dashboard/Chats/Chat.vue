@@ -32,124 +32,22 @@
     </n-space>
 
     <template #footer>
-      <div class="footer">
-        <n-space v-if="chat?.role == Role.ADMIN" style="grid-column: 1 / 3; gap: 5px" :wrap-item="false">
-          <n-tooltip placement="top-start">
-            <template #trigger>
-              <n-button
-                ghost
-                size="small"
-                :type="(sendMode === 'admin') ? 'warning' : undefined"
-                @click="sendMode = (sendMode === 'admin') ? 'default' : 'admin'"
-              >
-                Notes
-              </n-button>
-            </template>
-            Sent message as an Admin Note.
-          </n-tooltip>
-
-          <n-tooltip placement="top-start">
-            <template #trigger>
-              <n-button
-                ghost
-                size="small"
-                :type="(sendMode === 'approve') ? 'info' : undefined"
-                @click="sendMode = (sendMode === 'approve') ? 'default' : 'approve'"
-              >
-                Premoderate
-              </n-button>
-            </template>
-            Message will be put under moderation, thus not visible to user until one of the Admins approves it.
-          </n-tooltip>
-        </n-space>
-
-        <n-space class="textarea" vertical justify="center">
-          <n-alert
-            closable
-            type="info"
-            title="Editing"
-            style="min-width: 50vw"
-            v-if="store.updating"
-            @close="handle_stop_edit"
-          />
-
-          <n-tooltip placement="top-end">
-            <template #trigger>
-                <!-- :value="get_mention_value(store.current_message.content)" -->
-                <!-- @update:value="set_mention_value($event)" -->
-              <n-mention
-                ref="input"
-                size="small"
-                type="textarea"
-                style="width: 100%"
-                placeholder="Type your message"
-                v-model:value="store.current_message.content"
-                :autosize="{ minRows: 3, maxRows: 15 }"
-                :options="mentionsOptions"
-                :prefix="(isMentionVisible) ? '@' : ' @'"
-
-                @input="onInput"
-                @blur="check_mentioned"
-                @keypress.prevent.enter.exact="handle_new_line"
-                @keyup.prevent.ctrl.enter.exact="handle_send"
-                @keyup.prevent.ctrl.shift.enter.exact="store.handle_send(chat?.uuid ?? '', Kind.ADMIN_ONLY)"
-                @keyup.prevent.ctrl.up.exact="handle_begin_edit"
-              />
-            </template>
-
-            <ul style="padding: 0 0 0 10px">
-              <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to send message</li>
-              <li v-if="chat?.role == Role.ADMIN"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Enter</kbd> to
-                send
-                message as Admin Note
-              </li>
-              <li><kbd>Ctrl</kbd> + <kbd>↑</kbd> to edit last message</li>
-            </ul>
-
-          </n-tooltip>
-        </n-space>
-
-        <n-space class="actions" style="flex-flow: nowrap">
-          <n-button
-            ghost
-            circle
-            size="small"
-            type="success"
-            :color="(colorBySendMode as string)"
-            @click="handle_send"
-          >
-            <template #icon>
-              <n-icon :component="SendOutline" />
-            </template>
-          </n-button>
-        </n-space>
-      </div>
+      <chat-footer ref="footer" :chat="chat!" :messages="messages" />
     </template>
   </n-list>
 </template>
 
 <script setup lang="ts">
 import {computed, defineAsyncComponent, nextTick, ref, watch} from 'vue';
-import {
-  NAlert,
-  NButton,
-  NIcon,
-  NMention,
-  NList,
-  NListItem,
-  NScrollbar,
-  NSpace,
-  NTooltip,
-  MentionOption
-} from 'naive-ui';
+import {NAlert, NList, NListItem, NScrollbar, NSpace} from 'naive-ui';
 
 import {useRoute, useRouter} from 'vue-router';
 import {useCcStore} from '../../../store/chatting';
-import {Chat, Kind, Message, Role} from '../../../connect/cc/cc_pb';
+import {Chat, Kind, Message} from '../../../connect/cc/cc_pb';
 import ChatHeader from "../../../components/chats/layouts/chat_header.vue";
+import ChatFooter from "../../../components/chats/layouts/chat_footer.vue";
 import MockMessage from "../../../components/chats/mock_message.vue";
 
-const SendOutline = defineAsyncComponent(() => import('@vicons/ionicons5/SendOutline'));
 const MessageView = defineAsyncComponent(() => import('../../../components/chats/message.vue'));
 
 const route = useRoute();
@@ -157,7 +55,6 @@ const router = useRouter();
 
 const store = useCcStore()
 const scrollbar = ref()
-const input = ref()
 const isMessageLoading = ref(false)
 
 const chat = computed(() => {
@@ -176,52 +73,6 @@ const messages = computed(() => {
   chatMessages.sort((a, b) => Number(a.sent - b.sent))
   return chatMessages
 })
-
-const isMentionVisible = ref(false)
-const mentionsOptions = computed(() => {
-  if (!chat.value) return []
-  const uuids = new Set([...chat.value.users, ...chat.value.admins])
-  const result: MentionOption[] = []
-
-  uuids.forEach((uuid) => {
-    const { title } = store.users.get(uuid) ?? {}
-
-    result.push({
-      label: title ?? uuid,
-      value: title?.replace(' ', '_') ?? uuid
-    })
-  })
-
-  return result
-})
-
-function onInput({ target }: { target: HTMLTextAreaElement }) {
-  if (target.selectionStart !== target.selectionEnd) return
-  const symbol = target.value[target.selectionEnd - 1]
-  const prevSymbol = target.value[target.selectionEnd - 2]
-
-  if (symbol === '@' && prevSymbol === ' ') {
-    isMentionVisible.value = true
-  } else {
-    isMentionVisible.value = false
-  }
-}
-
-function check_mentioned() {
-  const users = Array.from(store.users.values())
-  const titles = store.current_message.content.match(/@[\w\d-]{1,}/g)
-
-  store.current_message.mentioned = []
-  titles?.forEach((title) => {
-    const { uuid } = users.find((user) =>
-      user.title.replace(' ', '_') === title.replace('@', '')
-    ) ?? {}
-    const mention = store.current_message.mentioned.includes(uuid ?? title)
-
-    if (mention) return
-    store.current_message.mentioned.push(uuid ?? title)
-  })
-}
 
 async function handle_approve(msg: Message, approve: boolean) {
   msg.underReview = !approve
@@ -276,71 +127,16 @@ watch(messages, () => {
 watch(isMessageLoading, scrollToBottom)
 watch(scrollbar, scrollToBottom)
 
-const sendMode = ref('default')
-const textareaColors = computed(() => {
-  const color = colorBySendMode.value
-
-  return `
-    --n-caret-color: ${color ?? '#63e2b7'};
-    --n-color-focus: ${color ?? '#63e2b7'}1a;
-    --n-border: 1px solid ${color};
-    --n-border-hover: 1px solid ${color ?? '#63e2b7'};
-    --n-border-focus: 1px solid ${color ?? '#63e2b7'};
-  `
-})
-
-const colorBySendMode = computed(() => {
-  switch (sendMode.value) {
-    case 'admin':
-      return '#f2c97d'
-    case 'approve':
-      return '#70c0e8'
-    default:
-      return null
-  }
-})
-
-watch(textareaColors, (value) => {
-  if (!input.value?.inputInstRef?.$el.style) return
-  input.value.inputInstRef.$el.style.cssText += value
-})
+const footer = ref()
 
 function handle_edit(message: Message) {
   store.updating = true
-  store.current_message = message
+  store.current_message = JSON.parse(JSON.stringify(message))
 
   if (message.underReview) {
-    sendMode.value = 'approve'
+    footer.value.sendMode = 'approve'
   } else if (message.kind === Kind.ADMIN_ONLY) {
-    sendMode.value = 'admin'
-  }
-}
-
-function handle_send() {
-  switch (sendMode.value) {
-    case 'admin':
-      store.handle_send(chat.value?.uuid ?? '', Kind.ADMIN_ONLY)
-      break;
-    case 'approve':
-      store.handle_send(chat.value?.uuid ?? '', Kind.DEFAULT, true)
-      break;
-    default:
-      store.handle_send(chat.value?.uuid ?? '')
-      break;
-  }
-}
-
-function handle_begin_edit() {
-  for (let i = messages.value.length - 1; i >= 0; i--) {
-    let msg = messages.value[i]
-    if (msg.sender == store.me.uuid) {
-      store.updating = true
-      store.current_message = msg
-      nextTick(() => {
-        input.value?.focus()
-      })
-      break
-    }
+    footer.value.sendMode = 'admin'
   }
 }
 
@@ -350,64 +146,13 @@ function handle_stop_edit() {
     content: '',
   })
 }
-
-function handle_new_line() {
-  const textarea = input.value.$el.querySelector('textarea')
-
-  textarea.setRangeText('\n', textarea.selectionStart, textarea.selectionEnd, 'end')
-}
 </script>
 
-<style scoped lang="scss">
-kbd {
-  background-color: #eee;
-  border-radius: 3px;
-  border: 1px solid #b4b4b4;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2), 0 2px 0 0 rgba(255, 255, 255, 0.7) inset;
-  color: #333;
-  display: inline-block;
-  font-size: 0.85em;
-  font-weight: 700;
-  line-height: 1;
-  padding: 2px 4px;
-  white-space: nowrap;
-}
-
-textarea {
-  overflow-wrap: anywhere;
-}
-
+<style scoped>
 .chat {
   display: flex;
   flex-direction: column;
   height: 100vh;
   padding-left: 16px;
-}
-
-.footer {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  width: calc(100% - 20px);
-  gap: 5px 15px;
-
-  .textarea {
-    min-width: 100px;
-    width: 100%;
-  }
-  
-  .actions {
-    justify-content: space-between;
-  }
-
-  @media (max-width: 600px) {
-    flex-wrap: wrap;
-    .textarea {
-      width: 60%;
-    }
-    .actions {
-      margin: 20px auto;
-    }
-  }
 }
 </style>

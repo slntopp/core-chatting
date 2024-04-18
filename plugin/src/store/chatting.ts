@@ -281,7 +281,7 @@ export const useCcStore = defineStore('cc', () => {
     })();
 
     return {
-        users, load_me, me, get_members,
+        users, load_me, me, get_members, baseUrl,
 
         chats, list_chats, create_chat, delete_chat, update_chat,
 

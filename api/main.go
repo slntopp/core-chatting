@@ -133,7 +133,7 @@ func main() {
 	path, handler = cc.NewUsersAPIHandler(usersServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 
-	streamServer := stream.NewStreamServer(log, usersCtrl, msgCtrl, ps, SIGNING_KEY)
+	streamServer := stream.NewStreamServer(log, usersCtrl, msgCtrl, chatCtrl, ps, SIGNING_KEY)
 	path, handler = cc.NewStreamServiceHandler(streamServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 

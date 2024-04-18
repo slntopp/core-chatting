@@ -12,7 +12,7 @@ import (
 
 type MessagesController struct {
 	log *zap.Logger
-	sync.Mutex
+	m   *sync.Mutex
 
 	db  driver.Database
 	col driver.Collection
@@ -30,6 +30,7 @@ func NewMessagesController(logger *zap.Logger, db driver.Database) *MessagesCont
 		log: log,
 		db:  db,
 		col: col,
+		m:   &sync.Mutex{},
 	}
 }
 
@@ -98,8 +99,8 @@ func (c *MessagesController) Read(ctx context.Context, msg *cc.Message, reader s
 	log := c.log.Named("Read")
 	log.Debug("Req received")
 
-	c.Lock()
-	defer c.Unlock()
+	c.m.Lock()
+	defer c.m.Unlock()
 	cur, err := c.db.Query(ctx, readMessageQuery, map[string]interface{}{
 		"message":   driver.NewDocumentID(MESSAGES_COLLECTION, msg.GetUuid()),
 		"reader":    reader,

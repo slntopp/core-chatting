@@ -544,7 +544,13 @@ function onMouseMove(clientX: number, clientY: number, chatId: string) {
 
   x.value = clientX
   y.value = clientY - 10
-  firstMessage.value = chat?.meta?.firstMessage?.content ?? ''
+  firstMessage.value = chat?.meta?.firstMessage?.content?.replace(
+    /<div class="chat__files">[\s\S]{1,}<\/div>$/g, ''
+  ) ?? ''
+
+  if (firstMessage.value.length > 99) {
+    firstMessage.value = `${firstMessage.value.slice(0, 100)}...`
+  }
   isFirstMessageVisible.value = true
 }
 </script>

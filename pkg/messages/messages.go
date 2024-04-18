@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
@@ -114,6 +115,15 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 	message, err := s.msgCtrl.Send(ctx, msg)
 	if err != nil {
 		return nil, err
+	}
+
+	if chat.GetResponsible() == "" && slices.Contains(chat.GetAdmins(), requestor) {
+		chat.Responsible = &requestor
+		chat, err = s.chatCtrl.Update(ctx, chat)
+		if err != nil {
+			log.Error("Failed to update chat", zap.Error(err))
+			go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_UPDATED)
+		}
 	}
 
 	go pubsub.HandleNotifyMessage(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_SENT)

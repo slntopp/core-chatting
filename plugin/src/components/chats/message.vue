@@ -3,6 +3,15 @@
     <span v-html="content()"></span>
   </render>
 
+  <n-modal
+    v-model:show="currentImage.visible"
+    preset="card"
+    style="max-width: 600px"
+    :title="currentImage.alt"
+  >
+    <img style="width: 100%" :alt="currentImage.alt" :src="currentImage.src">
+  </n-modal>
+
   <n-dropdown
     placement="bottom-start"
     trigger="manual"
@@ -16,8 +25,8 @@
 </template>
 
 <script setup lang="ts">
-import {Component, computed, defineAsyncComponent, h, nextTick, ref, toRefs} from 'vue';
-import {NButton, NDivider, NDropdown, NH2, NIcon, NSpace, NText, NTooltip, useThemeVars} from 'naive-ui'
+import {Component, computed, defineAsyncComponent, h, nextTick, onMounted, reactive, ref, toRefs} from 'vue';
+import {NButton, NDivider, NDropdown, NH2, NIcon, NModal, NSpace, NText, NTooltip, useThemeVars} from 'naive-ui'
 
 import {Kind, Message, Role, User} from '../../connect/cc/cc_pb'
 import {useCcStore} from '../../store/chatting';
@@ -43,6 +52,7 @@ interface MessageProps {
 }
 
 const CogIcon = defineAsyncComponent(() => import('@vicons/ionicons5/CogOutline'));
+const DownloadIcon = defineAsyncComponent(() => import('@vicons/ionicons5/DownloadOutline'));
 const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
 const PencilOutline = defineAsyncComponent(() => import('@vicons/ionicons5/PencilOutline'));
 const TrashOutline = defineAsyncComponent(() => import('@vicons/ionicons5/TrashOutline'));
@@ -65,6 +75,7 @@ const sender = computed(() =>
 
 const x = ref(0)
 const y = ref(0)
+const target = ref<HTMLImageElement>()
 const show = ref(false)
 const options = computed(() => {
 
@@ -96,6 +107,15 @@ const options = computed(() => {
       icon: icon(TrashOutline)
     })
   }
+
+  if (target.value?.tagName.toLowerCase() === 'img') {
+    result.push({
+      label: label('Download'),
+      icon: icon(DownloadIcon),
+      key: 'download'
+    })
+  }
+
   result.push({
     label: label('Readers'),
     icon: icon(EyeOutline),
@@ -106,7 +126,7 @@ const options = computed(() => {
   return result
 })
 
-function handle_select(key: "approve" | "convert" | "edit" | "delete") {
+function handle_select(key: "approve" | "convert" | "edit" | "delete" | "download") {
   console.log(key)
   show.value = false
 
@@ -116,6 +136,10 @@ function handle_select(key: "approve" | "convert" | "edit" | "delete") {
       break
     case 'convert':
       emit('convert', message.value.kind == Kind.ADMIN_ONLY ? Kind.DEFAULT : Kind.ADMIN_ONLY)
+      break
+    case 'download':
+      if (!target.value) return
+      downloadFile(target.value.alt, target.value.src)
       break
     default:
       emit(key)
@@ -128,6 +152,7 @@ function show_dropdown(e: MouseEvent) {
 
   nextTick(() => {
     show.value = true
+    target.value = (e.target as HTMLImageElement)
     x.value = e.clientX
     y.value = e.clientY
   })
@@ -352,6 +377,33 @@ function render(props: RenderProps, { slots }: any) {
     ...container_style.value
   } }, elements);
 }
+
+const currentImage = reactive({ src: '', alt: '', visible: false })
+function addImageClick () {
+  const files = document.querySelectorAll('.chat__files img')
+  
+  files.forEach((file) => {
+    file.addEventListener('click', (e) => {
+      currentImage.src = (e.target as HTMLImageElement)?.src
+      currentImage.alt = (e.target as HTMLImageElement)?.alt
+      currentImage.visible = true
+    })
+  })
+}
+
+async function downloadFile(name: string, link: string) {
+  const element = document.createElement('a')
+
+  const response = await fetch(link)
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+
+  element.setAttribute('href', url)
+  element.setAttribute('download', name)
+  element.click()
+}
+
+onMounted(addImageClick)
 </script>
 
 <style>
@@ -373,5 +425,30 @@ div.code {
 
 .sub:hover {
   text-decoration: v-bind('subStyle.decoration');
+}
+
+.chat__files {
+  display: flex;
+  justify-self: start;
+  flex-wrap: wrap;
+}
+
+.chat__files .files__preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 114px;
+  height: 100px;
+  padding: 5px;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.chat__files .files__preview > img {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: cover;
 }
 </style>

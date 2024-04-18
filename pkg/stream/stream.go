@@ -20,14 +20,15 @@ import (
 type StreamServer struct {
 	log *zap.Logger
 
-	upgrader websocket.Upgrader
-	userCtrl *graph.UsersController
-	msgCtrl  *graph.MessagesController
-	ps       *pubsub.PubSub
-	key      []byte
+	upgrader  websocket.Upgrader
+	userCtrl  *graph.UsersController
+	msgCtrl   *graph.MessagesController
+	chatsCtrl *graph.ChatsController
+	ps        *pubsub.PubSub
+	key       []byte
 }
 
-func NewStreamServer(logger *zap.Logger, userCtrl *graph.UsersController, msgCtrl *graph.MessagesController, ps *pubsub.PubSub, key []byte) *StreamServer {
+func NewStreamServer(logger *zap.Logger, userCtrl *graph.UsersController, msgCtrl *graph.MessagesController, chatsCtrl *graph.ChatsController, ps *pubsub.PubSub, key []byte) *StreamServer {
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -36,12 +37,13 @@ func NewStreamServer(logger *zap.Logger, userCtrl *graph.UsersController, msgCtr
 	}
 
 	return &StreamServer{
-		log:      logger.Named("StreamService"),
-		userCtrl: userCtrl,
-		msgCtrl:  msgCtrl,
-		ps:       ps,
-		upgrader: upgrader,
-		key:      key,
+		log:       logger.Named("StreamService"),
+		userCtrl:  userCtrl,
+		msgCtrl:   msgCtrl,
+		chatsCtrl: chatsCtrl,
+		ps:        ps,
+		upgrader:  upgrader,
+		key:       key,
 	}
 }
 
@@ -117,8 +119,27 @@ start_stream:
 				newMessage, err := s.msgCtrl.Read(ctx, message, requestor)
 				if err != nil {
 					log.Error("Failed to update readers", zap.Error(err))
+					return err
 				}
+				chat, err := s.chatsCtrl.Get(ctx, message.GetChat(), requestor)
+				if err != nil {
+					log.Error("Failed to get chat", zap.Error(err))
+					return err
+				}
+
 				event.Item = &cc.Event_Msg{Msg: newMessage}
+
+				readEvent := &cc.Event{
+					Type: cc.EventType_CHAT_READ,
+					Item: &cc.Event_Chat{
+						Chat: chat,
+					},
+				}
+				err = serverStream.Send(readEvent)
+				if err != nil {
+					log.Error("Failed to send read event", zap.Error(err))
+					return err
+				}
 			}
 
 			err = serverStream.Send(event)

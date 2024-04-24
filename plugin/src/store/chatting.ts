@@ -7,13 +7,14 @@ import { createGrpcWebTransport } from "@connectrpc/connect-web";
 import { useAppStore } from "./app";
 
 import {
-    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType, ChatMeta, Kind, StreamRequest,
+    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType, ChatMeta, Kind, StreamRequest, Department,
 } from "../connect/cc/cc_pb"
 import {
     ChatsAPI, MessagesAPI, StreamService, UsersAPI
 } from "../connect/cc/cc_connect"
 import { useRoute, useRouter } from "vue-router";
 import { useNotification } from "naive-ui";
+import { MetricWithKey } from "../hooks/useDefaults";
 
 export const useCcStore = defineStore('cc', () => {
     const app = useAppStore();
@@ -45,6 +46,8 @@ export const useCcStore = defineStore('cc', () => {
 
     const chats = ref<Map<string, Chat>>(new Map())
     const users = ref<Map<string, User>>(new Map())
+    const departments = ref<Department[]>([])
+    const metrics = ref<MetricWithKey[]>([])
 
     const updating = ref(false)
     const current_message = ref<Message>(new Message({
@@ -281,7 +284,7 @@ export const useCcStore = defineStore('cc', () => {
     })();
 
     return {
-        users, load_me, me, get_members, baseUrl,
+        users, load_me, me, get_members, baseUrl, departments, metrics,
 
         chats, list_chats, create_chat, delete_chat, update_chat,
 

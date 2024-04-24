@@ -260,15 +260,17 @@ async function handle_send() {
 
   switch (sendMode.value) {
     case 'admin':
-      store.handle_send(props.chat?.uuid ?? '', Kind.ADMIN_ONLY)
-      break;
+      await store.handle_send(props.chat?.uuid ?? '', Kind.ADMIN_ONLY)
+      break
     case 'approve':
-      store.handle_send(props.chat?.uuid ?? '', Kind.DEFAULT, true)
-      break;
+      await store.handle_send(props.chat?.uuid ?? '', Kind.DEFAULT, true)
+      break
     default:
-      store.handle_send(props.chat?.uuid ?? '')
-      break;
+      await store.handle_send(props.chat?.uuid ?? '')
+      break
   }
+
+  fileList.value =[]
 }
 
 async function handle_send_files() {

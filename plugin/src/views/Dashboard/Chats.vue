@@ -19,12 +19,7 @@
           <n-icon> <switch-icon /> </n-icon>
         </n-button>
 
-        <n-button
-          ghost
-          type="success"
-          :style="(isChatPanelOpen && selectedChats.length < 1) ? 'margin-right: auto': null"
-          @click="startChat"
-        >
+        <n-button ghost type="success" @click="startChat">
           <n-icon :component="ChatbubbleEllipsesOutline" />
           <span v-if="isChatPanelOpen" style="margin-left: 5px">
             Start Chat
@@ -36,7 +31,7 @@
           type="error"
           v-if="selectedChats.length > 0"
           :loading="deleteLoading"
-          :style="(isChatPanelOpen) ? 'margin-right: auto' : null"
+         
           @click="deleteChats"
         >
           <n-icon :component="deleteIcon" />
@@ -44,6 +39,15 @@
             Delete Chats
           </span>
         </n-button>
+
+        <n-space :wrap-item="false" :style="(isChatPanelOpen) ? 'margin-right: auto' : null">
+          <span v-for="(count, status) in chatsCountByStatus">
+          <n-text :style="{ color: getStatusColor(+status) }">
+            {{ getStatus(+status) }}:
+          </n-text>
+          <n-tag round size="small">{{ count }}</n-tag>
+        </span>
+        </n-space>
 
         <n-button ghost @click="changePanelOpen">
           <n-icon>
@@ -75,7 +79,18 @@
           </template>
 
           <div>
-            <n-text>Sort By:</n-text>
+            <n-space align="center" style="gap: 5px" :wrap-item="false">
+              <n-text>Sort By:</n-text>
+              <n-icon
+                size="18"
+                style="cursor: pointer"
+                :style="{ transform: (sortType === 'desc') ? 'rotate(180deg)' : null }"
+                @click="(sortType === 'desc') ? sortType = 'asc' : sortType = 'desc'"
+              >
+                <up-icon />
+              </n-icon>
+            </n-space>
+
             <n-divider style="margin: 5px 0" />
             <n-radio-group v-model:value="sortBy">
               <n-space :wrap-item="false">
@@ -87,65 +102,13 @@
             </n-radio-group>
           </div>
 
-          <div style="margin-top: 20px">
-            <n-text>Status priority:</n-text>
-            <n-divider style="margin: 5px 0" />
-            <n-space :wrap-item="false" style="gap: 7px">
-              <div v-for="(status, i) of statusSorters" style="display: flex; align-items: center">
-                <n-icon v-if="i !== 0" @click="() => {
-                  const i = statusSorters.indexOf(status)
-
-                  if (!statusSorters[i - 1]) return
-                  [statusSorters[i], statusSorters[i- 1]] = [statusSorters[i- 1], statusSorters[i]]
-                }">
-                  <left-icon />
-                </n-icon>
-
-                <n-tag round style="margin: 0 3px">
-                  {{ statuses[status].label }}
-                </n-tag>
-
-                <n-icon v-if="i !== statusSorters.length - 1" @click="() => {
-                  const i = statusSorters.indexOf(status)
-                  
-                  if (!statusSorters[i + 1]) return
-                  [statusSorters[i], statusSorters[i + 1]] = [statusSorters[i + 1], statusSorters[i]]
-                }">
-                  <right-icon />
-                </n-icon>
-              </div>
-            </n-space>
-          </div>
-
-          <div style="margin-top: 20px">
-            <n-text>Filter by status:</n-text>
-            <n-divider style="margin: 5px 0" />
-            <n-checkbox-group v-model:value="checkedStatuses">
-              <n-space :wrap-item="false">
-                <n-checkbox v-for="status of statuses" :value="status.value" :label="status.label" />
-              </n-space>
-            </n-checkbox-group>
-          </div>
-
-          <div style="margin-top: 20px">
-            <n-text>Filter by admin:</n-text>
-            <n-divider style="margin: 5px 0" />
-            <n-checkbox-group v-model:value="checkedAdmins">
-              <n-space :wrap-item="false">
-                <n-checkbox v-for="admin of admins" :value="admin.value" :label="admin.label" />
-              </n-space>
-            </n-checkbox-group>
-          </div>
-
-          <div style="margin-top: 20px" v-for="metric of metrics" :key="metric.key">
-            <n-text>Filter by {{ metric.title.toLowerCase() }}:</n-text>
-            <n-divider style="margin: 5px 0" />
-            <n-checkbox-group v-model:value="metricsOptions[metric.key]">
-              <n-space :wrap-item="false">
-                <n-checkbox v-for="option of metric.options" :value="option.value" :label="option.key" />
-              </n-space>
-            </n-checkbox-group>
-          </div>
+          <chats-filters
+            v-model:checkedDepartments="checkedDepartments"
+            v-model:checkedStatuses="checkedStatuses"
+            v-model:checkedAdmins="checkedAdmins"
+            :metricsOptions="metricsOptions"
+            @update:checked-metrics="(key, value) => metricsOptions[key] = value"
+          />
 
           <n-button
             ghost
@@ -163,7 +126,7 @@
           {{ firstMessage }}
         </n-popover>
 
-        <n-list hoverable clickable style="margin-bottom: 25px">
+        <n-list v-if="!(isLoading || isDefaultLoading)" hoverable clickable style="margin-bottom: 25px">
           <chat-item
             v-for="chat in viewedChats"
             :selected="selectedChats"
@@ -201,8 +164,7 @@ import {
   NButton, NIcon, NInput, NLayoutContent,
   NLayoutSider, NList, NScrollbar, NSpace,
   NPopover, NRadioGroup, NRadio, NDivider,
-  NCheckboxGroup, NCheckbox, NText, NSpin,
-  NTag, useNotification
+  NTag, NText, NSpin, useNotification
 } from 'naive-ui';
 
 import {useAppStore} from '../../store/app.ts';
@@ -211,6 +173,7 @@ import {useCcStore} from '../../store/chatting.ts';
 import {useRoute, useRouter} from 'vue-router';
 import {Chat, Status} from '../../connect/cc/cc_pb';
 import ChatItem from "../../components/chats/chat_item.vue";
+import ChatsFilters from "../../components/chats/chats_filters.vue"
 import useDraggable from "../../hooks/useDraggable.ts";
 import useDefaults from '../../hooks/useDefaults.ts';
 
@@ -221,16 +184,15 @@ const OpenIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForwa
 const CloseIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
 const SortIcon = defineAsyncComponent(() => import('@vicons/ionicons5/EllipsisVertical'));
 const SwitchIcon = defineAsyncComponent(() => import('@vicons/ionicons5/SwapHorizontal'));
-const rightIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowForward'));
-const leftIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowBack'));
-const deleteIcon = defineAsyncComponent(() => import('@vicons/ionicons5/CloseCircle'))
+const deleteIcon = defineAsyncComponent(() => import('@vicons/ionicons5/CloseCircle'));
+const upIcon = defineAsyncComponent(() => import('@vicons/ionicons5/ArrowUp'));
 
 const appStore = useAppStore()
 const store = useCcStore()
 const router = useRouter()
 const route = useRoute()
 const {makeDraggable} = useDraggable()
-const {metrics, fetch_defaults} = useDefaults()
+const {metrics, isDefaultLoading, fetch_defaults} = useDefaults()
 const notification = useNotification()
 
 const selectedChats = ref<string[]>([])
@@ -301,9 +263,10 @@ onMounted(() => {
 
   if (sorting) {
     sortBy.value = sorting.sortBy
-    statusSorters.value = sorting.statuses
+    sortType.value = sorting.sortType
   }
   if (filters) {
+    checkedDepartments.value = filters.departments
     checkedStatuses.value = filters.statuses
     checkedAdmins.value = filters.admins
   }
@@ -354,17 +317,17 @@ function filterChat (chat: Chat, val: string): boolean {
 }
 
 const sortBy = ref<'none' | 'sent' | 'created' | 'status'>('sent')
+const sortType = ref<'asc' | 'desc'>('desc')
 
 interface optionsIncludedType {
   [index: string]: boolean
 }
 
 const checkedStatuses = ref<Status[]>([])
-
 const statuses = computed(() =>
   Object.keys(Status).filter((key) => isFinite(+key)).map((key) => ({
     label: getStatus(+key), value: +key
-  }))
+  })).reverse()
 )
 
 function getStatus(statusCode: Status | number) {
@@ -373,15 +336,37 @@ function getStatus(statusCode: Status | number) {
   return `${status[0].toUpperCase()}${status.slice(1)}`
 }
 
-const statusSorters = ref(statuses.value.map(({ value }) => value))
+function getStatusColor (status: Status) {
+  switch (status) {
+    case 0:
+      return '#5084ff'
+    case 1:
+      return '#1ea01e'
+    case 2:
+      return '#ff8300'
+    case 3:
+      return '#e23535'
+    default:
+      return undefined
+  }
+}
 
-const chats = computed(() => {
-  let result: Chat[] = []
+const chatsCountByStatus = computed(() => {
+  const result: { [key: string]: number } = {}
+
   store.chats.forEach((chat) => {
-    result.push(chat)
+    if (!result[chat.status]) {
+      result[chat.status] = 0
+    }
+    result[chat.status]++
   })
 
-  result = result.filter((chat) => {
+  return result
+})
+
+const chats = computed(() => {
+  const result = [...store.chats.values()].filter((chat) => {
+    let isDepIncluded = checkedDepartments.value.includes(chat.department)
     let isIncluded = checkedStatuses.value.includes(chat.status)
     let isAdminsExist = !!checkedAdmins.value.find((uuid) =>
       chat.admins.includes(uuid)
@@ -398,26 +383,30 @@ const chats = computed(() => {
 
       isOptionsIncluded[key] = value.includes(metric)
     })
-    
+
+    if (checkedDepartments.value.length < 1) {
+      isDepIncluded = true
+    }
     if (checkedStatuses.value.length < 1) {
       isIncluded = true
     }
     if (checkedAdmins.value.length < 1) {
       isAdminsExist = true
     }
+
     if (appStore.conf?.params?.filterByAccount) {
       isAccountOwner = [...chat.users, ...chat.admins]
         .includes(appStore.conf.params.filterByAccount)
     }
 
     return filterChat(chat, searchParam.value) &&
-      isIncluded && isAdminsExist && isAccountOwner &&
+      isDepIncluded && isIncluded && isAdminsExist && isAccountOwner &&
       Object.values(isOptionsIncluded).every((value) => value)
   })
 
   const sortable = (chat: Chat) => {
     if (sortBy.value === 'status') {
-      return statusSorters.value.indexOf(chat.status)
+      return statuses.value.map(({ value }) => value).indexOf(chat.status)
     }
     if (chat.meta?.lastMessage && sortBy.value === 'sent') {
       return Number(chat.meta.lastMessage.sent)
@@ -428,38 +417,19 @@ const chats = computed(() => {
     return Number(chat.created)
   }
 
-  return result.sort((a: Chat, b: Chat) =>
-    sortable(b) - sortable(a)
+  result.sort((a: Chat, b: Chat) =>
+    (sortType.value === 'desc') ? sortable(b) - sortable(a) : sortable(a) - sortable(b)
   )
+
+  return result
 })
 
 const viewedChats = computed(() =>
   chats.value.slice(0, 10 * page.value)
 )
 
-interface adminsType {
-  value: string
-  label: string
-}
-
 const checkedAdmins = ref<string[]>([])
-
-const admins = computed(() => {
-  const result: adminsType[] = []
-
-  store.chats.forEach((chat: Chat) => {
-    chat.admins.forEach((uuid) => {
-      const element = result.find(({ value }) => uuid === value)
-
-      if (element) return
-      else result.push({
-        value: uuid, label: store.users.get(uuid)?.title ?? uuid
-      })
-    })
-  })
-
-  return result
-})
+const checkedDepartments = ref<string[]>([])
 
 if (Object.keys(metrics.value).length < 1) fetch_defaults()
 
@@ -481,15 +451,16 @@ watch(metrics, (value) => {
     : value.reduce((result, { key }) => ({ ...result, [key]: [] }), {})
 })
 
-watch([sortBy, statusSorters], () => {
+watch([sortBy, sortType], () => {
   localStorage.setItem('sorting', JSON.stringify({
     sortBy: sortBy.value,
-    statuses: statusSorters.value
+    sortType: sortType.value
   }))
 }, { deep: true })
 
-watch([checkedStatuses, checkedAdmins, metricsOptions], () => {
+watch([checkedDepartments, checkedStatuses, checkedAdmins, metricsOptions], () => {
   localStorage.setItem('filters', JSON.stringify({
+    departments: checkedDepartments.value,
     statuses: checkedStatuses.value,
     admins: checkedAdmins.value,
     metrics: metricsOptions.value
@@ -498,8 +469,9 @@ watch([checkedStatuses, checkedAdmins, metricsOptions], () => {
 
 async function resetFilters() {
   sortBy.value = 'sent'
-  statusSorters.value = statuses.value.map(({ value }) => value)
+  sortType.value = 'desc'
 
+  checkedDepartments.value = []
   checkedStatuses.value = []
   checkedAdmins.value = []
   metricsOptions.value = metrics.value.reduce(

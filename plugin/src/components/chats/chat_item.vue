@@ -61,7 +61,9 @@
               {{ gateway }}
             </n-tooltip>
           </n-space>
-          <n-text italic v-if="chat.department" style="white-space: nowrap">{{ chat.department }}</n-text>
+          <n-text italic v-if="chat.department" style="white-space: nowrap">
+            {{ department }}
+          </n-text>
         </n-space>
 
         <div class="time" v-show="appStore.displayMode === 'full'">
@@ -152,6 +154,10 @@ const users = computed(() => chat.value.users.map(uuid => store.users.get(uuid)?
 const admins = computed(() => chat.value.admins.map(uuid => store.users.get(uuid)?.title ?? 'Unknown'))
 
 const members = computed(() => users.value.concat(admins.value))
+const department = computed(() =>
+  store.departments.find(({ key }) => key === chat.value.department)
+    ?.title ?? chat.value.department
+)
 
 // const sub = computed(() => {
 //   if (chat.value.meta && chat.value.meta.lastMessage) {
@@ -181,8 +187,8 @@ onMounted(setColumns)
 watch(chats, setColumns)
 
 async function setColumns () {
+  if (chats.value.length < 1) return
   await nextTick()
-  await new Promise((resolve) => setTimeout(resolve, 200))
 
   const responsibles = document.querySelectorAll('.preview > .responsible')
   const departments = document.querySelectorAll('.preview > .department')
@@ -201,8 +207,12 @@ async function setColumns () {
     }
   })
 
-  if (resWidth > 0) responsibleColsWidth.value = `${resWidth}px`
-  if (depWidth > 0) departmentColsWidth.value = `${depWidth}px`
+  if (resWidth > 0) {
+    responsibleColsWidth.value = `${resWidth}px`
+  }
+  if (depWidth > 0) {
+    departmentColsWidth.value = `${depWidth}px`
+  }
 }
 
 const previewColumns = computed(() =>

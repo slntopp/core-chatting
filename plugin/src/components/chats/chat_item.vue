@@ -93,6 +93,15 @@
           <mail-icon />
         </n-icon>
 
+        <n-tooltip placement="bottom">
+          <template #trigger>
+            <n-icon size="18" style="grid-column: -1; grid-row: 2" @click="copyLink">
+              <copy-icon />
+            </n-icon>
+          </template>
+          Copy chat link
+        </n-tooltip>
+
         <div class="chat__right">
           <n-tooltip>
             <template #trigger>
@@ -126,6 +135,9 @@ import UserAvatar from "../ui/user_avatar.vue";
 import ChatStatus from "./chat_status.vue";
 import {useAppStore} from "../../store/app.ts";
 
+const CopyIcon = defineAsyncComponent(
+  () => import('@vicons/ionicons5/CopyOutline')
+)
 const MailIcon = defineAsyncComponent(
   () => import('@vicons/ionicons5/ChatbubbleEllipsesOutline')
 );
@@ -235,6 +247,13 @@ setInterval(() => now.value = Date.now(), 1000)
 const lastUpdate = computed(() =>
   Number(chat.value.meta?.lastMessage?.edited || chat.value.meta?.lastMessage?.sent)
 )
+
+function copyLink () {
+  const url = (new URL(appStore.conf?.params.fullUrl))
+
+  url.searchParams.set('chat', chat.value.uuid)
+  addToClipboard(url.href, notification)
+}
 
 function goToChat() {
   router.push({ name: 'Chat', params: { uuid: uuid.value } })

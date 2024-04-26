@@ -1,6 +1,15 @@
 <template>
   <n-tooltip>
     <template #trigger>
+      <n-button type="success" size="small" ghost circle @click="copyLink">
+        <template #icon> <copy-icon /> </template>
+      </n-button>
+    </template>
+    Copy chat link
+  </n-tooltip>
+
+  <n-tooltip>
+    <template #trigger>
       <n-button type="info" size="small" ghost circle @click="refresh">
         <template #icon> <refresh-icon /> </template>
       </n-button>
@@ -71,23 +80,16 @@
 import { computed, defineAsyncComponent, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { NButton, NList, NListItem, NPopover, NTooltip, NPopconfirm, useNotification } from 'naive-ui'
+
 import { ConnectError } from '@connectrpc/connect'
 import { Chat, Kind, Message } from '../../connect/cc/cc_pb'
 import { useAppStore } from '../../store/app.ts'
 import { useCcStore } from '../../store/chatting.ts'
+import { addToClipboard } from '../../functions.ts'
 
-
-interface ChatActionsProps {
-  chat: Chat
-}
-
-const appStore = useAppStore()
-const store = useCcStore()
-const notification = useNotification()
-
-const props = defineProps<ChatActionsProps>()
-const router = useRouter()
-
+const copyIcon = defineAsyncComponent(
+  () => import('@vicons/ionicons5/CopyOutline')
+)
 const refreshIcon = defineAsyncComponent(
   () => import('@vicons/ionicons5/RefreshOutline')
 )
@@ -100,6 +102,24 @@ const listIcon = defineAsyncComponent(
 const consoleIcon = defineAsyncComponent(
   () => import('@vicons/ionicons5/TerminalOutline')
 )
+
+interface ChatActionsProps {
+  chat: Chat
+}
+
+const appStore = useAppStore()
+const store = useCcStore()
+const notification = useNotification()
+
+const props = defineProps<ChatActionsProps>()
+const router = useRouter()
+
+function copyLink () {
+  const url = (new URL(appStore.conf?.params.fullUrl))
+
+  url.searchParams.set('chat', props.chat.uuid)
+  addToClipboard(url.href, notification)
+}
 
 async function refresh () {
   try {

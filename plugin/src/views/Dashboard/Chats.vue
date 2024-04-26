@@ -42,11 +42,14 @@
 
         <n-space :wrap-item="false" :style="(isChatPanelOpen) ? 'margin-right: auto' : null">
           <span v-for="(count, status) in chatsCountByStatus">
-          <n-text :style="{ color: getStatusColor(+status) }">
-            {{ getStatus(+status) }}:
-          </n-text>
-          <n-tag round size="small">{{ count }}</n-tag>
-        </span>
+            <n-text
+              :style="{ color: getStatusColor(+status), cursor: 'pointer' }"
+              @click="selectStatus(+status)"
+            >
+              {{ getStatus(+status) }}:
+            </n-text>
+            <n-tag round size="small">{{ count }}</n-tag>
+          </span>
         </n-space>
 
         <n-button ghost @click="changePanelOpen">
@@ -351,18 +354,12 @@ function getStatusColor (status: Status) {
   }
 }
 
-const chatsCountByStatus = computed(() => {
-  const result: { [key: string]: number } = {}
+function selectStatus (status: Status) {
+  const i = checkedStatuses.value.indexOf(status)
 
-  store.chats.forEach((chat) => {
-    if (!result[chat.status]) {
-      result[chat.status] = 0
-    }
-    result[chat.status]++
-  })
-
-  return result
-})
+  if (i === -1) checkedStatuses.value.push(status)
+  else checkedStatuses.value.splice(i, 1)
+}
 
 const chats = computed(() => {
   const result = [...store.chats.values()].filter((chat) => {
@@ -427,6 +424,32 @@ const chats = computed(() => {
 const viewedChats = computed(() =>
   chats.value.slice(0, 10 * page.value)
 )
+
+const filteredChatsByAccount = computed(() =>
+  [...store.chats.values()].filter((chat) => {
+    let isAccountOwner = true
+
+    if (appStore.conf?.params?.filterByAccount) {
+      isAccountOwner = [...chat.users, ...chat.admins]
+        .includes(appStore.conf.params.filterByAccount)
+    }
+
+    return isAccountOwner
+  })
+)
+
+const chatsCountByStatus = computed(() => {
+  const result: { [key: string]: number } = {}
+
+  filteredChatsByAccount.value.forEach((chat) => {
+    if (!result[chat.status]) {
+      result[chat.status] = 0
+    }
+    result[chat.status]++
+  })
+
+  return result
+})
 
 const checkedAdmins = ref<string[]>([])
 const checkedDepartments = ref<string[]>([])

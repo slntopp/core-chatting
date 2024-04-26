@@ -42,11 +42,14 @@
 
         <n-space :wrap-item="false" :style="(isChatPanelOpen) ? 'margin-right: auto' : null">
           <span v-for="(count, status) in chatsCountByStatus">
-          <n-text :style="{ color: getStatusColor(+status) }">
-            {{ getStatus(+status) }}:
-          </n-text>
-          <n-tag round size="small">{{ count }}</n-tag>
-        </span>
+            <n-text
+              :style="{ color: getStatusColor(+status), cursor: 'pointer' }"
+              @click="selectStatus(+status)"
+            >
+              {{ getStatus(+status) }}:
+            </n-text>
+            <n-tag round size="small">{{ count }}</n-tag>
+          </span>
         </n-space>
 
         <n-button ghost @click="changePanelOpen">
@@ -349,6 +352,13 @@ function getStatusColor (status: Status) {
     default:
       return undefined
   }
+}
+
+function selectStatus (status: Status) {
+  const i = checkedStatuses.value.indexOf(status)
+
+  if (i === -1) checkedStatuses.value.push(status)
+  else checkedStatuses.value.splice(i, 1)
 }
 
 const chats = computed(() => {

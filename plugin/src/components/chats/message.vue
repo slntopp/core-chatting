@@ -384,8 +384,11 @@ function addImageClick () {
   
   files.forEach((file) => {
     file.addEventListener('click', (e) => {
-      currentImage.src = (e.target as HTMLImageElement)?.src
-      currentImage.alt = (e.target as HTMLImageElement)?.alt
+      const image = (e.target as HTMLImageElement)
+      if (!message.value.content.includes(image.src)) return
+
+      currentImage.src = image?.src
+      currentImage.alt = image?.alt
       currentImage.visible = true
     })
   })

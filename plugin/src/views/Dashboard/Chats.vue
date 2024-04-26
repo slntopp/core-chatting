@@ -351,19 +351,6 @@ function getStatusColor (status: Status) {
   }
 }
 
-const chatsCountByStatus = computed(() => {
-  const result: { [key: string]: number } = {}
-
-  store.chats.forEach((chat) => {
-    if (!result[chat.status]) {
-      result[chat.status] = 0
-    }
-    result[chat.status]++
-  })
-
-  return result
-})
-
 const chats = computed(() => {
   const result = [...store.chats.values()].filter((chat) => {
     let isDepIncluded = checkedDepartments.value.includes(chat.department)
@@ -427,6 +414,32 @@ const chats = computed(() => {
 const viewedChats = computed(() =>
   chats.value.slice(0, 10 * page.value)
 )
+
+const filteredChatsByAccount = computed(() =>
+  [...store.chats.values()].filter((chat) => {
+    let isAccountOwner = true
+
+    if (appStore.conf?.params?.filterByAccount) {
+      isAccountOwner = [...chat.users, ...chat.admins]
+        .includes(appStore.conf.params.filterByAccount)
+    }
+
+    return isAccountOwner
+  })
+)
+
+const chatsCountByStatus = computed(() => {
+  const result: { [key: string]: number } = {}
+
+  filteredChatsByAccount.value.forEach((chat) => {
+    if (!result[chat.status]) {
+      result[chat.status] = 0
+    }
+    result[chat.status]++
+  })
+
+  return result
+})
 
 const checkedAdmins = ref<string[]>([])
 const checkedDepartments = ref<string[]>([])

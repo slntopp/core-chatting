@@ -290,6 +290,13 @@ func (s *ChatsServer) ChangeDepartment(ctx context.Context, req *connect.Request
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_DEPARTMENT_CHANGED)
 
+	if s.whmcsTickets {
+		go s.ps.PubWhmcs(ctx, &cc.Event{
+			Type: cc.EventType_CHAT_DEPARTMENT_CHANGED,
+			Item: &cc.Event_Chat{Chat: chat},
+		})
+	}
+
 	resp := connect.NewResponse[cc.Chat](chat)
 
 	return resp, nil
@@ -384,6 +391,13 @@ func (s *ChatsServer) ChangeStatus(ctx context.Context, req *connect.Request[cc.
 	}
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, update, cc.EventType_CHAT_STATUS_CHANGED)
+
+	if s.whmcsTickets {
+		go s.ps.PubWhmcs(ctx, &cc.Event{
+			Type: cc.EventType_CHAT_STATUS_CHANGED,
+			Item: &cc.Event_Chat{Chat: update},
+		})
+	}
 
 	resp := connect.NewResponse[cc.Chat](update)
 

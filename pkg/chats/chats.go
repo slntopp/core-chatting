@@ -288,7 +288,7 @@ func (s *ChatsServer) ChangeDepartment(ctx context.Context, req *connect.Request
 		return nil, err
 	}
 
-	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_UPDATED)
+	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_DEPARTMENT_CHANGED)
 
 	resp := connect.NewResponse[cc.Chat](chat)
 
@@ -354,6 +354,36 @@ func (s *ChatsServer) ChangeGateway(ctx context.Context, req *connect.Request[cc
 	}
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, update, cc.EventType_CHAT_UPDATED)
+
+	resp := connect.NewResponse[cc.Chat](update)
+
+	return resp, nil
+}
+
+func (s *ChatsServer) ChangeStatus(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+	log := s.log.Named("ChangeGateway")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	chat, err := s.ctrl.Get(ctx, req.Msg.Uuid, requestor)
+	if err != nil {
+		return nil, err
+	}
+
+	if chat.Role == cc.Role_NOACCESS {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
+	}
+
+	msg := req.Msg
+	chat.Status = msg.GetStatus()
+
+	update, err := s.ctrl.Update(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	go pubsub.HandleNotifyChat(ctx, log, s.ps, update, cc.EventType_CHAT_STATUS_CHANGED)
 
 	resp := connect.NewResponse[cc.Chat](update)
 

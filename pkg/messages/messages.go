@@ -135,13 +135,13 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 		})
 	}
 
-	if chat.GetStatus() == cc.Status_NEW {
+	if chat.GetStatus() == cc.Status_NEW || chat.GetStatus() == cc.Status_CLOSE {
 		chat.Status = cc.Status_OPEN
 		update, err := s.chatCtrl.Update(ctx, chat)
 		if err != nil {
 			return nil, err
 		}
-		go pubsub.HandleNotifyChat(ctx, log, s.ps, update, cc.EventType_CHAT_UPDATED)
+		go pubsub.HandleNotifyChat(ctx, log, s.ps, update, cc.EventType_CHAT_STATUS_CHANGED)
 	}
 
 	resp := connect.NewResponse[cc.Message](message)

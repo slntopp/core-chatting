@@ -119,6 +119,16 @@ export declare enum EventType {
    * @generated from enum value: MESSAGE_DELETED = 7;
    */
   MESSAGE_DELETED = 7,
+
+  /**
+   * @generated from enum value: CHAT_DEPARTMENT_CHANGED = 8;
+   */
+  CHAT_DEPARTMENT_CHANGED = 8,
+
+  /**
+   * @generated from enum value: CHAT_STATUS_CHANGED = 9;
+   */
+  CHAT_STATUS_CHANGED = 9,
 }
 
 /**

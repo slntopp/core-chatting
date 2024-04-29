@@ -93,6 +93,15 @@ export const ChatsAPI = {
       O: Chat,
       kind: MethodKind.Unary,
     },
+    /**
+     * @generated from rpc cc.ChatsAPI.ChangeStatus
+     */
+    changeStatus: {
+      name: "ChangeStatus",
+      I: Chat,
+      O: Chat,
+      kind: MethodKind.Unary,
+    },
   }
 };
 

@@ -57,6 +57,8 @@ export const EventType = proto3.makeEnum(
     {no: 5, name: "MESSAGE_SENT"},
     {no: 6, name: "MESSAGE_UPDATED"},
     {no: 7, name: "MESSAGE_DELETED"},
+    {no: 8, name: "CHAT_DEPARTMENT_CHANGED"},
+    {no: 9, name: "CHAT_STATUS_CHANGED"},
   ],
 );
 

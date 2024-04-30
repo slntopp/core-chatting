@@ -35,8 +35,8 @@ func (s *PubSub) Pub(ctx context.Context, id string, event *cc.Event) {
 	err := s.ch.ExchangeDeclare(
 		exchange,
 		"fanout",
-		false,
 		true,
+		false,
 		false,
 		false,
 		nil,
@@ -82,8 +82,8 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, func() error, error) {
 	err := s.ch.ExchangeDeclare(
 		exchange,
 		"fanout",
-		false,
 		true,
+		false,
 		false,
 		false,
 		nil,
@@ -120,6 +120,11 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, func() error, error) {
 		false,
 		nil,
 	)
+
+	if err != nil {
+		log.Error("bind queue", zap.Error(err))
+		return nil, nil, err
+	}
 
 	msgs, err := s.ch.Consume(
 		q.Name,

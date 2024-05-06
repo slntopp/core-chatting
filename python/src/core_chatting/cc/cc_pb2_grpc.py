@@ -67,7 +67,7 @@ class ChatsAPIStub(object):
         self.MergeChats = channel.unary_unary(
                 '/cc.ChatsAPI/MergeChats',
                 request_serializer=cc_dot_cc__pb2.Merge.SerializeToString,
-                response_deserializer=cc_dot_cc__pb2.Empty.FromString,
+                response_deserializer=cc_dot_cc__pb2.Chat.FromString,
                 )
 
 
@@ -196,7 +196,7 @@ def add_ChatsAPIServicer_to_server(servicer, server):
             'MergeChats': grpc.unary_unary_rpc_method_handler(
                     servicer.MergeChats,
                     request_deserializer=cc_dot_cc__pb2.Merge.FromString,
-                    response_serializer=cc_dot_cc__pb2.Empty.SerializeToString,
+                    response_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -391,7 +391,7 @@ class ChatsAPI(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/cc.ChatsAPI/MergeChats',
             cc_dot_cc__pb2.Merge.SerializeToString,
-            cc_dot_cc__pb2.Empty.FromString,
+            cc_dot_cc__pb2.Chat.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

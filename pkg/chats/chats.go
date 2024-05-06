@@ -403,3 +403,34 @@ func (s *ChatsServer) ChangeStatus(ctx context.Context, req *connect.Request[cc.
 
 	return resp, nil
 }
+
+func (s *ChatsServer) MergeChats(ctx context.Context, req *connect.Request[cc.Merge]) (*connect.Response[cc.Chat], error) {
+	log := s.log.Named("ChangeGateway")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	chats := req.Msg.GetChats()
+
+	for _, uuid := range chats {
+		chat, err := s.ctrl.Get(ctx, uuid, requestor)
+		if err != nil {
+			return nil, err
+		}
+
+		if chat.Role == cc.Role_NOACCESS {
+			return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
+		}
+	}
+
+	chat, err := s.ctrl.Merge(ctx, chats)
+	if err != nil {
+		return nil, err
+	}
+
+	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHATS_MERGED)
+
+	resp := connect.NewResponse[cc.Chat](chat)
+
+	return resp, nil
+}

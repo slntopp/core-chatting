@@ -108,7 +108,7 @@ export const ChatsAPI = {
     mergeChats: {
       name: "MergeChats",
       I: Merge,
-      O: Empty,
+      O: Chat,
       kind: MethodKind.Unary,
     },
   }

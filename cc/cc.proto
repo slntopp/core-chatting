@@ -75,7 +75,7 @@ service ChatsAPI {
   rpc ChangeGateway(Chat) returns (Chat);
   rpc ChangeStatus(Chat) returns (Chat);
 
-  rpc MergeChats(Merge) returns (Empty);
+  rpc MergeChats(Merge) returns (Chat);
 }
 
 enum Kind {

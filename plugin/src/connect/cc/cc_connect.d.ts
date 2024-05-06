@@ -108,7 +108,7 @@ export declare const ChatsAPI: {
     readonly mergeChats: {
       readonly name: "MergeChats",
       readonly I: typeof Merge,
-      readonly O: typeof Empty,
+      readonly O: typeof Chat,
       readonly kind: MethodKind.Unary,
     },
   }

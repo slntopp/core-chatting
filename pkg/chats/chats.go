@@ -82,7 +82,7 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_CREATED)
 
-	if s.whmcsTickets {
+	if s.whmcsTickets && chat.GetDepartment() != "openai" {
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_CHAT_CREATED,
 			Item: &cc.Event_Chat{Chat: chat},
@@ -117,7 +117,7 @@ func (s *ChatsServer) Update(ctx context.Context, req *connect.Request[cc.Chat])
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_UPDATED)
 
-	if s.whmcsTickets {
+	if s.whmcsTickets && chat.GetDepartment() != "openai"{
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_CHAT_UPDATED,
 			Item: &cc.Event_Chat{Chat: chat},
@@ -189,7 +189,7 @@ func (s *ChatsServer) Delete(ctx context.Context, req *connect.Request[cc.Chat])
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_DELETED)
 
-	if s.whmcsTickets {
+	if s.whmcsTickets && chat.GetDepartment() != "openai"{
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_CHAT_DELETED,
 			Item: &cc.Event_Chat{Chat: chat},
@@ -290,7 +290,7 @@ func (s *ChatsServer) ChangeDepartment(ctx context.Context, req *connect.Request
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_DEPARTMENT_CHANGED)
 
-	if s.whmcsTickets {
+	if s.whmcsTickets && chat.GetDepartment() != "openai"{
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_CHAT_DEPARTMENT_CHANGED,
 			Item: &cc.Event_Chat{Chat: chat},
@@ -392,7 +392,7 @@ func (s *ChatsServer) ChangeStatus(ctx context.Context, req *connect.Request[cc.
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, update, cc.EventType_CHAT_STATUS_CHANGED)
 
-	if s.whmcsTickets {
+	if s.whmcsTickets && chat.GetDepartment() != "openai"{
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_CHAT_STATUS_CHANGED,
 			Item: &cc.Event_Chat{Chat: update},

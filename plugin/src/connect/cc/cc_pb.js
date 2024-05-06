@@ -59,6 +59,7 @@ export const EventType = proto3.makeEnum(
     {no: 7, name: "MESSAGE_DELETED"},
     {no: 8, name: "CHAT_DEPARTMENT_CHANGED"},
     {no: 9, name: "CHAT_STATUS_CHANGED"},
+    {no: 10, name: "CHATS_MERGED"},
   ],
 );
 
@@ -112,6 +113,17 @@ export const Chats = proto3.makeMessageType(
   "cc.Chats",
   () => [
     { no: 1, name: "chats", kind: "message", T: Chat, repeated: true },
+  ],
+);
+
+/**
+ * @generated from message cc.Merge
+ */
+export const Merge = proto3.makeMessageType(
+  "cc.Merge",
+  () => [
+    { no: 1, name: "first_chat", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "second_chat", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ],
 );
 

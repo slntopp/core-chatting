@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from core_chatting.cc import cc_pb2 as cc_dot_cc__pb2
+from cc import cc_pb2 as cc_dot_cc__pb2
 
 
 class ChatsAPIStub(object):
@@ -63,6 +63,11 @@ class ChatsAPIStub(object):
                 '/cc.ChatsAPI/ChangeStatus',
                 request_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Chat.FromString,
+                )
+        self.MergeChats = channel.unary_unary(
+                '/cc.ChatsAPI/MergeChats',
+                request_serializer=cc_dot_cc__pb2.Merge.SerializeToString,
+                response_deserializer=cc_dot_cc__pb2.Empty.FromString,
                 )
 
 
@@ -129,6 +134,12 @@ class ChatsAPIServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def MergeChats(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ChatsAPIServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -181,6 +192,11 @@ def add_ChatsAPIServicer_to_server(servicer, server):
                     servicer.ChangeStatus,
                     request_deserializer=cc_dot_cc__pb2.Chat.FromString,
                     response_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
+            ),
+            'MergeChats': grpc.unary_unary_rpc_method_handler(
+                    servicer.MergeChats,
+                    request_deserializer=cc_dot_cc__pb2.Merge.FromString,
+                    response_serializer=cc_dot_cc__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -359,6 +375,23 @@ class ChatsAPI(object):
         return grpc.experimental.unary_unary(request, target, '/cc.ChatsAPI/ChangeStatus',
             cc_dot_cc__pb2.Chat.SerializeToString,
             cc_dot_cc__pb2.Chat.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def MergeChats(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cc.ChatsAPI/MergeChats',
+            cc_dot_cc__pb2.Merge.SerializeToString,
+            cc_dot_cc__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

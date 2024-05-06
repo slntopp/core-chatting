@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, Chats, Defaults, Empty, Event, Message, Messages, StreamRequest, User, Users } from "./cc_pb.js";
+import { Chat, Chats, Defaults, Empty, Event, Merge, Message, Messages, StreamRequest, User, Users } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -100,6 +100,15 @@ export declare const ChatsAPI: {
       readonly name: "ChangeStatus",
       readonly I: typeof Chat,
       readonly O: typeof Chat,
+      readonly kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.ChatsAPI.MergeChats
+     */
+    readonly mergeChats: {
+      readonly name: "MergeChats",
+      readonly I: typeof Merge,
+      readonly O: typeof Empty,
       readonly kind: MethodKind.Unary,
     },
   }

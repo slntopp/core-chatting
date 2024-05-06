@@ -129,6 +129,11 @@ export declare enum EventType {
    * @generated from enum value: CHAT_STATUS_CHANGED = 9;
    */
   CHAT_STATUS_CHANGED = 9,
+
+  /**
+   * @generated from enum value: CHATS_MERGED = 10;
+   */
+  CHATS_MERGED = 10,
 }
 
 /**
@@ -295,6 +300,35 @@ export declare class Chats extends Message$1<Chats> {
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Chats;
 
   static equals(a: Chats | PlainMessage<Chats> | undefined, b: Chats | PlainMessage<Chats> | undefined): boolean;
+}
+
+/**
+ * @generated from message cc.Merge
+ */
+export declare class Merge extends Message$1<Merge> {
+  /**
+   * @generated from field: string first_chat = 1;
+   */
+  firstChat: string;
+
+  /**
+   * @generated from field: string second_chat = 2;
+   */
+  secondChat: string;
+
+  constructor(data?: PartialMessage<Merge>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.Merge";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Merge;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Merge;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Merge;
+
+  static equals(a: Merge | PlainMessage<Merge> | undefined, b: Merge | PlainMessage<Merge> | undefined): boolean;
 }
 
 /**

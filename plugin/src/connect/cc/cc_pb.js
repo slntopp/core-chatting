@@ -122,8 +122,7 @@ export const Chats = proto3.makeMessageType(
 export const Merge = proto3.makeMessageType(
   "cc.Merge",
   () => [
-    { no: 1, name: "first_chat", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "second_chat", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "chats", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ],
 );
 

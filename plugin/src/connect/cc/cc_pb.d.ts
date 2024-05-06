@@ -307,14 +307,9 @@ export declare class Chats extends Message$1<Chats> {
  */
 export declare class Merge extends Message$1<Merge> {
   /**
-   * @generated from field: string first_chat = 1;
+   * @generated from field: repeated string chats = 1;
    */
-  firstChat: string;
-
-  /**
-   * @generated from field: string second_chat = 2;
-   */
-  secondChat: string;
+  chats: string[];
 
   constructor(data?: PartialMessage<Merge>);
 

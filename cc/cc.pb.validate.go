@@ -688,10 +688,6 @@ func (m *Merge) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for FirstChat
-
-	// no validation rules for SecondChat
-
 	if len(errors) > 0 {
 		return MergeMultiError(errors)
 	}

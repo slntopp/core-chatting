@@ -56,8 +56,7 @@ message Chats {
 }
 
 message Merge {
-  string first_chat = 1;
-  string second_chat = 2;
+  repeated string chats = 1;
 }
 
 service ChatsAPI {

@@ -481,14 +481,14 @@ const chats = computed(() => {
     }
 
     return (
-      filterChat(chat, searchParam.value) &&
+      filterChat(chat as Chat, searchParam.value) &&
       isDepIncluded &&
       isIncluded &&
       isAdminsExist &&
       isAccountOwner &&
       Object.values(isOptionsIncluded).every((value) => value)
     );
-  });
+  }) as Chat[];
 
   const sortable = (chat: Chat) => {
     if (sortBy.value === "status") {
@@ -512,7 +512,9 @@ const chats = computed(() => {
   return result;
 });
 
-const viewedChats = computed(() => chats.value.slice(0, 10 * page.value));
+const viewedChats = computed(
+  () => chats.value.slice(0, 10 * page.value) as Chat[]
+);
 
 const filteredChatsByAccount = computed(() =>
   [...store.chats.values()].filter((chat) => {

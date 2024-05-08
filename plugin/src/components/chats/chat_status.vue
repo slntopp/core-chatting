@@ -56,6 +56,7 @@ const statuses = computed(() =>
 )
 
 function updateChat (status: Status) {
+  //@ts-ignore
   store.change_status({ ...props.chat, status } as Chat)
   isVisible.value = false
 }

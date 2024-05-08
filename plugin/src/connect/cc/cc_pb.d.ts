@@ -54,6 +54,31 @@ export declare enum Status {
    * @generated from enum value: CLOSE = 3;
    */
   CLOSE = 3,
+
+  /**
+   * @generated from enum value: ANSWERED = 4;
+   */
+  ANSWERED = 4,
+
+  /**
+   * @generated from enum value: CUSTOMER_REPLY = 5;
+   */
+  CUSTOMER_REPLY = 5,
+
+  /**
+   * @generated from enum value: WAITING_FOR_REPLY = 6;
+   */
+  WAITING_FOR_REPLY = 6,
+
+  /**
+   * @generated from enum value: ON_HOLD = 7;
+   */
+  ON_HOLD = 7,
+
+  /**
+   * @generated from enum value: IN_PROGRESS = 8;
+   */
+  IN_PROGRESS = 8,
 }
 
 /**

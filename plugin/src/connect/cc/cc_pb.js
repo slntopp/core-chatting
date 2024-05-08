@@ -28,6 +28,11 @@ export const Status = proto3.makeEnum(
     {no: 1, name: "OPEN"},
     {no: 2, name: "RESOLVE"},
     {no: 3, name: "CLOSE"},
+    {no: 4, name: "ANSWERED"},
+    {no: 5, name: "CUSTOMER_REPLY"},
+    {no: 6, name: "WAITING_FOR_REPLY"},
+    {no: 7, name: "ON_HOLD"},
+    {no: 8, name: "IN_PROGRESS"},
   ],
 );
 

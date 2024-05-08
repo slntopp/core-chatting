@@ -10,7 +10,7 @@
           round
           size="large"
           class="chat__avatar"
-          :avatar="(hovered) ? ' ' : members.join(' ')"
+          :avatar="hovered ? ' ' : members.join(' ')"
         />
 
         <transition name="fade">
@@ -26,11 +26,7 @@
 
       <div v-if="!hideMessage" class="preview">
         <n-space align="center" :wrap-item="false">
-          <n-text
-            depth="3"
-            class="sub"
-            @click.stop="openUser(chat.owner)"
-          >
+          <n-text depth="3" class="sub" @click.stop="openUser(chat.owner)">
             {{ store.users.get(chat.owner)?.title }}
           </n-text>
 
@@ -44,19 +40,29 @@
           class="responsible"
           depth="3"
         >
-          {{ store.users.get(chat.responsible ?? '')?.title }}
+          {{ store.users.get(chat.responsible ?? "")?.title }}
         </n-text>
 
         <n-space
           v-if="appStore.displayMode === 'full'"
           class="department"
-          style="flex-direction: column; gap: 0; grid-row: 1 / 3; grid-column: 3"
+          style="
+            flex-direction: column;
+            gap: 0;
+            grid-row: 1 / 3;
+            grid-column: 3;
+          "
           :wrap-item="false"
+          :wrap="false"
         >
-          <n-space :wrap="false" :wrap-item="false">
+          <n-space
+            :wrap="false"
+            :wrap-item="false"
+            :style="{ 'min-width': 24 * chat.gateways?.length + 'px' }"
+          >
             <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
               <template #trigger>
-                <img height="24" :src="getImageUrl(gateway)" :alt="gateway">
+                <img height="24" :src="getImageUrl(gateway)" :alt="gateway" />
               </template>
               {{ gateway }}
             </n-tooltip>
@@ -70,9 +76,10 @@
           <div>
             Created:
             <code style="margin-left: 5px">
-              {{ (Number(chat.created) > 864e5)
-                ? new Date(Number(chat.created)).toLocaleDateString()
-                : getRelativeTime(Number(chat.created), now)
+              {{
+                Number(chat.created) > 864e5
+                  ? new Date(Number(chat.created)).toLocaleDateString()
+                  : getRelativeTime(Number(chat.created), now)
               }}
             </code>
           </div>
@@ -80,7 +87,7 @@
             Last update:
             <code style="margin-left: 5px">
               {{ getRelativeTime(Number(lastUpdate), now, true) }}
-              {{ (now - lastUpdate > 6e4) ? 'ago' : '' }}
+              {{ now - lastUpdate > 6e4 ? "ago" : "" }}
             </code>
           </div>
         </div>
@@ -95,7 +102,11 @@
 
         <n-tooltip placement="bottom">
           <template #trigger>
-            <n-icon size="18" style="grid-column: -1; grid-row: 2" @click="copyLink">
+            <n-icon
+              size="18"
+              style="grid-column: -1; grid-row: 2"
+              @click="copyLink"
+            >
               <copy-icon />
             </n-icon>
           </template>
@@ -105,7 +116,10 @@
         <div class="chat__right">
           <n-tooltip>
             <template #trigger>
-              <code style="text-decoration: underline" @click.stop="addToClipboard(uuid, notification)">
+              <code
+                style="text-decoration: underline"
+                @click.stop="addToClipboard(uuid, notification)"
+              >
                 {{ uuid.slice(0, 8).toUpperCase() }}
               </code>
             </template>
@@ -118,58 +132,90 @@
       </div>
 
       <div style="position: absolute; right: 18px; top: -10px">
-        <n-badge v-if="isUnreadMessages" :value="chat.meta!.unread" :max="99" size="24" :offset="[12, 12]"/>
+        <n-badge
+          v-if="isUnreadMessages"
+          :value="chat.meta!.unread"
+          :max="99"
+          size="24"
+          :offset="[12, 12]"
+        />
       </div>
     </n-space>
   </n-list-item>
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, nextTick, onMounted, ref, toRefs, watch} from "vue";
-import {useRouter} from "vue-router";
-import {NBadge, NCheckbox, NIcon, NListItem, NSpace, NText, NTooltip, useNotification} from "naive-ui";
-import {Chat} from "../../connect/cc/cc_pb";
-import {useCcStore} from "../../store/chatting.ts";
-import {addToClipboard, getImageUrl, getRelativeTime} from "../../functions.ts";
+import {
+  computed,
+  defineAsyncComponent,
+  nextTick,
+  onMounted,
+  ref,
+  toRefs,
+  watch,
+} from "vue";
+import { useRouter } from "vue-router";
+import {
+  NBadge,
+  NCheckbox,
+  NIcon,
+  NListItem,
+  NSpace,
+  NText,
+  NTooltip,
+  useNotification,
+} from "naive-ui";
+import { Chat } from "../../connect/cc/cc_pb";
+import { useCcStore } from "../../store/chatting.ts";
+import {
+  addToClipboard,
+  getImageUrl,
+  getRelativeTime,
+} from "../../functions.ts";
 import UserAvatar from "../ui/user_avatar.vue";
 import ChatStatus from "./chat_status.vue";
-import {useAppStore} from "../../store/app.ts";
+import { useAppStore } from "../../store/app.ts";
 
 const CopyIcon = defineAsyncComponent(
-  () => import('@vicons/ionicons5/CopyOutline')
-)
+  () => import("@vicons/ionicons5/CopyOutline")
+);
 const MailIcon = defineAsyncComponent(
-  () => import('@vicons/ionicons5/ChatbubbleEllipsesOutline')
+  () => import("@vicons/ionicons5/ChatbubbleEllipsesOutline")
 );
 const LoginIcon = defineAsyncComponent(
-  () => import('../../assets/icons/LoginOutline.svg')
+  () => import("../../assets/icons/LoginOutline.svg")
 );
 
 interface ChatItemProps {
-  chat: Chat
-  uuid: string
-  hideMessage: boolean
-  selected: string[]
-  chats: Chat[]
+  chat: Chat;
+  uuid: string;
+  hideMessage: boolean;
+  selected: string[];
+  chats: Chat[];
 }
 
-const props = defineProps<ChatItemProps>()
-const emits = defineEmits(['hover', 'hoverEnd', 'select'])
-const { chat, uuid, chats } = toRefs(props)
+const props = defineProps<ChatItemProps>();
+const emits = defineEmits(["hover", "hoverEnd", "select"]);
+const { chat, uuid, chats } = toRefs(props);
 
-const store = useCcStore()
-const appStore = useAppStore()
-const router = useRouter()
-const notification = useNotification()
+const store = useCcStore();
+const appStore = useAppStore();
+const router = useRouter();
+const notification = useNotification();
 
-const users = computed(() => chat.value.users.map(uuid => store.users.get(uuid)?.title ?? 'Unknown'))
-const admins = computed(() => chat.value.admins.map(uuid => store.users.get(uuid)?.title ?? 'Unknown'))
+const users = computed(() =>
+  chat.value.users.map((uuid) => store.users.get(uuid)?.title ?? "Unknown")
+);
+const admins = computed(() =>
+  chat.value.admins.map((uuid) => store.users.get(uuid)?.title ?? "Unknown")
+);
 
-const members = computed(() => users.value.concat(admins.value))
-const department = computed(() =>
-  store.departments.find(({ key }) => key === chat.value.department)
-    ?.title ?? chat.value.department
-)
+const members = computed(() => users.value.concat(admins.value));
+const department = computed(
+  () =>
+    store.departments.find(({ key }) => key === chat.value.department)?.title ??
+    chat.value.department
+);
 
 // const sub = computed(() => {
 //   if (chat.value.meta && chat.value.meta.lastMessage) {
@@ -178,99 +224,108 @@ const department = computed(() =>
 
 //   return "No messages yet"
 // })
-const hovered = ref(false)
+const hovered = ref(false);
 
 const chatTopic = computed(() => {
-  const topic = chat.value.topic ?? members.value.join(', ')
-  const words = topic.split(' ')
+  const topic = chat.value.topic ?? members.value.join(", ");
+  const words = topic.split(" ");
 
-  if (topic.length > 512)
-    return topic.slice(0, 509) + '...';
-  else if (words.length > 16) return words.slice(0, 16).join(' ') + '...'
+  if (topic.length > 512) return topic.slice(0, 509) + "...";
+  else if (words.length > 16) return words.slice(0, 16).join(" ") + "...";
 
-  return topic || '-'
-})
-const isUnreadMessages = computed(() => chat.value.meta && chat.value.meta.unread > 0)
+  return topic || "-";
+});
+const isUnreadMessages = computed(
+  () => chat.value.meta && chat.value.meta.unread > 0
+);
 
-const responsibleColsWidth = ref('auto')
-const departmentColsWidth = ref('auto')
+const responsibleColsWidth = ref("auto");
+const departmentColsWidth = ref("auto");
 
-onMounted(setColumns)
-watch(chats, setColumns)
+onMounted(setColumns);
+watch(chats, setColumns);
 
-async function setColumns () {
-  if (chats.value.length < 1) return
-  await nextTick()
+async function setColumns() {
+  if (chats.value.length < 1) return;
+  await nextTick();
 
-  const responsibles = document.querySelectorAll('.preview > .responsible')
-  const departments = document.querySelectorAll('.preview > .department')
-  let resWidth = 0
-  let depWidth = 0
-  
+  const responsibles = document.querySelectorAll(".preview > .responsible");
+  const departments = document.querySelectorAll(".preview > .department");
+  let resWidth = 0;
+  let depWidth = 0;
+
   responsibles.forEach((element) => {
     if (resWidth < element.clientWidth) {
-      resWidth = element.clientWidth
+      resWidth = element.clientWidth;
     }
-  })
+  });
 
   departments.forEach((element) => {
     if (depWidth < element.clientWidth) {
-      depWidth = element.clientWidth
+      depWidth = element.clientWidth;
     }
-  })
+  });
 
   if (resWidth > 0) {
-    responsibleColsWidth.value = `${resWidth}px`
+    responsibleColsWidth.value = `${resWidth}px`;
   }
   if (depWidth > 0) {
-    departmentColsWidth.value = `${depWidth}px`
+    departmentColsWidth.value = `${depWidth}px`;
   }
 }
 
 const previewColumns = computed(() =>
-  (appStore.displayMode === 'full')
+  appStore.displayMode === "full"
     ? `1fr ${responsibleColsWidth.value} ${departmentColsWidth.value} 210px`
-    : '1fr auto auto'
-)
+    : "1fr auto auto"
+);
 
-const subDecoration = computed(() =>
-  (window.top) ? 'underline' : 'none'
-)
+const subDecoration = computed(() => (window.top ? "underline" : "none"));
 
 const chatRightColumn = computed(() =>
-  (appStore.displayMode === 'full') ? 6 : 3
-)
-const now = ref(Date.now())
+  appStore.displayMode === "full" ? 6 : 3
+);
+const now = ref(Date.now());
 
-setInterval(() => now.value = Date.now(), 1000)
+setInterval(() => (now.value = Date.now()), 1000);
 
 const lastUpdate = computed(() =>
-  Number(chat.value.meta?.lastMessage?.edited || chat.value.meta?.lastMessage?.sent)
-)
+  Number(
+    chat.value.meta?.lastMessage?.edited || chat.value.meta?.lastMessage?.sent
+  )
+);
 
-function copyLink () {
-  const url = (new URL(appStore.conf?.params.fullUrl))
+function copyLink() {
+  const url = new URL(appStore.conf?.params.fullUrl);
 
-  url.searchParams.set('chat', chat.value.uuid)
-  addToClipboard(url.href, notification)
+  url.searchParams.set("chat", chat.value.uuid);
+  addToClipboard(url.href, notification);
 }
 
 function goToChat() {
-  router.push({ name: 'Chat', params: { uuid: uuid.value } })
+  router.push({ name: "Chat", params: { uuid: uuid.value } });
 
-  window.top?.postMessage({
-    type: 'send-user', value: { uuid: chat.value.owner }
-  }, '*')
+  window.top?.postMessage(
+    {
+      type: "send-user",
+      value: { uuid: chat.value.owner },
+    },
+    "*"
+  );
 }
 
 function openUser(uuid: string) {
-  window.top?.postMessage({ type: 'open-user', value: { uuid } }, '*')
+  window.top?.postMessage({ type: "open-user", value: { uuid } }, "*");
 }
 
 function openChat(user: string) {
-  window.top?.postMessage({
-    type: 'open-chat', value: { uuid: chat.value.uuid, user }
-  }, '*')
+  window.top?.postMessage(
+    {
+      type: "open-chat",
+      value: { uuid: chat.value.uuid, user },
+    },
+    "*"
+  );
 }
 </script>
 

@@ -51,8 +51,8 @@ export const useCcStore = defineStore('cc', () => {
 
     const updating = ref(false)
     const current_message = ref<Message>(new Message({
-      chat: route.params.uuid as string,
-      content: '',
+        chat: route.params.uuid as string,
+        content: '',
     }))
 
     const me = ref<User>(new User())
@@ -83,9 +83,9 @@ export const useCcStore = defineStore('cc', () => {
         return chat
     }
 
-    async function update_chat(chat: Chat){
+    async function update_chat(chat: Chat) {
         Object.entries(chat.meta?.data ?? {}).forEach(([key, value]) => {
-          if (!value.kind.value) delete chat.meta?.data[key]
+            if (!value.kind.value) delete chat.meta?.data[key]
         })
         chat = await chats_c.update(chat)
 
@@ -109,11 +109,11 @@ export const useCcStore = defineStore('cc', () => {
     }
 
     function change_department(chat: Chat): Promise<Chat> {
-      return chats_c.changeDepartment(chat)
+        return chats_c.changeDepartment(chat)
     }
 
     function change_status(chat: Chat): Promise<Chat> {
-      return chats_c.changeStatus(chat)
+        return chats_c.changeStatus(chat)
     }
 
     async function resolve(req_users: string[] = []): Promise<Users> {
@@ -132,7 +132,7 @@ export const useCcStore = defineStore('cc', () => {
 
     function chat_messages(chat: Chat | undefined): Message[] {
         if (!chat) return []
-        return messages.value.get(chat.uuid) || []
+        return messages.value.get(chat.uuid) as Message[] || []
     }
 
     async function get_messages(chat: Chat, cache = true): Promise<Messages> {
@@ -155,49 +155,49 @@ export const useCcStore = defineStore('cc', () => {
     }
 
     async function handle_send(uuid: string, kind = Kind.DEFAULT, review = false) {
-      if (current_message.value.content == '') {
-        return
-      }
-
-      if (!current_message.value.chat) {
-        current_message.value.chat = route.params.uuid as string
-      }
-
-      try {
-        current_message.value.underReview = review
-        current_message.value.kind = kind
-
-        if (updating.value) {
-          await update_message(current_message.value as Message)
-          updating.value = false
-        } else {
-          current_message.value.chat = route.params.uuid as string
-          await send_message(current_message.value as Message)
-        }
-      } catch (e) {
-        if (e instanceof ConnectError) {
-          notification.error({
-            title: 'Error',
-            description: e.message,
-          })
+        if (current_message.value.content == '') {
+            return
         }
 
-        get_messages(chats.value.get(uuid) as Chat, false)
-      }
+        if (!current_message.value.chat) {
+            current_message.value.chat = route.params.uuid as string
+        }
+
+        try {
+            current_message.value.underReview = review
+            current_message.value.kind = kind
+
+            if (updating.value) {
+                await update_message(current_message.value as Message)
+                updating.value = false
+            } else {
+                current_message.value.chat = route.params.uuid as string
+                await send_message(current_message.value as Message)
+            }
+        } catch (e) {
+            if (e instanceof ConnectError) {
+                notification.error({
+                    title: 'Error',
+                    description: e.message,
+                })
+            }
+
+            get_messages(chats.value.get(uuid) as Chat, false)
+        }
 
 
-      updating.value = false
-      current_message.value = new Message({
-        content: '',
-      })
+        updating.value = false
+        current_message.value = new Message({
+            content: '',
+        })
     }
 
     async function load_me() {
         me.value = await users_c.me(new Empty())
     }
 
-    function get_members():Promise<Users> {
-        return  users_c.getMembers(new Empty())
+    function get_members(): Promise<Users> {
+        return users_c.getMembers(new Empty())
     }
 
     const msg_handler = (event: Event) => {

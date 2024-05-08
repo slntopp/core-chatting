@@ -56,7 +56,7 @@ const statuses = computed(() =>
 )
 
 function updateChat (status: Status) {
-  store.update_chat({ ...props.chat, status } as Chat)
+  store.change_status({ ...props.chat, status } as Chat)
   isVisible.value = false
 }
 

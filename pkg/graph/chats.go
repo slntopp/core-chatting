@@ -378,3 +378,51 @@ func (c *ChatsController) SetBotState(ctx context.Context, chat *cc.Chat) (*cc.C
 
 	return chat, nil
 }
+
+const merge = `
+LET earliest = FIRST(
+	FOR c in @@chats
+	FILTER c._key in @chats
+	SORT c.created ASC
+	RETURN chat._key
+)
+
+FOR m in @@messages
+	FILTER m.chat in @@chats && m.chat != earliest
+	UPDATE m with {chat: earliest} in @@messages
+
+FOR c in @chats
+	REMOVE c in @@chats
+
+RETURN earliest
+`
+
+func (c *ChatsController) Merge(ctx context.Context, chats []string) (*cc.Chat, error) {
+	log := c.log.Named("Merge")
+
+	cur, err := c.db.Query(ctx, merge, map[string]interface{}{
+		"@chats": CHATS_COLLECTION,
+		"chats":  chats,
+	})
+
+	if err != nil {
+		log.Error("Failed to merge chats", zap.Error(err))
+		return nil, err
+	}
+
+	var chatUuid string
+	_, err = cur.ReadDocument(ctx, &chatUuid)
+	if err != nil {
+		log.Error("Failed to get chat", zap.Error(err))
+		return nil, err
+	}
+
+	var chat cc.Chat
+	_, err = c.col.ReadDocument(ctx, chatUuid, &chat)
+	if err != nil {
+		log.Error("Failed to read chat", zap.Error(err))
+		return nil, err
+	}
+
+	return &chat, nil
+}

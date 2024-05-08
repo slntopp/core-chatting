@@ -54,6 +54,31 @@ export declare enum Status {
    * @generated from enum value: CLOSE = 3;
    */
   CLOSE = 3,
+
+  /**
+   * @generated from enum value: ANSWERED = 4;
+   */
+  ANSWERED = 4,
+
+  /**
+   * @generated from enum value: CUSTOMER_REPLY = 5;
+   */
+  CUSTOMER_REPLY = 5,
+
+  /**
+   * @generated from enum value: WAITING_FOR_REPLY = 6;
+   */
+  WAITING_FOR_REPLY = 6,
+
+  /**
+   * @generated from enum value: ON_HOLD = 7;
+   */
+  ON_HOLD = 7,
+
+  /**
+   * @generated from enum value: IN_PROGRESS = 8;
+   */
+  IN_PROGRESS = 8,
 }
 
 /**
@@ -129,6 +154,11 @@ export declare enum EventType {
    * @generated from enum value: CHAT_STATUS_CHANGED = 9;
    */
   CHAT_STATUS_CHANGED = 9,
+
+  /**
+   * @generated from enum value: CHATS_MERGED = 10;
+   */
+  CHATS_MERGED = 10,
 }
 
 /**
@@ -295,6 +325,30 @@ export declare class Chats extends Message$1<Chats> {
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Chats;
 
   static equals(a: Chats | PlainMessage<Chats> | undefined, b: Chats | PlainMessage<Chats> | undefined): boolean;
+}
+
+/**
+ * @generated from message cc.Merge
+ */
+export declare class Merge extends Message$1<Merge> {
+  /**
+   * @generated from field: repeated string chats = 1;
+   */
+  chats: string[];
+
+  constructor(data?: PartialMessage<Merge>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.Merge";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Merge;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Merge;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Merge;
+
+  static equals(a: Merge | PlainMessage<Merge> | undefined, b: Merge | PlainMessage<Merge> | undefined): boolean;
 }
 
 /**

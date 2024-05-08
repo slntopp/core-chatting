@@ -26,6 +26,11 @@ enum Status {
   OPEN = 1;
   RESOLVE = 2;
   CLOSE = 3;
+  ANSWERED = 4;
+  CUSTOMER_REPLY = 5;
+  WAITING_FOR_REPLY = 6;
+  ON_HOLD = 7;
+  IN_PROGRESS = 8;
 }
 
 message Chat {
@@ -55,6 +60,10 @@ message Chats {
   repeated Chat chats = 1;
 }
 
+message Merge {
+  repeated string chats = 1;
+}
+
 service ChatsAPI {
   rpc Create(Chat) returns (Chat);
   rpc Update(Chat) returns (Chat);
@@ -70,6 +79,8 @@ service ChatsAPI {
   rpc ChangeDepartment(Chat) returns (Chat);
   rpc ChangeGateway(Chat) returns (Chat);
   rpc ChangeStatus(Chat) returns (Chat);
+
+  rpc MergeChats(Merge) returns (Chat);
 }
 
 enum Kind {
@@ -181,6 +192,7 @@ enum EventType {
   MESSAGE_DELETED = 7;
   CHAT_DEPARTMENT_CHANGED = 8;
   CHAT_STATUS_CHANGED = 9;
+  CHATS_MERGED = 10;
 }
 
 message Event {

@@ -82,7 +82,7 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_CREATED)
 
-	if s.whmcsTickets {
+	if s.whmcsTickets && chat.GetDepartment() != "openai" {
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_CHAT_CREATED,
 			Item: &cc.Event_Chat{Chat: chat},
@@ -117,7 +117,7 @@ func (s *ChatsServer) Update(ctx context.Context, req *connect.Request[cc.Chat])
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_UPDATED)
 
-	if s.whmcsTickets {
+	if s.whmcsTickets && chat.GetDepartment() != "openai"{
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_CHAT_UPDATED,
 			Item: &cc.Event_Chat{Chat: chat},
@@ -189,7 +189,7 @@ func (s *ChatsServer) Delete(ctx context.Context, req *connect.Request[cc.Chat])
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_DELETED)
 
-	if s.whmcsTickets {
+	if s.whmcsTickets && chat.GetDepartment() != "openai"{
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_CHAT_DELETED,
 			Item: &cc.Event_Chat{Chat: chat},
@@ -290,7 +290,7 @@ func (s *ChatsServer) ChangeDepartment(ctx context.Context, req *connect.Request
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_DEPARTMENT_CHANGED)
 
-	if s.whmcsTickets {
+	if s.whmcsTickets && chat.GetDepartment() != "openai"{
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_CHAT_DEPARTMENT_CHANGED,
 			Item: &cc.Event_Chat{Chat: chat},
@@ -392,7 +392,7 @@ func (s *ChatsServer) ChangeStatus(ctx context.Context, req *connect.Request[cc.
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, update, cc.EventType_CHAT_STATUS_CHANGED)
 
-	if s.whmcsTickets {
+	if s.whmcsTickets && chat.GetDepartment() != "openai"{
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_CHAT_STATUS_CHANGED,
 			Item: &cc.Event_Chat{Chat: update},
@@ -400,6 +400,37 @@ func (s *ChatsServer) ChangeStatus(ctx context.Context, req *connect.Request[cc.
 	}
 
 	resp := connect.NewResponse[cc.Chat](update)
+
+	return resp, nil
+}
+
+func (s *ChatsServer) MergeChats(ctx context.Context, req *connect.Request[cc.Merge]) (*connect.Response[cc.Chat], error) {
+	log := s.log.Named("ChangeGateway")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	chats := req.Msg.GetChats()
+
+	for _, uuid := range chats {
+		chat, err := s.ctrl.Get(ctx, uuid, requestor)
+		if err != nil {
+			return nil, err
+		}
+
+		if chat.Role == cc.Role_NOACCESS {
+			return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
+		}
+	}
+
+	chat, err := s.ctrl.Merge(ctx, chats)
+	if err != nil {
+		return nil, err
+	}
+
+	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHATS_MERGED)
+
+	resp := connect.NewResponse[cc.Chat](chat)
 
 	return resp, nil
 }

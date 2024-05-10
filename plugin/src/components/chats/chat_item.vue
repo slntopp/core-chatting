@@ -25,7 +25,7 @@
       </span>
 
       <div v-if="!hideMessage" class="preview">
-        <n-space align="center" :wrap-item="false">
+        <n-space align="center" :wrap-item="false" style="gap: 5px">
           <n-text depth="3" class="sub" @click.stop="openUser(chat.owner)">
             {{ store.users.get(chat.owner)?.title }}
           </n-text>
@@ -34,100 +34,99 @@
             <login-icon />
           </n-icon>
         </n-space>
-
-        <n-text
-          v-if="appStore.displayMode === 'full'"
-          class="responsible"
-          depth="3"
-        >
-          {{ store.users.get(chat.responsible ?? "")?.title }}
-        </n-text>
-
-        <n-space
-          v-if="appStore.displayMode === 'full'"
-          class="department"
-          style="
-            flex-direction: column;
-            gap: 0;
-            grid-row: 1 / 3;
-            grid-column: 3;
-          "
-          :wrap-item="false"
-          :wrap="false"
-        >
-          <n-space
-            :wrap="false"
-            :wrap-item="false"
-            :style="{ 'min-width': 24 * chat.gateways?.length + 'px' }"
-          >
-            <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
-              <template #trigger>
-                <img height="24" :src="getImageUrl(gateway)" :alt="gateway" />
-              </template>
-              {{ gateway }}
-            </n-tooltip>
-          </n-space>
-          <n-text italic v-if="chat.department" style="white-space: nowrap">
-            {{ department }}
+        <template v-if="appStore.displayMode === 'full' && !appStore.isMobile">
+          <n-text class="responsible" depth="3">
+            {{ store.users.get(chat.responsible ?? "")?.title }}
           </n-text>
-        </n-space>
 
-        <div class="time" v-show="appStore.displayMode === 'full'">
-          <div>
-            Created:
-            <code style="margin-left: 5px">
-              {{
-                Number(chat.created) > 864e5
-                  ? new Date(Number(chat.created)).toLocaleDateString()
-                  : getRelativeTime(Number(chat.created), now)
-              }}
-            </code>
-          </div>
-          <div v-if="lastUpdate">
-            Last update:
-            <code style="margin-left: 5px">
-              {{ getRelativeTime(Number(lastUpdate), now, true) }}
-              {{ now - lastUpdate > 6e4 ? "ago" : "" }}
-            </code>
-          </div>
-        </div>
-
-        <n-icon
-          size="18"
-          @mouseenter="(e) => emits('hover', e.clientX, e.clientY, chat.uuid)"
-          @mouseleave="emits('hoverEnd')"
-        >
-          <mail-icon />
-        </n-icon>
-
-        <n-tooltip placement="bottom">
-          <template #trigger>
-            <n-icon
-              size="18"
-              style="grid-column: -1; grid-row: 2"
-              @click="copyLink"
+          <n-space
+            class="department"
+            style="
+              flex-direction: column;
+              gap: 0;
+              grid-row: 1 / 3;
+              grid-column: 3;
+            "
+            :wrap-item="false"
+            :wrap="false"
+          >
+            <n-space
+              :wrap="false"
+              :wrap-item="false"
+              :style="{ 'min-width': 24 * chat.gateways?.length + 'px' }"
             >
-              <copy-icon />
-            </n-icon>
-          </template>
-          Copy chat link
-        </n-tooltip>
+              <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
+                <template #trigger>
+                  <img height="24" :src="getImageUrl(gateway)" :alt="gateway" />
+                </template>
+                {{ gateway }}
+              </n-tooltip>
+            </n-space>
+            <n-text italic v-if="chat.department" style="white-space: nowrap">
+              {{ department }}
+            </n-text>
+          </n-space>
 
-        <div class="chat__right">
-          <n-tooltip>
-            <template #trigger>
-              <code
-                style="text-decoration: underline"
-                @click.stop="addToClipboard(uuid, notification)"
-              >
-                {{ uuid.slice(0, 8).toUpperCase() }}
+          <div class="time">
+            <div>
+              Created:
+              <code style="margin-left: 5px">
+                {{
+                  Number(chat.created) > 864e5
+                    ? new Date(Number(chat.created)).toLocaleDateString()
+                    : getRelativeTime(Number(chat.created), now)
+                }}
               </code>
+            </div>
+            <div v-if="lastUpdate">
+              Last update:
+              <code style="margin-left: 5px">
+                {{ getRelativeTime(Number(lastUpdate), now, true) }}
+                {{ now - lastUpdate > 6e4 ? "ago" : "" }}
+              </code>
+            </div>
+          </div>
+        </template>
+
+        <template v-if="!appStore.isMobile">
+          <n-icon
+            size="18"
+            @mouseenter="(e) => emits('hover', e.clientX, e.clientY, chat.uuid)"
+            @mouseleave="emits('hoverEnd')"
+          >
+            <mail-icon />
+          </n-icon>
+
+          <n-tooltip placement="bottom">
+            <template #trigger>
+              <n-icon
+                size="18"
+                style="grid-column: -1; grid-row: 2"
+                @click="copyLink"
+              >
+                <copy-icon />
+              </n-icon>
             </template>
-            {{ uuid }}
+            Copy chat link
           </n-tooltip>
 
-          <chat-status :chat="chat" />
-        </div>
+          <div class="chat__right">
+            <n-tooltip>
+              <template #trigger>
+                <code
+                  style="text-decoration: underline"
+                  @click.stop="addToClipboard(uuid, notification)"
+                >
+                  {{ uuid.slice(0, 8).toUpperCase() }}
+                </code>
+              </template>
+              {{ uuid }}
+            </n-tooltip>
+
+            <chat-status :chat="chat" />
+          </div>
+        </template>
+
         <n-text class="topic">{{ chatTopic }}</n-text>
       </div>
 
@@ -141,6 +140,17 @@
         />
       </div>
     </n-space>
+
+    <div class="mobile_right" v-if="appStore.isMobile">
+      <chat-status :chat="chat" />
+
+      <div v-if="lastUpdate">
+        <code>
+          {{ getRelativeTime(Number(lastUpdate), now, true) }}
+          {{ now - lastUpdate > 6e4 ? "ago" : "" }}
+        </code>
+      </div>
+    </div>
   </n-list-item>
 </template>
 
@@ -338,6 +348,13 @@ function openChat(user: string) {
     gap: 5px 15px;
     width: calc(100% - 52px);
 
+    @media only screen and (max-width: 1024px) {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 0px;
+    }
+
     .sub {
       display: block;
       display: -webkit-box;
@@ -346,6 +363,7 @@ function openChat(user: string) {
       width: fit-content;
       overflow: hidden;
       text-overflow: ellipsis;
+      max-width: calc(100% - 25px);
 
       &:hover {
         text-decoration: v-bind(subDecoration);
@@ -354,6 +372,13 @@ function openChat(user: string) {
 
     .topic {
       word-break: break-all;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      width: fit-content;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 225px;
     }
 
     .responsible {
@@ -380,6 +405,18 @@ function openChat(user: string) {
     padding: 5px 10px;
     border: 1px solid var(--n-border-color-popover);
     border-radius: 15px;
+  }
+}
+
+.mobile_right {
+  position: absolute;
+  right: 5px;
+  bottom: 0px;
+  display: flex;
+  align-items: end;
+  flex-direction: column;
+  code {
+    font-size: 0.7rem;
   }
 }
 </style>

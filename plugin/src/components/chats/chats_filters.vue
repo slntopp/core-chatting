@@ -34,7 +34,7 @@
 
   <div
     class="filter_item"
-    v-for="metric of store.metrics"
+    v-for="metric of metrics"
     style="margin-top: 20px"
     :key="metric.key"
   >
@@ -78,6 +78,8 @@ const store = useCcStore();
 const departments = computed(() =>
   store.departments.map(({ key, title }) => ({ label: title, value: key }))
 );
+
+const metrics = computed<MetricWithKey[]>(() => store.metrics as MetricWithKey[]);
 
 const statuses = computed(() =>
   Object.keys(Status)
@@ -125,6 +127,13 @@ function getMetricOptions(metric: MetricWithKey) {
 .filter_item {
   display: grid;
   grid-template-columns: 150px 8fr;
+
+  @media only screen and (max-width: 1024px) {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 0px;
+  }
 }
 
 .filter_item span {

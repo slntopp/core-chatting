@@ -12,7 +12,7 @@ export interface PluginConf {
     }
     vars: {
         [key: string]: string
-    }
+    },
 }
 
 export const useAppStore = defineStore('app', () => {
@@ -20,8 +20,9 @@ export const useAppStore = defineStore('app', () => {
     const conf = ref<PluginConf>()
     const loading = ref(false)
     const displayMode = ref('full')
+    const isMobile = ref(false)
 
     return {
-        conf, loading, displayMode
+        conf, loading, displayMode, isMobile
     }
 })

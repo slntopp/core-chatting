@@ -91,7 +91,7 @@ const statuses = computed(() =>
 const admins = computed(() => {
   const result: SelectMixedOption[] = [];
 
-  store.chats.forEach((chat: Chat) => {
+  (store.chats as Map<string, Chat>).forEach((chat: Chat) => {
     chat.admins.forEach((uuid) => {
       const element = result.find(({ value }) => uuid === value);
 

@@ -73,7 +73,7 @@
           scrollable
           trigger="click"
           placement="bottom"
-          style="max-height: 50vh; max-width: 768px"
+          style="max-height: 50vh; max-width: 768px;min-width: 40vw;"
         >
           <template #trigger>
             <n-icon size="24" style="vertical-align: middle; cursor: pointer">

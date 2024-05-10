@@ -16,10 +16,10 @@
       <n-space
         align="center"
         :wrap-item="false"
-        :justify="isChatPanelOpen ? 'space-between' : 'center'"
+        :justify="isChatPanelOpen || appStore.isMobile ? 'space-between' : 'center'"
         :class="{ chat__actions: true, hide: !isChatPanelOpen }"
       >
-        <n-button ghost @click="changeMode(null)">
+        <n-button v-if="!appStore.isMobile" ghost @click="changeMode(null)">
           <n-icon> <switch-icon /> </n-icon>
         </n-button>
 
@@ -63,7 +63,7 @@
           </span>
         </n-space>
 
-        <n-button ghost @click="changePanelOpen">
+        <n-button v-if="!appStore.isMobile" ghost @click="changePanelOpen">
           <n-icon>
             <close-icon v-if="isChatPanelOpen" />
             <open-icon v-else />
@@ -88,7 +88,7 @@
           scrollable
           trigger="click"
           placement="bottom"
-          style="max-height: 50vh; max-width: 768px"
+          class="chats__filters"
         >
           <template #trigger>
             <n-icon size="24" style="vertical-align: middle; cursor: pointer">
@@ -715,6 +715,12 @@ function onMouseMove(clientX: number, clientY: number, chatId: string) {
   flex-flow: column-reverse !important;
   margin: 0px;
   padding: 10px;
+}
+
+.chats__filters {
+  max-height: 800px;
+  min-width: 40vw;
+  max-width: 90vw;
 }
 
 .chat__item {

@@ -1,83 +1,63 @@
 <template>
-  <div style="margin-top: 20px">
+  <div class="filter_item" style="margin-top: 20px">
     <n-text>Filter by department:</n-text>
-    <n-divider style="margin: 5px 0" />
-    <n-checkbox-group
+    <n-select
+      filterable
+      :items="departments"
       :value="checkedDepartments"
       @update:value="emits('update:checkedDepartments', $event)"
-    >
-      <n-space :wrap-item="false">
-        <n-checkbox
-          v-for="dep of departments"
-          :value="dep.value"
-          :label="dep.label"
-        />
-      </n-space>
-    </n-checkbox-group>
+      multiple
+    />
   </div>
 
-  <div style="margin-top: 20px">
+  <div class="filter_item" style="margin-top: 20px">
     <n-text>Filter by status:</n-text>
-    <n-divider style="margin: 5px 0" />
-    <n-checkbox-group
+    <n-select
+      filterable
+      :items="statuses"
       :value="checkedStatuses"
       @update:value="emits('update:checkedStatuses', $event)"
-    >
-      <n-space :wrap-item="false">
-        <n-checkbox
-          v-for="status of statuses"
-          :value="status.value"
-          :label="status.label"
-        />
-      </n-space>
-    </n-checkbox-group>
+      multiple
+    />
   </div>
 
-  <div style="margin-top: 20px">
-    <n-text>Filter by admin:</n-text>
-    <n-divider style="margin: 5px 0" />
-    <n-checkbox-group
+  <div class="filter_item" style="margin-top: 20px">
+    <n-text>Filter by admins:</n-text>
+    <n-select
+      filterable
+      :items="admins"
       :value="checkedAdmins"
       @update:value="emits('update:checkedAdmins', $event)"
-    >
-      <n-space :wrap-item="false">
-        <n-checkbox
-          v-for="admin of admins"
-          :value="admin.value"
-          :label="admin.label"
-        />
-      </n-space>
-    </n-checkbox-group>
+      multiple
+    />
   </div>
 
   <div
+    class="filter_item"
+    v-for="metric of metrics"
     style="margin-top: 20px"
-    v-for="metric of store.metrics"
     :key="metric.key"
   >
     <n-text>Filter by {{ metric.title.toLowerCase() }}:</n-text>
-    <n-divider style="margin: 5px 0" />
-    <n-checkbox-group
+
+    <n-select
+      filterable
+      :items="getMetricOptions(metric)"
       :value="metricsOptions[metric.key]"
       @update:value="emits('update:checkedMetrics', metric.key, $event)"
-    >
-      <n-space :wrap-item="false">
-        <n-checkbox
-          v-for="option of metric.options"
-          :value="option.value"
-          :label="option.key"
-        />
-      </n-space>
-    </n-checkbox-group>
+      multiple
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { NSpace, NDivider, NCheckboxGroup, NCheckbox, NText } from "naive-ui";
+import { NText, NSelect } from "naive-ui";
 
 import { useCcStore } from "../../store/chatting";
 import { Chat, Status } from "../../connect/cc/cc_pb";
+import { SelectMixedOption } from "naive-ui/es/select/src/interface";
+import { MetricWithKey } from "../../hooks/useDefaults";
 
 interface ChatsFiltersProps {
   checkedDepartments: string[];
@@ -99,6 +79,8 @@ const departments = computed(() =>
   store.departments.map(({ key, title }) => ({ label: title, value: key }))
 );
 
+const metrics = computed<MetricWithKey[]>(() => store.metrics as MetricWithKey[]);
+
 const statuses = computed(() =>
   Object.keys(Status)
     .filter((key) => isFinite(+key))
@@ -108,13 +90,8 @@ const statuses = computed(() =>
     }))
 );
 
-interface adminsType {
-  value: string;
-  label: string;
-}
-
 const admins = computed(() => {
-  const result: adminsType[] = [];
+  const result: SelectMixedOption[] = [];
 
   (store.chats as Map<string, Chat>).forEach((chat: Chat) => {
     chat.admins.forEach((uuid) => {
@@ -137,4 +114,31 @@ function getStatus(statusCode: Status | number) {
 
   return `${status[0].toUpperCase()}${status.slice(1)}`;
 }
+
+function getMetricOptions(metric: MetricWithKey) {
+  return metric.options.map((option) => ({
+    label: option.key,
+    value: option.value,
+  }));
+}
 </script>
+
+<style>
+.filter_item {
+  display: grid;
+  grid-template-columns: 150px 8fr;
+
+  @media only screen and (max-width: 1024px) {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 0px;
+  }
+}
+
+.filter_item span {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+}
+</style>

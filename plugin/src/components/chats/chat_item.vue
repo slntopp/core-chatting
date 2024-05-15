@@ -34,7 +34,7 @@
             <login-icon />
           </n-icon>
         </n-space>
-        <template v-if="appStore.displayMode === 'full' && !appStore.isMobile">
+        <template v-if="appStore.displayMode === 'full' && !onlyMainInfo">
           <n-text class="responsible" depth="3">
             {{ store.users.get(chat.responsible ?? "")?.title }}
           </n-text>
@@ -88,7 +88,7 @@
           </div>
         </template>
 
-        <template v-if="!appStore.isMobile">
+        <template v-if="!onlyMainInfo">
           <n-icon
             size="18"
             @mouseenter="(e) => emits('hover', e.clientX, e.clientY, chat.uuid)"
@@ -141,7 +141,7 @@
       </div>
     </n-space>
 
-    <div class="mobile_right" v-if="appStore.isMobile">
+    <div class="mobile_right" v-if="onlyMainInfo">
       <chat-status :chat="chat" />
 
       <div v-if="lastUpdate">
@@ -247,6 +247,10 @@ const chatTopic = computed(() => {
 });
 const isUnreadMessages = computed(
   () => chat.value.meta && chat.value.meta.unread > 0
+);
+
+const onlyMainInfo = computed(
+  () => appStore.isMobile || appStore.displayMode === "half"
 );
 
 const responsibleColsWidth = ref("auto");

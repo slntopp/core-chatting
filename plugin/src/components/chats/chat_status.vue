@@ -14,7 +14,7 @@
       </n-text>
     </template>
 
-    <div style="display: flex; gap: 5px">
+    <div class="status__change">
       <n-button
         ghost
         v-for="item of statuses"
@@ -100,5 +100,12 @@ export default {
   align-items: center;
   gap: 5px;
   cursor: pointer;
+}
+
+.status__change{
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  max-width: 60vw;
 }
 </style>

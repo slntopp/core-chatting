@@ -72,7 +72,7 @@
             />
           </template>
 
-          <ul style="padding: 0 0 0 10px">
+          <ul v-if="!appStore.isMobile" style="padding: 0 0 0 10px">
             <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to send message</li>
             <li v-if="chat?.role == Role.ADMIN">
               <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Enter</kbd> to send
@@ -129,6 +129,7 @@ import {
 
 import { useCcStore } from "../../../store/chatting";
 import { Chat, Kind, Message, Role } from "../../../connect/cc/cc_pb";
+import { useAppStore } from "../../../store/app";
 
 const SendIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/SendOutline")
@@ -143,6 +144,7 @@ interface ChatFooterProps {
 }
 const props = defineProps<ChatFooterProps>();
 const store = useCcStore();
+const appStore = useAppStore();
 
 interface FileInfo extends UploadFileInfo {
   uuid?: string;

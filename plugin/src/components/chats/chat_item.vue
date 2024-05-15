@@ -31,7 +31,7 @@
           </n-text>
 
           <n-icon size="20" @click.stop="openChat(chat.owner)">
-            <login-icon />
+            <login-icon v-if="!appStore.isMobile" />
           </n-icon>
         </n-space>
         <template v-if="appStore.displayMode === 'full' && !onlyMainInfo">

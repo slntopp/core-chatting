@@ -235,7 +235,7 @@ export const useCcStore = defineStore('cc', () => {
     const chat_handler = (event: Event) => {
         console.log('Received Chat Event', event)
 
-        let chat: Chat = event.item.value as Chat
+        const chat = event.item.value as Chat
 
         if (!chat.meta) {
             chat.meta = new ChatMeta({
@@ -247,6 +247,8 @@ export const useCcStore = defineStore('cc', () => {
             case EventType.CHAT_CREATED:
                 chats.value.set(chat.uuid, chat)
                 break
+            case EventType.CHAT_DEPARTMENT_CHANGED:
+            case EventType.CHAT_STATUS_CHANGED:
             case EventType.CHAT_UPDATED:
                 chats.value.set(chat.uuid, chat)
                 break
@@ -275,7 +277,18 @@ export const useCcStore = defineStore('cc', () => {
                 for await (const event of stream) {
                     console.debug('Received Event', event)
                     if (event.type == EventType.PING) continue
-                    else if (event.type >= EventType.MESSAGE_SENT) {
+                    if (
+                      event.type === +EventType.CHAT_DEPARTMENT_CHANGED ||
+                        event.type === +EventType.CHAT_STATUS_CHANGED
+                    ) {
+                        chat_handler(event)
+                    } else if (event.type === +EventType.CHATS_MERGED) {
+                        const chat = event.item.value as Chat
+
+                        await list_chats()
+                        await get_messages(chat, false)
+                        router.replace({ name: 'Chat', params: { uuid: chat.uuid } })
+                    } else if (event.type >= EventType.MESSAGE_SENT) {
                         msg_handler(event)
                     } else {
                         chat_handler(event)

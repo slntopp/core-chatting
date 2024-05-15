@@ -229,6 +229,7 @@ import ChatItem from "../../components/chats/chat_item.vue";
 import ChatsFilters from "../../components/chats/chats_filters.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
 import useDefaults from "../../hooks/useDefaults.ts";
+import { getStatusColor } from "../../functions.ts";
 
 defineEmits(["hover", "hoverEnd"]);
 
@@ -415,21 +416,6 @@ function getStatus(statusCode: Status | number) {
   const status = Status[statusCode].toLowerCase().replace("_", " ");
 
   return `${status[0].toUpperCase()}${status.slice(1)}`;
-}
-
-function getStatusColor(status: Status) {
-  switch (status) {
-    case 0:
-      return "#5084ff";
-    case 1:
-      return "#1ea01e";
-    case 2:
-      return "#ff8300";
-    case 3:
-      return "#e23535";
-    default:
-      return undefined;
-  }
 }
 
 function selectStatus(status: Status) {

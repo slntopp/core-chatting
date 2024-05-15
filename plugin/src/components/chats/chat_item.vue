@@ -102,7 +102,7 @@
               <n-icon
                 size="18"
                 style="grid-column: -1; grid-row: 2"
-                @click="copyLink"
+                @click.stop="copyLink"
               >
                 <copy-icon />
               </n-icon>
@@ -407,6 +407,7 @@ function openChat(user: string) {
     justify-content: center;
     grid-row: 1 / 3;
     grid-column: v-bind(chatRightColumn);
+    width: 130px;
     padding: 5px 10px;
     border: 1px solid var(--n-border-color-popover);
     border-radius: 15px;

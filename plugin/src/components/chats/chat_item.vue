@@ -10,12 +10,12 @@
           round
           size="large"
           class="chat__avatar"
-          :avatar="hovered ? ' ' : members.join(' ')"
+          :avatar="(hovered || selected.includes(chat.uuid)) ? ' ' : members.join(' ')"
         />
 
         <transition name="fade">
           <n-checkbox
-            v-if="hovered"
+            v-if="hovered || selected.includes(chat.uuid)"
             style="position: absolute; left: 32px; top: 20px"
             :checked="selected.includes(chat.uuid)"
             @update:checked="emits('select', chat.uuid)"
@@ -31,10 +31,10 @@
           </n-text>
 
           <n-icon size="20" @click.stop="openChat(chat.owner)">
-            <login-icon v-if="!appStore.isMobile" />
+            <login-icon />
           </n-icon>
         </n-space>
-        <template v-if="appStore.displayMode === 'full' && !onlyMainInfo">
+        <template v-if="appStore.displayMode === 'full' && !appStore.isMobile">
           <n-text class="responsible" depth="3">
             {{ store.users.get(chat.responsible ?? "")?.title }}
           </n-text>
@@ -88,7 +88,7 @@
           </div>
         </template>
 
-        <template v-if="!onlyMainInfo">
+        <template v-if="!appStore.isMobile">
           <n-icon
             size="18"
             @mouseenter="(e) => emits('hover', e.clientX, e.clientY, chat.uuid)"
@@ -141,7 +141,7 @@
       </div>
     </n-space>
 
-    <div class="mobile_right" v-if="onlyMainInfo">
+    <div class="mobile_right" v-if="appStore.isMobile">
       <chat-status :chat="chat" />
 
       <div v-if="lastUpdate">
@@ -249,10 +249,6 @@ const isUnreadMessages = computed(
   () => chat.value.meta && chat.value.meta.unread > 0
 );
 
-const onlyMainInfo = computed(
-  () => appStore.isMobile || appStore.displayMode === "half"
-);
-
 const responsibleColsWidth = ref("auto");
 const departmentColsWidth = ref("auto");
 
@@ -299,8 +295,11 @@ const subDecoration = computed(() => (window.top ? "underline" : "none"));
 const chatRightColumn = computed(() =>
   appStore.displayMode === "full" ? 6 : 3
 );
-const now = ref(Date.now());
+const avatarScale = computed(() =>
+  props.selected.includes(chat.value.uuid) ? 0.5 : 1
+);
 
+const now = ref(Date.now());
 setInterval(() => (now.value = Date.now()), 1000);
 
 const lastUpdate = computed(() =>
@@ -383,7 +382,6 @@ function openChat(user: string) {
       overflow: hidden;
       text-overflow: ellipsis;
       min-width: 225px;
-      max-width: calc(100% - 50px);
     }
 
     .responsible {
@@ -437,6 +435,7 @@ function openChat(user: string) {
 }
 
 .chat__avatar {
+  transform: scale(v-bind(avatarScale));
   transition: 0.3s;
 }
 

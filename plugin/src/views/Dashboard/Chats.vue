@@ -32,6 +32,19 @@
 
         <n-button
           ghost
+          type="warning"
+          v-if="isMergeVisible"
+          :loading="mergeLoading"
+          @click="mergeChats"
+        >
+          <n-icon :component="mergeIcon" />
+          <span v-if="isChatPanelOpen" style="margin-left: 5px">
+            Merge Chats
+          </span>
+        </n-button>
+
+        <n-button
+          ghost
           type="error"
           v-if="selectedChats.length > 0"
           :loading="deleteLoading"
@@ -251,7 +264,12 @@ const SwitchIcon = defineAsyncComponent(
 const deleteIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/CloseCircle")
 );
-const upIcon = defineAsyncComponent(() => import("@vicons/ionicons5/ArrowUp"));
+const mergeIcon = defineAsyncComponent(
+  () => import("@vicons/ionicons5/GitMerge")
+);
+const upIcon = defineAsyncComponent(() =>
+  import("@vicons/ionicons5/ArrowUp")
+);
 
 const appStore = useAppStore();
 const store = useCcStore();
@@ -263,11 +281,23 @@ const notification = useNotification();
 
 const selectedChats = ref<string[]>([]);
 const deleteLoading = ref(false);
+const mergeLoading = ref(false)
 const searchParam = ref("");
 const scrollbar = ref<InstanceType<typeof NScrollbar>>();
 const loading = ref<InstanceType<typeof NSpin>>();
 const page = ref(1);
 const isLoading = ref(false);
+
+const isMergeVisible = computed(() => {
+  const list = selectedChats.value.map((uuid) =>
+    new Chat(store.chats.get(uuid))
+  )
+
+  const dep = list.at(0)?.department
+  const isDepsEqual = list.every(({ department }) => department === dep)
+
+  return selectedChats.value.length > 0 && isDepsEqual
+})
 
 async function sync() {
   try {
@@ -314,6 +344,29 @@ async function deleteChats() {
     console.error(error);
   } finally {
     deleteLoading.value = false;
+  }
+}
+
+async function mergeChats() {
+  mergeLoading.value = true;
+  try {
+    const current = route.params.uuid as string;
+    if (selectedChats.value.includes(current)) {
+      await router.push({ name: "Dashboard" });
+      changePanelOpen();
+    }
+
+    await store.merge_chats(selectedChats.value)
+    notification.success({
+      title: "Chats successfully merged",
+    });
+  } catch (error: any) {
+    notification.error({
+      title: error.response?.data.message ?? error.message ?? error,
+    });
+    console.error(error);
+  } finally {
+    mergeLoading.value = false;
   }
 }
 

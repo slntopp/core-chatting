@@ -7,7 +7,7 @@ import { createGrpcWebTransport } from "@connectrpc/connect-web";
 import { useAppStore } from "./app";
 
 import {
-    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType, ChatMeta, Kind, StreamRequest, Department,
+    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType, ChatMeta, Kind, StreamRequest, Department, Merge
 } from "../connect/cc/cc_pb"
 import {
     ChatsAPI, MessagesAPI, StreamService, UsersAPI
@@ -114,6 +114,10 @@ export const useCcStore = defineStore('cc', () => {
 
     function change_status(chat: Chat): Promise<Chat> {
         return chats_c.changeStatus(chat)
+    }
+
+    function merge_chats(chats: string[]) {
+        return chats_c.mergeChats(new Merge({ chats }))
     }
 
     async function resolve(req_users: string[] = []): Promise<Users> {
@@ -303,7 +307,7 @@ export const useCcStore = defineStore('cc', () => {
     return {
         users, load_me, me, get_members, baseUrl, departments, metrics,
 
-        chats, list_chats, create_chat, delete_chat, update_chat,
+        chats, list_chats, create_chat, delete_chat, update_chat, merge_chats,
 
         current_message, updating, handle_send,
         messages, chat_messages, get_messages,
@@ -312,4 +316,3 @@ export const useCcStore = defineStore('cc', () => {
         fetch_defaults, update_defaults, change_department, change_status, resolve
     }
 })
-

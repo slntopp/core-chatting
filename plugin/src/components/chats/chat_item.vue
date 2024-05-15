@@ -383,6 +383,7 @@ function openChat(user: string) {
       overflow: hidden;
       text-overflow: ellipsis;
       min-width: 225px;
+      max-width: calc(100% - 50px);
     }
 
     .responsible {

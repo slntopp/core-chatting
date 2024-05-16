@@ -1,4 +1,5 @@
-import { NotificationApi } from "naive-ui"
+import { NotificationApi } from 'naive-ui'
+import { Status } from './connect/cc/cc_pb'
 
 export function addToClipboard (text: string, notification?: NotificationApi) {
   if (navigator?.clipboard) {
@@ -48,5 +49,27 @@ export function getRelativeTime(timestamp: number, now: number, isLifetime?: boo
     return `${minutesDifference} minutes${(isLifetime) ? '' : ' ago'}`;
   } else {
     return 'just now';
+  }
+}
+
+export function getStatusColor (status: Status) {
+  switch (status) {
+    case Status.NEW:
+      return '#5084ff'
+    case Status.ON_HOLD:
+      return '#00dbff'
+    case Status.OPEN:
+      return '#1ea01e'
+    case Status.IN_PROGRESS:
+      return '#00ffaa'
+    case Status.CUSTOMER_REPLY:
+      return '#ffcc55'
+    case Status.RESOLVE:
+    case Status.ANSWERED:
+      return '#ff8300'
+    case Status.CLOSE:
+      return '#e23535'
+    default:
+      return undefined
   }
 }

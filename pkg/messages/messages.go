@@ -107,6 +107,9 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 		data := chat.GetMeta().GetData()
 		if data != nil {
 			for _, gate := range chat.GetGateways() {
+				if _, ok := data[gate]; !ok {
+					continue
+				}
 				msg.Meta[fmt.Sprintf("%s_chat_id", gate)] = data[gate]
 			}
 		}

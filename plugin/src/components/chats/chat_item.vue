@@ -10,12 +10,12 @@
           round
           size="large"
           class="chat__avatar"
-          :avatar="hovered ? ' ' : members.join(' ')"
+          :avatar="(hovered || selected.includes(chat.uuid)) ? ' ' : members.join(' ')"
         />
 
         <transition name="fade">
           <n-checkbox
-            v-if="hovered"
+            v-if="hovered || selected.includes(chat.uuid)"
             style="position: absolute; left: 32px; top: 20px"
             :checked="selected.includes(chat.uuid)"
             @update:checked="emits('select', chat.uuid)"
@@ -102,7 +102,7 @@
               <n-icon
                 size="18"
                 style="grid-column: -1; grid-row: 2"
-                @click="copyLink"
+                @click.stop="copyLink"
               >
                 <copy-icon />
               </n-icon>
@@ -295,8 +295,11 @@ const subDecoration = computed(() => (window.top ? "underline" : "none"));
 const chatRightColumn = computed(() =>
   appStore.displayMode === "full" ? 6 : 3
 );
-const now = ref(Date.now());
+const avatarScale = computed(() =>
+  props.selected.includes(chat.value.uuid) ? 0.5 : 1
+);
 
+const now = ref(Date.now());
 setInterval(() => (now.value = Date.now()), 1000);
 
 const lastUpdate = computed(() =>
@@ -402,6 +405,7 @@ function openChat(user: string) {
     justify-content: center;
     grid-row: 1 / 3;
     grid-column: v-bind(chatRightColumn);
+    width: 130px;
     padding: 5px 10px;
     border: 1px solid var(--n-border-color-popover);
     border-radius: 15px;
@@ -431,6 +435,7 @@ function openChat(user: string) {
 }
 
 .chat__avatar {
+  transform: scale(v-bind(avatarScale));
   transition: 0.3s;
 }
 

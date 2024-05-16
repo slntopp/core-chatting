@@ -422,7 +422,7 @@ func (c *ChatsController) Merge(ctx context.Context, chats []string) (*cc.Chat, 
 		return nil, err
 	}
 
-	cur, err = c.db.Query(ctx, megreMessages, map[string]interface{}{
+	_, err = c.db.Query(ctx, megreMessages, map[string]interface{}{
 		"@messages": MESSAGES_COLLECTION,
 		"chats":     chats,
 		"earliest":  chat.GetUuid(),
@@ -433,7 +433,7 @@ func (c *ChatsController) Merge(ctx context.Context, chats []string) (*cc.Chat, 
 		return nil, err
 	}
 
-	cur, err = c.db.Query(ctx, deleteOldChats, map[string]interface{}{
+	_, err = c.db.Query(ctx, deleteOldChats, map[string]interface{}{
 		"@chats":   CHATS_COLLECTION,
 		"chats":    chats,
 		"earliest": chat.GetUuid(),

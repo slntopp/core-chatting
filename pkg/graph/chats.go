@@ -384,7 +384,7 @@ LET earliest = FIRST(
 	FOR c in @@chats
 	FILTER c._key in @chats
 	SORT c.created ASC
-	RETURN chat
+	RETURN c
 )
 
 RETURN earliest

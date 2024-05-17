@@ -98,7 +98,7 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, func() error, error) {
 		"",
 		false,
 		false,
-		false,
+		true,
 		false,
 		nil,
 	)

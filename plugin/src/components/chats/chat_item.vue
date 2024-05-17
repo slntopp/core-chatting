@@ -10,7 +10,9 @@
           round
           size="large"
           class="chat__avatar"
-          :avatar="(hovered || selected.includes(chat.uuid)) ? ' ' : members.join(' ')"
+          :avatar="
+            hovered || selected.includes(chat.uuid) ? ' ' : members.join(' ')
+          "
         />
 
         <transition name="fade">
@@ -34,7 +36,7 @@
             <login-icon />
           </n-icon>
         </n-space>
-        <template v-if="appStore.displayMode === 'full' && !appStore.isMobile">
+        <template v-if="appStore.displayMode === 'full' && !onlyMainInfo">
           <n-text class="responsible" depth="3">
             {{ store.users.get(chat.responsible ?? "")?.title }}
           </n-text>
@@ -88,7 +90,7 @@
           </div>
         </template>
 
-        <template v-if="!appStore.isMobile">
+        <template v-if="!onlyMainInfo">
           <n-icon
             size="18"
             @mouseenter="(e) => emits('hover', e.clientX, e.clientY, chat.uuid)"
@@ -141,7 +143,7 @@
       </div>
     </n-space>
 
-    <div class="mobile_right" v-if="appStore.isMobile">
+    <div class="mobile_right" v-if="onlyMainInfo">
       <chat-status :chat="chat" />
 
       <div v-if="lastUpdate">
@@ -297,6 +299,10 @@ const chatRightColumn = computed(() =>
 );
 const avatarScale = computed(() =>
   props.selected.includes(chat.value.uuid) ? 0.5 : 1
+);
+
+const onlyMainInfo = computed(
+  () => appStore.isMobile || appStore.displayMode === "half"
 );
 
 const now = ref(Date.now());

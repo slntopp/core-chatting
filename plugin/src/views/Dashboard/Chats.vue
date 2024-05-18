@@ -239,7 +239,7 @@ import { useAppStore } from "../../store/app.ts";
 import { useCcStore } from "../../store/chatting.ts";
 
 import { useRoute, useRouter } from "vue-router";
-import { Chat, Status, User } from "../../connect/cc/cc_pb";
+import { Chat, Status } from "../../connect/cc/cc_pb";
 import ChatItem from "../../components/chats/chat_item.vue";
 import ChatsFilters from "../../components/chats/chats_filters.vue";
 import useDraggable from "../../hooks/useDraggable.ts";

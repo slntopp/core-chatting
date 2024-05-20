@@ -16,7 +16,9 @@
       <n-space
         align="center"
         :wrap-item="false"
-        :justify="isChatPanelOpen || appStore.isMobile ? 'space-between' : 'center'"
+        :justify="
+          isChatPanelOpen || appStore.isMobile ? 'space-between' : 'center'
+        "
         :class="{ chat__actions: true, hide: !isChatPanelOpen }"
       >
         <n-button v-if="!appStore.isMobile" ghost @click="changeMode(null)">
@@ -267,9 +269,7 @@ const deleteIcon = defineAsyncComponent(
 const mergeIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/GitMerge")
 );
-const upIcon = defineAsyncComponent(() =>
-  import("@vicons/ionicons5/ArrowUp")
-);
+const upIcon = defineAsyncComponent(() => import("@vicons/ionicons5/ArrowUp"));
 
 const appStore = useAppStore();
 const store = useCcStore();
@@ -281,7 +281,7 @@ const notification = useNotification();
 
 const selectedChats = ref<string[]>([]);
 const deleteLoading = ref(false);
-const mergeLoading = ref(false)
+const mergeLoading = ref(false);
 const searchParam = ref("");
 const scrollbar = ref<InstanceType<typeof NScrollbar>>();
 const loading = ref<InstanceType<typeof NSpin>>();
@@ -289,15 +289,15 @@ const page = ref(1);
 const isLoading = ref(false);
 
 const isMergeVisible = computed(() => {
-  const list = selectedChats.value.map((uuid) =>
-    new Chat(store.chats.get(uuid))
-  )
+  const list = selectedChats.value.map(
+    (uuid) => new Chat(store.chats.get(uuid))
+  );
 
-  const dep = list.at(0)?.department
-  const isDepsEqual = list.every(({ department }) => department === dep)
+  const dep = list.at(0)?.department;
+  const isDepsEqual = list.every(({ department }) => department === dep);
 
-  return selectedChats.value.length > 0 && isDepsEqual
-})
+  return selectedChats.value.length > 0 && isDepsEqual;
+});
 
 async function sync() {
   try {
@@ -356,7 +356,7 @@ async function mergeChats() {
       changePanelOpen();
     }
 
-    await store.merge_chats(selectedChats.value)
+    await store.merge_chats(selectedChats.value);
     notification.success({
       title: "Chats successfully merged",
     });
@@ -433,16 +433,20 @@ function filterChat(chat: Chat, val: string): boolean {
   }
 
   return (
-    !!chat.users.find(
-      (u) =>
+    !!chat.users.find((u) => {
+      const user = store.users.get(u)?.toJson() as any;
+      return (
         u.startsWith(val) ||
-        store.users.get(u)?.title.toLowerCase().startsWith(val)
-    ) ||
+        user?.title.toLowerCase().startsWith(val) ||
+        user?.data?.email?.toLowerCase().startsWith(val)
+      );
+    }) ||
     !!chat.admins.find(
       (u) =>
         u.startsWith(val) ||
         store.users.get(u)?.title.toLocaleLowerCase().startsWith(val)
-    )
+    ) ||
+    !!chat.meta?.lastMessage?.content.toLowerCase().startsWith(val)
   );
 }
 

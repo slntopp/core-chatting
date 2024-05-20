@@ -379,48 +379,68 @@ func (c *ChatsController) SetBotState(ctx context.Context, chat *cc.Chat) (*cc.C
 	return chat, nil
 }
 
-const merge = `
+const getEarliest = `
 LET earliest = FIRST(
 	FOR c in @@chats
 	FILTER c._key in @chats
 	SORT c.created ASC
-	RETURN chat._key
+	RETURN c
 )
 
-FOR m in @@messages
-	FILTER m.chat in @@chats && m.chat != earliest
-	UPDATE m with {chat: earliest} in @@messages
-
-FOR c in @chats
-	REMOVE c in @@chats
-
 RETURN earliest
+`
+
+const megreMessages = `
+FOR m in @@messages
+	FILTER m.chat in @chats && m.chat != @earliest
+	UPDATE m with {chat: @earliest} in @@messages
+`
+
+const deleteOldChats = `
+FOR c in @chats
+	FILTER c != @earliest
+	REMOVE c in @@chats
 `
 
 func (c *ChatsController) Merge(ctx context.Context, chats []string) (*cc.Chat, error) {
 	log := c.log.Named("Merge")
 
-	cur, err := c.db.Query(ctx, merge, map[string]interface{}{
+	cur, err := c.db.Query(ctx, getEarliest, map[string]interface{}{
 		"@chats": CHATS_COLLECTION,
 		"chats":  chats,
 	})
 
 	if err != nil {
-		log.Error("Failed to merge chats", zap.Error(err))
-		return nil, err
-	}
-
-	var chatUuid string
-	_, err = cur.ReadDocument(ctx, &chatUuid)
-	if err != nil {
-		log.Error("Failed to get chat", zap.Error(err))
+		log.Error("Failed to get earliest chats", zap.Error(err))
 		return nil, err
 	}
 
 	var chat cc.Chat
-	_, err = c.col.ReadDocument(ctx, chatUuid, &chat)
+	_, err = cur.ReadDocument(ctx, &chat)
 	if err != nil {
 		log.Error("Failed to read chat", zap.Error(err))
+		return nil, err
+	}
+
+	_, err = c.db.Query(ctx, megreMessages, map[string]interface{}{
+		"@messages": MESSAGES_COLLECTION,
+		"chats":     chats,
+		"earliest":  chat.GetUuid(),
+	})
+
+	if err != nil {
+		log.Error("Failed to get merge messages", zap.Error(err))
+		return nil, err
+	}
+
+	_, err = c.db.Query(ctx, deleteOldChats, map[string]interface{}{
+		"@chats":   CHATS_COLLECTION,
+		"chats":    chats,
+		"earliest": chat.GetUuid(),
+	})
+
+	if err != nil {
+		log.Error("Failed to delete chats", zap.Error(err))
 		return nil, err
 	}
 

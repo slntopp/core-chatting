@@ -485,10 +485,6 @@ function selectStatus(status: Status) {
 
 const chats = computed(() => {
   const result = [...store.chats.values()].filter((chat) => {
-    if (selectedStatus.value !== undefined) {
-      return chat.status === selectedStatus.value;
-    }
-
     let isDepIncluded = checkedDepartments.value.includes(chat.department);
     let isIncluded = checkedStatuses.value.includes(chat.status);
     let isAdminsExist = !!checkedAdmins.value.find((uuid) =>
@@ -496,6 +492,9 @@ const chats = computed(() => {
     );
     let isOptionsIncluded: optionsIncludedType = {};
     let isAccountOwner = true;
+    const isStatusRight =
+      chat.status === selectedStatus.value ||
+      selectedStatus.value === undefined;
 
     Object.entries(metricsOptions.value).forEach(([key, value]) => {
       if (value.length < 1) {
@@ -524,6 +523,7 @@ const chats = computed(() => {
     }
 
     return (
+      isStatusRight &&
       filterChat(chat as Chat, searchParam.value) &&
       isDepIncluded &&
       isIncluded &&

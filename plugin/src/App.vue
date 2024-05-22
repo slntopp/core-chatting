@@ -52,14 +52,21 @@ window.addEventListener("message", ({ data, origin }) => {
 });
 
 router.beforeResolve((to, from, next) => {
+  console.log(to, from, next);
+
   if (from.name === "Start Chat") {
     store.displayMode = mode.value;
   }
+
+  if (to.params.uuid) {
+    store.displayMode = store.isMobile ? "none" : "half";
+  }
+
   if (to.path === "/dashboard") {
     store.displayMode = "full";
   }
   next();
 });
 
-store.isMobile= screen.width <= 760;
+store.isMobile = screen.width <= 760;
 </script>

@@ -32,7 +32,7 @@
         </n-icon>
       </n-button>
 
-      <template v-if="!appStore.isMobile">
+      <template v-if="appStore.isPC">
         <n-divider vertical />
         <n-tooltip>
           <template #trigger>
@@ -52,7 +52,7 @@
         </n-tooltip>
       </template>
 
-      <n-collapse v-else>
+      <n-collapse v-else-if="appStore.isMobile">
         <n-collapse-item title="Responsible">
           <n-select
             filterable
@@ -68,7 +68,7 @@
         </n-collapse-item>
       </n-collapse>
 
-      <template v-if="!appStore.isMobile">
+      <template v-if="!onlyMainInfo">
         <n-divider vertical />
         <n-tooltip>
           <template #trigger>
@@ -134,7 +134,7 @@
     </n-collapse>
 
     <n-space
-      v-if="!appStore.isMobile"
+      v-if="!onlyMainInfo"
       style="justify-self: start"
       :wrap-item="false"
       :style="{ gridColumn: appStore.displayMode !== 'half' ? 2 : 1 }"
@@ -414,6 +414,8 @@ const saveMembers = async () => {
 const gridColumns = computed(
   () => `repeat(${chat.value?.gateways.length > 0 ? 3 : 2}, auto) 1fr auto`
 );
+
+const onlyMainInfo = computed(() => appStore.isMobile || appStore.isTablet);
 </script>
 
 <style scoped lang="scss">
@@ -423,7 +425,7 @@ const gridColumns = computed(
   align-items: center;
   gap: 10px;
 
-  @media only screen and (max-width: 1024px) {
+  @media only screen and (max-width: 900px) {
     display: flex;
     flex-direction: column;
     align-items: start;
@@ -432,7 +434,7 @@ const gridColumns = computed(
 }
 
 .main__info {
-  @media only screen and (max-width: 1024px) {
+  @media only screen and (max-width: 900px) {
     display: grid !important;
     grid-template-columns: 80px 30px auto 25px;
   }

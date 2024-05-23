@@ -14,18 +14,40 @@
       </n-text>
     </template>
 
-    <n-space class="status__change" :wrap-item="false">
+    <n-space
+      v-if="
+        (appStore.displayMode === 'full' || appStore.displayMode === 'none') &&
+        !appStore.isMobile
+      "
+      class="status__change"
+      :wrap-item="false"
+    >
       <n-button
         ghost
         v-for="item of statuses"
         :key="item.value"
-        :disabled="chat.status === item.value"
+        :disabled="item.disabled"
         :loading="selectStatus === item.value ? isLoading : false"
         :color="statusColor(item.value)"
         @click="updateChat(item.value)"
       >
-        {{ item.label.replaceAll("_", " ") }}
+        {{ item.label }}
       </n-button>
+    </n-space>
+
+    <n-space align="end" style="flex-direction: column" v-else>
+      <n-select
+        placeholder="New status"
+        style="width: 150px"
+        v-model:value="newStatus"
+        :options="statuses"
+      />
+      <n-button
+        @click="updateChat(newStatus)"
+        :disabled="!newStatus"
+        :loading="isLoading"
+        >Change</n-button
+      >
     </n-space>
   </n-popover>
 </template>
@@ -39,12 +61,14 @@ import {
   NSpace,
   NText,
   useNotification,
+  NSelect,
 } from "naive-ui";
 import { ConnectError } from "@connectrpc/connect";
 
 import { Chat, Status } from "../../connect/cc/cc_pb";
 import { useCcStore } from "../../store/chatting.ts";
 import { getStatusColor } from "../../functions.ts";
+import { useAppStore } from "../../store/app.ts";
 
 interface ChatStatusProps {
   chat: Chat;
@@ -53,6 +77,7 @@ interface ChatStatusProps {
 
 const props = defineProps<ChatStatusProps>();
 const store = useCcStore();
+const appStore = useAppStore();
 const notification = useNotification();
 
 const SwapIcon = defineAsyncComponent(
@@ -63,11 +88,14 @@ const selectStatus = ref(-1);
 const isVisible = ref(false);
 const isLoading = ref(false);
 
+const newStatus = ref();
+
 const statuses = computed(() =>
   Object.keys(Status)
     .filter((key) => isFinite(+key))
     .map((key) => ({
-      label: getStatus(+key),
+      label: getStatus(+key).replaceAll("_", " "),
+      disabled: props.chat.status === +key,
       value: +key,
     }))
 );

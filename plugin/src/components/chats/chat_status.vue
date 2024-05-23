@@ -35,7 +35,7 @@
       </n-button>
     </n-space>
 
-    <n-space align="end" style="flex-direction: column">
+    <n-space align="end" style="flex-direction: column" v-else>
       <n-select
         placeholder="New status"
         style="width: 150px"

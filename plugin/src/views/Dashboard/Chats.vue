@@ -59,6 +59,7 @@
         </n-button>
 
         <n-space
+          v-if="isChatPanelOpen"
           :wrap-item="false"
           :style="isChatPanelOpen ? 'margin-right: auto' : null"
         >
@@ -78,7 +79,7 @@
           </span>
         </n-space>
 
-        <n-button v-if="!appStore.isMobile" ghost @click="changePanelOpen">
+        <n-button v-if="appStore.isPC" ghost @click="changePanelOpen">
           <n-icon>
             <close-icon v-if="isChatPanelOpen" />
             <open-icon v-else />

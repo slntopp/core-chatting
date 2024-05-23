@@ -52,14 +52,17 @@ window.addEventListener("message", ({ data, origin }) => {
 });
 
 router.beforeResolve((to, from, next) => {
-  console.log(to, from, next);
-
   if (from.name === "Start Chat") {
     store.displayMode = mode.value;
   }
 
   if (to.params.uuid) {
-    store.displayMode = store.isMobile ? "none" : "half";
+    if (store.isMobile) {
+    } else if (store.isTablet && store.displayMode === "full") {
+      store.displayMode = "none";
+    } else if (store.isPC) {
+      store.displayMode = "half";
+    }
   }
 
   if (to.path === "/dashboard") {
@@ -68,5 +71,28 @@ router.beforeResolve((to, from, next) => {
   next();
 });
 
-store.isMobile = screen.width <= 760;
+function setDevice() {
+  const screenWidth = document.body.clientWidth;
+  if (screenWidth <= 900) {
+    store.device = "phone";
+  } else if (store.conf?.fullscrean) {
+    store.device = "pc";
+  } else {
+    store.device = "tablet";
+  }
+}
+setDevice();
+
+window.addEventListener(
+  "resize",
+  function () {
+    setDevice();
+  },
+  true
+);
+
+watch(
+  () => store.conf?.fullscrean,
+  () => setDevice()
+);
 </script>

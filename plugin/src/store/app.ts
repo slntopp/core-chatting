@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 export interface PluginConf {
     api: string
     namespace: string
     theme: string
     title: string
+    fullscrean: boolean
     token: string
     params: {
         [key: string]: any
@@ -20,9 +21,16 @@ export const useAppStore = defineStore('app', () => {
     const conf = ref<PluginConf>()
     const loading = ref(false)
     const displayMode = ref('full')
-    const isMobile = ref(false)
+
+    const device = ref('pc')
+
+    const isMobile = computed(() => device.value === 'phone')
+    const isPC = computed(() => device.value === 'pc')
+    const isTablet = computed(() => device.value === 'tablet')
 
     return {
-        conf, loading, displayMode, isMobile
+        conf, loading, displayMode, device,
+
+        isPC, isMobile, isTablet
     }
 })

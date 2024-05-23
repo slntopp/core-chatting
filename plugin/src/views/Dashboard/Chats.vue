@@ -59,10 +59,15 @@
         </n-button>
 
         <n-space
+          v-if="
+            isChatPanelOpen &&
+            appStore.displayMode === 'full' &&
+            !appStore.isMobile
+          "
           :wrap-item="false"
           :style="isChatPanelOpen ? 'margin-right: auto' : null"
         >
-          <span v-for="(count, status) in chatsCountByStatus">
+          <span v-for="{ count, status } in chatsCountByStatus">
             <n-text
               :style="{ color: getStatusColor(+status), cursor: 'pointer' }"
               @click="selectStatus(+status)"
@@ -78,7 +83,21 @@
           </span>
         </n-space>
 
-        <n-button v-if="!appStore.isMobile" ghost @click="changePanelOpen">
+        <n-select
+          v-else
+          :value="selectedStatus"
+          @change="selectStatus"
+          clearable
+          placeholder="Status"
+          :options="
+            Object.values(chatsCountByStatus).map(({ count, status }) => ({
+              value: +status,
+              label: `${getStatus(status)} (${count})`,
+            }))
+          "
+        />
+
+        <n-button v-if="appStore.isPC" ghost @click="changePanelOpen">
           <n-icon>
             <close-icon v-if="isChatPanelOpen" />
             <open-icon v-else />
@@ -232,6 +251,7 @@ import {
   NTag,
   NText,
   NSpin,
+  NSelect,
   useNotification,
 } from "naive-ui";
 
@@ -476,7 +496,7 @@ function getStatus(statusCode: Status | number) {
 }
 
 function selectStatus(status: Status) {
-  if (status === selectedStatus.value) {
+  if (status === selectedStatus.value || status === null) {
     selectedStatus.value = undefined;
   } else {
     selectedStatus.value = status;
@@ -485,16 +505,17 @@ function selectStatus(status: Status) {
 
 const chats = computed(() => {
   const result = [...store.chats.values()].filter((chat) => {
+    const selectedStatuses =
+      selectedStatus.value === undefined
+        ? checkedStatuses.value
+        : [selectedStatus.value];
     let isDepIncluded = checkedDepartments.value.includes(chat.department);
-    let isIncluded = checkedStatuses.value.includes(chat.status);
+    let isIncluded = selectedStatuses.includes(chat.status);
     let isAdminsExist = !!checkedAdmins.value.find((uuid) =>
       chat.admins.includes(uuid)
     );
     let isOptionsIncluded: optionsIncludedType = {};
     let isAccountOwner = true;
-    const isStatusRight =
-      chat.status === selectedStatus.value ||
-      selectedStatus.value === undefined;
 
     Object.entries(metricsOptions.value).forEach(([key, value]) => {
       if (value.length < 1) {
@@ -509,7 +530,7 @@ const chats = computed(() => {
     if (checkedDepartments.value.length < 1) {
       isDepIncluded = true;
     }
-    if (checkedStatuses.value.length < 1) {
+    if (selectedStatuses.length < 1) {
       isIncluded = true;
     }
     if (checkedAdmins.value.length < 1) {
@@ -523,7 +544,6 @@ const chats = computed(() => {
     }
 
     return (
-      isStatusRight &&
       filterChat(chat as Chat, searchParam.value) &&
       isDepIncluded &&
       isIncluded &&
@@ -574,13 +594,22 @@ const filteredChatsByAccount = computed(() =>
 );
 
 const chatsCountByStatus = computed(() => {
-  const result: { [key: string]: number } = {};
+  const result: { [key: string]: { status: number; count: number } } = {};
+
+  const allowedStatuses = [0, 1, 8, 5, 4, 7, 3];
+
+  allowedStatuses.forEach(
+    (_, index) => (result[index] = { status: allowedStatuses[index], count: 0 })
+  );
 
   filteredChatsByAccount.value.forEach((chat) => {
-    if (!result[chat.status]) {
-      result[chat.status] = 0;
+    if (!allowedStatuses.includes(+chat.status)) {
+      return;
     }
-    result[chat.status]++;
+    const index = allowedStatuses.findIndex(
+      (status) => status === +chat.status
+    );
+    result[index].count++;
   });
 
   return result;

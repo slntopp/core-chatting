@@ -63,7 +63,7 @@
           :wrap-item="false"
           :style="isChatPanelOpen ? 'margin-right: auto' : null"
         >
-          <span v-for="(count, status) in chatsCountByStatus">
+          <span v-for="{ count, status } in chatsCountByStatus">
             <n-text
               :style="{ color: getStatusColor(+status), cursor: 'pointer' }"
               @click="selectStatus(+status)"
@@ -575,13 +575,22 @@ const filteredChatsByAccount = computed(() =>
 );
 
 const chatsCountByStatus = computed(() => {
-  const result: { [key: string]: number } = {};
+  const result: { [key: string]: { status: number; count: number } } = {};
+
+  const allowedStatuses = [0, 1, 8, 5, 4, 7, 3];
+
+  allowedStatuses.forEach(
+    (_, index) => (result[index] = { status: allowedStatuses[index], count: 0 })
+  );
 
   filteredChatsByAccount.value.forEach((chat) => {
-    if (!result[chat.status]) {
-      result[chat.status] = 0;
+    if (!allowedStatuses.includes(+chat.status)) {
+      return;
     }
-    result[chat.status]++;
+    const index = allowedStatuses.findIndex(
+      (status) => status === +chat.status
+    );
+    result[index].count++;
   });
 
   return result;

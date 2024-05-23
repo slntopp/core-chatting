@@ -59,7 +59,11 @@
         </n-button>
 
         <n-space
-          v-if="isChatPanelOpen"
+          v-if="
+            isChatPanelOpen &&
+            appStore.displayMode === 'full' &&
+            !appStore.isMobile
+          "
           :wrap-item="false"
           :style="isChatPanelOpen ? 'margin-right: auto' : null"
         >
@@ -78,6 +82,20 @@
             >
           </span>
         </n-space>
+
+        <n-select
+          v-else
+          :value="selectedStatus"
+          @change="selectStatus"
+          clearable
+          placeholder="Status"
+          :options="
+            Object.values(chatsCountByStatus).map(({ count, status }) => ({
+              value: +status,
+              label: `${getStatus(status)} (${count})`,
+            }))
+          "
+        />
 
         <n-button v-if="appStore.isPC" ghost @click="changePanelOpen">
           <n-icon>
@@ -233,6 +251,7 @@ import {
   NTag,
   NText,
   NSpin,
+  NSelect,
   useNotification,
 } from "naive-ui";
 
@@ -477,7 +496,7 @@ function getStatus(statusCode: Status | number) {
 }
 
 function selectStatus(status: Status) {
-  if (status === selectedStatus.value) {
+  if (status === selectedStatus.value || status === null) {
     selectedStatus.value = undefined;
   } else {
     selectedStatus.value = status;

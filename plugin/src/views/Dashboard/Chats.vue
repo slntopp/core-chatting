@@ -162,6 +162,8 @@
             v-model:checkedDepartments="checkedDepartments"
             v-model:checkedStatuses="checkedStatuses"
             v-model:checkedAdmins="checkedAdmins"
+            v-model:update-date-range="updateDateRange"
+            v-model:create-date-range="createDateRange"
             :metricsOptions="metricsOptions"
             @update:checked-metrics="
               (key, value) => (metricsOptions[key] = value)
@@ -408,6 +410,8 @@ onMounted(() => {
     checkedDepartments.value = filters.departments;
     checkedStatuses.value = filters.statuses;
     checkedAdmins.value = filters.admins;
+    updateDateRange.value = filters.updated;
+    createDateRange.value = filters.created;
   }
 
   const options = {
@@ -505,6 +509,24 @@ function selectStatus(status: Status) {
 
 const chats = computed(() => {
   const result = [...store.chats.values()].filter((chat) => {
+    let isCreatedInDate = true;
+    if (createDateRange.value) {
+      const createdDate = Number(chat.created);
+      isCreatedInDate =
+        createDateRange.value[0] <= createdDate &&
+        createDateRange.value[1] >= createdDate;
+    }
+
+    let isUpdatedInDate = true;
+    if (updateDateRange.value) {
+      const updatedDate = Number(
+        chat.meta?.lastMessage?.edited || chat.meta?.lastMessage?.sent
+      );
+      isUpdatedInDate =
+        updateDateRange.value[0] <= updatedDate &&
+        updateDateRange.value[1] >= updatedDate;
+    }
+
     const selectedStatuses =
       selectedStatus.value === undefined
         ? checkedStatuses.value
@@ -549,6 +571,8 @@ const chats = computed(() => {
       isIncluded &&
       isAdminsExist &&
       isAccountOwner &&
+      isCreatedInDate &&
+      isUpdatedInDate &&
       Object.values(isOptionsIncluded).every((value) => value)
     );
   }) as Chat[];
@@ -618,6 +642,9 @@ const chatsCountByStatus = computed(() => {
 const checkedAdmins = ref<string[]>([]);
 const checkedDepartments = ref<string[]>([]);
 
+const createDateRange = ref<[number, number] | null>(null);
+const updateDateRange = ref<[number, number] | null>(null);
+
 if (Object.keys(metrics.value).length < 1) fetch_defaults();
 
 interface metricsOptionsType {
@@ -654,7 +681,14 @@ watch(
 );
 
 watch(
-  [checkedDepartments, checkedStatuses, checkedAdmins, metricsOptions],
+  [
+    checkedDepartments,
+    checkedStatuses,
+    checkedAdmins,
+    metricsOptions,
+    updateDateRange,
+    createDateRange,
+  ],
   () => {
     localStorage.setItem(
       "filters",
@@ -663,6 +697,8 @@ watch(
         statuses: checkedStatuses.value,
         admins: checkedAdmins.value,
         metrics: metricsOptions.value,
+        updated: updateDateRange.value,
+        created: createDateRange.value,
       })
     );
   },
@@ -676,6 +712,8 @@ async function resetFilters() {
   checkedDepartments.value = [];
   checkedStatuses.value = [];
   checkedAdmins.value = [];
+  updateDateRange.value = null;
+  createDateRange.value = null;
   metricsOptions.value = metrics.value.reduce(
     (result, { key }) => ({ ...result, [key]: [] }),
     {}

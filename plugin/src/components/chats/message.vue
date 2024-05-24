@@ -45,7 +45,7 @@ import DOMPurify from 'dompurify'
 
 import UserAvatar from "../ui/user_avatar.vue";
 import UserItem from "../users/user_item.vue";
-import {getRelativeTime} from '../../functions.ts';
+import {addToClipboard, getRelativeTime} from '../../functions.ts';
 
 interface MessageProps {
   message: Message
@@ -57,6 +57,7 @@ const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/Cl
 const PencilOutline = defineAsyncComponent(() => import('@vicons/ionicons5/PencilOutline'));
 const TrashOutline = defineAsyncComponent(() => import('@vicons/ionicons5/TrashOutline'));
 const EyeOutline = defineAsyncComponent(() => import('@vicons/ionicons5/EyeOutline'));
+const CopyOutline = defineAsyncComponent(() => import('@vicons/ionicons5/CopyOutline'));
 const ReviewOutline = defineAsyncComponent(() => import('../../assets/icons/ReviewOutline.svg'));
 
 
@@ -264,6 +265,29 @@ function timestamp() {
   })
 }
 
+function copyMessage() {
+  let tooltip = [
+    h(() =>
+      `Copy message`
+    )
+  ]
+
+  const copyIcon = () => h(NIcon, { size: 18, component: CopyOutline })
+
+
+  return h(NTooltip, {
+    placement: 'right'
+  }, {
+    trigger: () => h(NButton, {
+      circle: true, quaternary: true, onClick: () => addToClipboard(message.value.content.replace(
+        /<div class="chat__files">[\s\S]{1,}<\/div>$/g,
+        ""
+      ))
+    }, () => copyIcon()),
+    default: () => tooltip
+  })
+}
+
 const subStyle = computed(() =>
   (window.top) ? {
     decoration: 'underline',
@@ -312,7 +336,8 @@ function render(props: RenderProps, { slots }: any) {
           () => sender.value
         )
     ),
-    timestamp()
+    timestamp(),
+    copyMessage()
   ]
 
   if (message.value.underReview) {

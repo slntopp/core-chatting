@@ -162,6 +162,8 @@
             v-model:checkedDepartments="checkedDepartments"
             v-model:checkedStatuses="checkedStatuses"
             v-model:checkedAdmins="checkedAdmins"
+            v-model:update-date-range="updateDateRange"
+            v-model:create-date-range="createDateRange"
             :metricsOptions="metricsOptions"
             @update:checked-metrics="
               (key, value) => (metricsOptions[key] = value)
@@ -408,6 +410,8 @@ onMounted(() => {
     checkedDepartments.value = filters.departments;
     checkedStatuses.value = filters.statuses;
     checkedAdmins.value = filters.admins;
+    updateDateRange.value = filters.updated;
+    createDateRange.value = filters.created;
   }
 
   const options = {
@@ -505,18 +509,48 @@ function selectStatus(status: Status) {
 
 const chats = computed(() => {
   const result = [...store.chats.values()].filter((chat) => {
+    let isCreatedInDate = true;
+    if (createDateRange.value) {
+      const createdDate = Number(chat.created);
+      isCreatedInDate =
+        createDateRange.value[0] <= createdDate &&
+        createDateRange.value[1] >= createdDate;
+    }
+
+    let isUpdatedInDate = true;
+    if (updateDateRange.value) {
+      const updatedDate = Number(
+        chat.meta?.lastMessage?.edited || chat.meta?.lastMessage?.sent
+      );
+      isUpdatedInDate =
+        updateDateRange.value[0] <= updatedDate &&
+        updateDateRange.value[1] >= updatedDate;
+    }
+
+    let isDepartamentIncluded = true;
+    if (checkedDepartments.value.length > 0) {
+      isDepartamentIncluded = checkedDepartments.value.includes(
+        chat.department
+      );
+    }
+
     const selectedStatuses =
       selectedStatus.value === undefined
         ? checkedStatuses.value
         : [selectedStatus.value];
-    let isDepIncluded = checkedDepartments.value.includes(chat.department);
-    let isIncluded = selectedStatuses.includes(chat.status);
-    let isAdminsExist = !!checkedAdmins.value.find((uuid) =>
-      chat.admins.includes(uuid)
-    );
-    let isOptionsIncluded: optionsIncludedType = {};
-    let isAccountOwner = true;
+    let isStatusIncluded = true;
+    if (selectedStatuses.length > 0) {
+      isStatusIncluded = selectedStatuses.includes(chat.status);
+    }
 
+    let isAdminsExist = true;
+    if (checkedAdmins.value.length > 0) {
+      isAdminsExist = !!checkedAdmins.value.find((uuid) =>
+        chat.admins.includes(uuid)
+      );
+    }
+
+    let isOptionsIncluded: optionsIncludedType = {};
     Object.entries(metricsOptions.value).forEach(([key, value]) => {
       if (value.length < 1) {
         isOptionsIncluded[key] = true;
@@ -527,16 +561,7 @@ const chats = computed(() => {
       isOptionsIncluded[key] = value.includes(metric);
     });
 
-    if (checkedDepartments.value.length < 1) {
-      isDepIncluded = true;
-    }
-    if (selectedStatuses.length < 1) {
-      isIncluded = true;
-    }
-    if (checkedAdmins.value.length < 1) {
-      isAdminsExist = true;
-    }
-
+    let isAccountOwner = true;
     if (appStore.conf?.params?.filterByAccount) {
       isAccountOwner = [...chat.users, ...chat.admins].includes(
         appStore.conf.params.filterByAccount
@@ -545,10 +570,12 @@ const chats = computed(() => {
 
     return (
       filterChat(chat as Chat, searchParam.value) &&
-      isDepIncluded &&
-      isIncluded &&
+      isDepartamentIncluded &&
+      isStatusIncluded &&
       isAdminsExist &&
       isAccountOwner &&
+      isCreatedInDate &&
+      isUpdatedInDate &&
       Object.values(isOptionsIncluded).every((value) => value)
     );
   }) as Chat[];
@@ -618,6 +645,9 @@ const chatsCountByStatus = computed(() => {
 const checkedAdmins = ref<string[]>([]);
 const checkedDepartments = ref<string[]>([]);
 
+const createDateRange = ref<[number, number] | null>(null);
+const updateDateRange = ref<[number, number] | null>(null);
+
 if (Object.keys(metrics.value).length < 1) fetch_defaults();
 
 interface metricsOptionsType {
@@ -654,7 +684,14 @@ watch(
 );
 
 watch(
-  [checkedDepartments, checkedStatuses, checkedAdmins, metricsOptions],
+  [
+    checkedDepartments,
+    checkedStatuses,
+    checkedAdmins,
+    metricsOptions,
+    updateDateRange,
+    createDateRange,
+  ],
   () => {
     localStorage.setItem(
       "filters",
@@ -663,6 +700,8 @@ watch(
         statuses: checkedStatuses.value,
         admins: checkedAdmins.value,
         metrics: metricsOptions.value,
+        updated: updateDateRange.value,
+        created: createDateRange.value,
       })
     );
   },
@@ -676,6 +715,8 @@ async function resetFilters() {
   checkedDepartments.value = [];
   checkedStatuses.value = [];
   checkedAdmins.value = [];
+  updateDateRange.value = null;
+  createDateRange.value = null;
   metricsOptions.value = metrics.value.reduce(
     (result, { key }) => ({ ...result, [key]: [] }),
     {}

@@ -1,5 +1,29 @@
 <template>
   <div class="filter_item" style="margin-top: 20px">
+    <n-text>Filter by created date:</n-text>
+
+    <n-date-picker
+      size="small"
+      :value="createDateRange"
+      @update:value="emits('update:createDateRange', $event)"
+      type="daterange"
+      clearable
+    />
+  </div>
+
+  <div class="filter_item" style="margin-top: 20px">
+    <n-text>Filter by updated date:</n-text>
+
+    <n-date-picker
+      size="small"
+      :value="updateDateRange"
+      @update:value="emits('update:updateDateRange', $event)"
+      type="daterange"
+      clearable
+    />
+  </div>
+
+  <div class="filter_item" style="margin-top: 20px">
     <n-text>Filter by department:</n-text>
     <n-select
       filterable
@@ -52,7 +76,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { NText, NSelect } from "naive-ui";
+import { NText, NSelect, NDatePicker } from "naive-ui";
 
 import { useCcStore } from "../../store/chatting";
 import { Chat, Status } from "../../connect/cc/cc_pb";
@@ -64,6 +88,8 @@ interface ChatsFiltersProps {
   checkedStatuses: Status[];
   checkedAdmins: string[];
   metricsOptions: { [key: string]: [] };
+  createDateRange: [number, number] | null;
+  updateDateRange: [number, number] | null;
 }
 defineProps<ChatsFiltersProps>();
 
@@ -72,6 +98,8 @@ const emits = defineEmits([
   "update:checkedStatuses",
   "update:checkedAdmins",
   "update:checkedMetrics",
+  "update:createDateRange",
+  "update:updateDateRange",
 ]);
 const store = useCcStore();
 
@@ -79,7 +107,9 @@ const departments = computed(() =>
   store.departments.map(({ key, title }) => ({ label: title, value: key }))
 );
 
-const metrics = computed<MetricWithKey[]>(() => store.metrics as MetricWithKey[]);
+const metrics = computed<MetricWithKey[]>(
+  () => store.metrics as MetricWithKey[]
+);
 
 const statuses = computed(() =>
   Object.keys(Status)

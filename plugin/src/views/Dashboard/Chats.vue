@@ -527,18 +527,30 @@ const chats = computed(() => {
         updateDateRange.value[1] >= updatedDate;
     }
 
+    let isDepartamentIncluded = true;
+    if (checkedDepartments.value.length > 0) {
+      isDepartamentIncluded = checkedDepartments.value.includes(
+        chat.department
+      );
+    }
+
     const selectedStatuses =
       selectedStatus.value === undefined
         ? checkedStatuses.value
         : [selectedStatus.value];
-    let isDepIncluded = checkedDepartments.value.includes(chat.department);
-    let isIncluded = selectedStatuses.includes(chat.status);
-    let isAdminsExist = !!checkedAdmins.value.find((uuid) =>
-      chat.admins.includes(uuid)
-    );
-    let isOptionsIncluded: optionsIncludedType = {};
-    let isAccountOwner = true;
+    let isStatusIncluded = true;
+    if (selectedStatuses.length > 0) {
+      isStatusIncluded = selectedStatuses.includes(chat.status);
+    }
 
+    let isAdminsExist = true;
+    if (checkedAdmins.value.length > 0) {
+      isAdminsExist = !!checkedAdmins.value.find((uuid) =>
+        chat.admins.includes(uuid)
+      );
+    }
+
+    let isOptionsIncluded: optionsIncludedType = {};
     Object.entries(metricsOptions.value).forEach(([key, value]) => {
       if (value.length < 1) {
         isOptionsIncluded[key] = true;
@@ -549,16 +561,7 @@ const chats = computed(() => {
       isOptionsIncluded[key] = value.includes(metric);
     });
 
-    if (checkedDepartments.value.length < 1) {
-      isDepIncluded = true;
-    }
-    if (selectedStatuses.length < 1) {
-      isIncluded = true;
-    }
-    if (checkedAdmins.value.length < 1) {
-      isAdminsExist = true;
-    }
-
+    let isAccountOwner = true;
     if (appStore.conf?.params?.filterByAccount) {
       isAccountOwner = [...chat.users, ...chat.admins].includes(
         appStore.conf.params.filterByAccount
@@ -567,8 +570,8 @@ const chats = computed(() => {
 
     return (
       filterChat(chat as Chat, searchParam.value) &&
-      isDepIncluded &&
-      isIncluded &&
+      isDepartamentIncluded &&
+      isStatusIncluded &&
       isAdminsExist &&
       isAccountOwner &&
       isCreatedInDate &&

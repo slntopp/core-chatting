@@ -10,7 +10,7 @@
     </n-button>
 
     <n-space class="main__info" justify="start" align="center">
-      <n-tooltip>
+      <n-tooltip v-if="!onlyMainInfo">
         <template #trigger>
           <n-tag round @click="addToClipboard(chat.uuid, notification)">
             <code style="text-decoration: underline; cursor: pointer">
@@ -32,7 +32,7 @@
         </n-icon>
       </n-button>
 
-      <template v-if="appStore.isPC">
+      <template v-if="appStore.isPC || appStore.isTablet">
         <n-divider vertical />
         <n-tooltip>
           <template #trigger>
@@ -52,7 +52,7 @@
         </n-tooltip>
       </template>
 
-      <n-collapse v-else-if="appStore.isMobile">
+      <n-collapse v-else>
         <n-collapse-item title="Responsible">
           <n-select
             filterable
@@ -68,7 +68,7 @@
         </n-collapse-item>
       </n-collapse>
 
-      <template v-if="!onlyMainInfo">
+      <template v-if="!appStore.isMobile">
         <n-divider vertical />
         <n-tooltip>
           <template #trigger>
@@ -436,7 +436,7 @@ const onlyMainInfo = computed(() => appStore.isMobile || appStore.isTablet);
 .main__info {
   @media only screen and (max-width: 900px) {
     display: grid !important;
-    grid-template-columns: 80px 30px auto 25px;
+    grid-template-columns: 40px 50px 25px;
   }
 }
 

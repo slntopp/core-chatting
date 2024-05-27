@@ -41,20 +41,9 @@
             {{ store.users.get(chat.responsible ?? "")?.title }}
           </n-text>
 
-          <n-space
-            class="department"
-            style="
-              flex-direction: column;
-              gap: 0;
-              grid-row: 1 / 3;
-              grid-column: 3;
-            "
-            :wrap-item="false"
-            :wrap="false"
-          >
+          <n-space class="department">
             <n-space
-              :wrap="false"
-              :wrap-item="false"
+              v-if="chat.gateways?.length"
               :style="{ 'min-width': 24 * chat.gateways?.length + 'px' }"
             >
               <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
@@ -64,7 +53,7 @@
                 {{ gateway }}
               </n-tooltip>
             </n-space>
-            <n-text italic v-if="chat.department" style="white-space: nowrap">
+            <n-text italic v-if="chat.department" style="text-align: start">
               {{ department }}
             </n-text>
           </n-space>
@@ -268,21 +257,21 @@ async function setColumns() {
 
   responsibles.forEach((element) => {
     if (resWidth < element.clientWidth) {
-      resWidth = element.clientWidth;
+      resWidth = element.clientWidth + 10;
     }
   });
 
   departments.forEach((element) => {
     if (depWidth < element.clientWidth) {
-      depWidth = element.clientWidth;
+      depWidth = element.clientWidth + 10;
     }
   });
 
   if (resWidth > 0) {
-    responsibleColsWidth.value = `${resWidth}px`;
+    responsibleColsWidth.value = resWidth > 150 ? "150px" : `${resWidth}px`;
   }
   if (depWidth > 0) {
-    departmentColsWidth.value = `${depWidth}px`;
+    departmentColsWidth.value = depWidth > 200 ? "200px" : `${depWidth}px`;
   }
 }
 
@@ -396,7 +385,17 @@ function openChat(user: string) {
       grid-row: 1 / 3;
       align-self: center;
       padding-right: 10px;
-      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .department {
+      flex-direction: column;
+      gap: 0;
+      grid-row: 1 / 3;
+      grid-column: 3;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .time {

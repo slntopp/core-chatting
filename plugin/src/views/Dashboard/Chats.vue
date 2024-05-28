@@ -21,81 +21,107 @@
         "
         :class="{ chat__actions: true, hide: !isChatPanelOpen }"
       >
-        <n-button v-if="!appStore.isMobile" ghost @click="changeMode(null)">
-          <n-icon> <switch-icon /> </n-icon>
-        </n-button>
+        <template v-if="!isSelectedChats">
+          <n-button v-if="!appStore.isMobile" ghost @click="changeMode(null)">
+            <n-icon> <switch-icon /> </n-icon>
+          </n-button>
+          <n-button ghost type="success" @click="startChat">
+            <n-icon :component="ChatbubbleEllipsesOutline" />
+            <span v-if="isChatPanelOpen" style="margin-left: 5px">
+              Start Chat
+            </span>
+          </n-button>
 
-        <n-button ghost type="success" @click="startChat">
-          <n-icon :component="ChatbubbleEllipsesOutline" />
-          <span v-if="isChatPanelOpen" style="margin-left: 5px">
-            Start Chat
-          </span>
-        </n-button>
+          <n-space
+            v-if="
+              isChatPanelOpen &&
+              appStore.displayMode === 'full' &&
+              !appStore.isMobile
+            "
+            :wrap-item="false"
+            :style="isChatPanelOpen ? 'margin-right: auto' : null"
+          >
+            <span v-for="{ count, status } in chatsCountByStatus">
+              <n-text
+                :style="{ color: getStatusColor(+status), cursor: 'pointer' }"
+                @click="selectStatus(+status)"
+              >
+                {{ getStatus(+status) }}:
+              </n-text>
+              <n-tag
+                :type="selectedStatus === +status ? 'success' : undefined"
+                round
+                size="small"
+                >{{ count }}</n-tag
+              >
+            </span>
+          </n-space>
 
-        <n-button
-          ghost
-          type="warning"
-          v-if="isMergeVisible"
-          :loading="mergeLoading"
-          @click="mergeChats"
-        >
-          <n-icon :component="mergeIcon" />
-          <span v-if="isChatPanelOpen" style="margin-left: 5px">
-            Merge Chats
-          </span>
-        </n-button>
+          <n-select
+            v-else
+            :value="selectedStatus"
+            @change="selectStatus"
+            clearable
+            placeholder="Status"
+            :options="
+              Object.values(chatsCountByStatus).map(({ count, status }) => ({
+                value: +status,
+                label: `${getStatus(status)} (${count})`,
+              }))
+            "
+          />
+        </template>
 
-        <n-button
-          ghost
-          type="error"
-          v-if="selectedChats.length > 0"
-          :loading="deleteLoading"
-          @click="deleteChats"
-        >
-          <n-icon :component="deleteIcon" />
-          <span v-if="isChatPanelOpen" style="margin-left: 5px">
-            Delete Chats
-          </span>
-        </n-button>
+        <n-space v-else>
+          <n-button ghost @click="resetSelectedChats"> Cancel </n-button>
 
-        <n-space
-          v-if="
-            isChatPanelOpen &&
-            appStore.displayMode === 'full' &&
-            !appStore.isMobile
-          "
-          :wrap-item="false"
-          :style="isChatPanelOpen ? 'margin-right: auto' : null"
-        >
-          <span v-for="{ count, status } in chatsCountByStatus">
-            <n-text
-              :style="{ color: getStatusColor(+status), cursor: 'pointer' }"
-              @click="selectStatus(+status)"
-            >
-              {{ getStatus(+status) }}:
-            </n-text>
-            <n-tag
-              :type="selectedStatus === +status ? 'success' : undefined"
-              round
-              size="small"
-              >{{ count }}</n-tag
-            >
-          </span>
+          <n-button
+            ghost
+            type="warning"
+            v-if="isMergeVisible"
+            :loading="mergeLoading"
+            @click="mergeChats"
+          >
+            <n-icon :component="mergeIcon" />
+            <span v-if="isChatPanelOpen" style="margin-left: 5px">
+              Merge Chats
+            </span>
+          </n-button>
+
+          <n-button
+            ghost
+            type="error"
+            v-if="isSelectedChats"
+            :loading="deleteLoading"
+            @click="deleteChats"
+          >
+            <n-icon :component="deleteIcon" />
+            <span v-if="isChatPanelOpen" style="margin-left: 5px">
+              Delete Chats
+            </span>
+          </n-button>
+          <n-select
+            style="width: 200px"
+            v-model:value="newStatus"
+            clearable
+            placeholder="Status"
+            :options="
+              allStatuses.map((status) => ({
+                label: status,
+                value: Status[status as unknown as number],
+              }))
+            "
+          />
+          <n-button
+            :disabled="!newStatus"
+            @click="changeChatsStatus"
+            type="warning"
+            ghost
+            :loading="isChangeStatusLoading"
+          >
+            Change status
+          </n-button>
         </n-space>
-
-        <n-select
-          v-else
-          :value="selectedStatus"
-          @change="selectStatus"
-          clearable
-          placeholder="Status"
-          :options="
-            Object.values(chatsCountByStatus).map(({ count, status }) => ({
-              value: +status,
-              label: `${getStatus(status)} (${count})`,
-            }))
-          "
-        />
 
         <n-button v-if="appStore.isPC" ghost @click="changePanelOpen">
           <n-icon>
@@ -309,6 +335,8 @@ const scrollbar = ref<InstanceType<typeof NScrollbar>>();
 const loading = ref<InstanceType<typeof NSpin>>();
 const page = ref(1);
 const isLoading = ref(false);
+const newStatus = ref();
+const isChangeStatusLoading = ref(false);
 
 const isMergeVisible = computed(() => {
   const list = selectedChats.value.map(
@@ -318,8 +346,10 @@ const isMergeVisible = computed(() => {
   const dep = list.at(0)?.department;
   const isDepsEqual = list.every(({ department }) => department === dep);
 
-  return selectedChats.value.length > 0 && isDepsEqual;
+  return isSelectedChats.value && isDepsEqual;
 });
+
+const isSelectedChats = computed(() => selectedChats.value.length > 0);
 
 async function sync() {
   try {
@@ -620,6 +650,12 @@ const filteredChatsByAccount = computed(() =>
   })
 );
 
+const allStatuses = computed(() =>
+  Object.keys(Status).filter((item) => {
+    return isNaN(Number(item));
+  })
+);
+
 const chatsCountByStatus = computed(() => {
   const result: { [key: string]: { status: number; count: number } } = {};
 
@@ -641,6 +677,32 @@ const chatsCountByStatus = computed(() => {
 
   return result;
 });
+
+const changeChatsStatus = async () => {
+  isChangeStatusLoading.value = true;
+
+  try {
+    const promises = selectedChats.value
+      .map((uuid) => chats.value.find((chat) => chat.uuid === uuid))
+      .map(async (chat) => {
+        const data = { ...chat, status: newStatus.value } as Chat;
+        await store.change_status(data);
+        store.chats.set(chat!.uuid, data);
+      });
+
+    await Promise.all(promises);
+
+    notification.success({
+      title: "Chats statuses successfully changed",
+    });
+  } catch (error: any) {
+    notification.error({
+      title: error.response?.data.message ?? error.message ?? error,
+    });
+  } finally {
+    isChangeStatusLoading.value = false;
+  }
+};
 
 const checkedAdmins = ref<string[]>([]);
 const checkedDepartments = ref<string[]>([]);
@@ -771,6 +833,10 @@ function onMouseMove(clientX: number, clientY: number, chatId: string) {
   }
   isFirstMessageVisible.value = true;
 }
+
+const resetSelectedChats = () => {
+  selectedChats.value = [];
+};
 </script>
 
 <style>

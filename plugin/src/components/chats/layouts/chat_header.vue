@@ -52,22 +52,6 @@
         </n-tooltip>
       </template>
 
-      <n-collapse v-else>
-        <n-collapse-item title="Responsible">
-          <n-select
-            filterable
-            ref="responsibleSelect"
-            label-field="title"
-            value-field="uuid"
-            placeholder="Responsible"
-            style="min-width: 200px; width: 100%"
-            :value="chat.responsible"
-            :options="adminsItems"
-            @update:value="changeResponsible"
-          />
-        </n-collapse-item>
-      </n-collapse>
-
       <template v-if="!appStore.isMobile">
         <n-divider vertical />
         <n-tooltip>
@@ -126,12 +110,51 @@
       <n-divider vertical style="height: auto; margin: 0 8px" />
       <chat-dates :chat="chat" />
     </n-space>
-    <n-collapse v-else>
-      <n-collapse-item title="Dates">
-        <n-divider vertical style="height: auto; margin: 0 8px" />
-        <chat-dates :chat="chat" />
-      </n-collapse-item>
-    </n-collapse>
+
+    <template v-else>
+      <n-collapse>
+        <n-collapse-item title="Responsible">
+          <n-select
+            filterable
+            ref="responsibleSelect"
+            label-field="title"
+            value-field="uuid"
+            placeholder="Responsible"
+            style="min-width: 200px; width: 100%"
+            :value="chat.responsible"
+            :options="adminsItems"
+            @update:value="changeResponsible"
+          />
+        </n-collapse-item>
+      </n-collapse>
+
+      <n-collapse>
+        <n-collapse-item :title="`Status: ${Status[chat.status]}`">
+          <div style="display: flex; gap: 5px; margin-bottom: 10px">
+            <n-select
+              v-model:value="newStatus"
+              style="width: 75%"
+              :options="statusesOptions"
+            ></n-select>
+            <n-button
+              :disabled="isNaN(newStatus) || newStatus === null"
+              ghost
+              type="warning"
+              @click="changeStatus"
+              :loading="isChangeStatusLoading"
+              >Change</n-button
+            >
+          </div>
+        </n-collapse-item>
+      </n-collapse>
+
+      <n-collapse>
+        <n-collapse-item title="Dates">
+          <n-divider vertical style="height: auto; margin: 0 8px" />
+          <chat-dates :chat="chat" />
+        </n-collapse-item>
+      </n-collapse>
+    </template>
 
     <n-space
       v-if="!onlyMainInfo"
@@ -223,7 +246,7 @@ import {
   NCollapseItem,
 } from "naive-ui";
 import { ConnectError } from "@connectrpc/connect";
-import { Chat, User } from "../../../connect/cc/cc_pb";
+import { Chat, Status, User } from "../../../connect/cc/cc_pb";
 import { useCcStore } from "../../../store/chatting.ts";
 import { useAppStore } from "../../../store/app";
 import ChatOptions from "../chat_options.vue";
@@ -275,6 +298,8 @@ const isAddDialog = ref<boolean>(false);
 const chatWithNewMembers = ref<Chat>();
 const availableMembersOptions = ref<SelectOption[]>([]);
 const isAddSaveLoading = ref<boolean>(false);
+const newStatus = ref();
+const isChangeStatusLoading = ref(false);
 
 const members = computed(() => {
   const uuids = new Set([
@@ -292,6 +317,20 @@ const members = computed(() => {
   return result;
 });
 const me = computed(() => store.me);
+
+const statusesOptions = computed(() =>
+  Object.keys(Status)
+    .filter((item) => {
+      return isNaN(Number(item));
+    })
+    .map((status) => ({
+      label: status,
+      //@ts-ignore
+      disabled: Status[status] == chat.value.status,
+      //@ts-ignore
+      value: Status[status],
+    }))
+);
 
 fetch_defaults();
 
@@ -411,6 +450,24 @@ const saveMembers = async () => {
   }
 };
 
+const changeStatus = async () => {
+  isChangeStatusLoading.value = true;
+
+  try {
+    const data = { ...chat.value, status: newStatus.value } as Chat;
+    await store.change_status(data);
+
+    store.chats.set(chat.value.uuid, data);
+    newStatus.value = undefined;
+  } catch (error) {
+    notification.error({
+      title: (error as ConnectError).message,
+    });
+  } finally {
+    isChangeStatusLoading.value = false;
+  }
+};
+
 const gridColumns = computed(
   () => `repeat(${chat.value?.gateways.length > 0 ? 3 : 2}, auto) 1fr auto`
 );
@@ -427,16 +484,18 @@ const onlyMainInfo = computed(() => appStore.isMobile || appStore.isTablet);
 
   @media only screen and (max-width: 900px) {
     display: flex;
-    flex-direction: column;
     align-items: start;
     gap: 0px;
+    flex-wrap: wrap;
   }
 }
 
 .main__info {
   @media only screen and (max-width: 900px) {
     display: grid !important;
-    grid-template-columns: 40px 50px 25px;
+    width: calc(100% - 60px);
+    margin-left: 10px;
+    grid-template-columns: 40px auto 25px;
   }
 }
 

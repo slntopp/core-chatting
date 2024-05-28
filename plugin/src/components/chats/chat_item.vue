@@ -27,7 +27,11 @@
       </span>
 
       <div v-if="!hideMessage" class="preview">
-        <n-space align="center" :wrap-item="false" style="gap: 5px">
+        <n-space
+          align="center"
+          :wrap-item="false"
+          style="gap: 5px; width: 100%"
+        >
           <n-text depth="3" class="sub" @click.stop="openUser(chat.owner)">
             {{ store.users.get(chat.owner)?.title }}
           </n-text>
@@ -278,7 +282,7 @@ async function setColumns() {
 const previewColumns = computed(() =>
   appStore.displayMode === "full"
     ? `1fr ${responsibleColsWidth.value} ${departmentColsWidth.value} 210px`
-    : "1fr auto auto"
+    : ""
 );
 
 const subDecoration = computed(() => (window.top ? "underline" : "none"));
@@ -361,7 +365,7 @@ function openChat(user: string) {
       width: fit-content;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: calc(100% - 25px);
+      max-width: calc(100% - 50px);
 
       &:hover {
         text-decoration: v-bind(subDecoration);
@@ -376,8 +380,7 @@ function openChat(user: string) {
       width: fit-content;
       overflow: hidden;
       text-overflow: ellipsis;
-      min-width: 225px;
-      max-width: calc(100% - 50px);
+      max-width: calc(100% - 75px);
     }
 
     .responsible {

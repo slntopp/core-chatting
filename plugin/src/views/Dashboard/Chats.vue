@@ -113,7 +113,7 @@
             "
           />
           <n-button
-            :disabled="!newStatus"
+            :disabled="isNaN(newStatus) || newStatus === null"
             @click="changeChatsStatus"
             type="warning"
             ghost
@@ -695,6 +695,7 @@ const changeChatsStatus = async () => {
     notification.success({
       title: "Chats statuses successfully changed",
     });
+    newStatus.value = undefined;
   } catch (error: any) {
     notification.error({
       title: error.response?.data.message ?? error.message ?? error,

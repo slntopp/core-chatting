@@ -136,7 +136,12 @@
               style="width: 75%"
               :options="statusesOptions"
             ></n-select>
-            <n-button ghost type="warning" @click="changeStatus" :loading="isChangeStatusLoading"
+            <n-button
+              :disabled="isNaN(newStatus) || newStatus === null"
+              ghost
+              type="warning"
+              @click="changeStatus"
+              :loading="isChangeStatusLoading"
               >Change</n-button
             >
           </div>
@@ -453,6 +458,7 @@ const changeStatus = async () => {
     await store.change_status(data);
 
     store.chats.set(chat.value.uuid, data);
+    newStatus.value = undefined;
   } catch (error) {
     notification.error({
       title: (error as ConnectError).message,

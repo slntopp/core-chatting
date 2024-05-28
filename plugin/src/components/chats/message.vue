@@ -1,6 +1,6 @@
 <template>
   <render :settingsAvatar="true" messagePlacement="left" @contextmenu="show_dropdown">
-    <span v-html="content()"></span>
+    <span :id="messageContentId"  v-html="content()"></span>
   </render>
 
   <n-modal
@@ -73,6 +73,8 @@ const store = useCcStore()
 const sender = computed(() =>
   store.users.get(message.value.sender)?.title ?? 'Unknown'
 )
+
+const messageContentId=computed(()=>`message_content-${message.value.uuid}`)
 
 const x = ref(0)
 const y = ref(0)
@@ -419,6 +421,15 @@ function addImageClick () {
   })
 }
 
+function addLinkTarget() {
+  const contentElement = document.getElementById(messageContentId.value);
+  if (contentElement) {
+    contentElement.querySelectorAll("a").forEach((link) => {
+      link.target='_blanc'
+    });
+  }
+}
+
 async function downloadFile(name: string, link: string) {
   const element = document.createElement('a')
 
@@ -431,7 +442,10 @@ async function downloadFile(name: string, link: string) {
   element.click()
 }
 
-onMounted(addImageClick)
+onMounted(()=>{
+  addImageClick();
+  addLinkTarget();
+})
 </script>
 
 <style>

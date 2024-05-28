@@ -126,12 +126,30 @@
       <n-divider vertical style="height: auto; margin: 0 8px" />
       <chat-dates :chat="chat" />
     </n-space>
-    <n-collapse v-else>
-      <n-collapse-item title="Dates">
-        <n-divider vertical style="height: auto; margin: 0 8px" />
-        <chat-dates :chat="chat" />
-      </n-collapse-item>
-    </n-collapse>
+
+    <template v-else>
+      <n-collapse>
+        <n-collapse-item :title="`Status: ${Status[chat.status]}`">
+          <div style="display: flex; gap: 5px; margin-bottom: 10px">
+            <n-select
+              v-model:value="newStatus"
+              style="width: 75%"
+              :options="statusesOptions"
+            ></n-select>
+            <n-button @click="changeStatus" :loading="isChangeStatusLoading"
+              >Change</n-button
+            >
+          </div>
+        </n-collapse-item>
+      </n-collapse>
+
+      <n-collapse>
+        <n-collapse-item title="Dates">
+          <n-divider vertical style="height: auto; margin: 0 8px" />
+          <chat-dates :chat="chat" />
+        </n-collapse-item>
+      </n-collapse>
+    </template>
 
     <n-space
       v-if="!onlyMainInfo"
@@ -223,7 +241,7 @@ import {
   NCollapseItem,
 } from "naive-ui";
 import { ConnectError } from "@connectrpc/connect";
-import { Chat, User } from "../../../connect/cc/cc_pb";
+import { Chat, Status, User } from "../../../connect/cc/cc_pb";
 import { useCcStore } from "../../../store/chatting.ts";
 import { useAppStore } from "../../../store/app";
 import ChatOptions from "../chat_options.vue";
@@ -275,6 +293,8 @@ const isAddDialog = ref<boolean>(false);
 const chatWithNewMembers = ref<Chat>();
 const availableMembersOptions = ref<SelectOption[]>([]);
 const isAddSaveLoading = ref<boolean>(false);
+const newStatus = ref();
+const isChangeStatusLoading = ref(false);
 
 const members = computed(() => {
   const uuids = new Set([
@@ -292,6 +312,20 @@ const members = computed(() => {
   return result;
 });
 const me = computed(() => store.me);
+
+const statusesOptions = computed(() =>
+  Object.keys(Status)
+    .filter((item) => {
+      return isNaN(Number(item));
+    })
+    .map((status) => ({
+      label: status,
+      //@ts-ignore
+      disabled: Status[status] == chat.value.status,
+      //@ts-ignore
+      value: Status[status],
+    }))
+);
 
 fetch_defaults();
 
@@ -408,6 +442,23 @@ const saveMembers = async () => {
     isAddDialog.value = false;
   } finally {
     isAddSaveLoading.value = false;
+  }
+};
+
+const changeStatus = async () => {
+  isChangeStatusLoading.value = true;
+
+  try {
+    const data = { ...chat.value, status: newStatus.value } as Chat;
+    await store.change_status(data);
+
+    store.chats.set(chat.value.uuid, data);
+  } catch (error) {
+    notification.error({
+      title: (error as ConnectError).message,
+    });
+  } finally {
+    isChangeStatusLoading.value = false;
   }
 };
 

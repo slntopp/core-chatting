@@ -136,7 +136,7 @@
               style="width: 75%"
               :options="statusesOptions"
             ></n-select>
-            <n-button @click="changeStatus" :loading="isChangeStatusLoading"
+            <n-button ghost type="warning" @click="changeStatus" :loading="isChangeStatusLoading"
               >Change</n-button
             >
           </div>

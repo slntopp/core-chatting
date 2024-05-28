@@ -487,7 +487,7 @@ const onlyMainInfo = computed(() => appStore.isMobile || appStore.isTablet);
 .main__info {
   @media only screen and (max-width: 900px) {
     display: grid !important;
-    grid-template-columns: 40px 50px 25px;
+    grid-template-columns: 40px auto 25px;
   }
 }
 

@@ -52,22 +52,6 @@
         </n-tooltip>
       </template>
 
-      <n-collapse v-else>
-        <n-collapse-item title="Responsible">
-          <n-select
-            filterable
-            ref="responsibleSelect"
-            label-field="title"
-            value-field="uuid"
-            placeholder="Responsible"
-            style="min-width: 200px; width: 100%"
-            :value="chat.responsible"
-            :options="adminsItems"
-            @update:value="changeResponsible"
-          />
-        </n-collapse-item>
-      </n-collapse>
-
       <template v-if="!appStore.isMobile">
         <n-divider vertical />
         <n-tooltip>
@@ -128,6 +112,22 @@
     </n-space>
 
     <template v-else>
+      <n-collapse>
+        <n-collapse-item title="Responsible">
+          <n-select
+            filterable
+            ref="responsibleSelect"
+            label-field="title"
+            value-field="uuid"
+            placeholder="Responsible"
+            style="min-width: 200px; width: 100%"
+            :value="chat.responsible"
+            :options="adminsItems"
+            @update:value="changeResponsible"
+          />
+        </n-collapse-item>
+      </n-collapse>
+
       <n-collapse>
         <n-collapse-item :title="`Status: ${Status[chat.status]}`">
           <div style="display: flex; gap: 5px; margin-bottom: 10px">
@@ -484,15 +484,17 @@ const onlyMainInfo = computed(() => appStore.isMobile || appStore.isTablet);
 
   @media only screen and (max-width: 900px) {
     display: flex;
-    flex-direction: column;
     align-items: start;
     gap: 0px;
+    flex-wrap: wrap;
   }
 }
 
 .main__info {
   @media only screen and (max-width: 900px) {
     display: grid !important;
+    width: calc(100% - 60px);
+    margin-left: 10px;
     grid-template-columns: 40px auto 25px;
   }
 }

@@ -244,7 +244,11 @@ function handle_select(
       break;
     case "download":
       if (!target.value) return;
-      downloadFile(target.value.alt, target.value.src);
+      downloadFile(
+        target.value.alt,
+        attachFiles.value.find((file) => target.value?.alt === file.name)
+          ?.url || target.value.src
+      );
       break;
     default:
       emit(key);

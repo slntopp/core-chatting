@@ -1,6 +1,10 @@
 <template>
-  <render :settingsAvatar="true" messagePlacement="left" @contextmenu="show_dropdown">
-    <span :id="messageContentId"  v-html="content()"></span>
+  <render
+    :settingsAvatar="true"
+    messagePlacement="left"
+    @contextmenu="show_dropdown"
+  >
+    <span :id="messageContentId" v-html="content()"></span>
   </render>
 
   <n-modal
@@ -9,7 +13,7 @@
     style="max-width: 600px"
     :title="currentImage.alt"
   >
-    <img style="width: 100%" :alt="currentImage.alt" :src="currentImage.src">
+    <img style="width: 100%" :alt="currentImage.alt" :src="currentImage.src" />
   </n-modal>
 
   <n-dropdown
@@ -25,427 +29,544 @@
 </template>
 
 <script setup lang="ts">
-import {Component, computed, defineAsyncComponent, h, nextTick, onMounted, reactive, ref, toRefs} from 'vue';
-import {NButton, NDivider, NDropdown, NH2, NIcon, NModal, NSpace, NText, NTooltip, useThemeVars} from 'naive-ui'
+import {
+  Component,
+  computed,
+  defineAsyncComponent,
+  h,
+  nextTick,
+  onMounted,
+  reactive,
+  ref,
+  toRefs,
+} from "vue";
+import {
+  NButton,
+  NDivider,
+  NDropdown,
+  NH2,
+  NIcon,
+  NModal,
+  NSpace,
+  NText,
+  NTooltip,
+  useThemeVars,
+} from "naive-ui";
 
-import {Kind, Message, Role, User} from '../../connect/cc/cc_pb'
-import {useCcStore} from '../../store/chatting';
+import { Kind, Message, Role, User } from "../../connect/cc/cc_pb";
+import { useCcStore } from "../../store/chatting";
 
-import hljs from 'highlight.js';
-import javascript from 'highlight.js/lib/languages/javascript'
-import typescript from 'highlight.js/lib/languages/typescript'
-import css from 'highlight.js/lib/languages/css'
-import xml from 'highlight.js/lib/languages/xml'
-import json from 'highlight.js/lib/languages/json'
-import markdown from 'highlight.js/lib/languages/markdown'
+import hljs from "highlight.js";
+import javascript from "highlight.js/lib/languages/javascript";
+import typescript from "highlight.js/lib/languages/typescript";
+import css from "highlight.js/lib/languages/css";
+import xml from "highlight.js/lib/languages/xml";
+import json from "highlight.js/lib/languages/json";
+import markdown from "highlight.js/lib/languages/markdown";
 
-import {marked, Renderer} from 'marked'
-import {mangle} from 'marked-mangle'
-import DOMPurify from 'dompurify'
+import { marked, Renderer } from "marked";
+import { mangle } from "marked-mangle";
+import DOMPurify from "dompurify";
 
 import UserAvatar from "../ui/user_avatar.vue";
 import UserItem from "../users/user_item.vue";
-import {addToClipboard, getRelativeTime} from '../../functions.ts';
+import { addToClipboard, getRelativeTime } from "../../functions.ts";
 
 interface MessageProps {
-  message: Message
+  message: Message;
 }
 
-const CogIcon = defineAsyncComponent(() => import('@vicons/ionicons5/CogOutline'));
-const DownloadIcon = defineAsyncComponent(() => import('@vicons/ionicons5/DownloadOutline'));
-const ClipboardOutline = defineAsyncComponent(() => import('@vicons/ionicons5/ClipboardOutline'));
-const PencilOutline = defineAsyncComponent(() => import('@vicons/ionicons5/PencilOutline'));
-const TrashOutline = defineAsyncComponent(() => import('@vicons/ionicons5/TrashOutline'));
-const EyeOutline = defineAsyncComponent(() => import('@vicons/ionicons5/EyeOutline'));
-const CopyOutline = defineAsyncComponent(() => import('@vicons/ionicons5/CopyOutline'));
-const ReviewOutline = defineAsyncComponent(() => import('../../assets/icons/ReviewOutline.svg'));
+const CogIcon = defineAsyncComponent(
+  () => import("@vicons/ionicons5/CogOutline")
+);
+const DownloadIcon = defineAsyncComponent(
+  () => import("@vicons/ionicons5/DownloadOutline")
+);
+const ClipboardOutline = defineAsyncComponent(
+  () => import("@vicons/ionicons5/ClipboardOutline")
+);
+const PencilOutline = defineAsyncComponent(
+  () => import("@vicons/ionicons5/PencilOutline")
+);
+const TrashOutline = defineAsyncComponent(
+  () => import("@vicons/ionicons5/TrashOutline")
+);
+const EyeOutline = defineAsyncComponent(
+  () => import("@vicons/ionicons5/EyeOutline")
+);
+const CopyOutline = defineAsyncComponent(
+  () => import("@vicons/ionicons5/CopyOutline")
+);
+const ReviewOutline = defineAsyncComponent(
+  () => import("../../assets/icons/ReviewOutline.svg")
+);
 
+const props = defineProps<MessageProps>();
+const { message } = toRefs(props);
 
-const props = defineProps<MessageProps>()
-const {message} = toRefs(props)
+const emit = defineEmits(["approve", "convert", "edit", "delete"]);
 
-const emit = defineEmits(['approve', 'convert', 'edit', 'delete'])
+const theme = useThemeVars();
 
-const theme = useThemeVars()
+const store = useCcStore();
 
-const store = useCcStore()
+const sender = computed(
+  () => store.users.get(message.value.sender)?.title ?? "Unknown"
+);
 
-const sender = computed(() =>
-  store.users.get(message.value.sender)?.title ?? 'Unknown'
-)
+const messageContentId = computed(
+  () => `message_content-${message.value.uuid}`
+);
 
-const messageContentId=computed(()=>`message_content-${message.value.uuid}`)
-
-const x = ref(0)
-const y = ref(0)
-const target = ref<HTMLImageElement>()
-const show = ref(false)
+const x = ref(0);
+const y = ref(0);
+const target = ref<HTMLImageElement>();
+const show = ref(false);
 const options = computed(() => {
+  let result = [];
 
-  let result = []
-
-  const label = (text: string) => () => h('b', {}, text)
-  const icon = (component: any) => () => h(NIcon, {size: 24, component: component})
+  const label = (text: string) => () => h("b", {}, text);
+  const icon = (component: any) => () =>
+    h(NIcon, { size: 24, component: component });
   if (store.chats.get(message.value.chat!)?.role == Role.ADMIN) {
-    result.push({
-      label: label(message.value.underReview ? 'Approve' : 'Review'), key: 'approve',
-      icon: icon(ReviewOutline)
-    }, {
-      label: label(message.value.kind == Kind.ADMIN_ONLY ? 'Convert to Message' : 'Convert to Admin Note'),
-      key: 'convert', icon: icon(ClipboardOutline)
-    }, {
-      type: 'divider', key: 'd-pre-delete'
-    })
+    result.push(
+      {
+        label: label(message.value.underReview ? "Approve" : "Review"),
+        key: "approve",
+        icon: icon(ReviewOutline),
+      },
+      {
+        label: label(
+          message.value.kind == Kind.ADMIN_ONLY
+            ? "Convert to Message"
+            : "Convert to Admin Note"
+        ),
+        key: "convert",
+        icon: icon(ClipboardOutline),
+      },
+      {
+        type: "divider",
+        key: "d-pre-delete",
+      }
+    );
   }
 
-  if (store.chats.get(message.value.chat!)?.role == Role.ADMIN || message.value.sender == store.me.uuid) {
-    result.unshift({
-      label: label('Edit'), key: 'edit',
-      icon: icon(PencilOutline)
-    }, {
-      type: 'divider', key: 'd-post-edit'
-    })
+  if (
+    store.chats.get(message.value.chat!)?.role == Role.ADMIN ||
+    message.value.sender == store.me.uuid
+  ) {
+    result.unshift(
+      {
+        label: label("Edit"),
+        key: "edit",
+        icon: icon(PencilOutline),
+      },
+      {
+        type: "divider",
+        key: "d-post-edit",
+      }
+    );
     result.push({
-      label: label('Delete'), key: 'delete',
-      icon: icon(TrashOutline)
-    })
+      label: label("Delete"),
+      key: "delete",
+      icon: icon(TrashOutline),
+    });
   }
 
-  if (target.value?.tagName.toLowerCase() === 'img') {
+  if (target.value?.tagName.toLowerCase() === "img") {
     result.push({
-      label: label('Download'),
+      label: label("Download"),
       icon: icon(DownloadIcon),
-      key: 'download'
-    })
+      key: "download",
+    });
   }
 
   result.push({
-    label: label('Readers'),
+    label: label("Readers"),
     icon: icon(EyeOutline),
-    key: 'readers',
-    children: message.value!.readers.map(r => ({key: r,type: 'render', render:()=>h(UserItem,{user: store.users.get(r) as User,actions:false})}))
-  })
+    key: "readers",
+    children: message.value!.readers.map((r) => ({
+      key: r,
+      type: "render",
+      render: () =>
+        h(UserItem, { user: store.users.get(r) as User, actions: false }),
+    })),
+  });
 
-  return result
-})
+  return result;
+});
 
-function handle_select(key: "approve" | "convert" | "edit" | "delete" | "download") {
-  console.log(key)
-  show.value = false
+function handle_select(
+  key: "approve" | "convert" | "edit" | "delete" | "download"
+) {
+  console.log(key);
+  show.value = false;
 
   switch (key) {
-    case 'approve':
-      emit('approve', message.value.underReview)
-      break
-    case 'convert':
-      emit('convert', message.value.kind == Kind.ADMIN_ONLY ? Kind.DEFAULT : Kind.ADMIN_ONLY)
-      break
-    case 'download':
-      if (!target.value) return
-      downloadFile(target.value.alt, target.value.src)
-      break
+    case "approve":
+      emit("approve", message.value.underReview);
+      break;
+    case "convert":
+      emit(
+        "convert",
+        message.value.kind == Kind.ADMIN_ONLY ? Kind.DEFAULT : Kind.ADMIN_ONLY
+      );
+      break;
+    case "download":
+      if (!target.value) return;
+      downloadFile(target.value.alt, target.value.src);
+      break;
     default:
-      emit(key)
+      emit(key);
   }
 }
 
 function show_dropdown(e: MouseEvent) {
-  e.preventDefault()
-  show.value = false
+  e.preventDefault();
+  show.value = false;
 
   nextTick(() => {
-    show.value = true
-    target.value = (e.target as HTMLImageElement)
-    x.value = e.clientX
-    y.value = e.clientY
-  })
+    show.value = true;
+    target.value = e.target as HTMLImageElement;
+    x.value = e.clientX;
+    y.value = e.clientY;
+  });
 }
-
 
 function avatar() {
   const elements = [
-    h(UserAvatar, {round: true, size: 64, avatar: sender.value})
-  ]
+    h(UserAvatar, { round: true, size: 64, avatar: sender.value }),
+  ];
 
   if (message.value.kind == Kind.ADMIN_ONLY) {
-    elements.push(h(NIcon, {
-      color: theme.value.warningColor,
-      size: 24,
-      component: ClipboardOutline,
-    }))
+    elements.push(
+      h(NIcon, {
+        color: theme.value.warningColor,
+        size: 24,
+        component: ClipboardOutline,
+      })
+    );
   }
 
-  return h(NSpace, {vertical: true, justify: 'start', align: 'center'}, () => elements)
+  return h(
+    NSpace,
+    { vertical: true, justify: "start", align: "center" },
+    () => elements
+  );
 }
 
 const container_style = computed(() => {
-  const is_sender = message.value.sender == store.me.uuid
+  const is_sender = message.value.sender == store.me.uuid;
   let style = {
-    padding: '12px',
+    padding: "12px",
     borderRadius: theme.value.borderRadius,
-    maxWidth: 'calc(100% - 45px)',
+    maxWidth: "calc(100% - 45px)",
     border: `1px solid ${theme.value.borderColor}`,
-    backgroundColor: (is_sender) ? 'var(--n-color-hover)' : null
-  }
+    backgroundColor: is_sender ? "var(--n-color-hover)" : null,
+  };
 
   if (message.value.underReview)
-    style = {...style, backgroundColor: theme.value.infoColor + '40', border: `1px solid ${theme.value.infoColor}`}
+    style = {
+      ...style,
+      backgroundColor: theme.value.infoColor + "40",
+      border: `1px solid ${theme.value.infoColor}`,
+    };
   else if (message.value.kind == Kind.ADMIN_ONLY)
     style = {
       ...style,
-      backgroundColor: theme.value.warningColor + '40',
-      border: `1px solid ${theme.value.warningColor}`
-    }
+      backgroundColor: theme.value.warningColor + "40",
+      border: `1px solid ${theme.value.warningColor}`,
+    };
 
-  return style
-})
+  return style;
+});
 
 {
-  hljs.registerLanguage('javascript', javascript)
-  hljs.registerLanguage('typescript', typescript)
-  hljs.registerLanguage('css', css)
-  hljs.registerLanguage('xml', xml)
-  hljs.registerLanguage('json', json)
-  hljs.registerLanguage('markdown', markdown)
+  hljs.registerLanguage("javascript", javascript);
+  hljs.registerLanguage("typescript", typescript);
+  hljs.registerLanguage("css", css);
+  hljs.registerLanguage("xml", xml);
+  hljs.registerLanguage("json", json);
+  hljs.registerLanguage("markdown", markdown);
 }
 
 marked.use({
-  async: false, gfm: true,
-  breaks: true, mangle: false,
-  headerIds: false, headerPrefix: '',
-})
+  async: false,
+  gfm: true,
+  breaks: true,
+  mangle: false,
+  headerIds: false,
+  headerPrefix: "",
+});
 // @ts-ignore
-marked.use(mangle)
+marked.use(mangle);
 
-const renderer = new Renderer()
+const renderer = new Renderer();
 renderer.code = (code, language) => {
-  if (!language) language = 'plaintext'
+  if (!language) language = "plaintext";
 
-  return `<div class="code"><code>${hljs.highlight(code, {language}).value}</code></div>`
-}
-marked.setOptions({renderer})
+  return `<div class="code"><code>${
+    hljs.highlight(code, { language }).value
+  }</code></div>`;
+};
+marked.setOptions({ renderer });
 
 function content() {
-  const parsed = marked.parse(message.value.content)
-  const sanitized = DOMPurify.sanitize(parsed)
+  const parsed = marked.parse(message.value.content);
+  const sanitized = DOMPurify.sanitize(parsed);
 
-  return sanitized.replace(/^<p>/, '').replace(/<\/p>$/, '')
+  return sanitized.replace(/^<p>/, "").replace(/<\/p>$/, "");
 }
 
-const now = ref(Date.now())
-setInterval(() => now.value = Date.now(), 1000)
+const now = ref(Date.now());
+setInterval(() => (now.value = Date.now()), 1000);
 
 function timestamp() {
-
-  let result = ''
+  let result = "";
   if (message.value.edited) {
-    result = 'edited, '
+    result = "edited, ";
   }
 
-  result += getRelativeTime(Number(message.value.edited ? message.value.edited : message.value.sent), now.value)
+  result += getRelativeTime(
+    Number(message.value.edited ? message.value.edited : message.value.sent),
+    now.value
+  );
 
   let tooltip = [
-    h(() =>
-      `Sent: ${new Date(Number(message.value.sent)).toLocaleString()}`
-    )
-  ]
+    h(() => `Sent: ${new Date(Number(message.value.sent)).toLocaleString()}`),
+  ];
 
   if (message.value.edited) {
     tooltip.push(
-      h(NDivider, { style: { margin: '5px 0' } }),
-      h(() =>
-        `Edited: ${new Date(Number(message.value.edited)).toLocaleString()}`
+      h(NDivider, { style: { margin: "5px 0" } }),
+      h(
+        () =>
+          `Edited: ${new Date(Number(message.value.edited)).toLocaleString()}`
       )
-    )
+    );
   }
 
-  return h(NTooltip, {
-    placement: 'top'
-  }, {
-    trigger: () => h(NText, {depth: 3}, () => result),
-    default: () => tooltip
-  })
+  return h(
+    NTooltip,
+    {
+      placement: "top",
+    },
+    {
+      trigger: () => h(NText, { depth: 3 }, () => result),
+      default: () => tooltip,
+    }
+  );
 }
 
 function copyMessage() {
-  let tooltip = [
-    h(() =>
-      `Copy message`
-    )
-  ]
+  let tooltip = [h(() => `Copy message`)];
 
-  const copyIcon = () => h(NIcon, { size: 18, component: CopyOutline })
+  const copyIcon = () => h(NIcon, { size: 18, component: CopyOutline });
 
-
-  return h(NTooltip, {
-    placement: 'right'
-  }, {
-    trigger: () => h(NButton, {
-      circle: true, quaternary: true, onClick: () => addToClipboard(message.value.content.replace(
-        /<div class="chat__files">[\s\S]{1,}<\/div>$/g,
-        ""
-      ))
-    }, () => copyIcon()),
-    default: () => tooltip
-  })
+  return h(
+    NTooltip,
+    {
+      placement: "right",
+    },
+    {
+      trigger: () =>
+        h(
+          NButton,
+          {
+            circle: true,
+            quaternary: true,
+            onClick: () =>
+              addToClipboard(
+                message.value.content.replace(
+                  /<div class="chat__files">[\s\S]{1,}<\/div>$/g,
+                  ""
+                )
+              ),
+          },
+          () => copyIcon()
+        ),
+      default: () => tooltip,
+    }
+  );
 }
 
 const subStyle = computed(() =>
-  (window.top) ? {
-    decoration: 'underline',
-    cursor: 'pointer'
-  } : {
-    decoration: 'none',
-    cursor: 'default'
-  }
-)
+  window.top
+    ? {
+        decoration: "underline",
+        cursor: "pointer",
+      }
+    : {
+        decoration: "none",
+        cursor: "default",
+      }
+);
 
 interface RenderProps {
-  messagePlacement?: 'left' | 'right' | 'auto'
-  settingsAvatar?: boolean
+  messagePlacement?: "left" | "right" | "auto";
+  settingsAvatar?: boolean;
 }
 
 function render(props: RenderProps, { slots }: any) {
-  let is_sender: boolean
+  let is_sender: boolean;
 
   switch (props.messagePlacement) {
-    case 'left':
-      is_sender = false
-      break
-    case 'right':
-      is_sender = true
-      break
-    case 'auto':
+    case "left":
+      is_sender = false;
+      break;
+    case "right":
+      is_sender = true;
+      break;
+    case "auto":
     default:
-      is_sender = message.value.sender === store.me.uuid
+      is_sender = message.value.sender === store.me.uuid;
   }
   let title = [
     h(
-        NH2,
-        {
-          style: "margin: 0",
-        },
-        () => h(
+      NH2,
+      {
+        style: "margin: 0",
+      },
+      () =>
+        h(
           NText,
           {
-            class: 'sub',
+            class: "sub",
             onClick() {
-              const uuid = message.value.sender
+              const uuid = message.value.sender;
 
-              window.top?.postMessage({ type: 'open-user', value: { uuid } }, '*')
-            }
+              window.top?.postMessage(
+                { type: "open-user", value: { uuid } },
+                "*"
+              );
+            },
           },
           () => sender.value
         )
     ),
     timestamp(),
-    copyMessage()
-  ]
+    copyMessage(),
+  ];
 
   if (message.value.underReview) {
-    title.push(h(NButton, {
-      size: 'small', type: 'info',
-      ghost: true, round: true,
-      onClick: () => emit('approve', true)
-    }, () => 'Approve'))
+    title.push(
+      h(
+        NButton,
+        {
+          size: "small",
+          type: "info",
+          ghost: true,
+          round: true,
+          onClick: () => emit("approve", true),
+        },
+        () => "Approve"
+      )
+    );
   }
 
   if (is_sender) {
-    title = title.reverse()
+    title = title.reverse();
   }
 
   let elements = [
-    (props.settingsAvatar)
+    props.settingsAvatar
       ? h(UserAvatar as Component, {
-        id: 'chat-message',
-        style: 'cursor: pointer',
-        round: true,
-        size: 50,
-        iconSize: 28,
-        onClick: (e: MouseEvent) => {
-          let avatar = (e.target as HTMLElement)
+          id: "chat-message",
+          style: "cursor: pointer",
+          round: true,
+          size: 50,
+          iconSize: 28,
+          onClick: (e: MouseEvent) => {
+            let avatar = e.target as HTMLElement;
 
-          if (avatar.id !== 'chat-message') {
-            avatar = avatar.closest('#chat-message') as HTMLElement
-          }
-          const isOpen = JSON.parse(avatar.dataset.open ?? 'false')
-          
-          if (show.value || isOpen) {
-            show.value = false
-            delete avatar.dataset.open
-          } else {
-            show_dropdown(e)
-            avatar.dataset.open = 'true'
-          }
-        },
-        avatar: CogIcon
-      })
+            if (avatar.id !== "chat-message") {
+              avatar = avatar.closest("#chat-message") as HTMLElement;
+            }
+            const isOpen = JSON.parse(avatar.dataset.open ?? "false");
+
+            if (show.value || isOpen) {
+              show.value = false;
+              delete avatar.dataset.open;
+            } else {
+              show_dropdown(e);
+              avatar.dataset.open = "true";
+            }
+          },
+          avatar: CogIcon,
+        })
       : avatar(),
-    h(NSpace,
+    h(
+      NSpace,
       {
         vertical: true,
         align: is_sender ? "end" : "start",
       },
       () => [
-        h(NSpace, {align: 'center'}, () => title),
+        h(NSpace, { align: "center" }, () => title),
         (slots as any).default(),
       ]
     ),
-  ]
+  ];
 
   if (is_sender) {
-    elements = elements.reverse()
+    elements = elements.reverse();
   }
 
-  return h('div', { style: {
-    display: 'grid',
-    gridTemplateColumns: (is_sender) ? '1fr auto' : 'auto 1fr',
-    gap: '15px',
-    ...container_style.value
-  } }, elements);
+  return h(
+    "div",
+    {
+      style: {
+        display: "grid",
+        gridTemplateColumns: is_sender ? "1fr auto" : "auto 1fr",
+        gap: "15px",
+        ...container_style.value,
+      },
+    },
+    elements
+  );
 }
 
-const currentImage = reactive({ src: '', alt: '', visible: false })
-function addImageClick () {
-  const files = document.querySelectorAll('.chat__files img')
-  
-  files.forEach((file) => {
-    file.addEventListener('click', (e) => {
-      const image = (e.target as HTMLImageElement)
-      if (!message.value.content.includes(image.src)) return
+const currentImage = reactive({ src: "", alt: "", visible: false });
+function addImageClick() {
+  const files = document.querySelectorAll(".chat__files img");
 
-      currentImage.src = image?.src
-      currentImage.alt = image?.alt
-      currentImage.visible = true
-    })
-  })
+  files.forEach((file) => {
+    file.addEventListener("click", (e) => {
+      const image = e.target as HTMLImageElement;
+      if (!message.value.content.includes(image.src)) return;
+
+      currentImage.src = image?.src;
+      currentImage.alt = image?.alt;
+      currentImage.visible = true;
+    });
+  });
 }
 
 function addLinkTarget() {
   const contentElement = document.getElementById(messageContentId.value);
   if (contentElement) {
     contentElement.querySelectorAll("a").forEach((link) => {
-      link.target='_blanc'
+      link.target = "_blanc";
     });
   }
 }
 
 async function downloadFile(name: string, link: string) {
-  const element = document.createElement('a')
+  const element = document.createElement("a");
 
-  const response = await fetch(link)
-  const blob = await response.blob()
-  const url = URL.createObjectURL(blob)
+  const response = await fetch(link);
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
 
-  element.setAttribute('href', url)
-  element.setAttribute('download', name)
-  element.click()
+  element.setAttribute("href", url);
+  element.setAttribute("download", name);
+  element.click();
 }
 
-onMounted(()=>{
+onMounted(() => {
   addImageClick();
   addLinkTarget();
-})
+});
 </script>
 
 <style>
@@ -462,11 +583,11 @@ div.code {
 }
 
 .sub {
-  cursor: v-bind('subStyle.cursor');
+  cursor: v-bind("subStyle.cursor");
 }
 
 .sub:hover {
-  text-decoration: v-bind('subStyle.decoration');
+  text-decoration: v-bind("subStyle.decoration");
 }
 
 .chat__files {

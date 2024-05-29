@@ -5,6 +5,30 @@
     @contextmenu="show_dropdown"
   >
     <span :id="messageContentId" v-html="content()"></span>
+    <div v-if="attachFiles.length" class="chat__files">
+      <div
+        @click="() => onFileClick(file)"
+        class="files__preview"
+        v-for="file in attachFiles"
+      >
+        <n-tooltip trigger="hover">
+          <template #trigger>
+            <img
+              v-if="file.type === 'image'"
+              :src="file.url"
+              :alt="file.name"
+            />
+            <img
+              class="document-icon"
+              v-else-if="file.type === 'document'"
+              src="/icons/file.svg"
+              :alt="file.name"
+            />
+          </template>
+          {{ file.name }}
+        </n-tooltip>
+      </div>
+    </div>
   </render>
 
   <n-modal
@@ -74,6 +98,12 @@ import { addToClipboard, getRelativeTime } from "../../functions.ts";
 
 interface MessageProps {
   message: Message;
+}
+
+interface AttachFile {
+  type: "image" | "document";
+  name: string;
+  url: string;
 }
 
 const CogIcon = defineAsyncComponent(
@@ -318,6 +348,26 @@ function content() {
   return sanitized.replace(/^<p>/, "").replace(/<\/p>$/, "");
 }
 
+const attachFiles = computed<AttachFile[]>(() => {
+  const attachments = (message.value.toJson() as any).meta?.attachments as any;
+
+  if (!attachments || !attachments.length) {
+    return [];
+  }
+
+  const files: AttachFile[] = attachments?.map((file: any) => {
+    return {
+      url: file.url,
+      name: file.name,
+      type: !!file.name.match(/\.(jpg|jpeg|png|gif|svg)$/i)
+        ? "image"
+        : "document",
+    };
+  });
+
+  return files;
+});
+
 const now = ref(Date.now());
 setInterval(() => (now.value = Date.now()), 1000);
 
@@ -375,13 +425,7 @@ function copyMessage() {
           {
             circle: true,
             quaternary: true,
-            onClick: () =>
-              addToClipboard(
-                message.value.content.replace(
-                  /<div class="chat__files">[\s\S]{1,}<\/div>$/g,
-                  ""
-                )
-              ),
+            onClick: () => addToClipboard(message.value.content),
           },
           () => copyIcon()
         ),
@@ -527,19 +571,14 @@ function render(props: RenderProps, { slots }: any) {
 }
 
 const currentImage = reactive({ src: "", alt: "", visible: false });
-function addImageClick() {
-  const files = document.querySelectorAll(".chat__files img");
+function onFileClick(file: AttachFile) {
+  if (file.type !== "image") {
+    return;
+  }
 
-  files.forEach((file) => {
-    file.addEventListener("click", (e) => {
-      const image = e.target as HTMLImageElement;
-      if (!message.value.content.includes(image.src)) return;
-
-      currentImage.src = image?.src;
-      currentImage.alt = image?.alt;
-      currentImage.visible = true;
-    });
-  });
+  currentImage.src = file.url;
+  currentImage.alt = file.name;
+  currentImage.visible = true;
 }
 
 function addLinkTarget() {
@@ -564,7 +603,6 @@ async function downloadFile(name: string, link: string) {
 }
 
 onMounted(() => {
-  addImageClick();
   addLinkTarget();
 });
 </script>
@@ -613,5 +651,10 @@ div.code {
   width: auto;
   max-width: 100%;
   object-fit: cover;
+}
+
+.chat__files .files__preview .document-icon {
+  -webkit-filter: invert(0.75); /* safari 6.0 - 9.0 */
+  filter: invert(0.75);
 }
 </style>

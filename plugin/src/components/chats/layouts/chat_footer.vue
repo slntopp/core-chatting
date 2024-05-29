@@ -130,6 +130,7 @@ import {
 import { useCcStore } from "../../../store/chatting";
 import { Chat, Kind, Message, Role } from "../../../connect/cc/cc_pb";
 import { useAppStore } from "../../../store/app";
+import { Value } from "@bufbuild/protobuf";
 
 const SendIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/SendOutline")
@@ -207,17 +208,20 @@ watch(
   () => store.updating,
   (value) => {
     if (value) {
+      console.log(store.current_message);
+
       const message = store.current_message;
 
-      const { content, attachments } = message ?? {};
-      const template = content
-        ?.match(/<div class="chat__files">[\s\S]{1,}<\/div>$/g)
-        ?.at(0);
-      const urls = template?.match(/https:\/\/[\S ]{1,}\.\w{1,}/g) ?? [];
+      const attachments = message.meta?.attachments as any;
+      if (!attachments) {
+        return;
+      }
 
-      urls.forEach((url) => {
-        const [thumbnailUrl, name] = url.split('" alt="');
-        const uuid = attachments?.find((id) => thumbnailUrl.includes(id));
+      attachments.forEach((file: any) => {
+        const { url: thumbnailUrl, name } = file;
+        const uuid = message.attachments?.find((id: string) =>
+          thumbnailUrl.includes(id)
+        );
 
         fileList.value.push({
           thumbnailUrl,
@@ -227,13 +231,6 @@ watch(
           status: "finished",
         });
       });
-
-      if (message?.content) {
-        message.content = message.content.replace(
-          /<div class="chat__files">[\s\S]{1,}<\/div>$/g,
-          ""
-        );
-      }
     } else {
       fileList.value = [];
     }
@@ -272,20 +269,17 @@ function check_mentioned() {
 async function handle_send() {
   if (fileList.value.length > 0) {
     await handle_send_files();
-    const template =
-      fileList.value.length > 0
-        ? `<div class="chat__files">
-          ${fileList.value
-            .map(
-              (file) => `<div class="files__preview">
-            <img src="${file.url}" alt="${file.name}">
-          </div>`
-            )
-            .join("\n")}
-        </div>`
-        : "";
 
-    store.current_message.content += template;
+    store.current_message.meta.attachments = Value.fromJson(
+      fileList.value.map((f) => ({
+        name: f.name,
+        url: f.url!,
+      }))
+    );
+
+    store.current_message.attachments = fileList.value.map(
+      (f) => f.uuid
+    ) as string[];
   }
 
   switch (sendMode.value) {

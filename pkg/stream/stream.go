@@ -105,7 +105,12 @@ start_stream:
 
 	for {
 		select {
-		case msg := <-msgs:
+		case msg, opened := <-msgs:
+			if !opened {
+				log.Warn("Channel was closed")
+				return nil
+			}
+
 			err := proto.Unmarshal(msg.Body, event)
 			if err != nil {
 				log.Error("Failed to unmarshal event", zap.Error(err))

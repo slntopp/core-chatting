@@ -159,7 +159,7 @@ export const useCcStore = defineStore('cc', () => {
     }
 
     async function handle_send(uuid: string, kind = Kind.DEFAULT, review = false) {
-        if (current_message.value.content == '') {
+        if (current_message.value.content == '' && !current_message.value.attachments.length) {
             return
         }
 
@@ -282,7 +282,7 @@ export const useCcStore = defineStore('cc', () => {
                     console.debug('Received Event', event)
                     if (event.type == EventType.PING) continue
                     if (
-                      event.type === +EventType.CHAT_DEPARTMENT_CHANGED ||
+                        event.type === +EventType.CHAT_DEPARTMENT_CHANGED ||
                         event.type === +EventType.CHAT_STATUS_CHANGED
                     ) {
                         chat_handler(event)

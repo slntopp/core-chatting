@@ -74,6 +74,7 @@
 
         <n-space v-else>
           <n-button ghost @click="resetSelectedChats"> Cancel </n-button>
+          <n-button ghost @click="choseAllChats"> All </n-button>
 
           <n-button
             ghost
@@ -845,6 +846,10 @@ function onMouseMove(clientX: number, clientY: number, chatId: string) {
 const resetSelectedChats = () => {
   selectedChats.value = [];
 };
+
+function choseAllChats() {
+  selectedChats.value = viewedChats.value.map(chat=>chat.uuid);
+}
 </script>
 
 <style>

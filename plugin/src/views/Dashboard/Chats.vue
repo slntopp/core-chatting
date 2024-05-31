@@ -389,6 +389,8 @@ async function deleteChats() {
     notification.success({
       title: "Chats successfully deleted",
     });
+
+    resetSelectedChats();
   } catch (error: any) {
     notification.error({
       title: error.response?.data.message ?? error.message ?? error,
@@ -412,6 +414,8 @@ async function mergeChats() {
     notification.success({
       title: "Chats successfully merged",
     });
+
+    resetSelectedChats();
   } catch (error: any) {
     notification.error({
       title: error.response?.data.message ?? error.message ?? error,
@@ -696,6 +700,7 @@ const changeChatsStatus = async () => {
       title: "Chats statuses successfully changed",
     });
     newStatus.value = undefined;
+    resetSelectedChats();
   } catch (error: any) {
     notification.error({
       title: error.response?.data.message ?? error.message ?? error,
@@ -823,8 +828,7 @@ function onMouseMove(clientX: number, clientY: number, chatId: string) {
 
   x.value = clientX;
   y.value = clientY - 10;
-  firstMessage.value =
-    chat?.meta?.firstMessage?.content ?? "";
+  firstMessage.value = chat?.meta?.firstMessage?.content ?? "";
 
   if (firstMessage.value.length > 99) {
     firstMessage.value = `${firstMessage.value.slice(0, 100)}...`;

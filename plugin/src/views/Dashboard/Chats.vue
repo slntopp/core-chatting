@@ -388,12 +388,14 @@ async function deleteChats() {
     await Promise.all(promises);
     notification.success({
       title: "Chats successfully deleted",
+      duration: 5000,
     });
 
     resetSelectedChats();
   } catch (error: any) {
     notification.error({
       title: error.response?.data.message ?? error.message ?? error,
+      duration: 5000,
     });
     console.error(error);
   } finally {
@@ -413,12 +415,14 @@ async function mergeChats() {
     await store.merge_chats(selectedChats.value);
     notification.success({
       title: "Chats successfully merged",
+      duration: 5000,
     });
 
     resetSelectedChats();
   } catch (error: any) {
     notification.error({
       title: error.response?.data.message ?? error.message ?? error,
+      duration: 5000,
     });
     console.error(error);
   } finally {
@@ -698,12 +702,14 @@ const changeChatsStatus = async () => {
 
     notification.success({
       title: "Chats statuses successfully changed",
+      duration: 5000,
     });
     newStatus.value = undefined;
     resetSelectedChats();
   } catch (error: any) {
     notification.error({
       title: error.response?.data.message ?? error.message ?? error,
+      duration: 5000,
     });
   } finally {
     isChangeStatusLoading.value = false;

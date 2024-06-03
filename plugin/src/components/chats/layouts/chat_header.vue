@@ -254,7 +254,11 @@ import UserAvatar from "../../ui/user_avatar.vue";
 import MembersDropdown from "../../users/members_dropdown.vue";
 import useDefaults from "../../../hooks/useDefaults.ts";
 import MemberSelect from "../../users/member_select.vue";
-import { addToClipboard, getImageUrl } from "../../../functions.ts";
+import {
+  addToClipboard,
+  getImageUrl,
+  getStatusItems,
+} from "../../../functions.ts";
 import ChatStatus from "../chat_status.vue";
 import ChatActions from "../chat_actions.vue";
 import ChatDates from "../chat_dates.vue";
@@ -319,17 +323,11 @@ const members = computed(() => {
 const me = computed(() => store.me);
 
 const statusesOptions = computed(() =>
-  Object.keys(Status)
-    .filter((item) => {
-      return isNaN(Number(item));
-    })
-    .map((status) => ({
-      label: status,
-      //@ts-ignore
-      disabled: Status[status] == chat.value.status,
-      //@ts-ignore
-      value: Status[status],
-    }))
+  getStatusItems().map((status) => ({
+    label: status.label,
+    disabled: status.value == chat.value.status,
+    value: status.value,
+  }))
 );
 
 fetch_defaults();

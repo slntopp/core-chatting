@@ -82,6 +82,7 @@ import { useCcStore } from "../../store/chatting";
 import { Chat, Status } from "../../connect/cc/cc_pb";
 import { SelectMixedOption } from "naive-ui/es/select/src/interface";
 import { MetricWithKey } from "../../hooks/useDefaults";
+import { getStatusItems } from "../../functions";
 
 interface ChatsFiltersProps {
   checkedDepartments: string[];
@@ -111,14 +112,7 @@ const metrics = computed<MetricWithKey[]>(
   () => store.metrics as MetricWithKey[]
 );
 
-const statuses = computed(() =>
-  Object.keys(Status)
-    .filter((key) => isFinite(+key))
-    .map((key) => ({
-      label: getStatus(+key),
-      value: +key,
-    }))
-);
+const statuses = computed(() => getStatusItems());
 
 const admins = computed(() => {
   const result: SelectMixedOption[] = [];

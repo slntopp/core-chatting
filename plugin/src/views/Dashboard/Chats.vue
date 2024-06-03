@@ -105,12 +105,7 @@
             v-model:value="newStatus"
             clearable
             placeholder="Status"
-            :options="
-              allStatuses.map((status) => ({
-                label: status,
-                value: Status[status as unknown as number],
-              }))
-            "
+            :options="getStatusItems()"
           />
           <n-button
             :disabled="isNaN(newStatus) || newStatus === null"
@@ -298,7 +293,7 @@ import ChatItem from "../../components/chats/chat_item.vue";
 import ChatsFilters from "../../components/chats/chats_filters.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
 import useDefaults from "../../hooks/useDefaults.ts";
-import { getStatusColor } from "../../functions.ts";
+import { getStatusColor, getStatusItems } from "../../functions.ts";
 
 defineEmits(["hover", "hoverEnd"]);
 
@@ -665,27 +660,22 @@ const filteredChatsByAccount = computed(() =>
   })
 );
 
-const allStatuses = computed(() =>
-  Object.keys(Status).filter((item) => {
-    return isNaN(Number(item));
-  })
-);
-
 const chatsCountByStatus = computed(() => {
   const result: { [key: string]: { status: number; count: number } } = {};
 
-  const allowedStatuses = [0, 1, 8, 5, 4, 7, 3];
+  const allowedStatuses = getStatusItems();
 
   allowedStatuses.forEach(
-    (_, index) => (result[index] = { status: allowedStatuses[index], count: 0 })
+    (_, index) =>
+      (result[index] = { status: allowedStatuses[index].value, count: 0 })
   );
 
   filteredChatsByAccount.value.forEach((chat) => {
-    if (!allowedStatuses.includes(+chat.status)) {
+    if (!allowedStatuses.find((status) => status.value === +chat.status)) {
       return;
     }
     const index = allowedStatuses.findIndex(
-      (status) => status === +chat.status
+      (status) => status.value === +chat.status
     );
     result[index].count++;
   });

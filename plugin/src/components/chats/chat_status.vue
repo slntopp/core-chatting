@@ -67,7 +67,7 @@ import { ConnectError } from "@connectrpc/connect";
 
 import { Chat, Status } from "../../connect/cc/cc_pb";
 import { useCcStore } from "../../store/chatting.ts";
-import { getStatusColor } from "../../functions.ts";
+import { getStatusColor, getStatusItems } from "../../functions.ts";
 import { useAppStore } from "../../store/app.ts";
 
 interface ChatStatusProps {
@@ -91,13 +91,11 @@ const isLoading = ref(false);
 const newStatus = ref();
 
 const statuses = computed(() =>
-  Object.keys(Status)
-    .filter((key) => isFinite(+key))
-    .map((key) => ({
-      label: getStatus(+key).replaceAll("_", " "),
-      disabled: props.chat.status === +key,
-      value: +key,
-    }))
+  getStatusItems().map((status) => ({
+    label: getStatus(+status.value),
+    disabled: props.chat.status === +status.value,
+    value: +status.value,
+  }))
 );
 
 async function updateChat(status: Status) {

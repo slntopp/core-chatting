@@ -1,7 +1,7 @@
 import { NotificationApi } from 'naive-ui'
 import { Status } from './connect/cc/cc_pb'
 
-export function addToClipboard (text: string, notification?: NotificationApi) {
+export function addToClipboard(text: string, notification?: NotificationApi) {
   if (navigator?.clipboard) {
     navigator.clipboard.writeText(text)
       .then(() => {
@@ -52,7 +52,7 @@ export function getRelativeTime(timestamp: number, now: number, isLifetime?: boo
   }
 }
 
-export function getStatusColor (status: Status) {
+export function getStatusColor(status: Status) {
   switch (status) {
     case Status.NEW:
       return '#5084ff'
@@ -72,4 +72,12 @@ export function getStatusColor (status: Status) {
     default:
       return undefined
   }
+}
+
+
+export function getStatusItems() {
+  const allowedStatuses = [0, 1, 8, 5, 4, 7, 3]
+console.log(allowedStatuses.map((status) => ({ label: Status[status].replace("_", " "), value: status })));
+
+  return allowedStatuses.map((status) => ({ label: Status[status].replace("_", " "), value: status }))
 }

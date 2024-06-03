@@ -96,7 +96,7 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, func() error, error) {
 
 	q, err := s.ch.QueueDeclare(
 		"",
-		false,
+		true,
 		false,
 		true,
 		false,

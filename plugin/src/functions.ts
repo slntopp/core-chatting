@@ -77,7 +77,6 @@ export function getStatusColor(status: Status) {
 
 export function getStatusItems() {
   const allowedStatuses = [0, 1, 8, 5, 4, 7, 3]
-console.log(allowedStatuses.map((status) => ({ label: Status[status].replace("_", " "), value: status })));
 
   return allowedStatuses.map((status) => ({ label: Status[status].replace("_", " "), value: status }))
 }

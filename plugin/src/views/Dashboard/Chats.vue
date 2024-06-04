@@ -105,12 +105,7 @@
             v-model:value="newStatus"
             clearable
             placeholder="Status"
-            :options="
-              allStatuses.map((status) => ({
-                label: status,
-                value: Status[status as unknown as number],
-              }))
-            "
+            :options="getStatusItems()"
           />
           <n-button
             :disabled="isNaN(newStatus) || newStatus === null"
@@ -138,6 +133,11 @@
         v-if="isChatPanelOpen"
         :wrap="false"
       >
+        <n-checkbox
+          style="padding-left: 20px"
+          v-model:checked="isAllChatsSelected"
+        />
+
         <n-input
           v-model:value="searchParam"
           type="text"
@@ -280,6 +280,7 @@ import {
   NText,
   NSpin,
   NSelect,
+  NCheckbox,
   useNotification,
 } from "naive-ui";
 
@@ -292,7 +293,7 @@ import ChatItem from "../../components/chats/chat_item.vue";
 import ChatsFilters from "../../components/chats/chats_filters.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
 import useDefaults from "../../hooks/useDefaults.ts";
-import { getStatusColor } from "../../functions.ts";
+import { getStatusColor, getStatusItems } from "../../functions.ts";
 
 defineEmits(["hover", "hoverEnd"]);
 
@@ -337,6 +338,7 @@ const page = ref(1);
 const isLoading = ref(false);
 const newStatus = ref();
 const isChangeStatusLoading = ref(false);
+const isAllChatsSelected = ref(false);
 
 const isMergeVisible = computed(() => {
   const list = selectedChats.value.map(
@@ -388,10 +390,14 @@ async function deleteChats() {
     await Promise.all(promises);
     notification.success({
       title: "Chats successfully deleted",
+      duration: 5000,
     });
+
+    resetSelectedChats();
   } catch (error: any) {
     notification.error({
       title: error.response?.data.message ?? error.message ?? error,
+      duration: 5000,
     });
     console.error(error);
   } finally {
@@ -411,10 +417,14 @@ async function mergeChats() {
     await store.merge_chats(selectedChats.value);
     notification.success({
       title: "Chats successfully merged",
+      duration: 5000,
     });
+
+    resetSelectedChats();
   } catch (error: any) {
     notification.error({
       title: error.response?.data.message ?? error.message ?? error,
+      duration: 5000,
     });
     console.error(error);
   } finally {
@@ -650,27 +660,22 @@ const filteredChatsByAccount = computed(() =>
   })
 );
 
-const allStatuses = computed(() =>
-  Object.keys(Status).filter((item) => {
-    return isNaN(Number(item));
-  })
-);
-
 const chatsCountByStatus = computed(() => {
   const result: { [key: string]: { status: number; count: number } } = {};
 
-  const allowedStatuses = [0, 1, 8, 5, 4, 7, 3];
+  const allowedStatuses = getStatusItems();
 
   allowedStatuses.forEach(
-    (_, index) => (result[index] = { status: allowedStatuses[index], count: 0 })
+    (_, index) =>
+      (result[index] = { status: allowedStatuses[index].value, count: 0 })
   );
 
   filteredChatsByAccount.value.forEach((chat) => {
-    if (!allowedStatuses.includes(+chat.status)) {
+    if (!allowedStatuses.find((status) => status.value === +chat.status)) {
       return;
     }
     const index = allowedStatuses.findIndex(
-      (status) => status === +chat.status
+      (status) => status.value === +chat.status
     );
     result[index].count++;
   });
@@ -694,11 +699,14 @@ const changeChatsStatus = async () => {
 
     notification.success({
       title: "Chats statuses successfully changed",
+      duration: 5000,
     });
     newStatus.value = undefined;
+    resetSelectedChats();
   } catch (error: any) {
     notification.error({
       title: error.response?.data.message ?? error.message ?? error,
+      duration: 5000,
     });
   } finally {
     isChangeStatusLoading.value = false;
@@ -823,11 +831,7 @@ function onMouseMove(clientX: number, clientY: number, chatId: string) {
 
   x.value = clientX;
   y.value = clientY - 10;
-  firstMessage.value =
-    chat?.meta?.firstMessage?.content?.replace(
-      /<div class="chat__files">[\s\S]{1,}<\/div>$/g,
-      ""
-    ) ?? "";
+  firstMessage.value = chat?.meta?.firstMessage?.content ?? "";
 
   if (firstMessage.value.length > 99) {
     firstMessage.value = `${firstMessage.value.slice(0, 100)}...`;
@@ -836,8 +840,21 @@ function onMouseMove(clientX: number, clientY: number, chatId: string) {
 }
 
 const resetSelectedChats = () => {
+  isAllChatsSelected.value = false;
   selectedChats.value = [];
 };
+
+function choseAllChats() {
+  selectedChats.value = viewedChats.value.map((chat) => chat.uuid);
+}
+
+watch(isAllChatsSelected, () => {
+  if (isAllChatsSelected.value) {
+    choseAllChats();
+  } else {
+    resetSelectedChats();
+  }
+});
 </script>
 
 <style>
@@ -874,7 +891,7 @@ const resetSelectedChats = () => {
   margin: 5px 10px;
 }
 
-.chats__panel .search div:first-child {
+.chats__panel .search div:nth-child(2) {
   width: 100%;
 }
 

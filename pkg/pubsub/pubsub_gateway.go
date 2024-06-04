@@ -15,7 +15,15 @@ func (s *PubSub) PubGateway(ctx context.Context, event *cc.Event, gateways []str
 	for _, gateway := range gateways {
 		queueName := fmt.Sprintf("cc.gateway.%s", gateway)
 
-		queue, err := s.ch.QueueDeclare(queueName, true, false, false, false, nil)
+		channel, err := s.conn.Channel()
+
+		if err != nil {
+			log.Error("Failed to init channel", zap.Error(err))
+			return
+		}
+		defer channel.Close()
+
+		queue, err := channel.QueueDeclare(queueName, true, false, false, false, nil)
 		if err != nil {
 			log.Error("failed to create exchange", zap.Error(err))
 			return
@@ -29,7 +37,7 @@ func (s *PubSub) PubGateway(ctx context.Context, event *cc.Event, gateways []str
 
 		log.Debug("Publish event", zap.Any("event", event))
 
-		err = s.ch.PublishWithContext(
+		err = channel.PublishWithContext(
 			ctx,
 			"",
 			queue.Name,

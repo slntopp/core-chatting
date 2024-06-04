@@ -13,7 +13,15 @@ func (s *PubSub) PubWhmcs(ctx context.Context, event *cc.Event) {
 	log := s.log.Named("Pub-Whmcs")
 	queueName := "whmcs_tickets"
 
-	queue, err := s.ch.QueueDeclare(queueName, true, false, false, false, nil)
+	channel, err := s.conn.Channel()
+
+	if err != nil {
+		log.Error("Failed to init channel", zap.Error(err))
+		return
+	}
+	defer channel.Close()
+
+	queue, err := channel.QueueDeclare(queueName, true, false, false, false, nil)
 	if err != nil {
 		log.Error("failed to create exchange", zap.Error(err))
 		return
@@ -27,7 +35,7 @@ func (s *PubSub) PubWhmcs(ctx context.Context, event *cc.Event) {
 
 	log.Debug("Publish event", zap.Any("event", event))
 
-	err = s.ch.PublishWithContext(
+	err = channel.PublishWithContext(
 		ctx,
 		"",
 		queue.Name,

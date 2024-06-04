@@ -13,18 +13,12 @@ import (
 type PubSub struct {
 	log *zap.Logger
 
-	ch *amqp091.Channel
+	conn *amqp091.Connection
 }
 
 func NewPubSub(logger *zap.Logger, conn *amqp091.Connection) *PubSub {
 	log := logger.Named("PubSub")
-
-	ch, err := conn.Channel()
-	if err != nil {
-		log.Fatal("Failed to create channel", zap.Error(err))
-	}
-
-	return &PubSub{log: log, ch: ch}
+	return &PubSub{log: log, conn: conn}
 }
 
 func (s *PubSub) Pub(ctx context.Context, id string, event *cc.Event) {
@@ -32,7 +26,15 @@ func (s *PubSub) Pub(ctx context.Context, id string, event *cc.Event) {
 
 	exchange := fmt.Sprintf("cc.user.%s", id)
 
-	err := s.ch.ExchangeDeclare(
+	channel, err := s.conn.Channel()
+
+	if err != nil {
+		log.Error("Failed to init channel", zap.Error(err))
+		return
+	}
+	defer channel.Close()
+
+	err = channel.ExchangeDeclare(
 		exchange,
 		"fanout",
 		true,
@@ -56,7 +58,7 @@ func (s *PubSub) Pub(ctx context.Context, id string, event *cc.Event) {
 
 	log.Debug("Publish event", zap.Any("event", event))
 
-	err = s.ch.PublishWithContext(
+	err = channel.PublishWithContext(
 		ctx,
 		exchange,
 		"",
@@ -79,7 +81,14 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, func() error, error) {
 
 	exchange := fmt.Sprintf("cc.user.%s", id)
 
-	err := s.ch.ExchangeDeclare(
+	channel, err := s.conn.Channel()
+
+	if err != nil {
+		log.Error("Failed to init channel", zap.Error(err))
+		return nil, nil, err
+	}
+
+	err = channel.ExchangeDeclare(
 		exchange,
 		"fanout",
 		true,
@@ -94,9 +103,9 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, func() error, error) {
 		return nil, nil, err
 	}
 
-	q, err := s.ch.QueueDeclare(
+	q, err := channel.QueueDeclare(
 		"",
-		false,
+		true,
 		false,
 		true,
 		false,
@@ -109,11 +118,12 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, func() error, error) {
 	}
 
 	queueTerminator := func() error {
-		_, err := s.ch.QueueDelete(q.Name, false, false, false)
+		_, err := channel.QueueDelete(q.Name, false, false, false)
+		channel.Close()
 		return err
 	}
 
-	err = s.ch.QueueBind(
+	err = channel.QueueBind(
 		q.Name,
 		"",
 		exchange,
@@ -126,7 +136,7 @@ func (s *PubSub) Sub(id string) (<-chan amqp091.Delivery, func() error, error) {
 		return nil, nil, err
 	}
 
-	msgs, err := s.ch.Consume(
+	msgs, err := channel.Consume(
 		q.Name,
 		"",
 		true,

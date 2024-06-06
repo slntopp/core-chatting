@@ -116,6 +116,23 @@
           >
             Change status
           </n-button>
+
+          <n-select
+            style="width: 200px"
+            v-model:value="newDepartment"
+            clearable
+            placeholder="Departament"
+            :options="departments"
+          />
+          <n-button
+            :disabled="!newDepartment"
+            @click="changeDepartment"
+            type="warning"
+            ghost
+            :loading="isChangeDepartmentLoading"
+          >
+            Change departament
+          </n-button>
         </n-space>
 
         <n-button v-if="appStore.isPC" ghost @click="changePanelOpen">
@@ -294,6 +311,7 @@ import ChatsFilters from "../../components/chats/chats_filters.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
 import useDefaults from "../../hooks/useDefaults.ts";
 import { getStatusColor, getStatusItems } from "../../functions.ts";
+import { ConnectError } from "@connectrpc/connect";
 
 defineEmits(["hover", "hoverEnd"]);
 
@@ -338,6 +356,8 @@ const page = ref(1);
 const isLoading = ref(false);
 const newStatus = ref();
 const isChangeStatusLoading = ref(false);
+const newDepartment = ref();
+const isChangeDepartmentLoading = ref(false);
 const isAllChatsSelected = ref(false);
 
 const isMergeVisible = computed(() => {
@@ -352,6 +372,10 @@ const isMergeVisible = computed(() => {
 });
 
 const isSelectedChats = computed(() => selectedChats.value.length > 0);
+
+const departments = computed(() =>
+  store.departments.map(({ key, title }) => ({ label: title, value: key }))
+);
 
 async function sync() {
   try {
@@ -710,6 +734,39 @@ const changeChatsStatus = async () => {
     });
   } finally {
     isChangeStatusLoading.value = false;
+  }
+};
+
+const changeDepartment = async () => {
+  isChangeDepartmentLoading.value = true;
+
+  try {
+    const promises = selectedChats.value
+      .map((uuid) => chats.value.find((chat) => chat.uuid === uuid))
+      .map(async (chat) => {
+        const data = { ...chat, department: newDepartment.value } as Chat;
+        console.log(data);
+
+        await store.change_department(data);
+        store.chats.set(chat!.uuid, data);
+      });
+
+    await Promise.all(promises);
+
+    notification.success({
+      title: "Department successfully changed",
+      duration: 5000,
+    });
+
+    newDepartment.value = undefined;
+    resetSelectedChats();
+  } catch (error: any) {
+    notification.error({
+      title: (error as ConnectError).message ?? "[Error]: Unknown",
+      duration: 5000,
+    });
+  } finally {
+    isChangeDepartmentLoading.value = false;
   }
 };
 

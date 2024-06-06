@@ -133,12 +133,6 @@ const admins = computed(() => {
   return result;
 });
 
-function getStatus(statusCode: Status | number) {
-  const status = Status[statusCode].toLowerCase().replace("_", " ");
-
-  return `${status[0].toUpperCase()}${status.slice(1)}`;
-}
-
 function getMetricOptions(metric: MetricWithKey) {
   return metric.options.map((option) => ({
     label: option.key,

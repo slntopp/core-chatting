@@ -100,7 +100,7 @@
               Delete Chats
             </span>
           </n-button>
-          <n-flex>
+          <n-space>
             <n-select
               style="width: 200px"
               v-model:value="newStatus"
@@ -117,9 +117,9 @@
             >
               Change
             </n-button>
-          </n-flex>
+          </n-space>
 
-          <n-flex>
+          <n-space>
             <n-select
               style="width: 200px"
               v-model:value="newDepartment"
@@ -136,9 +136,9 @@
             >
               Change
             </n-button>
-          </n-flex>
+          </n-space>
 
-          <n-flex>
+          <n-space>
             <n-select
               style="width: 200px"
               v-model:value="newResponsible"
@@ -157,7 +157,7 @@
             >
               Change
             </n-button>
-          </n-flex>
+          </n-space>
         </n-space>
 
         <n-button v-if="appStore.isPC" ghost @click="changePanelOpen">
@@ -323,7 +323,6 @@ import {
   NSpin,
   NSelect,
   NCheckbox,
-  NFlex,
   useNotification,
 } from "naive-ui";
 

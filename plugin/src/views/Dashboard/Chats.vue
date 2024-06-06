@@ -100,22 +100,64 @@
               Delete Chats
             </span>
           </n-button>
-          <n-select
-            style="width: 200px"
-            v-model:value="newStatus"
-            clearable
-            placeholder="Status"
-            :options="getStatusItems()"
-          />
-          <n-button
-            :disabled="isNaN(newStatus) || newStatus === null"
-            @click="changeChatsStatus"
-            type="warning"
-            ghost
-            :loading="isChangeStatusLoading"
-          >
-            Change status
-          </n-button>
+          <n-flex>
+            <n-select
+              style="width: 200px"
+              v-model:value="newStatus"
+              clearable
+              placeholder="Status"
+              :options="getStatusItems()"
+            />
+            <n-button
+              :disabled="isNaN(newStatus) || newStatus === null"
+              @click="changeChatsStatus"
+              type="warning"
+              ghost
+              :loading="isChangeStatusLoading"
+            >
+              Change
+            </n-button>
+          </n-flex>
+
+          <n-flex>
+            <n-select
+              style="width: 200px"
+              v-model:value="newDepartment"
+              clearable
+              placeholder="Departament"
+              :options="departments"
+            />
+            <n-button
+              :disabled="!newDepartment"
+              @click="changeDepartment"
+              type="warning"
+              ghost
+              :loading="isChangeDepartmentLoading"
+            >
+              Change
+            </n-button>
+          </n-flex>
+
+          <n-flex>
+            <n-select
+              style="width: 200px"
+              v-model:value="newResponsible"
+              clearable
+              placeholder="Responsible"
+              :options="responsibles"
+              label-field="title"
+              value-field="uuid"
+            />
+            <n-button
+              :disabled="!newResponsible"
+              @click="changeResponsible"
+              type="warning"
+              ghost
+              :loading="isChangeResponsibleLoading"
+            >
+              Change
+            </n-button>
+          </n-flex>
         </n-space>
 
         <n-button v-if="appStore.isPC" ghost @click="changePanelOpen">
@@ -281,6 +323,7 @@ import {
   NSpin,
   NSelect,
   NCheckbox,
+  NFlex,
   useNotification,
 } from "naive-ui";
 
@@ -294,6 +337,7 @@ import ChatsFilters from "../../components/chats/chats_filters.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
 import useDefaults from "../../hooks/useDefaults.ts";
 import { getStatusColor, getStatusItems } from "../../functions.ts";
+import { ConnectError } from "@connectrpc/connect";
 
 defineEmits(["hover", "hoverEnd"]);
 
@@ -325,7 +369,8 @@ const store = useCcStore();
 const router = useRouter();
 const route = useRoute();
 const { makeDraggable } = useDraggable();
-const { metrics, isDefaultLoading, fetch_defaults } = useDefaults();
+const { metrics, isDefaultLoading, fetch_defaults, admins, users } =
+  useDefaults();
 const notification = useNotification();
 
 const selectedChats = ref<string[]>([]);
@@ -338,6 +383,10 @@ const page = ref(1);
 const isLoading = ref(false);
 const newStatus = ref();
 const isChangeStatusLoading = ref(false);
+const newDepartment = ref();
+const isChangeDepartmentLoading = ref(false);
+const newResponsible = ref();
+const isChangeResponsibleLoading = ref(false);
 const isAllChatsSelected = ref(false);
 
 const isMergeVisible = computed(() => {
@@ -352,6 +401,16 @@ const isMergeVisible = computed(() => {
 });
 
 const isSelectedChats = computed(() => selectedChats.value.length > 0);
+
+const departments = computed(() =>
+  store.departments.map(({ key, title }) => ({ label: title, value: key }))
+);
+
+const responsibles = computed(() =>
+  admins.value.map(
+    (admin) => users.value.find(({ uuid }) => uuid === admin) ?? { uuid: admin }
+  )
+);
 
 async function sync() {
   try {
@@ -710,6 +769,70 @@ const changeChatsStatus = async () => {
     });
   } finally {
     isChangeStatusLoading.value = false;
+  }
+};
+
+const changeDepartment = async () => {
+  isChangeDepartmentLoading.value = true;
+
+  try {
+    const promises = selectedChats.value
+      .map((uuid) => chats.value.find((chat) => chat.uuid === uuid))
+      .map(async (chat) => {
+        const data = { ...chat, department: newDepartment.value } as Chat;
+
+        await store.change_department(data);
+        store.chats.set(chat!.uuid, data);
+      });
+
+    await Promise.all(promises);
+
+    notification.success({
+      title: "Department successfully changed",
+      duration: 5000,
+    });
+
+    newDepartment.value = undefined;
+    resetSelectedChats();
+  } catch (error: any) {
+    notification.error({
+      title: (error as ConnectError).message ?? "[Error]: Unknown",
+      duration: 5000,
+    });
+  } finally {
+    isChangeDepartmentLoading.value = false;
+  }
+};
+
+const changeResponsible = async () => {
+  isChangeResponsibleLoading.value = true;
+
+  try {
+    const promises = selectedChats.value
+      .map((uuid) => chats.value.find((chat) => chat.uuid === uuid))
+      .map(async (chat) => {
+        const data = { ...chat, responsible: newResponsible.value } as Chat;
+
+        await store.update_chat(data);
+        store.chats.set(chat!.uuid, data);
+      });
+
+    await Promise.all(promises);
+
+    notification.success({
+      title: "Responsible successfully changed",
+      duration: 5000,
+    });
+
+    newResponsible.value = undefined;
+    resetSelectedChats();
+  } catch (error: any) {
+    notification.error({
+      title: (error as ConnectError).message ?? "[Error]: Unknown",
+      duration: 5000,
+    });
+  } finally {
+    isChangeResponsibleLoading.value = false;
   }
 };
 

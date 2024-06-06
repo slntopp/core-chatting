@@ -133,6 +133,25 @@
           >
             Change departament
           </n-button>
+
+          <n-select
+            style="width: 200px"
+            v-model:value="newResponsible"
+            clearable
+            placeholder="Responsible"
+            :options="responsibles"
+            label-field="title"
+            value-field="uuid"
+          />
+          <n-button
+            :disabled="!newResponsible"
+            @click="changeResponsible"
+            type="warning"
+            ghost
+            :loading="isChangeResponsibleLoading"
+          >
+            Change responsible
+          </n-button>
         </n-space>
 
         <n-button v-if="appStore.isPC" ghost @click="changePanelOpen">
@@ -343,7 +362,8 @@ const store = useCcStore();
 const router = useRouter();
 const route = useRoute();
 const { makeDraggable } = useDraggable();
-const { metrics, isDefaultLoading, fetch_defaults } = useDefaults();
+const { metrics, isDefaultLoading, fetch_defaults, admins, users } =
+  useDefaults();
 const notification = useNotification();
 
 const selectedChats = ref<string[]>([]);
@@ -358,6 +378,8 @@ const newStatus = ref();
 const isChangeStatusLoading = ref(false);
 const newDepartment = ref();
 const isChangeDepartmentLoading = ref(false);
+const newResponsible = ref();
+const isChangeResponsibleLoading = ref(false);
 const isAllChatsSelected = ref(false);
 
 const isMergeVisible = computed(() => {
@@ -375,6 +397,12 @@ const isSelectedChats = computed(() => selectedChats.value.length > 0);
 
 const departments = computed(() =>
   store.departments.map(({ key, title }) => ({ label: title, value: key }))
+);
+
+const responsibles = computed(() =>
+  admins.value.map(
+    (admin) => users.value.find(({ uuid }) => uuid === admin) ?? { uuid: admin }
+  )
 );
 
 async function sync() {
@@ -767,6 +795,39 @@ const changeDepartment = async () => {
     });
   } finally {
     isChangeDepartmentLoading.value = false;
+  }
+};
+
+const changeResponsible = async () => {
+  isChangeResponsibleLoading.value = true;
+
+  try {
+    const promises = selectedChats.value
+      .map((uuid) => chats.value.find((chat) => chat.uuid === uuid))
+      .map(async (chat) => {
+        const data = { ...chat, responsible: newResponsible.value } as Chat;
+        console.log(data);
+
+        await store.update_chat(data);
+        store.chats.set(chat!.uuid, data);
+      });
+
+    await Promise.all(promises);
+
+    notification.success({
+      title: "Responsible successfully changed",
+      duration: 5000,
+    });
+
+    newResponsible.value = undefined;
+    resetSelectedChats();
+  } catch (error: any) {
+    notification.error({
+      title: (error as ConnectError).message ?? "[Error]: Unknown",
+      duration: 5000,
+    });
+  } finally {
+    isChangeResponsibleLoading.value = false;
   }
 };
 

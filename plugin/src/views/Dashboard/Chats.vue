@@ -100,58 +100,64 @@
               Delete Chats
             </span>
           </n-button>
-          <n-select
-            style="width: 200px"
-            v-model:value="newStatus"
-            clearable
-            placeholder="Status"
-            :options="getStatusItems()"
-          />
-          <n-button
-            :disabled="isNaN(newStatus) || newStatus === null"
-            @click="changeChatsStatus"
-            type="warning"
-            ghost
-            :loading="isChangeStatusLoading"
-          >
-            Change status
-          </n-button>
+          <n-flex>
+            <n-select
+              style="width: 200px"
+              v-model:value="newStatus"
+              clearable
+              placeholder="Status"
+              :options="getStatusItems()"
+            />
+            <n-button
+              :disabled="isNaN(newStatus) || newStatus === null"
+              @click="changeChatsStatus"
+              type="warning"
+              ghost
+              :loading="isChangeStatusLoading"
+            >
+              Change
+            </n-button>
+          </n-flex>
 
-          <n-select
-            style="width: 200px"
-            v-model:value="newDepartment"
-            clearable
-            placeholder="Departament"
-            :options="departments"
-          />
-          <n-button
-            :disabled="!newDepartment"
-            @click="changeDepartment"
-            type="warning"
-            ghost
-            :loading="isChangeDepartmentLoading"
-          >
-            Change departament
-          </n-button>
+          <n-flex>
+            <n-select
+              style="width: 200px"
+              v-model:value="newDepartment"
+              clearable
+              placeholder="Departament"
+              :options="departments"
+            />
+            <n-button
+              :disabled="!newDepartment"
+              @click="changeDepartment"
+              type="warning"
+              ghost
+              :loading="isChangeDepartmentLoading"
+            >
+              Change
+            </n-button>
+          </n-flex>
 
-          <n-select
-            style="width: 200px"
-            v-model:value="newResponsible"
-            clearable
-            placeholder="Responsible"
-            :options="responsibles"
-            label-field="title"
-            value-field="uuid"
-          />
-          <n-button
-            :disabled="!newResponsible"
-            @click="changeResponsible"
-            type="warning"
-            ghost
-            :loading="isChangeResponsibleLoading"
-          >
-            Change responsible
-          </n-button>
+          <n-flex>
+            <n-select
+              style="width: 200px"
+              v-model:value="newResponsible"
+              clearable
+              placeholder="Responsible"
+              :options="responsibles"
+              label-field="title"
+              value-field="uuid"
+            />
+            <n-button
+              :disabled="!newResponsible"
+              @click="changeResponsible"
+              type="warning"
+              ghost
+              :loading="isChangeResponsibleLoading"
+            >
+              Change
+            </n-button>
+          </n-flex>
         </n-space>
 
         <n-button v-if="appStore.isPC" ghost @click="changePanelOpen">
@@ -317,6 +323,7 @@ import {
   NSpin,
   NSelect,
   NCheckbox,
+  NFlex,
   useNotification,
 } from "naive-ui";
 
@@ -773,7 +780,6 @@ const changeDepartment = async () => {
       .map((uuid) => chats.value.find((chat) => chat.uuid === uuid))
       .map(async (chat) => {
         const data = { ...chat, department: newDepartment.value } as Chat;
-        console.log(data);
 
         await store.change_department(data);
         store.chats.set(chat!.uuid, data);
@@ -806,7 +812,6 @@ const changeResponsible = async () => {
       .map((uuid) => chats.value.find((chat) => chat.uuid === uuid))
       .map(async (chat) => {
         const data = { ...chat, responsible: newResponsible.value } as Chat;
-        console.log(data);
 
         await store.update_chat(data);
         store.chats.set(chat!.uuid, data);

@@ -576,13 +576,13 @@ function render(props: RenderProps, { slots }: any) {
 
 const currentImage = reactive({ src: "", alt: "", visible: false });
 function onFileClick(file: AttachFile) {
-  if (file.type !== "image") {
-    return;
+  if (file.type === "image") {
+    currentImage.src = file.url;
+    currentImage.alt = file.name;
+    currentImage.visible = true;
+  } else {
+    downloadFile(file.name, file.url);
   }
-
-  currentImage.src = file.url;
-  currentImage.alt = file.name;
-  currentImage.visible = true;
 }
 
 function addLinkTarget() {

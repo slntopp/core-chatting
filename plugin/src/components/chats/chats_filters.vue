@@ -56,6 +56,17 @@
     />
   </div>
 
+  <div class="filter_item" style="margin-top: 20px">
+    <n-text>Filter by responsible:</n-text>
+    <n-select
+      filterable
+      :items="admins"
+      :value="checkedResponsibles"
+      @update:value="emits('update:checkedResponsibles', $event)"
+      multiple
+    />
+  </div>
+
   <div
     class="filter_item"
     v-for="metric of metrics"
@@ -88,6 +99,7 @@ interface ChatsFiltersProps {
   checkedDepartments: string[];
   checkedStatuses: Status[];
   checkedAdmins: string[];
+  checkedResponsibles: string[];
   metricsOptions: { [key: string]: [] };
   createDateRange: [number, number] | null;
   updateDateRange: [number, number] | null;
@@ -98,6 +110,7 @@ const emits = defineEmits([
   "update:checkedDepartments",
   "update:checkedStatuses",
   "update:checkedAdmins",
+  "update:checkedResponsibles",
   "update:checkedMetrics",
   "update:createDateRange",
   "update:updateDateRange",

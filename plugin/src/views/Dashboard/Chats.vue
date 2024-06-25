@@ -230,6 +230,7 @@
             v-model:checkedDepartments="checkedDepartments"
             v-model:checkedStatuses="checkedStatuses"
             v-model:checkedAdmins="checkedAdmins"
+            v-model:checkedResponsibles="checkedResponsibles"
             v-model:update-date-range="updateDateRange"
             v-model:create-date-range="createDateRange"
             :metricsOptions="metricsOptions"
@@ -508,6 +509,7 @@ onMounted(() => {
     checkedDepartments.value = filters.departments;
     checkedStatuses.value = filters.statuses;
     checkedAdmins.value = filters.admins;
+    checkedResponsibles.value = filters.responsibles;
     updateDateRange.value = filters.updated;
     createDateRange.value = filters.created;
   }
@@ -648,6 +650,11 @@ const chats = computed(() => {
       );
     }
 
+    let isResponsibleExist = true;
+    if (checkedResponsibles.value.length > 0) {
+      isAdminsExist = !!checkedResponsibles.value.includes(chat.responsible || '');
+    }
+
     let isOptionsIncluded: optionsIncludedType = {};
     Object.entries(metricsOptions.value).forEach(([key, value]) => {
       if (value.length < 1) {
@@ -671,6 +678,7 @@ const chats = computed(() => {
       isDepartamentIncluded &&
       isStatusIncluded &&
       isAdminsExist &&
+      isResponsibleExist &&
       isAccountOwner &&
       isCreatedInDate &&
       isUpdatedInDate &&
@@ -836,6 +844,7 @@ const changeResponsible = async () => {
 };
 
 const checkedAdmins = ref<string[]>([]);
+const checkedResponsibles = ref<string[]>([]);
 const checkedDepartments = ref<string[]>([]);
 
 const createDateRange = ref<[number, number] | null>(null);
@@ -881,6 +890,7 @@ watch(
     checkedDepartments,
     checkedStatuses,
     checkedAdmins,
+    checkedResponsibles,
     metricsOptions,
     updateDateRange,
     createDateRange,
@@ -892,6 +902,7 @@ watch(
         departments: checkedDepartments.value,
         statuses: checkedStatuses.value,
         admins: checkedAdmins.value,
+        responsibles: checkedResponsibles.value,
         metrics: metricsOptions.value,
         updated: updateDateRange.value,
         created: createDateRange.value,
@@ -908,6 +919,7 @@ async function resetFilters() {
   checkedDepartments.value = [];
   checkedStatuses.value = [];
   checkedAdmins.value = [];
+  checkedResponsibles.value = [];
   updateDateRange.value = null;
   createDateRange.value = null;
   metricsOptions.value = metrics.value.reduce(

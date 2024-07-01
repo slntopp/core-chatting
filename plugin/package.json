@@ -23,7 +23,8 @@
     "vfonts": "^0.0.3",
     "vite-svg-loader": "^4.0.0",
     "vue": "^3.3.4",
-    "vue-router": "^4.2.4"
+    "vue-router": "^4.2.4",
+    "write-excel-file": "^2.0.2"
   },
   "devDependencies": {
     "@types/dompurify": "^3.0.2",

@@ -239,12 +239,13 @@
             "
           />
 
-          <n-flex style="margin: 15px 10px 0px 0px;" justify="end">
+          <div style="margin: 15px 10px 0px 0px;display: flex;justify-content: end;">
             <n-button
               ghost
               type="primary"
               @click="downloadReport"
               :loading="isReportLoading"
+              style="margin-right: 10px;"
             >
               Report
             </n-button>
@@ -252,7 +253,7 @@
             <n-button ghost type="primary" @click="resetFilters">
               Reset
             </n-button>
-          </n-flex>
+          </div>
         </n-popover>
       </n-space>
 
@@ -319,7 +320,6 @@ import {
   NLayoutContent,
   NLayoutSider,
   NList,
-  NFlex,
   NScrollbar,
   NSpace,
   NPopover,

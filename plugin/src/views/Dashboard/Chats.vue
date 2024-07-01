@@ -239,14 +239,21 @@
             "
           />
 
-          <n-button
-            ghost
-            type="primary"
-            style="display: block; margin: 10px 0 5px auto"
-            @click="resetFilters"
-          >
-            Reset
-          </n-button>
+          <div style="margin: 15px 10px 0px 0px;display: flex;justify-content: end;">
+            <n-button
+              ghost
+              type="primary"
+              @click="downloadReport"
+              :loading="isReportLoading"
+              style="margin-right: 10px;"
+            >
+              Report
+            </n-button>
+
+            <n-button ghost type="primary" @click="resetFilters">
+              Reset
+            </n-button>
+          </div>
         </n-popover>
       </n-space>
 
@@ -331,13 +338,14 @@ import { useAppStore } from "../../store/app.ts";
 import { useCcStore } from "../../store/chatting.ts";
 
 import { useRoute, useRouter } from "vue-router";
-import { Chat, Status } from "../../connect/cc/cc_pb";
+import { Chat, Status, User } from "../../connect/cc/cc_pb";
 import ChatItem from "../../components/chats/chat_item.vue";
 import ChatsFilters from "../../components/chats/chats_filters.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
 import useDefaults from "../../hooks/useDefaults.ts";
 import { getStatusColor, getStatusItems } from "../../functions.ts";
 import { ConnectError } from "@connectrpc/connect";
+import ChatReportService from "../../services/ChatReportService.ts";
 
 defineEmits(["hover", "hoverEnd"]);
 
@@ -381,6 +389,7 @@ const scrollbar = ref<InstanceType<typeof NScrollbar>>();
 const loading = ref<InstanceType<typeof NSpin>>();
 const page = ref(1);
 const isLoading = ref(false);
+const isReportLoading = ref(false);
 const newStatus = ref();
 const isChangeStatusLoading = ref(false);
 const newDepartment = ref();
@@ -651,8 +660,10 @@ const chats = computed(() => {
     }
 
     let isResponsibleExist = true;
-    if (checkedResponsibles.value.length > 0) {
-      isAdminsExist = !!checkedResponsibles.value.includes(chat.responsible || '');
+    if (checkedResponsibles.value?.length > 0) {
+      isAdminsExist = !!checkedResponsibles.value.includes(
+        chat.responsible || ""
+      );
     }
 
     let isOptionsIncluded: optionsIncludedType = {};
@@ -930,6 +941,16 @@ async function resetFilters() {
   await nextTick();
   localStorage.removeItem("sorting");
   localStorage.removeItem("filters");
+}
+
+async function downloadReport() {
+  isReportLoading.value = true;
+
+  try {
+    await ChatReportService.generate(chats.value, responsibles.value as User[]);
+  } finally {
+    isReportLoading.value = false;
+  }
 }
 
 const isChatPanelOpen = ref(true);

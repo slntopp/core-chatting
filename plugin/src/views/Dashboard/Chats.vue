@@ -70,6 +70,17 @@
               }))
             "
           />
+
+          <n-button
+            v-if="
+              isChatPanelOpen &&
+              appStore.displayMode === 'full' &&
+              !appStore.isMobile
+            "
+            @click="syncChats()"
+            :loading="isSyncLoading"
+            >Sync</n-button
+          >
         </template>
 
         <n-space v-else>
@@ -239,13 +250,19 @@
             "
           />
 
-          <div style="margin: 15px 10px 0px 0px;display: flex;justify-content: end;">
+          <div
+            style="
+              margin: 15px 10px 0px 0px;
+              display: flex;
+              justify-content: end;
+            "
+          >
             <n-button
               ghost
               type="primary"
               @click="downloadReport"
               :loading="isReportLoading"
-              style="margin-right: 10px;"
+              style="margin-right: 10px"
             >
               Report
             </n-button>
@@ -389,6 +406,7 @@ const scrollbar = ref<InstanceType<typeof NScrollbar>>();
 const loading = ref<InstanceType<typeof NSpin>>();
 const page = ref(1);
 const isLoading = ref(false);
+const isSyncLoading = ref(false);
 const isReportLoading = ref(false);
 const newStatus = ref();
 const isChangeStatusLoading = ref(false);
@@ -440,6 +458,17 @@ async function sync() {
 function startChat() {
   router.push({ name: "Start Chat" });
   appStore.displayMode = "none";
+}
+
+async function syncChats() {
+  isSyncLoading.value = true;
+  try {
+    await store.sync_chats();
+
+    await store.list_chats();
+  } finally {
+    isSyncLoading.value = false;
+  }
 }
 
 async function deleteChats() {

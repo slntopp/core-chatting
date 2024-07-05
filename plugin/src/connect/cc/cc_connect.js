@@ -111,6 +111,15 @@ export const ChatsAPI = {
       O: Chat,
       kind: MethodKind.Unary,
     },
+    /**
+     * @generated from rpc cc.ChatsAPI.SyncChats
+     */
+    syncChats: {
+      name: "SyncChats",
+      I: Empty,
+      O: Empty,
+      kind: MethodKind.Unary,
+    },
   }
 };
 

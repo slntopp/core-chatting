@@ -81,6 +81,7 @@ service ChatsAPI {
   rpc ChangeStatus(Chat) returns (Chat);
 
   rpc MergeChats(Merge) returns (Chat);
+  rpc SyncChats(Empty) returns (Empty);
 }
 
 enum Kind {

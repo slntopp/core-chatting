@@ -3,6 +3,7 @@ package chats
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
@@ -117,7 +118,7 @@ func (s *ChatsServer) Update(ctx context.Context, req *connect.Request[cc.Chat])
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_UPDATED)
 
-	if s.whmcsTickets && chat.GetDepartment() != "openai"{
+	if s.whmcsTickets && chat.GetDepartment() != "openai" {
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_CHAT_UPDATED,
 			Item: &cc.Event_Chat{Chat: chat},
@@ -189,7 +190,7 @@ func (s *ChatsServer) Delete(ctx context.Context, req *connect.Request[cc.Chat])
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_DELETED)
 
-	if s.whmcsTickets && chat.GetDepartment() != "openai"{
+	if s.whmcsTickets && chat.GetDepartment() != "openai" {
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_CHAT_DELETED,
 			Item: &cc.Event_Chat{Chat: chat},
@@ -290,7 +291,7 @@ func (s *ChatsServer) ChangeDepartment(ctx context.Context, req *connect.Request
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_DEPARTMENT_CHANGED)
 
-	if s.whmcsTickets && chat.GetDepartment() != "openai"{
+	if s.whmcsTickets && chat.GetDepartment() != "openai" {
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_CHAT_DEPARTMENT_CHANGED,
 			Item: &cc.Event_Chat{Chat: chat},
@@ -392,7 +393,7 @@ func (s *ChatsServer) ChangeStatus(ctx context.Context, req *connect.Request[cc.
 
 	go pubsub.HandleNotifyChat(ctx, log, s.ps, update, cc.EventType_CHAT_STATUS_CHANGED)
 
-	if s.whmcsTickets && chat.GetDepartment() != "openai"{
+	if s.whmcsTickets && chat.GetDepartment() != "openai" {
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_CHAT_STATUS_CHANGED,
 			Item: &cc.Event_Chat{Chat: update},
@@ -433,4 +434,22 @@ func (s *ChatsServer) MergeChats(ctx context.Context, req *connect.Request[cc.Me
 	resp := connect.NewResponse[cc.Chat](chat)
 
 	return resp, nil
+}
+
+func (s *ChatsServer) SyncChats(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.Empty], error) {
+	log := s.log.Named("SyncChats")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	config, err := core.Config()
+	if err != nil {
+		return nil, err
+	}
+
+	if !slices.Contains(config.GetAdmins(), requestor) {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("not enough rights"))
+	}
+
+	return &connect.Response[cc.Empty]{}, nil
 }

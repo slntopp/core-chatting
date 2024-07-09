@@ -446,3 +446,35 @@ func (c *ChatsController) Merge(ctx context.Context, chats []string) (*cc.Chat, 
 
 	return &chat, nil
 }
+
+const syncQuery = `
+LET deps = @deps
+
+FOR c in @@chats
+	FILTER c.department != null
+	LET admins = deps[c.department]
+	FILTER admins != null
+	UPDATE c with {admins: admins} in @@chats
+`
+
+func (c *ChatsController) Sync(ctx context.Context, cfg *cc.Defaults) error {
+	log := c.log.Named("Merge")
+
+	var deps = make(map[string][]string)
+
+	for _, val := range cfg.Departments {
+		deps[val.Key] = val.Admins
+	}
+
+	_, err := c.db.Query(ctx, syncQuery, map[string]interface{}{
+		"@chats": CHATS_COLLECTION,
+		"deps":   deps,
+	})
+
+	if err != nil {
+		log.Error("Failed to sync chats", zap.Error(err))
+		return err
+	}
+
+	return nil
+}

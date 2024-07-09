@@ -268,6 +268,10 @@ export const useCcStore = defineStore('cc', () => {
         }
     }
 
+    const sync_chats=()=>{
+        return chats_c.syncChats(new Empty())
+    }
+
     (async () => {
         console.log("Subscribing to state updates");
 
@@ -307,7 +311,7 @@ export const useCcStore = defineStore('cc', () => {
     return {
         users, load_me, me, get_members, baseUrl, departments, metrics,
 
-        chats, list_chats, create_chat, delete_chat, update_chat, merge_chats,
+        chats, list_chats, create_chat, delete_chat, update_chat, merge_chats, sync_chats,
 
         current_message, updating, handle_send,
         messages, chat_messages, get_messages,

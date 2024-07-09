@@ -111,6 +111,15 @@ export declare const ChatsAPI: {
       readonly O: typeof Chat,
       readonly kind: MethodKind.Unary,
     },
+    /**
+     * @generated from rpc cc.ChatsAPI.SyncChats
+     */
+    readonly syncChats: {
+      readonly name: "SyncChats",
+      readonly I: typeof Empty,
+      readonly O: typeof Empty,
+      readonly kind: MethodKind.Unary,
+    },
   }
 };
 

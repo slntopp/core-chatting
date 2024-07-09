@@ -62,6 +62,8 @@ const (
 	ChatsAPIChangeStatusProcedure = "/cc.ChatsAPI/ChangeStatus"
 	// ChatsAPIMergeChatsProcedure is the fully-qualified name of the ChatsAPI's MergeChats RPC.
 	ChatsAPIMergeChatsProcedure = "/cc.ChatsAPI/MergeChats"
+	// ChatsAPISyncChatsProcedure is the fully-qualified name of the ChatsAPI's SyncChats RPC.
+	ChatsAPISyncChatsProcedure = "/cc.ChatsAPI/SyncChats"
 	// MessagesAPIGetProcedure is the fully-qualified name of the MessagesAPI's Get RPC.
 	MessagesAPIGetProcedure = "/cc.MessagesAPI/Get"
 	// MessagesAPISendProcedure is the fully-qualified name of the MessagesAPI's Send RPC.
@@ -100,6 +102,7 @@ var (
 	chatsAPIChangeGatewayMethodDescriptor    = chatsAPIServiceDescriptor.Methods().ByName("ChangeGateway")
 	chatsAPIChangeStatusMethodDescriptor     = chatsAPIServiceDescriptor.Methods().ByName("ChangeStatus")
 	chatsAPIMergeChatsMethodDescriptor       = chatsAPIServiceDescriptor.Methods().ByName("MergeChats")
+	chatsAPISyncChatsMethodDescriptor        = chatsAPIServiceDescriptor.Methods().ByName("SyncChats")
 	messagesAPIServiceDescriptor             = cc.File_cc_cc_proto.Services().ByName("MessagesAPI")
 	messagesAPIGetMethodDescriptor           = messagesAPIServiceDescriptor.Methods().ByName("Get")
 	messagesAPISendMethodDescriptor          = messagesAPIServiceDescriptor.Methods().ByName("Send")
@@ -129,6 +132,7 @@ type ChatsAPIClient interface {
 	ChangeGateway(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	ChangeStatus(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	MergeChats(context.Context, *connect.Request[cc.Merge]) (*connect.Response[cc.Chat], error)
+	SyncChats(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Empty], error)
 }
 
 // NewChatsAPIClient constructs a client for the cc.ChatsAPI service. By default, it uses the
@@ -207,6 +211,12 @@ func NewChatsAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 			connect.WithSchema(chatsAPIMergeChatsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		syncChats: connect.NewClient[cc.Empty, cc.Empty](
+			httpClient,
+			baseURL+ChatsAPISyncChatsProcedure,
+			connect.WithSchema(chatsAPISyncChatsMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -223,6 +233,7 @@ type chatsAPIClient struct {
 	changeGateway    *connect.Client[cc.Chat, cc.Chat]
 	changeStatus     *connect.Client[cc.Chat, cc.Chat]
 	mergeChats       *connect.Client[cc.Merge, cc.Chat]
+	syncChats        *connect.Client[cc.Empty, cc.Empty]
 }
 
 // Create calls cc.ChatsAPI.Create.
@@ -280,6 +291,11 @@ func (c *chatsAPIClient) MergeChats(ctx context.Context, req *connect.Request[cc
 	return c.mergeChats.CallUnary(ctx, req)
 }
 
+// SyncChats calls cc.ChatsAPI.SyncChats.
+func (c *chatsAPIClient) SyncChats(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.Empty], error) {
+	return c.syncChats.CallUnary(ctx, req)
+}
+
 // ChatsAPIHandler is an implementation of the cc.ChatsAPI service.
 type ChatsAPIHandler interface {
 	Create(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
@@ -293,6 +309,7 @@ type ChatsAPIHandler interface {
 	ChangeGateway(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	ChangeStatus(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	MergeChats(context.Context, *connect.Request[cc.Merge]) (*connect.Response[cc.Chat], error)
+	SyncChats(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Empty], error)
 }
 
 // NewChatsAPIHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -367,6 +384,12 @@ func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect.HandlerOption) (str
 		connect.WithSchema(chatsAPIMergeChatsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	chatsAPISyncChatsHandler := connect.NewUnaryHandler(
+		ChatsAPISyncChatsProcedure,
+		svc.SyncChats,
+		connect.WithSchema(chatsAPISyncChatsMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cc.ChatsAPI/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ChatsAPICreateProcedure:
@@ -391,6 +414,8 @@ func NewChatsAPIHandler(svc ChatsAPIHandler, opts ...connect.HandlerOption) (str
 			chatsAPIChangeStatusHandler.ServeHTTP(w, r)
 		case ChatsAPIMergeChatsProcedure:
 			chatsAPIMergeChatsHandler.ServeHTTP(w, r)
+		case ChatsAPISyncChatsProcedure:
+			chatsAPISyncChatsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -442,6 +467,10 @@ func (UnimplementedChatsAPIHandler) ChangeStatus(context.Context, *connect.Reque
 
 func (UnimplementedChatsAPIHandler) MergeChats(context.Context, *connect.Request[cc.Merge]) (*connect.Response[cc.Chat], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.MergeChats is not implemented"))
+}
+
+func (UnimplementedChatsAPIHandler) SyncChats(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.SyncChats is not implemented"))
 }
 
 // MessagesAPIClient is a client for the cc.MessagesAPI service.

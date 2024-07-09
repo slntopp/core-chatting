@@ -5,7 +5,7 @@
     @contextmenu="show_dropdown"
   >
     <span :id="messageContentId" v-html="content()"></span>
-    <div v-if="attachFiles.length" class="chat__files">
+    <div v-if="attachFiles?.length" class="chat__files">
       <div
         @click="() => onFileClick(file)"
         class="files__preview"
@@ -353,7 +353,11 @@ function content() {
 }
 
 const attachFiles = computed<AttachFile[]>(() => {
-  const attachments = (message.value.toJson() as any).meta?.attachments as any;
+  if (!message.value.meta?.attachments?.toJson) {
+    return [];
+  }
+
+  const attachments = message.value.meta?.attachments.toJson() as any;
 
   if (!attachments || !attachments.length) {
     return [];

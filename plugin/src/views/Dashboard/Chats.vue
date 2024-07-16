@@ -586,10 +586,10 @@ function filterChat(chat: Chat, val: string): boolean {
   }
   val = val.toLowerCase();
 
-  const startsWithKeys = ["topic", "uuid"];
+  const includesKeys = ["topic", "uuid"];
 
-  for (const key of startsWithKeys) {
-    if ((chat as any)[key]?.toLowerCase().startsWith(val)) {
+  for (const key of includesKeys) {
+    if ((chat as any)[key]?.toLowerCase().includes(val)) {
       return true;
     }
   }
@@ -599,8 +599,8 @@ function filterChat(chat: Chat, val: string): boolean {
       const user = store.users.get(u)?.toJson() as any;
       return (
         u.startsWith(val) ||
-        user?.title.toLowerCase().startsWith(val) ||
-        user?.data?.email?.toLowerCase().startsWith(val)
+        user?.title.toLowerCase().includes(val) ||
+        user?.data?.email?.toLowerCase().includes(val)
       );
     }) ||
     !!chat.admins.find(

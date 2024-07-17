@@ -58,6 +58,7 @@ router.beforeResolve((to, from, next) => {
 
   if (to.params.uuid) {
     if (store.isMobile) {
+      store.displayMode = "none";
     } else if (store.isTablet && store.displayMode === "full") {
       store.displayMode = "none";
     } else if (store.isPC) {

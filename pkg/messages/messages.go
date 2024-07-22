@@ -120,6 +120,8 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 		return nil, err
 	}
 
+	log.Info("Sending result message", zap.Any("message", message))
+
 	if chat.GetResponsible() == "" && slices.Contains(chat.GetAdmins(), requestor) {
 		chat.Responsible = &requestor
 		chat, err = s.chatCtrl.Update(ctx, chat)

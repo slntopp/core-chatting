@@ -314,11 +314,13 @@ func (c *ChatsController) GetByGateway(ctx context.Context, gate string, gateId 
 const deleteGateways = `
 FOR c in @@chats
 	FILTER c.meta.data[@gate] == @gate_id
-	UPDATE c with {meta: {data: {@gate : @null_value }}} in @@chats
+	UPDATE c with {meta: {data: { @gate : null }}} in @@chats
+    OPTIONS { keepNull: false }
 `
 
 const resetState = `
-UPDATE DOCUMENT(@key) WITH { bot_state: null } IN @@chats 
+UPDATE DOCUMENT(@key) WITH { bot_state: null } IN @@chats
+OPTIONS { keepNull: false }
 `
 
 const setState = `

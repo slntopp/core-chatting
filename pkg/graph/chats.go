@@ -341,10 +341,9 @@ func (c *ChatsController) DeleteGateways(ctx context.Context, fields map[string]
 		}
 
 		_, err := c.db.Query(ctx, deleteGateways, map[string]interface{}{
-			"@chats":     CHATS_COLLECTION,
-			"gate":       key,
-			"gate_id":    queryValue,
-			"null_value": structpb.NewNullValue(),
+			"@chats":  CHATS_COLLECTION,
+			"gate":    key,
+			"gate_id": queryValue,
 		})
 		if err != nil {
 			return err

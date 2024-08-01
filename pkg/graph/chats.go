@@ -314,11 +314,13 @@ func (c *ChatsController) GetByGateway(ctx context.Context, gate string, gateId 
 const deleteGateways = `
 FOR c in @@chats
 	FILTER c.meta.data[@gate] == @gate_id
-	UPDATE c with {meta: {data: {@gate : @null_value }}} in @@chats
+	UPDATE c with {meta: {data: { @gate : null }}} in @@chats
+    OPTIONS { keepNull: false }
 `
 
 const resetState = `
-UPDATE DOCUMENT(@key) WITH { bot_state: null } IN @@chats 
+UPDATE DOCUMENT(@key) WITH { bot_state: null } IN @@chats
+OPTIONS { keepNull: false }
 `
 
 const setState = `
@@ -339,10 +341,9 @@ func (c *ChatsController) DeleteGateways(ctx context.Context, fields map[string]
 		}
 
 		_, err := c.db.Query(ctx, deleteGateways, map[string]interface{}{
-			"@chats":     CHATS_COLLECTION,
-			"gate":       key,
-			"gate_id":    queryValue,
-			"null_value": structpb.NewNullValue(),
+			"@chats":  CHATS_COLLECTION,
+			"gate":    key,
+			"gate_id": queryValue,
 		})
 		if err != nil {
 			return err

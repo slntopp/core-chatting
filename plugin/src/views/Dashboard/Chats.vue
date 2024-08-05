@@ -32,6 +32,18 @@
             </span>
           </n-button>
 
+          <n-button
+            v-if="!appStore.isMobile"
+            ghost
+            type="info"
+            @click="goToStatistics"
+          >
+            <n-icon :component="StatsChartOutline" />
+            <span v-if="isChatPanelOpen" style="margin-left: 5px">
+              Statistic
+            </span>
+          </n-button>
+
           <n-space
             v-if="
               isChatPanelOpen &&
@@ -381,6 +393,9 @@ const SortIcon = defineAsyncComponent(
 const SwitchIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/SwapHorizontal")
 );
+const StatsChartOutline = defineAsyncComponent(
+  () => import("@vicons/ionicons5/StatsChartOutline")
+);
 const deleteIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/CloseCircle")
 );
@@ -457,6 +472,11 @@ async function sync() {
 
 function startChat() {
   router.push({ name: "Start Chat" });
+  appStore.displayMode = "none";
+}
+
+function goToStatistics() {
+  router.push({ name: "Statistics" });
   appStore.displayMode = "none";
 }
 

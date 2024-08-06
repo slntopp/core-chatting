@@ -37,6 +37,7 @@
             ghost
             type="info"
             @click="goToStatistics"
+            :disabled="isLoading"
           >
             <n-icon :component="StatsChartOutline" />
             <span v-if="isChatPanelOpen" style="margin-left: 5px">

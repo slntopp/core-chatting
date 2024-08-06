@@ -14,8 +14,8 @@
             <n-icon><prev-icon /></n-icon>
           </n-button>
           <span class="current_duration_info"
-            >{{ formatDate(chatCountDurationDatesTuple[0]) }} -
-            {{ formatDate(chatCountDurationDatesTuple[1]) }}</span
+            >{{ formatDate(openChatCountDurationDatesTuple[0]) }} -
+            {{ formatDate(openChatCountDurationDatesTuple[1]) }}</span
           >
           <n-button @click="openChatsCountOffset++">
             <n-icon><next-icon /></n-icon>
@@ -47,8 +47,8 @@
       <apexchart
         type="bar"
         height="250"
-        :options="chatsCountOptions"
-        :series="chatsCountOptions.series"
+        :options="openChatsCountOptions"
+        :series="openChatsCountOptions.series"
       ></apexchart>
     </div>
   </n-space>
@@ -276,12 +276,10 @@ const usersActivityOffset = ref(0);
 onMounted(async () => {
   try {
     isChatsMessagesLoading.value = true;
-
     fetch_defaults();
     await Promise.all(
       chats.value.map(async (chat) => {
         const messagesData = await store.get_messages(chat, false);
-
         chatMessagesMap.value.set(chat.uuid, messagesData);
       })
     );
@@ -306,7 +304,7 @@ const chats = computed(() => {
   return chats;
 });
 
-const chatCountDurationDatesTuple = computed(() => {
+const openChatCountDurationDatesTuple = computed(() => {
   const [startDate, endDate] = getDurationTuple(
     openChatsCountDuration.value,
     openChatsCountOffset.value
@@ -314,16 +312,19 @@ const chatCountDurationDatesTuple = computed(() => {
 
   return [startDate, endDate];
 });
-const chatsCountOptions = computed<ApexOptions>(() => {
+const openChatsCountOptions = computed<ApexOptions>(() => {
   const options = getChartOptions({
     duration: openChatsCountDuration.value,
-    durationTuples: chatCountDurationDatesTuple.value,
+    durationTuples: openChatCountDurationDatesTuple.value,
     title: "New tickets",
     type: openChatsCountType.value,
     chatsFilter:
-      closedChatsCountType.value === "clients"
+      openChatsCountType.value === "clients"
         ? (params) =>
-            filterChatsByTop({ ...params, count: +closedChatsCountType.value })
+            filterChatsByTop({
+              ...params,
+              count: +openChatsCountByClient.value,
+            })
         : filterChats,
     setToChartMap:
       openChatsCountType.value === "all"
@@ -350,9 +351,11 @@ const closedChatsCountOptions = computed<ApexOptions>(() => {
     chatsFilter:
       closedChatsCountType.value === "clients"
         ? (params) =>
-            filterChatsByTop({ ...params, count: +closedChatsCountType.value })
+            filterChatsByTop({
+              ...params,
+              count: +closedChatsCountByClient.value,
+            })
         : filterChats,
-    stacked: true,
     filter: (chat) => chat.status === 3 || chat.status === 2,
     setToChartMap:
       closedChatsCountType.value === "all"
@@ -376,9 +379,10 @@ const usersActivityOptions = computed<ApexOptions>(() => {
     durationTuples: usersActivityDurationDatesTuple.value,
     title: "Activity in chats",
     type: usersActivityType.value,
-    stacked: true,
     filter: (chat) => chat.status === 3 || chat.status === 2,
     chatsFilter: filterChats,
+    seriesFilter: (series) =>
+      filterUsersActivitySeries(series, +usersActivityCount.value),
     setToChartMap: (params) =>
       setToChatActivityMap({
         ...params,
@@ -388,58 +392,14 @@ const usersActivityOptions = computed<ApexOptions>(() => {
   return options;
 });
 
-function filterChatsByTop({
-  chats,
-  startDate,
-  endDate,
-  count,
-}: ChatsFilterParams & { count: number }) {
-  const mapMostPopularOwner = new Map();
-
-  chats
-    .filter((chat) => {
-      const created = Number(chat.created);
-      return created > startDate.getTime() && created < endDate.getTime();
-    })
-    .forEach((chat) => {
-      let count = 0;
-      if (mapMostPopularOwner.has(chat.owner)) {
-        count = mapMostPopularOwner.get(chat.owner);
-      }
-      count++;
-      mapMostPopularOwner.set(chat.owner, count);
-    });
-
-  const arrayMostPopularOwner = [...mapMostPopularOwner.keys()]
-    .map((key) => ({ owner: key, count: mapMostPopularOwner.get(key) }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, +count)
-    .map(({ owner }) => owner);
-
-  return chats.filter((chat) => arrayMostPopularOwner.includes(chat.owner));
-}
-
-function filterChats({ chats, endDate, startDate }: ChatsFilterParams) {
-  return chats.filter((chat) => {
-    const created = Number(chat.created);
-    return created > startDate.getTime() && created < endDate.getTime();
-  });
-}
-
-interface ChatsFilterParams {
-  chats: Chat[];
-  startDate: Date;
-  endDate: Date;
-}
-
 function getChartOptions({
   type = "all",
   duration = "monthly",
   durationTuples = [new Date(), new Date()],
   title = "Tickets",
   filter = (chat: Chat) => !!chat,
-  stacked = false,
   chatsFilter = (params: ChatsFilterParams) => params.chats,
+  seriesFilter = (series: ApexAxisChartSeries) => series,
   setToChartMap = setToChatCountMap,
 }): ApexOptions {
   const isTypeAll = type === "all";
@@ -448,7 +408,7 @@ function getChartOptions({
   const endDate = new Date(durationTuples[1].getTime());
 
   filtredChats = chatsFilter({
-    chats: chats.value,
+    chats: filtredChats,
     endDate,
     startDate,
   });
@@ -590,6 +550,8 @@ function getChartOptions({
     }
   });
 
+  series = seriesFilter(series);
+
   if (!isTypeAll) {
     series = series.map((s) => ({
       ...s,
@@ -601,6 +563,8 @@ function getChartOptions({
     series,
     xaxis: {
       categories,
+      position: "top",
+      tickPlacement: "on",
     },
     yaxis: {
       labels: {
@@ -619,20 +583,33 @@ function getChartOptions({
       enabled: isTypeAll,
     },
     legend: {
+      onItemClick: {
+        toggleDataSeries: !isTypeAll,
+      },
       show: isTypeAll,
+      showForSingleSeries: true,
+      formatter: function (val: any, opts: any) {
+        const total = series[opts.seriesIndex].data.reduce((a, acc) => {
+          return (acc as number) + (a as number);
+        }, 0);
+        return `${val}: ${total}`;
+      },
     },
     chart: {
-      stacked: stacked,
       animations: {
         enabled: isTypeAll,
+      },
+      zoom: {
+        type: "x",
+        enabled: !isTypeAll,
+        autoScaleYaxis: true,
       },
       toolbar: {
         tools: {
           download: true,
-          zoom: true,
-          zoomin: true,
-          zoomout: true,
-          pan: true,
+          zoom: !isTypeAll,
+          zoomin: !isTypeAll,
+          zoomout: !isTypeAll,
         },
       },
     },
@@ -646,6 +623,68 @@ function getChartOptions({
       },
     },
   };
+}
+
+function filterChatsByTop({
+  chats,
+  startDate,
+  endDate,
+  count,
+}: ChatsFilterParams & { count: number }) {
+  const mapMostPopularOwner = new Map();
+
+  chats
+    .filter((chat) => {
+      const created = Number(chat.created);
+      return created > startDate.getTime() && created < endDate.getTime();
+    })
+    .forEach((chat) => {
+      let count = 0;
+      if (mapMostPopularOwner.has(chat.owner)) {
+        count = mapMostPopularOwner.get(chat.owner);
+      }
+      count++;
+      mapMostPopularOwner.set(chat.owner, count);
+    });
+
+  const arrayMostPopularOwner = [...mapMostPopularOwner.keys()]
+    .map((key) => ({ owner: key, count: mapMostPopularOwner.get(key) }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, +count)
+    .map(({ owner }) => owner);
+
+  return chats.filter((chat) => arrayMostPopularOwner.includes(chat.owner));
+}
+
+function filterChats({ chats, endDate, startDate }: ChatsFilterParams) {
+  return chats.filter((chat) => {
+    const created = Number(chat.created);
+    return created > startDate.getTime() && created < endDate.getTime();
+  });
+}
+
+interface ChatsFilterParams {
+  chats: Chat[];
+  startDate: Date;
+  endDate: Date;
+}
+
+function filterUsersActivitySeries(series: ApexAxisChartSeries, count: number) {
+  const userActivityMap = new Map();
+  series.forEach((s) => {
+    userActivityMap.set(
+      s.name,
+      s.data.reduce((acc, a) => (acc as number) + (a as number), 0)
+    );
+  });
+
+  const mostActiveUsers = [...userActivityMap.keys()]
+    .map((key) => ({ user: key, activity: userActivityMap.get(key) }))
+    .sort((a, b) => b.activity - a.activity)
+    .slice(0, +count)
+    .map(({ user }) => user);
+
+  return series.filter((s) => mostActiveUsers.includes(s.name));
 }
 
 function getDurationTuple(type = "week", offset = 1) {

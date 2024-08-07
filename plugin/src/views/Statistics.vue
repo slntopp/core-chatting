@@ -34,12 +34,12 @@
           v-if="openChatsCountType !== 'all'"
           style="width: 200px"
           v-model:value="openChatsCountByClient"
-          :options="openChatsCountByClientTypes"
+          :options="clientByOptions"
         />
         <n-select
           style="width: 200px"
           v-model:value="openChatsCountDuration"
-          :options="openChatsCountDurations"
+          :options="durationOptions"
         />
       </n-space>
     </div>
@@ -83,12 +83,12 @@
           v-if="closedChatsCountType !== 'all'"
           style="width: 200px"
           v-model:value="closedChatsCountByClient"
-          :options="closedChatsCountByClientTypes"
+          :options="clientByOptions"
         />
         <n-select
           style="width: 200px"
           v-model:value="closedChatsCountDuration"
-          :options="closedChatsCountDurations"
+          :options="durationOptions"
         />
       </n-space>
     </div>
@@ -131,12 +131,12 @@
         <n-select
           style="width: 200px"
           v-model:value="usersActivityCount"
-          :options="usersActivityCountTypes"
+          :options="clientByOptions"
         />
         <n-select
           style="width: 200px"
           v-model:value="usersActivityDuration"
-          :options="usersActivityDurations"
+          :options="durationOptions"
         />
       </n-space>
     </div>
@@ -213,64 +213,48 @@ const apexchartColors = [
   "#66994D",
 ];
 
-const openChatsCountDuration = ref("weekly");
-const openChatsCountDurations = [
-  { label: "Weekly", value: "weekly" },
-  { label: "Monthly", value: "monthly" },
-  { label: "Yearly", value: "yearly" },
+const durationOptions = [
+  { label: "Week", value: "week" },
+  { label: "Month", value: "month" },
+  { label: "Month by week", value: "month-week" },
+  { label: "Year", value: "year" },
+  { label: "Year by month", value: "year-month" },
 ];
+
+const clientByOptions = [
+  { label: "Top 5", value: "5" },
+  { label: "Top 10", value: "10" },
+  { label: "Top 25", value: "25" },
+  { label: "Top 50", value: "50" },
+];
+const openChatsCountDuration = ref("month");
 const openChatsCountType = ref("all");
 const openChatsCountTypes = [
   { label: "Clients", value: "clients" },
   { label: "All", value: "all" },
 ];
 const openChatsCountByClient = ref("5");
-const openChatsCountByClientTypes = [
-  { label: "Top 5", value: "5" },
-  { label: "Top 10", value: "10" },
-  { label: "Top 20", value: "20" },
-];
 const openChatsCountOffset = ref(0);
 
-const closedChatsCountDuration = ref("weekly");
-const closedChatsCountDurations = [
-  { label: "Weekly", value: "weekly" },
-  { label: "Monthly", value: "monthly" },
-  { label: "Yearly", value: "yearly" },
-];
+const closedChatsCountDuration = ref("month");
 const closedChatsCountType = ref("all");
 const closedChatsCountTypes = [
   { label: "Clients", value: "clients" },
   { label: "All", value: "all" },
 ];
 const closedChatsCountByClient = ref("5");
-const closedChatsCountByClientTypes = [
-  { label: "Top 5", value: "5" },
-  { label: "Top 10", value: "10" },
-  { label: "Top 20", value: "20" },
-];
 const closedChatsCountOffset = ref(0);
 
 const chatMessagesMap = ref(new Map<string, Messages>());
 const isChatsMessagesLoading = ref(false);
 
-const usersActivityDuration = ref("weekly");
-const usersActivityDurations = [
-  { label: "Weekly", value: "weekly" },
-  { label: "Monthly", value: "monthly" },
-  { label: "Yearly", value: "yearly" },
-];
+const usersActivityDuration = ref("month");
 const usersActivityType = ref("only-admins");
 const usersActivityTypes = [
   { label: "Clients", value: "only-clients" },
   { label: "Admins", value: "only-admins" },
 ];
 const usersActivityCount = ref("5");
-const usersActivityCountTypes = [
-  { label: "Top 5", value: "5" },
-  { label: "Top 10", value: "10" },
-  { label: "Top 20", value: "20" },
-];
 const usersActivityOffset = ref(0);
 
 onMounted(async () => {
@@ -416,7 +400,7 @@ function getChartOptions({
   let categories: string[] = [];
 
   switch (duration) {
-    case "weekly": {
+    case "week": {
       const firstDayTs = startDate.getTime();
 
       categories = Array.from({ length: 7 }, (_, i) => {
@@ -429,7 +413,7 @@ function getChartOptions({
 
       break;
     }
-    case "monthly": {
+    case "month-week": {
       const daysInMonth = new Date(
         startDate.getFullYear(),
         startDate.getMonth() + 1,
@@ -451,9 +435,18 @@ function getChartOptions({
       );
       break;
     }
-    case "yearly":
-    default: {
+    case "month": {
+      categories = [months[startDate.getMonth() + 1]];
+      break;
+    }
+    case "year-month": {
       categories = [...months];
+      break;
+    }
+
+    case "year":
+    default: {
+      categories = [startDate.getFullYear().toString()];
       break;
     }
   }
@@ -468,7 +461,7 @@ function getChartOptions({
 
   const seriesMap = new Map();
   switch (duration) {
-    case "weekly": {
+    case "week": {
       const firstDayTs = startDate.getTime();
       const lastDayTs = endDate.getTime();
 
@@ -492,7 +485,7 @@ function getChartOptions({
 
       break;
     }
-    case "monthly": {
+    case "month-week": {
       const currentMonth = startDate.getMonth();
 
       filtredChats.forEach((chat) => {
@@ -507,8 +500,13 @@ function getChartOptions({
       });
       break;
     }
-    case "yearly":
-    default: {
+    case "month": {
+      filtredChats.forEach((chat) => {
+        setToChartMap({ map: seriesMap, key: 1, chat });
+      });
+      break;
+    }
+    case "year-month": {
       const currentYear = startDate.getFullYear();
       filtredChats.forEach((chat) => {
         const createdDate = new Date(Number(chat.created));
@@ -521,6 +519,18 @@ function getChartOptions({
         setToChartMap({
           map: seriesMap,
           key: currentMonth,
+          chat,
+        });
+      });
+
+      break;
+    }
+    case "year":
+    default: {
+      filtredChats.forEach((chat) => {
+        setToChartMap({
+          map: seriesMap,
+          key: 1,
           chat,
         });
       });
@@ -691,7 +701,7 @@ function getDurationTuple(type = "week", offset = 1) {
   let startDate, endDate;
 
   switch (type) {
-    case "weekly": {
+    case "week": {
       let [firstDayTs, lastDayTs] = getWeekTuple();
 
       firstDayTs += offset * 86400000 * 7;
@@ -702,7 +712,8 @@ function getDurationTuple(type = "week", offset = 1) {
 
       break;
     }
-    case "monthly": {
+    case "month-week":
+    case "month": {
       const todayDate = new Date(Date.now());
       todayDate.setMonth(todayDate.getMonth() + offset);
 
@@ -719,7 +730,8 @@ function getDurationTuple(type = "week", offset = 1) {
 
       break;
     }
-    case "yearly":
+    case "year":
+    case "year-month":
     default: {
       const todayDate = new Date(Date.now());
       const year = todayDate.getFullYear() + offset;

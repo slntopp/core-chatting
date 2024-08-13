@@ -65,6 +65,7 @@ func (s *MessagesServer) Get(ctx context.Context, req *connect.Request[cc.Chat])
 		}
 	}
 
+	log.Debug("Messages retrieved", zap.Any("messages", messages))
 	resp := connect.NewResponse[cc.Messages](&cc.Messages{
 		Messages: messages,
 	})

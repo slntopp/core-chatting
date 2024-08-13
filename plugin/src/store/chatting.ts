@@ -172,7 +172,7 @@ export const useCcStore = defineStore('cc', () => {
             current_message.value.kind = kind
 
             if (updating.value) {
-                await update_message(current_message.value as Message)
+                await update_message(Message.fromJson(current_message.value as any))
                 updating.value = false
             } else {
                 current_message.value.chat = route.params.uuid as string

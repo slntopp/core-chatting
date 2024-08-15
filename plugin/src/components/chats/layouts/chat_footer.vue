@@ -106,7 +106,7 @@
         </n-button>
       </n-space>
 
-      <n-upload-file-list />
+      <n-upload-file-list v-if="fileList.length > 0" />
     </n-upload>
   </div>
 </template>
@@ -411,7 +411,6 @@ textarea {
       width: 100%;
     }
     .actions {
-      margin: 20px auto;
       display: flex;
       flex-direction: column !important;
     }

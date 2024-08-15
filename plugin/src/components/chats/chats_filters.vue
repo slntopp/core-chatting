@@ -27,7 +27,7 @@
     <n-text>Filter by department:</n-text>
     <n-select
       filterable
-      :items="departments"
+      :options="departments"
       :value="checkedDepartments"
       @update:value="emits('update:checkedDepartments', $event)"
       multiple
@@ -38,7 +38,7 @@
     <n-text>Filter by status:</n-text>
     <n-select
       filterable
-      :items="statuses"
+      :options="statuses"
       :value="checkedStatuses"
       @update:value="emits('update:checkedStatuses', $event)"
       multiple
@@ -49,7 +49,7 @@
     <n-text>Filter by admins:</n-text>
     <n-select
       filterable
-      :items="admins"
+      :options="admins"
       :value="checkedAdmins"
       @update:value="emits('update:checkedAdmins', $event)"
       multiple
@@ -60,7 +60,7 @@
     <n-text>Filter by responsible:</n-text>
     <n-select
       filterable
-      :items="admins"
+      :options="admins"
       :value="checkedResponsibles"
       @update:value="emits('update:checkedResponsibles', $event)"
       multiple
@@ -77,7 +77,7 @@
 
     <n-select
       filterable
-      :items="getMetricOptions(metric)"
+      :options="getMetricOptions(metric)"
       :value="metricsOptions[metric.key]"
       @update:value="emits('update:checkedMetrics', metric.key, $event)"
       multiple

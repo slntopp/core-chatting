@@ -9,7 +9,7 @@
       <n-icon> <open-icon /> </n-icon>
     </n-button>
 
-    <n-space class="main__info" justify="start" align="center">
+    <n-space class="main__info" justify="start" align="center" :size="4">
       <n-tooltip v-if="!onlyMainInfo">
         <template #trigger>
           <n-tag round @click="addToClipboard(chat.uuid, notification)">
@@ -22,9 +22,18 @@
       </n-tooltip>
 
       <user-avatar
+        v-if="!appStore.isPC"
+        round
+        style="cursor: pointer"
+        :avatar="(CogIcon as DefineComponent)"
+        @click="isSettingsVisible = !isSettingsVisible"
+      />
+      <user-avatar
+        v-else
         round
         :avatar="members.map((m) => m?.title ?? '').join(' ')"
       />
+
       <n-text class="chat__topic">{{ chat.topic ?? members }}</n-text>
       <n-button text @click="startEditChat">
         <n-icon size="20">
@@ -111,8 +120,8 @@
       <chat-dates :chat="chat" />
     </n-space>
 
-    <template v-else>
-      <n-collapse>
+    <template v-else-if="isSettingsVisible">
+      <n-collapse class="chat__settings">
         <n-collapse-item title="Responsible">
           <n-select
             filterable
@@ -128,7 +137,7 @@
         </n-collapse-item>
       </n-collapse>
 
-      <n-collapse>
+      <n-collapse class="chat__settings">
         <n-collapse-item :title="`Status: ${Status[chat.status]}`">
           <div style="display: flex; gap: 5px; margin-bottom: 10px">
             <n-select
@@ -148,9 +157,8 @@
         </n-collapse-item>
       </n-collapse>
 
-      <n-collapse>
+      <n-collapse class="chat__settings">
         <n-collapse-item title="Dates">
-          <n-divider vertical style="height: auto; margin: 0 8px" />
           <chat-dates :chat="chat" />
         </n-collapse-item>
       </n-collapse>
@@ -227,7 +235,7 @@
 (increase width)
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, ref, toRefs } from "vue";
+import { type DefineComponent, computed, defineAsyncComponent, nextTick, ref, toRefs } from "vue";
 import {
   NButton,
   NCard,
@@ -269,6 +277,9 @@ const EditIcon = defineAsyncComponent(
 const OpenIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/ArrowBack")
 );
+const CogIcon = defineAsyncComponent(
+  () => import("@vicons/ionicons5/CogOutline")
+);
 
 interface ChatHeaderProps {
   chat: Chat;
@@ -304,6 +315,7 @@ const availableMembersOptions = ref<SelectOption[]>([]);
 const isAddSaveLoading = ref<boolean>(false);
 const newStatus = ref();
 const isChangeStatusLoading = ref(false);
+const isSettingsVisible = ref((document.documentElement.clientWidth > 768) ? true : false)
 
 const members = computed(() => {
   const uuids = new Set([
@@ -503,5 +515,9 @@ const onlyMainInfo = computed(() => appStore.isMobile || appStore.isTablet);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.chat__settings.n-collapse:deep(.n-collapse-item .n-collapse-item__content-wrapper .n-collapse-item__content-inner) {
+  padding: 4px 0 0 12px;
 }
 </style>

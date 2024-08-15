@@ -82,18 +82,8 @@ function setDevice() {
     store.device = "tablet";
   }
 }
+
 setDevice();
-
-window.addEventListener(
-  "resize",
-  function () {
-    setDevice();
-  },
-  true
-);
-
-watch(
-  () => store.conf?.fullscrean,
-  () => setDevice()
-);
+window.addEventListener("resize", setDevice, true);
+watch(() => store.conf?.fullscrean, setDevice);
 </script>

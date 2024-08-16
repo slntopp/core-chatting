@@ -6,7 +6,7 @@
 
     <n-scrollbar
       ref="scrollbar"
-      style="max-height: calc(100vh - 66px - 77px); margin-bottom: auto"
+      style="max-height: calc(100dvh - 66px - 77px); margin-bottom: auto"
       v-if="isMessageLoading || messages.length > 0"
     >
       <template v-if="isMessageLoading">
@@ -179,7 +179,7 @@ const chatPaddingLeft = computed(() =>
 .chat {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
   padding-left: v-bind('chatPaddingLeft');
 }
 </style>

@@ -290,7 +290,7 @@
 
       <n-scrollbar
         ref="scrollbar"
-        style="height: calc(100vh - 100px); min-width: 150px"
+        style="height: calc(100dvh - 100px); min-width: 150px"
       >
         <n-popover trigger="manual" :show="isFirstMessageVisible" :x="x" :y="y">
           {{ firstMessage }}

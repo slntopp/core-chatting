@@ -22,7 +22,7 @@
       </n-tooltip>
 
       <user-avatar
-        v-if="!appStore.isPC"
+        v-if="appStore.isMobile"
         round
         style="cursor: pointer"
         :avatar="(CogIcon as DefineComponent)"

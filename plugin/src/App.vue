@@ -76,7 +76,7 @@ function setDevice() {
   const screenWidth = document.body.clientWidth;
   if (screenWidth <= 900) {
     store.device = "phone";
-  } else if (store.conf?.fullscrean) {
+  } else if (store.conf?.fullscreen) {
     store.device = "pc";
   } else {
     store.device = "tablet";
@@ -85,5 +85,5 @@ function setDevice() {
 
 setDevice();
 window.addEventListener("resize", setDevice, true);
-watch(() => store.conf?.fullscrean, setDevice);
+watch(() => store.conf?.fullscreen, setDevice);
 </script>

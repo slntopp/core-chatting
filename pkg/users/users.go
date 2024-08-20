@@ -3,6 +3,7 @@ package users
 import (
 	"context"
 	"fmt"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"connectrpc.com/connect"
 	"github.com/slntopp/core-chatting/cc"
@@ -21,7 +22,7 @@ func NewUsersServer(logger *zap.Logger, ctrl *graph.UsersController) *UsersServe
 	return &UsersServer{log: logger.Named("UsersServer"), ctrl: ctrl}
 }
 
-func (s *UsersServer) FetchDefaults(ctx context.Context, req *connect.Request[cc.Empty]) (
+func (s *UsersServer) FetchDefaults(ctx context.Context, req *connect.Request[cc.FetchDefaultsRequest]) (
 	*connect.Response[cc.Defaults], error) {
 	log := s.log.Named("FetchDefaults")
 	log.Debug("Request received", zap.Any("req", req.Msg))
@@ -30,6 +31,10 @@ func (s *UsersServer) FetchDefaults(ctx context.Context, req *connect.Request[cc
 	if err != nil {
 		s.log.Error("Failed get config", zap.Error(err))
 		return nil, fmt.Errorf("failed to fetch defaults: %w", err)
+	}
+
+	if !req.Msg.GetFetchTemplates() {
+		defaults.Templates = map[string]*structpb.Value{}
 	}
 
 	resp := connect.NewResponse[cc.Defaults](defaults)

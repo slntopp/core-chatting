@@ -251,6 +251,16 @@ export const Users = /*@__PURE__*/ proto3.makeMessageType(
 );
 
 /**
+ * @generated from message cc.FetchDefaultsRequest
+ */
+export const FetchDefaultsRequest = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.FetchDefaultsRequest",
+  () => [
+    { no: 1, name: "fetch_templates", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ],
+);
+
+/**
  * @generated from message cc.Event
  */
 export const Event = /*@__PURE__*/ proto3.makeMessageType(

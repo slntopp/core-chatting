@@ -715,6 +715,30 @@ export declare class Users extends Message$1<Users> {
 }
 
 /**
+ * @generated from message cc.FetchDefaultsRequest
+ */
+export declare class FetchDefaultsRequest extends Message$1<FetchDefaultsRequest> {
+  /**
+   * @generated from field: bool fetch_templates = 1;
+   */
+  fetchTemplates: boolean;
+
+  constructor(data?: PartialMessage<FetchDefaultsRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.FetchDefaultsRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FetchDefaultsRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FetchDefaultsRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FetchDefaultsRequest;
+
+  static equals(a: FetchDefaultsRequest | PlainMessage<FetchDefaultsRequest> | undefined, b: FetchDefaultsRequest | PlainMessage<FetchDefaultsRequest> | undefined): boolean;
+}
+
+/**
  * @generated from message cc.Event
  */
 export declare class Event extends Message$1<Event> {

@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, Chats, Defaults, Empty, Event, Merge, Message, Messages, StreamRequest, User, Users } from "./cc_pb.js";
+import { Chat, Chats, Defaults, Empty, Event, FetchDefaultsRequest, Merge, Message, Messages, StreamRequest, User, Users } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -188,7 +188,7 @@ export declare const UsersAPI: {
      */
     readonly fetchDefaults: {
       readonly name: "FetchDefaults",
-      readonly I: typeof Empty,
+      readonly I: typeof FetchDefaultsRequest,
       readonly O: typeof Defaults,
       readonly kind: MethodKind.Unary,
     },

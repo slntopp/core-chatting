@@ -170,9 +170,13 @@ message Users {
   repeated User users = 1;
 }
 
+message FetchDefaultsRequest {
+  bool fetch_templates = 1;
+}
+
 service UsersAPI {
   rpc Me(Empty) returns (User);
-  rpc FetchDefaults(Empty) returns (Defaults);
+  rpc FetchDefaults(FetchDefaultsRequest) returns (Defaults);
 
   rpc GetConfig(Empty) returns (Defaults);
   rpc SetConfig(Defaults) returns (Defaults);

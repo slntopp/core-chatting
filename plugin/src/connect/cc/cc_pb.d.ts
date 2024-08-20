@@ -671,9 +671,9 @@ export declare class Defaults extends Message$1<Defaults> {
   metrics: { [key: string]: Metric };
 
   /**
-   * @generated from field: map<string, google.protobuf.Value> templates = 5;
+   * @generated from field: map<string, string> templates = 5;
    */
-  templates: { [key: string]: Value };
+  templates: { [key: string]: string };
 
   constructor(data?: PartialMessage<Defaults>);
 

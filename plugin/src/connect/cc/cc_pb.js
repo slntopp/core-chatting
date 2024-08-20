@@ -236,7 +236,7 @@ export const Defaults = /*@__PURE__*/ proto3.makeMessageType(
     { no: 2, name: "admins", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 3, name: "departments", kind: "message", T: Department, repeated: true },
     { no: 4, name: "metrics", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Metric} },
-    { no: 5, name: "templates", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
+    { no: 5, name: "templates", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
   ],
 );
 

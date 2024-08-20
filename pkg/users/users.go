@@ -1,11 +1,9 @@
 package users
 
 import (
+	"connectrpc.com/connect"
 	"context"
 	"fmt"
-	"google.golang.org/protobuf/types/known/structpb"
-
-	"connectrpc.com/connect"
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/graph"
@@ -34,7 +32,7 @@ func (s *UsersServer) FetchDefaults(ctx context.Context, req *connect.Request[cc
 	}
 
 	if !req.Msg.GetFetchTemplates() {
-		defaults.Templates = map[string]*structpb.Value{}
+		defaults.Templates = map[string]string{}
 	}
 
 	resp := connect.NewResponse[cc.Defaults](defaults)

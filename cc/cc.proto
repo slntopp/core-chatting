@@ -163,7 +163,7 @@ message Defaults {
   repeated string admins = 2;
   repeated Department departments = 3;
   map<string, Metric> metrics = 4;
-  map<string, google.protobuf.Value> templates = 5;
+  map<string, string> templates = 5;
 }
 
 message Users {

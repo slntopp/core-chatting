@@ -4,7 +4,14 @@
     messagePlacement="left"
     @contextmenu="show_dropdown"
   >
-    <span :id="messageContentId" v-html="content()"></span>
+    <span
+      v-html="content()"
+      :style="{
+        wordBreak: 'break-word',
+        gridColumn: (appStore.isMobile) ? '1 / 3' : '2 / 3'
+      }"
+      :id="messageContentId"
+    />
     <div v-if="attachFiles?.length" class="chat__files">
       <div
         @click="() => onFileClick(file)"
@@ -69,6 +76,7 @@ import {
   NDivider,
   NDropdown,
   NH2,
+  NH3,
   NIcon,
   NModal,
   NSpace,
@@ -79,6 +87,7 @@ import {
 
 import { Kind, Message, Role, User } from "../../connect/cc/cc_pb";
 import { useCcStore } from "../../store/chatting";
+import { useAppStore } from "../../store/app";
 
 import hljs from "highlight.js";
 import javascript from "highlight.js/lib/languages/javascript";
@@ -137,7 +146,7 @@ const { message } = toRefs(props);
 const emit = defineEmits(["approve", "convert", "edit", "delete"]);
 
 const theme = useThemeVars();
-
+const appStore = useAppStore();
 const store = useCcStore();
 
 const sender = computed(
@@ -291,10 +300,12 @@ function avatar() {
 
 const container_style = computed(() => {
   const is_sender = message.value.sender == store.me.uuid;
+  const paddingRight = (appStore.isMobile) ? '35px' : '45px'
+
   let style = {
     padding: "12px",
     borderRadius: theme.value.borderRadius,
-    maxWidth: "calc(100% - 45px)",
+    maxWidth: `calc(100% - ${paddingRight})`,
     border: `1px solid ${theme.value.borderColor}`,
     backgroundColor: is_sender ? "var(--n-color-hover)" : null,
   };
@@ -474,30 +485,29 @@ function render(props: RenderProps, { slots }: any) {
       is_sender = message.value.sender === store.me.uuid;
   }
   let title = [
-    h(
-      NH2,
-      {
-        style: "margin: 0",
-      },
-      () =>
-        h(
-          NText,
-          {
-            class: "sub",
-            onClick() {
-              const uuid = message.value.sender;
+    h((appStore.isMobile) ? NH3 : NH2, { style: "margin: 0" }, () =>
+      h(NText,
+        {
+          class: "sub",
+          onClick() {
+            const uuid = message.value.sender;
 
-              window.top?.postMessage(
-                { type: "open-user", value: { uuid } },
-                "*"
-              );
-            },
+            window.top?.postMessage(
+              { type: "open-user", value: { uuid } },
+              "*"
+            );
           },
-          () => sender.value
-        )
+        },
+        () => sender.value
+      )
     ),
-    timestamp(),
-    copyMessage(),
+    h(NSpace,
+      { wrapItem: false, wrap: false, align: 'center', size: 4 },
+      () => [
+        timestamp(),
+        copyMessage()
+      ]
+    )
   ];
 
   if (message.value.underReview) {
@@ -524,10 +534,13 @@ function render(props: RenderProps, { slots }: any) {
     props.settingsAvatar
       ? h(UserAvatar as Component, {
           id: "chat-message",
-          style: "cursor: pointer",
+          style: {
+            cursor: "pointer",
+            marginTop: (appStore.isMobile) ? "4px" : undefined
+          },
           round: true,
-          size: 50,
-          iconSize: 28,
+          size: (appStore.isMobile) ? 26 : 50,
+          iconSize: (appStore.isMobile) ? 21 : 28,
           onClick: (e: MouseEvent) => {
             let avatar = e.target as HTMLElement;
 
@@ -547,30 +560,19 @@ function render(props: RenderProps, { slots }: any) {
           avatar: CogIcon,
         })
       : avatar(),
-    h(
-      NSpace,
-      {
-        vertical: true,
-        align: is_sender ? "end" : "start",
-      },
-      () => [
-        h(NSpace, { align: "center" }, () => title),
-        (slots as any).default(),
-      ]
-    ),
+      h(NSpace, { align: "center", size: [12, 0] }, () => title),
+      (slots as any).default()
   ];
 
-  if (is_sender) {
-    elements = elements.reverse();
-  }
+  if (is_sender) elements.reverse();
 
   return h(
     "div",
     {
       style: {
         display: "grid",
-        gridTemplateColumns: is_sender ? "1fr auto" : "auto 1fr",
-        gap: "15px",
+        gridTemplateColumns: (is_sender) ? "1fr auto" : "auto 1fr",
+        gap: (appStore.isMobile) ? "0 10px" : "15px",
         ...container_style.value,
       },
     },
@@ -640,6 +642,7 @@ div.code {
   display: flex;
   justify-self: start;
   flex-wrap: wrap;
+  grid-column: 1 / 3;
 }
 
 .chat__files .files__preview {

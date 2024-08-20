@@ -162,7 +162,7 @@
       </n-space>
     </n-space>
   </div>
-  <n-spin v-else style="width: 100%; height: 100vh; margin: auto" size="large" />
+  <n-spin v-else style="width: 100%; height: 100dvh; margin: auto" size="large" />
 </template>
 
 <script setup lang="ts">

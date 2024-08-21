@@ -4,14 +4,12 @@
     messagePlacement="left"
     @contextmenu="show_dropdown"
   >
-    <span
-      v-html="content()"
-      :style="{
-        wordBreak: 'break-word',
-        gridColumn: (appStore.isMobile) ? '1 / 3' : '2 / 3'
-      }"
-      :id="messageContentId"
+    <message-content
+      :message="message"
+      :attach-files="attachFiles"
+      @click:file="onFileClick"
     />
+
     <div v-if="attachFiles?.length" class="chat__files">
       <div
         @click="() => onFileClick(file)"
@@ -66,7 +64,6 @@ import {
   defineAsyncComponent,
   h,
   nextTick,
-  onMounted,
   reactive,
   ref,
   toRefs,
@@ -84,22 +81,11 @@ import {
   NTooltip,
   useThemeVars,
 } from "naive-ui";
+import messageContent from "./message/message_content.vue";
 
 import { Kind, Message, Role, User } from "../../connect/cc/cc_pb";
 import { useCcStore } from "../../store/chatting";
 import { useAppStore } from "../../store/app";
-
-import hljs from "highlight.js";
-import javascript from "highlight.js/lib/languages/javascript";
-import typescript from "highlight.js/lib/languages/typescript";
-import css from "highlight.js/lib/languages/css";
-import xml from "highlight.js/lib/languages/xml";
-import json from "highlight.js/lib/languages/json";
-import markdown from "highlight.js/lib/languages/markdown";
-
-import { marked, Renderer } from "marked";
-import { mangle } from "marked-mangle";
-import DOMPurify from "dompurify";
 
 import UserAvatar from "../ui/user_avatar.vue";
 import UserItem from "../users/user_item.vue";
@@ -151,10 +137,6 @@ const store = useCcStore();
 
 const sender = computed(
   () => store.users.get(message.value.sender)?.title ?? "Unknown"
-);
-
-const messageContentId = computed(
-  () => `message_content-${message.value.uuid}`
 );
 
 const x = ref(0);
@@ -300,7 +282,7 @@ function avatar() {
 
 const container_style = computed(() => {
   const is_sender = message.value.sender == store.me.uuid;
-  const paddingRight = (appStore.isMobile) ? '35px' : '45px'
+  const paddingRight = appStore.isMobile ? "35px" : "45px";
 
   let style = {
     padding: "12px",
@@ -325,43 +307,6 @@ const container_style = computed(() => {
 
   return style;
 });
-
-{
-  hljs.registerLanguage("javascript", javascript);
-  hljs.registerLanguage("typescript", typescript);
-  hljs.registerLanguage("css", css);
-  hljs.registerLanguage("xml", xml);
-  hljs.registerLanguage("json", json);
-  hljs.registerLanguage("markdown", markdown);
-}
-
-marked.use({
-  async: false,
-  gfm: true,
-  breaks: true,
-  mangle: false,
-  headerIds: false,
-  headerPrefix: "",
-});
-// @ts-ignore
-marked.use(mangle);
-
-const renderer = new Renderer();
-renderer.code = (code, language) => {
-  if (!language) language = "plaintext";
-
-  return `<div class="code"><code>${
-    hljs.highlight(code, { language }).value
-  }</code></div>`;
-};
-marked.setOptions({ renderer });
-
-function content() {
-  const parsed = marked.parse(message.value.content);
-  const sanitized = DOMPurify.sanitize(parsed);
-
-  return sanitized.replace(/^<p>/, "").replace(/<\/p>$/, "");
-}
 
 const attachFiles = computed<AttachFile[]>(() => {
   if (!message.value.meta?.attachments?.toJson) {
@@ -485,8 +430,9 @@ function render(props: RenderProps, { slots }: any) {
       is_sender = message.value.sender === store.me.uuid;
   }
   let title = [
-    h((appStore.isMobile) ? NH3 : NH2, { style: "margin: 0" }, () =>
-      h(NText,
+    h(appStore.isMobile ? NH3 : NH2, { style: "margin: 0" }, () =>
+      h(
+        NText,
         {
           class: "sub",
           onClick() {
@@ -501,13 +447,11 @@ function render(props: RenderProps, { slots }: any) {
         () => sender.value
       )
     ),
-    h(NSpace,
-      { wrapItem: false, wrap: false, align: 'center', size: 4 },
-      () => [
-        timestamp(),
-        copyMessage()
-      ]
-    )
+    h(
+      NSpace,
+      { wrapItem: false, wrap: false, align: "center", size: 4 },
+      () => [timestamp(), copyMessage()]
+    ),
   ];
 
   if (message.value.underReview) {
@@ -536,11 +480,11 @@ function render(props: RenderProps, { slots }: any) {
           id: "chat-message",
           style: {
             cursor: "pointer",
-            marginTop: (appStore.isMobile) ? "4px" : undefined
+            marginTop: appStore.isMobile ? "4px" : undefined,
           },
           round: true,
-          size: (appStore.isMobile) ? 26 : 50,
-          iconSize: (appStore.isMobile) ? 21 : 28,
+          size: appStore.isMobile ? 26 : 50,
+          iconSize: appStore.isMobile ? 21 : 28,
           onClick: (e: MouseEvent) => {
             let avatar = e.target as HTMLElement;
 
@@ -560,8 +504,8 @@ function render(props: RenderProps, { slots }: any) {
           avatar: CogIcon,
         })
       : avatar(),
-      h(NSpace, { align: "center", size: [12, 0] }, () => title),
-      (slots as any).default()
+    h(NSpace, { align: "center", size: [12, 0] }, () => title),
+    (slots as any).default(),
   ];
 
   if (is_sender) elements.reverse();
@@ -571,8 +515,8 @@ function render(props: RenderProps, { slots }: any) {
     {
       style: {
         display: "grid",
-        gridTemplateColumns: (is_sender) ? "1fr auto" : "auto 1fr",
-        gap: (appStore.isMobile) ? "0 10px" : "15px",
+        gridTemplateColumns: is_sender ? "1fr auto" : "auto 1fr",
+        gap: appStore.isMobile ? "0 10px" : "15px",
         ...container_style.value,
       },
     },
@@ -591,15 +535,6 @@ function onFileClick(file: AttachFile) {
   }
 }
 
-function addLinkTarget() {
-  const contentElement = document.getElementById(messageContentId.value);
-  if (contentElement) {
-    contentElement.querySelectorAll("a").forEach((link) => {
-      link.target = "_blanc";
-    });
-  }
-}
-
 async function downloadFile(name: string, link: string) {
   const element = document.createElement("a");
 
@@ -611,21 +546,9 @@ async function downloadFile(name: string, link: string) {
   element.setAttribute("download", name);
   element.click();
 }
-
-onMounted(() => {
-  addLinkTarget();
-});
 </script>
 
 <style>
-div.code {
-  padding: 8px;
-  background-color: black;
-  border-radius: 6px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
 .n-space span img {
   max-width: 50vw;
 }

@@ -836,6 +836,19 @@ function goBack() {
   router.go(-1);
 }
 
+function openUser(e: Event) {
+  const name = (e.target as any).innerText.split(":")[0];
+  const user = [...store.users.values()].find((u) => u.title === name);
+  if (user) {
+    window.open(
+      `${appStore.conf?.params.fullUrl.split("plugin")[0]}accounts/${
+        user.uuid
+      }?tab=helpdesk`,
+      "_blank"
+    );
+  }
+}
+
 watch(openChatsCountDuration, () => {
   openChatsCountOffset.value = 0;
 });
@@ -853,20 +866,8 @@ watch(
       document
         .querySelectorAll(".apexcharts-legend-series")
         .forEach((element) => {
-          element.addEventListener("click", (e) => {
-            const name = (e.target as any).innerText.split(":")[0];
-            const user = [...store.users.values()].find(
-              (u) => u.title === name
-            );
-            if (user) {
-              window.open(
-                `${appStore.conf?.params.fullUrl.split("plugin")[0]}accounts/${
-                  user.uuid
-                }?tab=5`,
-                "_blank"
-              );
-            }
-          });
+          element.removeEventListener("click", openUser);
+          element.addEventListener("click", openUser);
         });
     }, 200);
   },

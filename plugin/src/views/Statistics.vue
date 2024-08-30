@@ -163,6 +163,7 @@ import { Chat, Messages } from "../connect/cc/cc_pb";
 import { ApexOptions } from "apexcharts";
 import { useRouter } from "vue-router";
 import useDefaults from "../hooks/useDefaults";
+import { useAppStore } from "../store/app";
 
 const nextIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/ChevronForwardOutline")
@@ -172,6 +173,7 @@ const prevIcon = defineAsyncComponent(
 );
 
 const store = useCcStore();
+const appStore = useAppStore();
 const router = useRouter();
 const { admins, fetch_defaults } = useDefaults();
 
@@ -594,9 +596,9 @@ function getChartOptions({
     },
     legend: {
       onItemClick: {
-        toggleDataSeries: !isTypeAll,
+        toggleDataSeries: false,
       },
-      show: isTypeAll,
+      show: true,
       showForSingleSeries: true,
       formatter: function (val: any, opts: any) {
         const total = series[opts.seriesIndex].data.reduce((a, acc) => {
@@ -843,6 +845,33 @@ watch(closedChatsCountDuration, () => {
 watch(usersActivityDuration, () => {
   usersActivityOffset.value = 0;
 });
+
+watch(
+  [openChatsCountOptions, closedChatsCountOptions, usersActivityOptions],
+  () => {
+    setTimeout(() => {
+      document
+        .querySelectorAll(".apexcharts-legend-series")
+        .forEach((element) => {
+          element.addEventListener("click", (e) => {
+            const name = (e.target as any).innerText.split(":")[0];
+            const user = [...store.users.values()].find(
+              (u) => u.title === name
+            );
+            if (user) {
+              window.open(
+                `${appStore.conf?.params.fullUrl.split("plugin")[0]}accounts/${
+                  user.uuid
+                }?tab=5`,
+                "_blank"
+              );
+            }
+          });
+        });
+    }, 200);
+  },
+  { deep: true }
+);
 </script>
 
 <style lang="scss">
@@ -875,5 +904,10 @@ span.apexcharts-legend-text {
       }
     }
   }
+}
+
+.apexcharts-legend-text {
+  text-decoration: underline;
+  cursor: pointer;
 }
 </style>

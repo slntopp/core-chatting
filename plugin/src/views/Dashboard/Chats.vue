@@ -215,6 +215,7 @@
           trigger="click"
           placement="bottom"
           class="chats__filters"
+          v-model:show="isFilterOpen"
         >
           <template #trigger>
             <n-icon size="24" style="vertical-align: middle; cursor: pointer">
@@ -267,22 +268,32 @@
             style="
               margin: 15px 10px 0px 0px;
               display: flex;
-              justify-content: end;
+              justify-content: space-between;
             "
           >
             <n-button
               ghost
-              type="primary"
+              type="warning"
               @click="downloadReport"
               :loading="isReportLoading"
-              style="margin-right: 10px"
             >
               Report
             </n-button>
 
-            <n-button ghost type="primary" @click="resetFilters">
-              Reset
-            </n-button>
+            <div>
+              <n-button
+                style="margin-right: 10px"
+                ghost
+                type="error"
+                @click="resetFilters"
+              >
+                Reset
+              </n-button>
+
+              <n-button ghost type="primary" @click="isFilterOpen = false">
+                Close
+              </n-button>
+            </div>
           </div>
         </n-popover>
       </n-space>
@@ -431,6 +442,7 @@ const isChangeDepartmentLoading = ref(false);
 const newResponsible = ref();
 const isChangeResponsibleLoading = ref(false);
 const isAllChatsSelected = ref(false);
+const isFilterOpen = ref(false);
 
 const isMergeVisible = computed(() => {
   const list = selectedChats.value.map(

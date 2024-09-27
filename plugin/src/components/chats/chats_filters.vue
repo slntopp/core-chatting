@@ -1,24 +1,52 @@
 <template>
-  <div class="filter_item" style="margin-top: 20px">
+  <div class="filter_item dates" style="margin-top: 20px">
     <n-text>Filter by created date:</n-text>
 
     <n-date-picker
+      placeholder="From"
       size="small"
-      :value="createDateRange"
-      @update:value="emits('update:createDateRange', $event)"
-      type="daterange"
+      :value="createDateRange.from"
+      @update:value="
+        emits('update:createDateRange', { ...createDateRange, from: $event })
+      "
+      style="margin-right: 10px"
       clearable
+      :is-date-disabled="(ts:number)=>ts >= (createDateRange.to || Number.MAX_SAFE_INTEGER)"
+    />
+    <n-date-picker
+      placeholder="To"
+      size="small"
+      :value="createDateRange.to"
+      @update:value="
+        emits('update:createDateRange', { ...createDateRange, to: $event })
+      "
+      clearable
+      :is-date-disabled="(ts:number)=>ts <= (createDateRange.from || 0)"
     />
   </div>
 
-  <div class="filter_item" style="margin-top: 20px">
+  <div class="filter_item dates" style="margin-top: 20px">
     <n-text>Filter by updated date:</n-text>
 
     <n-date-picker
+      placeholder="From"
       size="small"
-      :value="updateDateRange"
-      @update:value="emits('update:updateDateRange', $event)"
-      type="daterange"
+      :value="updateDateRange.from"
+      @update:value="
+        emits('update:updateDateRange', { ...updateDateRange, from: $event })
+      "
+      :is-date-disabled="(ts:number)=>ts >= (updateDateRange.to || Number.MAX_SAFE_INTEGER)"
+      style="margin-right: 10px"
+      clearable
+    />
+    <n-date-picker
+      placeholder="To"
+      size="small"
+      :value="updateDateRange.to"
+      :is-date-disabled="(ts:number)=>ts <= (updateDateRange.from || 0)"
+      @update:value="
+        emits('update:updateDateRange', { ...updateDateRange, to: $event })
+      "
       clearable
     />
   </div>
@@ -101,8 +129,8 @@ interface ChatsFiltersProps {
   checkedAdmins: string[];
   checkedResponsibles: string[];
   metricsOptions: { [key: string]: [] };
-  createDateRange: [number, number] | null;
-  updateDateRange: [number, number] | null;
+  createDateRange: { from: null | number; to: null | number };
+  updateDateRange: { from: null | number; to: null | number };
 }
 defineProps<ChatsFiltersProps>();
 
@@ -171,5 +199,17 @@ function getMetricOptions(metric: MetricWithKey) {
   display: flex;
   justify-content: start;
   align-items: center;
+}
+
+.filter_item.dates {
+  display: grid;
+  grid-template-columns: 150px 4fr 4fr;
+
+  @media only screen and (max-width: 1024px) {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 0px;
+  }
 }
 </style>

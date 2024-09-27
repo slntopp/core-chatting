@@ -969,6 +969,8 @@ watch(
     createDateRange,
   ],
   () => {
+    selectedStatus.value = undefined;
+
     localStorage.setItem(
       "filters",
       JSON.stringify({

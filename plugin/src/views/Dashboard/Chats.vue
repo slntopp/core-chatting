@@ -581,8 +581,8 @@ onMounted(() => {
     checkedStatuses.value = filters.statuses;
     checkedAdmins.value = filters.admins;
     checkedResponsibles.value = filters.responsibles;
-    updateDateRange.value = filters.updated;
-    createDateRange.value = filters.created;
+    updateDateRange.value = filters.updated ?? { from: null, to: null };
+    createDateRange.value = filters.created ?? { from: null, to: null };
   }
 
   const options = {
@@ -680,23 +680,17 @@ function selectStatus(status: Status) {
 
 const chats = computed(() => {
   const result = [...store.chats.values()].filter((chat) => {
-    let isCreatedInDate = true;
-    if (createDateRange.value) {
-      const createdDate = Number(chat.created);
-      isCreatedInDate =
-        createDateRange.value[0] <= createdDate &&
-        createDateRange.value[1] >= createdDate;
-    }
+    const createdDate = Number(chat.created);
+    const isCreatedInDate =
+      (createDateRange.value.from ?? 0) <= createdDate &&
+      (createDateRange.value.to ?? Number.MAX_SAFE_INTEGER) >= createdDate;
 
-    let isUpdatedInDate = true;
-    if (updateDateRange.value) {
-      const updatedDate = Number(
-        chat.meta?.lastMessage?.edited || chat.meta?.lastMessage?.sent
-      );
-      isUpdatedInDate =
-        updateDateRange.value[0] <= updatedDate &&
-        updateDateRange.value[1] >= updatedDate;
-    }
+    const updatedDate = Number(
+      chat.meta?.lastMessage?.edited || chat.meta?.lastMessage?.sent
+    );
+    const isUpdatedInDate =
+      (updateDateRange.value.from ?? 0) <= updatedDate &&
+      (updateDateRange.value.to ?? Number.MAX_SAFE_INTEGER) >= updatedDate;
 
     let isDepartamentIncluded = true;
     if (checkedDepartments.value.length > 0) {
@@ -920,8 +914,14 @@ const checkedAdmins = ref<string[]>([]);
 const checkedResponsibles = ref<string[]>([]);
 const checkedDepartments = ref<string[]>([]);
 
-const createDateRange = ref<[number, number] | null>(null);
-const updateDateRange = ref<[number, number] | null>(null);
+const createDateRange = ref<{ from: null | number; to: null | number }>({
+  from: null,
+  to: null,
+});
+const updateDateRange = ref<{ from: null | number; to: null | number }>({
+  from: null,
+  to: null,
+});
 
 if (Object.keys(metrics.value).length < 1) fetch_defaults();
 
@@ -993,8 +993,8 @@ async function resetFilters() {
   checkedStatuses.value = [];
   checkedAdmins.value = [];
   checkedResponsibles.value = [];
-  updateDateRange.value = null;
-  createDateRange.value = null;
+  updateDateRange.value = { from: null, to: null };
+  createDateRange.value = { from: null, to: null };
   metricsOptions.value = metrics.value.reduce(
     (result, { key }) => ({ ...result, [key]: [] }),
     {}

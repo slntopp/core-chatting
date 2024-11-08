@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/slntopp/core-chatting/cc"
+	"github.com/slntopp/core-chatting/pkg/pubsub"
 	"github.com/slntopp/nocloud-proto/events"
 	"github.com/slntopp/nocloud/pkg/nocloud/schema"
 	sc "github.com/slntopp/nocloud/pkg/settings/client"
@@ -12,6 +13,24 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"time"
 )
+
+func (s *ChatsServer) sendCloseChatMessage(ctx context.Context, log *zap.Logger, chat *cc.Chat, msg *cc.Message) error {
+	message, err := s.msgsCtrl.Send(ctx, msg)
+	if err != nil {
+		return err
+	}
+
+	go pubsub.HandleNotifyMessage(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_SENT)
+
+	if s.whmcsTickets && chat.GetDepartment() != "openai" {
+		go s.ps.PubWhmcs(ctx, &cc.Event{
+			Type: cc.EventType_MESSAGE_SENT,
+			Item: &cc.Event_Msg{Msg: message},
+		})
+	}
+
+	return nil
+}
 
 func (s *ChatsServer) CloseInactiveChats(ctx context.Context, log *zap.Logger, conf TicketsSettingsConf, eventPublisher func(ctx context.Context, event *events.Event)) error {
 	log = log.Named("CloseInactiveChats")
@@ -48,6 +67,14 @@ func (s *ChatsServer) CloseInactiveChats(ctx context.Context, log *zap.Logger, c
 			},
 			Uuid: chat.GetOwner(),
 		})
+		if err = s.sendCloseChatMessage(ctx, log, chat, &cc.Message{
+			Sent:    time.Now().UnixMilli(),
+			Sender:  schema.ROOT_ACCOUNT_KEY,
+			Content: conf.CloseMessageContent,
+			Chat:    &chat.Uuid,
+		}); err != nil {
+			return err
+		}
 	}
 
 	return nil

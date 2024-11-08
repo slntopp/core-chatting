@@ -24,6 +24,7 @@ type ChatsServer struct {
 
 	ctrl       *graph.ChatsController
 	users_ctrl *graph.UsersController
+	msgsCtrl   *graph.MessagesController
 	ps         *pubsub.PubSub
 
 	settingsClient settingspb.SettingsServiceClient
@@ -31,10 +32,10 @@ type ChatsServer struct {
 	whmcsTickets bool
 }
 
-func NewChatsServer(logger *zap.Logger, ctrl *graph.ChatsController, users_ctrl *graph.UsersController,
+func NewChatsServer(logger *zap.Logger, ctrl *graph.ChatsController, users_ctrl *graph.UsersController, msgsCtrl *graph.MessagesController,
 	ps *pubsub.PubSub, whmcsTickets bool, settingsClient settingspb.SettingsServiceClient, conn *amqp091.Connection) *ChatsServer {
 	return &ChatsServer{log: logger.Named("ChatsServer"), ctrl: ctrl, users_ctrl: users_ctrl,
-		ps: ps, whmcsTickets: whmcsTickets, settingsClient: settingsClient, conn: conn}
+		ps: ps, whmcsTickets: whmcsTickets, settingsClient: settingsClient, conn: conn, msgsCtrl: msgsCtrl}
 }
 
 func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {

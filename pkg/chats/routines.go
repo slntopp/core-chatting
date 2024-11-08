@@ -43,9 +43,9 @@ func (s *ChatsServer) CloseInactiveChats(ctx context.Context, log *zap.Logger, c
 	now := time.Now().Unix()
 	closeAfterSeconds := int64(conf.CloseInactiveChatsAfterHours * 60 * 60)
 	for _, chat := range chats {
-		//if chat.Status != cc.Status_ANSWERED {
-		//	continue
-		//}
+		if chat.Status != cc.Status_ANSWERED {
+			continue
+		}
 		if chat.Meta == nil || chat.GetMeta().LastMessage == nil {
 			continue
 		}

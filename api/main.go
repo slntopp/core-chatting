@@ -6,6 +6,7 @@ import (
 	"github.com/slntopp/nocloud/pkg/nocloud/schema"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -31,7 +32,6 @@ import (
 	"golang.org/x/net/http2/h2c"
 
 	settingspb "github.com/slntopp/nocloud-proto/settings"
-	"github.com/slntopp/nocloud/pkg/nocloud"
 )
 
 var (
@@ -128,7 +128,15 @@ func main() {
 		http.StripPrefix("/cc.ui/", http.FileServer(http.Dir(dist))),
 	)
 
-	ctx := context.WithValue(context.Background(), nocloud.NoCloudAccount, schema.ROOT_ACCOUNT_KEY)
+	authInterceptor := auth.NewAuthInterceptor(log, SIGNING_KEY)
+
+	interceptors := connect.WithInterceptors(authInterceptor)
+
+	token, err := authInterceptor.MakeToken(schema.ROOT_ACCOUNT_KEY)
+	if err != nil {
+		log.Fatal("Can't generate token", zap.Error(err))
+	}
+	ctx := metadata.AppendToOutgoingContext(context.Background(), "authorization", "bearer "+token)
 	settingsConn, err := grpc.Dial(settingsHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic(err)
@@ -139,10 +147,6 @@ func main() {
 		log.Fatal("Can't check settings connection", zap.Error(err))
 	}
 	log.Info("Settings server connection established")
-
-	authInterceptor := auth.NewAuthInterceptor(log, SIGNING_KEY)
-
-	interceptors := connect.WithInterceptors(authInterceptor)
 
 	chatServer := chats.NewChatsServer(log, chatCtrl, usersCtrl, ps, whmcsTickets, settingsClient)
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)

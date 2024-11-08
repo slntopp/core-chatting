@@ -148,7 +148,7 @@ func main() {
 	}
 	log.Info("Settings server connection established")
 
-	chatServer := chats.NewChatsServer(log, chatCtrl, usersCtrl, ps, whmcsTickets, settingsClient)
+	chatServer := chats.NewChatsServer(log, chatCtrl, usersCtrl, ps, whmcsTickets, settingsClient, rbmq)
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 	go chatServer.CloseInactiveChatsRoutine(ctx)

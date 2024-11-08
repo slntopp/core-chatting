@@ -3,6 +3,7 @@ package chats
 import (
 	"context"
 	"errors"
+	settingspb "github.com/slntopp/nocloud-proto/settings"
 	"slices"
 
 	"github.com/slntopp/core-chatting/pkg/core"
@@ -23,11 +24,15 @@ type ChatsServer struct {
 	users_ctrl *graph.UsersController
 	ps         *pubsub.PubSub
 
+	settingsClient settingspb.SettingsServiceClient
+
 	whmcsTickets bool
 }
 
-func NewChatsServer(logger *zap.Logger, ctrl *graph.ChatsController, users_ctrl *graph.UsersController, ps *pubsub.PubSub, whmcsTickets bool) *ChatsServer {
-	return &ChatsServer{log: logger.Named("ChatsServer"), ctrl: ctrl, users_ctrl: users_ctrl, ps: ps, whmcsTickets: whmcsTickets}
+func NewChatsServer(logger *zap.Logger, ctrl *graph.ChatsController, users_ctrl *graph.UsersController,
+	ps *pubsub.PubSub, whmcsTickets bool, settingsClient settingspb.SettingsServiceClient) *ChatsServer {
+	return &ChatsServer{log: logger.Named("ChatsServer"), ctrl: ctrl, users_ctrl: users_ctrl,
+		ps: ps, whmcsTickets: whmcsTickets, settingsClient: settingsClient}
 }
 
 func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {

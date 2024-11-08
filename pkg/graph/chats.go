@@ -3,6 +3,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"github.com/slntopp/nocloud/pkg/nocloud/schema"
 	"slices"
 	"time"
 
@@ -127,7 +128,7 @@ func (c *ChatsController) Get(ctx context.Context, uuid, requestor string) (*cc.
 
 const listChatsQuery = `
 FOR c in @@chats
-FILTER @requestor in c.admins || @requestor in c.users
+FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_account
 	LET role = (
      @requestor in c.admins ? 3 : (
       c.owner == @requestor ? 2 : (
@@ -164,6 +165,7 @@ func (c *ChatsController) List(ctx context.Context, requestor string) ([]*cc.Cha
 		"@chats":        CHATS_COLLECTION,
 		"@messages":     MESSAGES_COLLECTION,
 		"requestor":     requestor,
+		"root_account":  schema.ROOT_ACCOUNT_KEY,
 		"closed_status": cc.Status_CLOSE,
 	})
 

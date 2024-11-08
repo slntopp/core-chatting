@@ -13,8 +13,9 @@ const (
 )
 
 type TicketsSettingsConf struct {
-	RoutineFrequency             int `json:"routine-frequency"`                // In seconds
-	CloseInactiveChatsAfterHours int `json:"close-inactive-chats-after-hours"` // In hours
+	RoutineFrequency             int    `json:"routine-frequency"`                // In seconds
+	CloseInactiveChatsAfterHours int    `json:"close-inactive-chats-after-hours"` // In hours
+	CloseMessageContent          string `json:"close-message-content"`
 }
 
 var (
@@ -22,6 +23,7 @@ var (
 		Value: TicketsSettingsConf{
 			RoutineFrequency:             3600,
 			CloseInactiveChatsAfterHours: 120,
+			CloseMessageContent:          "Chat was closed by system due to inactivity",
 		},
 		Description: "Tickets Settings",
 		Level:       access.Level_ADMIN,

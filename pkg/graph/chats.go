@@ -130,13 +130,19 @@ const listChatsQuery = `
 FOR c in @@chats
 FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_account
 	LET role = (
-     @requestor in c.admins ? 3 : (
+     @requestor in c.admins or @requestor == @root_account ? 3 : (
       c.owner == @requestor ? 2 : (
        @requestor in c.users ? 1 : 0
       )
      )
     )
-	LET messages = (FOR m in @@messages FILTER m.chat == c._key SORT m.sent ASC RETURN m)
+	LET messages = (
+         FOR m in @@messages 
+         FILTER m.chat == c._key 
+		 FILTER m.kind != @admin_only || role == 3
+         FILTER !m.under_review || role == 3
+         SORT m.sent ASC RETURN m
+    )
 	LET first_message = FIRST(messages)
 	LET last_message = LAST(messages)
 	LET unread = c.status == @closed_status ? 0 : LENGTH(
@@ -167,6 +173,7 @@ func (c *ChatsController) List(ctx context.Context, requestor string) ([]*cc.Cha
 		"requestor":     requestor,
 		"root_account":  schema.ROOT_ACCOUNT_KEY,
 		"closed_status": cc.Status_CLOSE,
+		"admin_only":    cc.Kind_ADMIN_ONLY,
 	})
 
 	if err != nil {

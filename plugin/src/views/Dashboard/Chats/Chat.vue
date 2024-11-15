@@ -161,13 +161,6 @@ function handle_edit(message: Message) {
   }
 }
 
-function handle_stop_edit() {
-  store.updating = false;
-  store.current_message = new Message({
-    content: "",
-  });
-}
-
 const chatPaddingLeft = computed(() =>
   (appStore.isMobile) ? '12px' : '16px'
 )

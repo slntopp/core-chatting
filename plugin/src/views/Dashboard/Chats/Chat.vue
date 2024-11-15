@@ -122,8 +122,6 @@ async function load_chat() {
       store.resolve([...chat.value.users, ...chat.value.admins]),
       store.get_messages(chat.value as Chat),
     ]);
-
-    handle_stop_edit();
   } finally {
     isMessageLoading.value = false;
   }

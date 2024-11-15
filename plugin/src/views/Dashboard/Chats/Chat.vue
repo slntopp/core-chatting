@@ -157,13 +157,6 @@ function handle_edit(message: Message) {
     footer.value.sendMode = "admin";
   }
 }
-
-function handle_stop_edit() {
-  store.updating = false;
-  store.current_message = new Message({
-    content: "",
-  });
-}
 </script>
 
 <style scoped>

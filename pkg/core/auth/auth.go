@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"github.com/slntopp/nocloud/pkg/nocloud"
 	"strings"
 
 	"connectrpc.com/connect"
@@ -21,6 +22,16 @@ func NewAuthInterceptor(log *zap.Logger, signing_key []byte) *interceptor {
 		log:         log.Named("AuthInterceptor"),
 		signing_key: signing_key,
 	}
+}
+
+func (i *interceptor) MakeToken(account string) (string, error) {
+	claims := jwt.MapClaims{}
+	claims[nocloud.NOCLOUD_ACCOUNT_CLAIM] = account
+	claims[nocloud.NOCLOUD_INSTANCE_CLAIM] = "placeholder"
+	claims[nocloud.NOCLOUD_ROOT_CLAIM] = 4
+	claims[nocloud.NOCLOUD_NOSESSION_CLAIM] = true
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(i.signing_key)
 }
 
 func (i *interceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {

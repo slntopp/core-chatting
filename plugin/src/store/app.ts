@@ -6,7 +6,7 @@ export interface PluginConf {
     namespace: string
     theme: string
     title: string
-    fullscrean: boolean
+    fullscreen: boolean
     token: string
     params: {
         [key: string]: any

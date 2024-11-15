@@ -605,7 +605,7 @@ class UsersAPIStub(object):
                 )
         self.FetchDefaults = channel.unary_unary(
                 '/cc.UsersAPI/FetchDefaults',
-                request_serializer=cc_dot_cc__pb2.Empty.SerializeToString,
+                request_serializer=cc_dot_cc__pb2.FetchDefaultsRequest.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Defaults.FromString,
                 )
         self.GetConfig = channel.unary_unary(
@@ -681,7 +681,7 @@ def add_UsersAPIServicer_to_server(servicer, server):
             ),
             'FetchDefaults': grpc.unary_unary_rpc_method_handler(
                     servicer.FetchDefaults,
-                    request_deserializer=cc_dot_cc__pb2.Empty.FromString,
+                    request_deserializer=cc_dot_cc__pb2.FetchDefaultsRequest.FromString,
                     response_serializer=cc_dot_cc__pb2.Defaults.SerializeToString,
             ),
             'GetConfig': grpc.unary_unary_rpc_method_handler(
@@ -743,7 +743,7 @@ class UsersAPI(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/cc.UsersAPI/FetchDefaults',
-            cc_dot_cc__pb2.Empty.SerializeToString,
+            cc_dot_cc__pb2.FetchDefaultsRequest.SerializeToString,
             cc_dot_cc__pb2.Defaults.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -18,7 +18,8 @@
         <transition name="fade">
           <n-checkbox
             v-if="hovered || selected.includes(chat.uuid)"
-            style="position: absolute; left: 32px; top: 20px"
+            style="position: absolute; top: 21px"
+            :style="{ left: (appStore.isMobile) ? '12px' : '22px' }"
             :checked="selected.includes(chat.uuid)"
             @update:checked="emits('select', chat.uuid)"
             @click.stop
@@ -125,7 +126,7 @@
         <n-text class="topic">{{ chatTopic }}</n-text>
       </div>
 
-      <div style="position: absolute; right: 18px; top: -10px">
+      <div style="position: absolute; right: 5px; top: -20px">
         <n-badge
           v-if="isUnreadMessages"
           :value="chat.meta!.unread"
@@ -231,6 +232,8 @@ const department = computed(
 // })
 const hovered = ref(false);
 
+if (appStore.isMobile) hovered.value = true
+
 const chatTopic = computed(() => {
   const topic = chat.value.topic ?? members.value.join(", ");
   const words = topic.split(" ");
@@ -290,9 +293,15 @@ const subDecoration = computed(() => (window.top ? "underline" : "none"));
 const chatRightColumn = computed(() =>
   appStore.displayMode === "full" ? 6 : 3
 );
-const avatarScale = computed(() =>
-  props.selected.includes(chat.value.uuid) ? 0.5 : 1
-);
+const avatarScale = computed(() => {
+  if (appStore.isMobile) return 0
+
+  return props.selected.includes(chat.value.uuid) ? 0.5 : 1
+});
+
+const chatAvatarWidth = computed(() =>
+  (appStore.isMobile) ? '15px' : null
+)
 
 const onlyMainInfo = computed(
   () => appStore.isMobile || appStore.displayMode === "half"
@@ -343,6 +352,10 @@ function openChat(user: string) {
 
 <style scoped lang="scss">
 .chat {
+  &.n-list-item {
+    padding: 12px 10px;
+  }
+
   .preview {
     display: grid;
     grid-template-columns: v-bind(previewColumns);
@@ -423,8 +436,8 @@ function openChat(user: string) {
 
 .mobile_right {
   position: absolute;
-  right: 5px;
-  bottom: 0px;
+  right: 10px;
+  top: 12px;
   display: flex;
   align-items: end;
   flex-direction: column;
@@ -441,6 +454,7 @@ function openChat(user: string) {
 
 .chat__avatar-wrapper {
   height: fit-content;
+  width: v-bind('chatAvatarWidth');
 }
 
 .chat__avatar {

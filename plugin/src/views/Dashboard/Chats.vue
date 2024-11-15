@@ -4,7 +4,7 @@
     :class="{ chats__panel: true, closed: !isChatPanelOpen }"
     :style="
       appStore.displayMode === 'full'
-        ? 'min-width: calc(100% - 8px)'
+        ? 'min-width: 100%'
         : undefined
     "
   >
@@ -15,6 +15,7 @@
     >
       <n-space
         align="center"
+        :wrap="appStore.isMobile ? false : true"
         :wrap-item="false"
         :justify="
           isChatPanelOpen || appStore.isMobile ? 'space-between' : 'center'
@@ -72,16 +73,16 @@
 
           <n-select
             v-else
-            :value="selectedStatus"
-            @change="selectStatus"
             clearable
             placeholder="Status"
+            :value="selectedStatus"
             :options="
               Object.values(chatsCountByStatus).map(({ count, status }) => ({
                 value: +status,
                 label: `${getStatus(status)} (${count})`,
               }))
             "
+            @update:value="selectStatus"
           />
 
           <n-button
@@ -200,7 +201,7 @@
         :wrap="false"
       >
         <n-checkbox
-          style="padding-left: 20px"
+          :style="(appStore.isMobile) ? undefined : 'padding-left: 10px'"
           v-model:checked="isAllChatsSelected"
         />
 
@@ -300,7 +301,7 @@
 
       <n-scrollbar
         ref="scrollbar"
-        style="height: calc(100vh - 100px); min-width: 150px"
+        style="height: calc(100dvh - 100px); min-width: 150px"
       >
         <n-popover trigger="manual" :show="isFirstMessageVisible" :x="x" :y="y">
           {{ firstMessage }}
@@ -337,7 +338,7 @@
     </n-layout-sider>
   </div>
 
-  <div id="separator" v-show="isChatPanelOpen"></div>
+  <div id="separator" v-show="appStore.displayMode === 'half'"></div>
   <div class="chat__item" v-if="appStore.displayMode !== 'full'">
     <n-layout-content>
       <router-view />
@@ -585,6 +586,13 @@ onMounted(() => {
     createDateRange.value = filters.created ?? { from: null, to: null };
   }
 
+  observe();
+});
+
+watch(loading, observe);
+sync();
+
+function observe () {
   const options = {
     root: scrollbar.value?.$el.nextElementSibling,
     threshold: 1,
@@ -598,10 +606,8 @@ onMounted(() => {
   }, options);
 
   if (!loading.value?.$el) return;
-  observer.observe(loading.value?.$el);
-});
-
-sync();
+  observer.observe(loading.value.$el);
+}
 
 function selectChat(uuid: string) {
   if (selectedChats.value.includes(uuid)) {

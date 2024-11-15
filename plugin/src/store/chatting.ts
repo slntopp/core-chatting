@@ -7,7 +7,8 @@ import { createGrpcWebTransport } from "@connectrpc/connect-web";
 import { useAppStore } from "./app";
 
 import {
-    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType, ChatMeta, Kind, StreamRequest, Department, Merge
+    Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType, ChatMeta, Kind, StreamRequest, Department, Merge,
+    FetchDefaultsRequest
 } from "../connect/cc/cc_pb"
 import {
     ChatsAPI, MessagesAPI, StreamService, UsersAPI
@@ -100,8 +101,8 @@ export const useCcStore = defineStore('cc', () => {
         chats.value.delete(chat.uuid)
     }
 
-    function fetch_defaults(): Promise<Defaults> {
-        return users_c.fetchDefaults(new Empty())
+    function fetch_defaults(fetchTemplates:boolean=false): Promise<Defaults> {
+        return users_c.fetchDefaults(new FetchDefaultsRequest({fetchTemplates}))
     }
 
     function update_defaults(config: Defaults): Promise<Defaults> {

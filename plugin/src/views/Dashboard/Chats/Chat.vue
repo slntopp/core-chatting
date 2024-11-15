@@ -1,12 +1,12 @@
 <template>
-  <n-list class="chat" v-if="chat">
+  <n-list v-if="chat" class="chat">
     <template #header>
       <chat-header :chat="chat" />
     </template>
 
     <n-scrollbar
       ref="scrollbar"
-      style="max-height: calc(100vh - 66px - 77px); margin-bottom: auto"
+      style="max-height: calc(100dvh - 66px - 77px); margin-bottom: auto"
       v-if="isMessageLoading || messages.length > 0"
     >
       <template v-if="isMessageLoading">
@@ -54,10 +54,12 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, nextTick, ref, watch } from "vue";
 import { NAlert, NList, NListItem, NScrollbar, NSpace } from "naive-ui";
-
 import { useRoute, useRouter } from "vue-router";
+
+import { useAppStore } from "../../../store/app";
 import { useCcStore } from "../../../store/chatting";
 import { Chat, Kind, Message } from "../../../connect/cc/cc_pb";
+
 import ChatHeader from "../../../components/chats/layouts/chat_header.vue";
 import ChatFooter from "../../../components/chats/layouts/chat_footer.vue";
 import MockMessage from "../../../components/chats/mock_message.vue";
@@ -69,6 +71,7 @@ const MessageView = defineAsyncComponent(
 const route = useRoute();
 const router = useRouter();
 
+const appStore = useAppStore()
 const store = useCcStore();
 const scrollbar = ref();
 const isMessageLoading = ref(false);
@@ -157,13 +160,17 @@ function handle_edit(message: Message) {
     footer.value.sendMode = "admin";
   }
 }
+
+const chatPaddingLeft = computed(() =>
+  (appStore.isMobile) ? '12px' : '16px'
+)
 </script>
 
 <style scoped>
 .chat {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  padding-left: 16px;
+  height: 100dvh;
+  padding-left: v-bind('chatPaddingLeft');
 }
 </style>

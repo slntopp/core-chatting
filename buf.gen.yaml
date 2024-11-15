@@ -11,10 +11,10 @@ plugins:
     out: .
     opt: paths=source_relative
 
-  - name: es
+  - plugin: buf.build/bufbuild/es:v1.10.0
     out: plugin/src/connect
     opt: target=js+dts
-  - name: connect-es
+  - plugin: buf.build/bufbuild/connect-es
     out: plugin/src/connect
     opt: target=js+dts
   

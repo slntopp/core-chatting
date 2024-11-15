@@ -1,10 +1,9 @@
 package users
 
 import (
+	"connectrpc.com/connect"
 	"context"
 	"fmt"
-
-	"connectrpc.com/connect"
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/graph"
@@ -21,7 +20,7 @@ func NewUsersServer(logger *zap.Logger, ctrl *graph.UsersController) *UsersServe
 	return &UsersServer{log: logger.Named("UsersServer"), ctrl: ctrl}
 }
 
-func (s *UsersServer) FetchDefaults(ctx context.Context, req *connect.Request[cc.Empty]) (
+func (s *UsersServer) FetchDefaults(ctx context.Context, req *connect.Request[cc.FetchDefaultsRequest]) (
 	*connect.Response[cc.Defaults], error) {
 	log := s.log.Named("FetchDefaults")
 	log.Debug("Request received", zap.Any("req", req.Msg))
@@ -30,6 +29,10 @@ func (s *UsersServer) FetchDefaults(ctx context.Context, req *connect.Request[cc
 	if err != nil {
 		s.log.Error("Failed get config", zap.Error(err))
 		return nil, fmt.Errorf("failed to fetch defaults: %w", err)
+	}
+
+	if !req.Msg.GetFetchTemplates() {
+		defaults.Templates = map[string]string{}
 	}
 
 	resp := connect.NewResponse[cc.Defaults](defaults)

@@ -33,6 +33,20 @@
         Message will be put under moderation, thus not visible to user until one
         of the Admins approves it.
       </n-tooltip>
+
+      <n-tooltip placement="top-start">
+        <template #trigger>
+          <n-button
+            ghost
+            size="small"
+            @click="handle_open_templates"
+            :loading="isTemplatesLoading"
+          >
+            Templates
+          </n-button>
+        </template>
+        Message templates created by our team. Ready to use.
+      </n-tooltip>
     </n-space>
 
     <n-upload abstract v-model:file-list="fileList" list-type="image">
@@ -106,8 +120,17 @@
         </n-button>
       </n-space>
 
-      <n-upload-file-list />
+      <n-upload-file-list v-if="fileList.length > 0" />
     </n-upload>
+
+    <n-modal v-model:show="isTemplatesOpen">
+      <n-card style="max-width: 800px; width: 90vw; min-height: 80vh">
+        <templates-view
+          @select="handle_select_template"
+          v-bind="templatesOptions"
+        />
+      </n-card>
+    </n-modal>
   </div>
 </template>
 
@@ -123,6 +146,8 @@ import {
   NUpload,
   NUploadFileList,
   NUploadTrigger,
+  NModal,
+  NCard,
   MentionOption,
   UploadFileInfo,
 } from "naive-ui";
@@ -131,6 +156,8 @@ import { useCcStore } from "../../../store/chatting";
 import { Chat, Kind, Message, Role } from "../../../connect/cc/cc_pb";
 import { useAppStore } from "../../../store/app";
 import { Value } from "@bufbuild/protobuf";
+import templatesView from "../../settings/templates.vue";
+import useDefaults from "../../../hooks/useDefaults";
 
 const SendIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/SendOutline")
@@ -146,6 +173,7 @@ interface ChatFooterProps {
 const props = defineProps<ChatFooterProps>();
 const store = useCcStore();
 const appStore = useAppStore();
+const { fetch_defaults, admins, templates, users } = useDefaults();
 
 interface FileInfo extends UploadFileInfo {
   uuid?: string;
@@ -155,6 +183,10 @@ const input = ref();
 const sendMode = ref("default");
 const isMentionVisible = ref(false);
 const fileList = ref<FileInfo[]>([]);
+
+const templatesOptions = ref<any>(null);
+const isTemplatesOpen = ref(false);
+const isTemplatesLoading = ref(false);
 
 const mentionsOptions = computed(() => {
   if (!props.chat) return [];
@@ -353,6 +385,31 @@ function handle_new_line() {
   );
 }
 
+async function handle_open_templates() {
+  isTemplatesLoading.value = true;
+  try {
+    if (!templatesOptions.value) {
+      await fetch_defaults(true);
+
+      templatesOptions.value = {
+        admins: admins.value,
+        users: users.value,
+        templates: templates.value,
+        isEdit: false,
+      };
+    }
+
+    isTemplatesOpen.value = true;
+  } finally {
+    isTemplatesLoading.value = false;
+  }
+}
+
+function handle_select_template(content: string) {
+  store.current_message.content = content;
+  isTemplatesOpen.value = false;
+}
+
 const deleteIconDisplayStyle = computed(() =>
   store.updating ? "none" : "flex"
 );
@@ -411,7 +468,6 @@ textarea {
       width: 100%;
     }
     .actions {
-      margin: 20px auto;
       display: flex;
       flex-direction: column !important;
     }

@@ -5,3 +5,6 @@ gateways:
   - whmcs
   - telegram
   - email
+
+templates:
+  - test template: "Hello. Wait for our employee to answer you."

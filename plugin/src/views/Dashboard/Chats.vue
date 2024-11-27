@@ -216,6 +216,7 @@
           trigger="click"
           placement="bottom"
           class="chats__filters"
+          v-model:show="isFilterOpen"
         >
           <template #trigger>
             <n-icon size="24" style="vertical-align: middle; cursor: pointer">
@@ -268,22 +269,32 @@
             style="
               margin: 15px 10px 0px 0px;
               display: flex;
-              justify-content: end;
+              justify-content: space-between;
             "
           >
             <n-button
               ghost
-              type="primary"
+              type="warning"
               @click="downloadReport"
               :loading="isReportLoading"
-              style="margin-right: 10px"
             >
               Report
             </n-button>
 
-            <n-button ghost type="primary" @click="resetFilters">
-              Reset
-            </n-button>
+            <div>
+              <n-button
+                style="margin-right: 10px"
+                ghost
+                type="error"
+                @click="resetFilters"
+              >
+                Reset
+              </n-button>
+
+              <n-button ghost type="primary" @click="isFilterOpen = false">
+                Close
+              </n-button>
+            </div>
           </div>
         </n-popover>
       </n-space>
@@ -432,6 +443,7 @@ const isChangeDepartmentLoading = ref(false);
 const newResponsible = ref();
 const isChangeResponsibleLoading = ref(false);
 const isAllChatsSelected = ref(false);
+const isFilterOpen = ref(false);
 
 const isMergeVisible = computed(() => {
   const list = selectedChats.value.map(
@@ -570,8 +582,8 @@ onMounted(() => {
     checkedStatuses.value = filters.statuses;
     checkedAdmins.value = filters.admins;
     checkedResponsibles.value = filters.responsibles;
-    updateDateRange.value = filters.updated;
-    createDateRange.value = filters.created;
+    updateDateRange.value = filters.updated ?? { from: null, to: null };
+    createDateRange.value = filters.created ?? { from: null, to: null };
   }
 
   observe();
@@ -674,23 +686,17 @@ function selectStatus(status: Status) {
 
 const chats = computed(() => {
   const result = [...store.chats.values()].filter((chat) => {
-    let isCreatedInDate = true;
-    if (createDateRange.value) {
-      const createdDate = Number(chat.created);
-      isCreatedInDate =
-        createDateRange.value[0] <= createdDate &&
-        createDateRange.value[1] >= createdDate;
-    }
+    const createdDate = Number(chat.created);
+    const isCreatedInDate =
+      (createDateRange.value.from ?? 0) <= createdDate &&
+      (createDateRange.value.to ?? Number.MAX_SAFE_INTEGER) >= createdDate;
 
-    let isUpdatedInDate = true;
-    if (updateDateRange.value) {
-      const updatedDate = Number(
-        chat.meta?.lastMessage?.edited || chat.meta?.lastMessage?.sent
-      );
-      isUpdatedInDate =
-        updateDateRange.value[0] <= updatedDate &&
-        updateDateRange.value[1] >= updatedDate;
-    }
+    const updatedDate = Number(
+      chat.meta?.lastMessage?.edited || chat.meta?.lastMessage?.sent
+    );
+    const isUpdatedInDate =
+      (updateDateRange.value.from ?? 0) <= updatedDate &&
+      (updateDateRange.value.to ?? Number.MAX_SAFE_INTEGER) >= updatedDate;
 
     let isDepartamentIncluded = true;
     if (checkedDepartments.value.length > 0) {
@@ -914,8 +920,14 @@ const checkedAdmins = ref<string[]>([]);
 const checkedResponsibles = ref<string[]>([]);
 const checkedDepartments = ref<string[]>([]);
 
-const createDateRange = ref<[number, number] | null>(null);
-const updateDateRange = ref<[number, number] | null>(null);
+const createDateRange = ref<{ from: null | number; to: null | number }>({
+  from: null,
+  to: null,
+});
+const updateDateRange = ref<{ from: null | number; to: null | number }>({
+  from: null,
+  to: null,
+});
 
 if (Object.keys(metrics.value).length < 1) fetch_defaults();
 
@@ -963,6 +975,8 @@ watch(
     createDateRange,
   ],
   () => {
+    selectedStatus.value = undefined;
+
     localStorage.setItem(
       "filters",
       JSON.stringify({
@@ -987,8 +1001,8 @@ async function resetFilters() {
   checkedStatuses.value = [];
   checkedAdmins.value = [];
   checkedResponsibles.value = [];
-  updateDateRange.value = null;
-  createDateRange.value = null;
+  updateDateRange.value = { from: null, to: null };
+  createDateRange.value = { from: null, to: null };
   metricsOptions.value = metrics.value.reduce(
     (result, { key }) => ({ ...result, [key]: [] }),
     {}

@@ -1,7 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/slntopp/nocloud/pkg/nocloud/schema"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -13,7 +18,6 @@ import (
 	"github.com/slntopp/core-chatting/pkg/stream"
 
 	cc "github.com/slntopp/core-chatting/cc/ccconnect"
-
 	"github.com/slntopp/core-chatting/pkg/chats"
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/graph"
@@ -26,6 +30,8 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+
+	settingspb "github.com/slntopp/nocloud-proto/settings"
 )
 
 var (
@@ -47,6 +53,8 @@ var (
 	s3host, s3bucket, s3port, s3AccKey, s3SecKey string
 
 	SIGNING_KEY []byte
+
+	settingsHost string
 )
 
 func init() {
@@ -87,6 +95,9 @@ func init() {
 	s3port = viper.GetString("S3_PORT")
 	s3AccKey = viper.GetString("ACC_KEY")
 	s3SecKey = viper.GetString("SEC_KEY")
+
+	viper.SetDefault("SETTINGS_HOST", "settings:8000")
+	settingsHost = viper.GetString("SETTINGS_HOST")
 }
 
 func main() {
@@ -121,9 +132,26 @@ func main() {
 
 	interceptors := connect.WithInterceptors(authInterceptor)
 
-	chatServer := chats.NewChatsServer(log, chatCtrl, usersCtrl, ps, whmcsTickets)
+	token, err := authInterceptor.MakeToken(schema.ROOT_ACCOUNT_KEY)
+	if err != nil {
+		log.Fatal("Can't generate token", zap.Error(err))
+	}
+	ctx := metadata.AppendToOutgoingContext(context.Background(), "authorization", "bearer "+token)
+	settingsConn, err := grpc.Dial(settingsHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic(err)
+	}
+	settingsClient := settingspb.NewSettingsServiceClient(settingsConn)
+	log.Info("Check settings server")
+	if _, err = settingsClient.Get(ctx, &settingspb.GetRequest{}); err != nil {
+		log.Fatal("Can't check settings connection", zap.Error(err))
+	}
+	log.Info("Settings server connection established")
+
+	chatServer := chats.NewChatsServer(log, chatCtrl, usersCtrl, msgCtrl, ps, whmcsTickets, settingsClient, rbmq)
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
+	go chatServer.CloseInactiveChatsRoutine(ctx)
 
 	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrl, attachmentsCtrl, ps, whmcsTickets)
 	path, handler = cc.NewMessagesAPIHandler(messagesServer, interceptors)

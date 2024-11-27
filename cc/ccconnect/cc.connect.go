@@ -622,7 +622,7 @@ func (UnimplementedMessagesAPIHandler) Delete(context.Context, *connect.Request[
 // UsersAPIClient is a client for the cc.UsersAPI service.
 type UsersAPIClient interface {
 	Me(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.User], error)
-	FetchDefaults(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Defaults], error)
+	FetchDefaults(context.Context, *connect.Request[cc.FetchDefaultsRequest]) (*connect.Response[cc.Defaults], error)
 	GetConfig(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Defaults], error)
 	SetConfig(context.Context, *connect.Request[cc.Defaults]) (*connect.Response[cc.Defaults], error)
 	// Resolves given Users data by their UUIDs
@@ -647,7 +647,7 @@ func NewUsersAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 			connect.WithSchema(usersAPIMeMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
-		fetchDefaults: connect.NewClient[cc.Empty, cc.Defaults](
+		fetchDefaults: connect.NewClient[cc.FetchDefaultsRequest, cc.Defaults](
 			httpClient,
 			baseURL+UsersAPIFetchDefaultsProcedure,
 			connect.WithSchema(usersAPIFetchDefaultsMethodDescriptor),
@@ -683,7 +683,7 @@ func NewUsersAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 // usersAPIClient implements UsersAPIClient.
 type usersAPIClient struct {
 	me            *connect.Client[cc.Empty, cc.User]
-	fetchDefaults *connect.Client[cc.Empty, cc.Defaults]
+	fetchDefaults *connect.Client[cc.FetchDefaultsRequest, cc.Defaults]
 	getConfig     *connect.Client[cc.Empty, cc.Defaults]
 	setConfig     *connect.Client[cc.Defaults, cc.Defaults]
 	resolve       *connect.Client[cc.Users, cc.Users]
@@ -696,7 +696,7 @@ func (c *usersAPIClient) Me(ctx context.Context, req *connect.Request[cc.Empty])
 }
 
 // FetchDefaults calls cc.UsersAPI.FetchDefaults.
-func (c *usersAPIClient) FetchDefaults(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.Defaults], error) {
+func (c *usersAPIClient) FetchDefaults(ctx context.Context, req *connect.Request[cc.FetchDefaultsRequest]) (*connect.Response[cc.Defaults], error) {
 	return c.fetchDefaults.CallUnary(ctx, req)
 }
 
@@ -723,7 +723,7 @@ func (c *usersAPIClient) GetMembers(ctx context.Context, req *connect.Request[cc
 // UsersAPIHandler is an implementation of the cc.UsersAPI service.
 type UsersAPIHandler interface {
 	Me(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.User], error)
-	FetchDefaults(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Defaults], error)
+	FetchDefaults(context.Context, *connect.Request[cc.FetchDefaultsRequest]) (*connect.Response[cc.Defaults], error)
 	GetConfig(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Defaults], error)
 	SetConfig(context.Context, *connect.Request[cc.Defaults]) (*connect.Response[cc.Defaults], error)
 	// Resolves given Users data by their UUIDs
@@ -801,7 +801,7 @@ func (UnimplementedUsersAPIHandler) Me(context.Context, *connect.Request[cc.Empt
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.UsersAPI.Me is not implemented"))
 }
 
-func (UnimplementedUsersAPIHandler) FetchDefaults(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Defaults], error) {
+func (UnimplementedUsersAPIHandler) FetchDefaults(context.Context, *connect.Request[cc.FetchDefaultsRequest]) (*connect.Response[cc.Defaults], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.UsersAPI.FetchDefaults is not implemented"))
 }
 

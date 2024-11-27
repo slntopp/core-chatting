@@ -3,6 +3,8 @@ package chats
 import (
 	"context"
 	"errors"
+	"github.com/rabbitmq/amqp091-go"
+	settingspb "github.com/slntopp/nocloud-proto/settings"
 	"slices"
 
 	"github.com/slntopp/core-chatting/pkg/core"
@@ -17,17 +19,23 @@ import (
 )
 
 type ChatsServer struct {
-	log *zap.Logger
+	log  *zap.Logger
+	conn *amqp091.Connection
 
 	ctrl       *graph.ChatsController
 	users_ctrl *graph.UsersController
+	msgsCtrl   *graph.MessagesController
 	ps         *pubsub.PubSub
+
+	settingsClient settingspb.SettingsServiceClient
 
 	whmcsTickets bool
 }
 
-func NewChatsServer(logger *zap.Logger, ctrl *graph.ChatsController, users_ctrl *graph.UsersController, ps *pubsub.PubSub, whmcsTickets bool) *ChatsServer {
-	return &ChatsServer{log: logger.Named("ChatsServer"), ctrl: ctrl, users_ctrl: users_ctrl, ps: ps, whmcsTickets: whmcsTickets}
+func NewChatsServer(logger *zap.Logger, ctrl *graph.ChatsController, users_ctrl *graph.UsersController, msgsCtrl *graph.MessagesController,
+	ps *pubsub.PubSub, whmcsTickets bool, settingsClient settingspb.SettingsServiceClient, conn *amqp091.Connection) *ChatsServer {
+	return &ChatsServer{log: logger.Named("ChatsServer"), ctrl: ctrl, users_ctrl: users_ctrl,
+		ps: ps, whmcsTickets: whmcsTickets, settingsClient: settingsClient, conn: conn, msgsCtrl: msgsCtrl}
 }
 
 func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {

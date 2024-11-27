@@ -16,7 +16,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_TAG: ${{github.ref_name == 'master' && 'latest' || github.ref_name}}
+  IMAGE_TAG: ${{github.ref_name == 'main' && 'latest' || github.ref_name}}
 
 jobs:
   build-and-push:

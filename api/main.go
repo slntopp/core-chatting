@@ -178,7 +178,7 @@ func main() {
 		AllowPrivateNetwork: true,
 	}).Handler(h2c.NewHandler(router, &http2.Server{}))
 
-	log.Debug("Start server", zap.String("host", host))
+	log.Debug("Start server on host", zap.String("host", host))
 	err = http.ListenAndServe(host, handler)
 	if err != nil {
 		log.Fatal("Failed to start server", zap.Error(err))

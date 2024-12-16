@@ -692,7 +692,7 @@ const chats = computed(() => {
       (createDateRange.value.to ?? Number.MAX_SAFE_INTEGER) >= createdDate;
 
     const updatedDate = Number(
-      chat.meta?.lastMessage?.edited || chat.meta?.lastMessage?.sent
+      chat.meta?.lastMessage?.edited || chat.meta?.lastMessage?.sent || 0
     );
     const isUpdatedInDate =
       (updateDateRange.value.from ?? 0) <= updatedDate &&

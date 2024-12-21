@@ -11,7 +11,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.69
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/rs/cors v1.10.1
-	github.com/slntopp/nocloud v0.0.19-0.20241221221348-6d3ea0f8b0eb
+	github.com/slntopp/nocloud v0.0.19-0.20241221234550-bbac22626023
 	github.com/slntopp/nocloud-proto v0.0.0-20241218103715-0ee38a002fda
 	github.com/spf13/viper v1.18.2
 	go.uber.org/zap v1.27.0

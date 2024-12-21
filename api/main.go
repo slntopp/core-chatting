@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	http_server "github.com/slntopp/nocloud/pkg/nocloud/http"
 	"github.com/slntopp/nocloud/pkg/nocloud/schema"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -178,9 +179,5 @@ func main() {
 		AllowPrivateNetwork: true,
 	}).Handler(h2c.NewHandler(router, &http2.Server{}))
 
-	log.Debug("Start server on host", zap.String("host", host))
-	err = http.ListenAndServe(host, handler)
-	if err != nil {
-		log.Fatal("Failed to start server", zap.Error(err))
-	}
+	http_server.Serve(log, host, handler)
 }

@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	http_server "github.com/slntopp/nocloud/pkg/nocloud/http"
+	"github.com/slntopp/nocloud/pkg/nocloud/rabbitmq"
 	"github.com/slntopp/nocloud/pkg/nocloud/schema"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/mux"
 	"github.com/slntopp/core-chatting/pkg/attachments"
@@ -101,13 +104,16 @@ func init() {
 }
 
 func main() {
-	rbmq, err := amqp091.Dial(rbmq)
+	workers := &sync.WaitGroup{}
+
+	conn, err := amqp091.Dial(rbmq)
 	if err != nil {
 		log.Fatal("Failed to connect to RabbitMQ", zap.Error(err))
 	}
-	defer rbmq.Close()
+	defer conn.Close()
+	rabbitmq.FatalOnConnectionClose(log, conn)
 
-	ps := pubsub.NewPubSub(log, rbmq)
+	ps := pubsub.NewPubSub(log, conn)
 
 	db := graph.ConnectDb(log, arangodbHost, arangodbCred, dbName)
 
@@ -137,6 +143,8 @@ func main() {
 		log.Fatal("Can't generate token", zap.Error(err))
 	}
 	ctx := metadata.AppendToOutgoingContext(context.Background(), "authorization", "bearer "+token)
+	ctx, cancel := context.WithCancel(ctx)
+
 	settingsConn, err := grpc.Dial(settingsHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic(err)
@@ -148,10 +156,10 @@ func main() {
 	}
 	log.Info("Settings server connection established")
 
-	chatServer := chats.NewChatsServer(log, chatCtrl, usersCtrl, msgCtrl, ps, whmcsTickets, settingsClient, rbmq)
+	chatServer := chats.NewChatsServer(log, chatCtrl, usersCtrl, msgCtrl, ps, whmcsTickets, settingsClient, conn)
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
-	go chatServer.CloseInactiveChatsRoutine(ctx)
+	go chatServer.CloseInactiveChatsRoutine(ctx, worker(workers))
 
 	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrl, attachmentsCtrl, ps, whmcsTickets)
 	path, handler = cc.NewMessagesAPIHandler(messagesServer, interceptors)
@@ -178,9 +186,14 @@ func main() {
 		AllowPrivateNetwork: true,
 	}).Handler(h2c.NewHandler(router, &http2.Server{}))
 
-	log.Debug("Start server on host", zap.String("host", host))
-	err = http.ListenAndServe(host, handler)
-	if err != nil {
-		log.Fatal("Failed to start server", zap.Error(err))
-	}
+	http_server.Serve(log, host, handler)
+	log.Info("Stopping workers.")
+	cancel()
+	workers.Wait()
+	log.Info("All workers were stopped.")
+}
+
+func worker(wg *sync.WaitGroup) *sync.WaitGroup {
+	wg.Add(1)
+	return wg
 }

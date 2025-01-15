@@ -8,7 +8,9 @@ import { useAppStore } from "./app";
 
 import {
     Empty, Chat, Defaults, Users, User, Messages, Message, Event, EventType, ChatMeta, Kind, StreamRequest, Department, Merge,
-    FetchDefaultsRequest
+    FetchDefaultsRequest,
+    GetMembersRequest,
+    ListChatsRequest
 } from "../connect/cc/cc_pb"
 import {
     ChatsAPI, MessagesAPI, StreamService, UsersAPI
@@ -59,9 +61,9 @@ export const useCcStore = defineStore('cc', () => {
     const me = ref<User>(new User())
 
     async function list_chats() {
-        let result = await chats_c.list(new Empty())
-        console.debug('Got Chats', result.chats)
-        chats.value = new Map(result.chats.map((chat) => {
+        let result = await chats_c.list(new ListChatsRequest())
+        console.debug('Got Chats', result.pool)
+        chats.value = new Map(result.pool.map((chat) => {
             if (!chat.meta) {
                 chat.meta = new ChatMeta({
                     unread: 0,
@@ -72,7 +74,7 @@ export const useCcStore = defineStore('cc', () => {
         }))
 
         resolve(
-            result.chats.map((chat) => [...chat.admins, ...chat.users]).flat()
+            result.pool.map((chat) => [...chat.admins, ...chat.users]).flat()
         )
     }
 
@@ -202,7 +204,7 @@ export const useCcStore = defineStore('cc', () => {
     }
 
     function get_members(): Promise<Users> {
-        return users_c.getMembers(new Empty())
+        return users_c.getMembers(new GetMembersRequest())
     }
 
     const msg_handler = (event: Event) => {

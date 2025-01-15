@@ -64,6 +64,19 @@ message Merge {
   repeated string chats = 1;
 }
 
+message ListChatsRequest{
+  optional uint64 page = 1;
+  optional uint64 limit = 2;
+  optional string field = 3; // Sort field
+  optional string sort = 4;  // Sort direction
+  map<string, google.protobuf.Value> filters = 5;
+}
+
+message ListChatsResponse{
+  repeated Chats pool = 1;
+  int64 total = 2;
+}
+
 service ChatsAPI {
   rpc Create(Chat) returns (Chat);
   rpc Update(Chat) returns (Chat);
@@ -172,6 +185,10 @@ message Users {
 
 message FetchDefaultsRequest {
   bool fetch_templates = 1;
+}
+
+message GetMembersRequest{
+  repeated string uuids = 1;
 }
 
 service UsersAPI {

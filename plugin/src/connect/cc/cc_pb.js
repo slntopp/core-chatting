@@ -132,6 +132,31 @@ export const Merge = /*@__PURE__*/ proto3.makeMessageType(
 );
 
 /**
+ * @generated from message cc.ListChatsRequest
+ */
+export const ListChatsRequest = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.ListChatsRequest",
+  () => [
+    { no: 1, name: "page", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 2, name: "limit", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 3, name: "field", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 4, name: "sort", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 5, name: "filters", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
+  ],
+);
+
+/**
+ * @generated from message cc.ListChatsResponse
+ */
+export const ListChatsResponse = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.ListChatsResponse",
+  () => [
+    { no: 1, name: "pool", kind: "message", T: Chats, repeated: true },
+    { no: 2, name: "total", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+  ],
+);
+
+/**
  * @generated from message cc.Attachment
  */
 export const Attachment = /*@__PURE__*/ proto3.makeMessageType(
@@ -257,6 +282,16 @@ export const FetchDefaultsRequest = /*@__PURE__*/ proto3.makeMessageType(
   "cc.FetchDefaultsRequest",
   () => [
     { no: 1, name: "fetch_templates", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ],
+);
+
+/**
+ * @generated from message cc.GetMembersRequest
+ */
+export const GetMembersRequest = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.GetMembersRequest",
+  () => [
+    { no: 1, name: "uuids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ],
 );
 

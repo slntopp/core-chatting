@@ -404,9 +404,9 @@ export declare class ListChatsRequest extends Message$1<ListChatsRequest> {
  */
 export declare class ListChatsResponse extends Message$1<ListChatsResponse> {
   /**
-   * @generated from field: repeated cc.Chats pool = 1;
+   * @generated from field: repeated cc.Chat pool = 1;
    */
-  pool: Chats[];
+  pool: Chat[];
 
   /**
    * @generated from field: int64 total = 2;

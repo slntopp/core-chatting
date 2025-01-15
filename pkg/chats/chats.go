@@ -158,19 +158,20 @@ func (s *ChatsServer) Get(ctx context.Context, req *connect.Request[cc.Chat]) (*
 	return resp, nil
 }
 
-func (s *ChatsServer) List(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.Chats], error) {
-	log := s.log.Named("Create")
+func (s *ChatsServer) List(ctx context.Context, req *connect.Request[cc.ListChatsRequest]) (*connect.Response[cc.ListChatsResponse], error) {
+	log := s.log.Named("List")
 	log.Debug("Request received", zap.Any("req", req.Msg))
 
-	requestor := ctx.Value(core.ChatAccount).(string)
+	requester := ctx.Value(core.ChatAccount).(string)
 
-	chats, err := s.ctrl.List(ctx, requestor)
+	chats, err := s.ctrl.List(ctx, requester)
 	if err != nil {
 		return nil, err
 	}
 
-	resp := connect.NewResponse[cc.Chats](&cc.Chats{
-		Chats: chats,
+	resp := connect.NewResponse[cc.ListChatsResponse](&cc.ListChatsResponse{
+		Pool:  chats,
+		Total: int64(len(chats)),
 	})
 
 	return resp, nil

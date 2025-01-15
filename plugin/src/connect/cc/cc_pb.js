@@ -151,7 +151,7 @@ export const ListChatsRequest = /*@__PURE__*/ proto3.makeMessageType(
 export const ListChatsResponse = /*@__PURE__*/ proto3.makeMessageType(
   "cc.ListChatsResponse",
   () => [
-    { no: 1, name: "pool", kind: "message", T: Chats, repeated: true },
+    { no: 1, name: "pool", kind: "message", T: Chat, repeated: true },
     { no: 2, name: "total", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
   ],
 );

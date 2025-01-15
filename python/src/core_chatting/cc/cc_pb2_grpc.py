@@ -31,8 +31,8 @@ class ChatsAPIStub(object):
                 )
         self.List = channel.unary_unary(
                 '/cc.ChatsAPI/List',
-                request_serializer=cc_dot_cc__pb2.Empty.SerializeToString,
-                response_deserializer=cc_dot_cc__pb2.Chats.FromString,
+                request_serializer=cc_dot_cc__pb2.ListChatsRequest.SerializeToString,
+                response_deserializer=cc_dot_cc__pb2.ListChatsResponse.FromString,
                 )
         self.Delete = channel.unary_unary(
                 '/cc.ChatsAPI/Delete',
@@ -171,8 +171,8 @@ def add_ChatsAPIServicer_to_server(servicer, server):
             ),
             'List': grpc.unary_unary_rpc_method_handler(
                     servicer.List,
-                    request_deserializer=cc_dot_cc__pb2.Empty.FromString,
-                    response_serializer=cc_dot_cc__pb2.Chats.SerializeToString,
+                    request_deserializer=cc_dot_cc__pb2.ListChatsRequest.FromString,
+                    response_serializer=cc_dot_cc__pb2.ListChatsResponse.SerializeToString,
             ),
             'Delete': grpc.unary_unary_rpc_method_handler(
                     servicer.Delete,
@@ -287,8 +287,8 @@ class ChatsAPI(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/cc.ChatsAPI/List',
-            cc_dot_cc__pb2.Empty.SerializeToString,
-            cc_dot_cc__pb2.Chats.FromString,
+            cc_dot_cc__pb2.ListChatsRequest.SerializeToString,
+            cc_dot_cc__pb2.ListChatsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -625,7 +625,7 @@ class UsersAPIStub(object):
                 )
         self.GetMembers = channel.unary_unary(
                 '/cc.UsersAPI/GetMembers',
-                request_serializer=cc_dot_cc__pb2.Empty.SerializeToString,
+                request_serializer=cc_dot_cc__pb2.GetMembersRequest.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Users.FromString,
                 )
 
@@ -701,7 +701,7 @@ def add_UsersAPIServicer_to_server(servicer, server):
             ),
             'GetMembers': grpc.unary_unary_rpc_method_handler(
                     servicer.GetMembers,
-                    request_deserializer=cc_dot_cc__pb2.Empty.FromString,
+                    request_deserializer=cc_dot_cc__pb2.GetMembersRequest.FromString,
                     response_serializer=cc_dot_cc__pb2.Users.SerializeToString,
             ),
     }
@@ -811,7 +811,7 @@ class UsersAPI(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/cc.UsersAPI/GetMembers',
-            cc_dot_cc__pb2.Empty.SerializeToString,
+            cc_dot_cc__pb2.GetMembersRequest.SerializeToString,
             cc_dot_cc__pb2.Users.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

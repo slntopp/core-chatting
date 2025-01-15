@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, Chats, Defaults, Empty, Event, FetchDefaultsRequest, Merge, Message, Messages, StreamRequest, User, Users } from "./cc_pb.js";
+import { Chat, Defaults, Empty, Event, FetchDefaultsRequest, GetMembersRequest, ListChatsRequest, ListChatsResponse, Merge, Message, Messages, StreamRequest, User, Users } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -44,8 +44,8 @@ export const ChatsAPI = {
      */
     list: {
       name: "List",
-      I: Empty,
-      O: Chats,
+      I: ListChatsRequest,
+      O: ListChatsResponse,
       kind: MethodKind.Unary,
     },
     /**
@@ -227,7 +227,7 @@ export const UsersAPI = {
      */
     getMembers: {
       name: "GetMembers",
-      I: Empty,
+      I: GetMembersRequest,
       O: Users,
       kind: MethodKind.Unary,
     },

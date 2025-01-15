@@ -82,7 +82,7 @@ service ChatsAPI {
   rpc Update(Chat) returns (Chat);
 
   rpc Get(Chat) returns (Chat);
-  rpc List(Empty) returns (Chats);
+  rpc List(ListChatsRequest) returns (ListChatsResponse);
 
   rpc Delete(Chat) returns (Chat);
 
@@ -201,7 +201,7 @@ service UsersAPI {
   // Resolves given Users data by their UUIDs
   // And returns all accessible Users for Requestor
   rpc Resolve(Users) returns (Users);
-  rpc GetMembers(Empty) returns (Users);
+  rpc GetMembers(GetMembersRequest) returns (Users);
 }
 
 enum EventType {

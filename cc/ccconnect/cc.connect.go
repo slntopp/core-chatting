@@ -124,7 +124,7 @@ type ChatsAPIClient interface {
 	Create(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	Update(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	Get(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
-	List(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Chats], error)
+	List(context.Context, *connect.Request[cc.ListChatsRequest]) (*connect.Response[cc.ListChatsResponse], error)
 	Delete(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	SetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	GetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
@@ -163,7 +163,7 @@ func NewChatsAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 			connect.WithSchema(chatsAPIGetMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
-		list: connect.NewClient[cc.Empty, cc.Chats](
+		list: connect.NewClient[cc.ListChatsRequest, cc.ListChatsResponse](
 			httpClient,
 			baseURL+ChatsAPIListProcedure,
 			connect.WithSchema(chatsAPIListMethodDescriptor),
@@ -225,7 +225,7 @@ type chatsAPIClient struct {
 	create           *connect.Client[cc.Chat, cc.Chat]
 	update           *connect.Client[cc.Chat, cc.Chat]
 	get              *connect.Client[cc.Chat, cc.Chat]
-	list             *connect.Client[cc.Empty, cc.Chats]
+	list             *connect.Client[cc.ListChatsRequest, cc.ListChatsResponse]
 	delete           *connect.Client[cc.Chat, cc.Chat]
 	setBotState      *connect.Client[cc.Chat, cc.Chat]
 	getBotState      *connect.Client[cc.Chat, cc.Chat]
@@ -252,7 +252,7 @@ func (c *chatsAPIClient) Get(ctx context.Context, req *connect.Request[cc.Chat])
 }
 
 // List calls cc.ChatsAPI.List.
-func (c *chatsAPIClient) List(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.Chats], error) {
+func (c *chatsAPIClient) List(ctx context.Context, req *connect.Request[cc.ListChatsRequest]) (*connect.Response[cc.ListChatsResponse], error) {
 	return c.list.CallUnary(ctx, req)
 }
 
@@ -301,7 +301,7 @@ type ChatsAPIHandler interface {
 	Create(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	Update(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	Get(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
-	List(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Chats], error)
+	List(context.Context, *connect.Request[cc.ListChatsRequest]) (*connect.Response[cc.ListChatsResponse], error)
 	Delete(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	SetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	GetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
@@ -437,7 +437,7 @@ func (UnimplementedChatsAPIHandler) Get(context.Context, *connect.Request[cc.Cha
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.Get is not implemented"))
 }
 
-func (UnimplementedChatsAPIHandler) List(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Chats], error) {
+func (UnimplementedChatsAPIHandler) List(context.Context, *connect.Request[cc.ListChatsRequest]) (*connect.Response[cc.ListChatsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.List is not implemented"))
 }
 
@@ -628,7 +628,7 @@ type UsersAPIClient interface {
 	// Resolves given Users data by their UUIDs
 	// And returns all accessible Users for Requestor
 	Resolve(context.Context, *connect.Request[cc.Users]) (*connect.Response[cc.Users], error)
-	GetMembers(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Users], error)
+	GetMembers(context.Context, *connect.Request[cc.GetMembersRequest]) (*connect.Response[cc.Users], error)
 }
 
 // NewUsersAPIClient constructs a client for the cc.UsersAPI service. By default, it uses the
@@ -671,7 +671,7 @@ func NewUsersAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 			connect.WithSchema(usersAPIResolveMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
-		getMembers: connect.NewClient[cc.Empty, cc.Users](
+		getMembers: connect.NewClient[cc.GetMembersRequest, cc.Users](
 			httpClient,
 			baseURL+UsersAPIGetMembersProcedure,
 			connect.WithSchema(usersAPIGetMembersMethodDescriptor),
@@ -687,7 +687,7 @@ type usersAPIClient struct {
 	getConfig     *connect.Client[cc.Empty, cc.Defaults]
 	setConfig     *connect.Client[cc.Defaults, cc.Defaults]
 	resolve       *connect.Client[cc.Users, cc.Users]
-	getMembers    *connect.Client[cc.Empty, cc.Users]
+	getMembers    *connect.Client[cc.GetMembersRequest, cc.Users]
 }
 
 // Me calls cc.UsersAPI.Me.
@@ -716,7 +716,7 @@ func (c *usersAPIClient) Resolve(ctx context.Context, req *connect.Request[cc.Us
 }
 
 // GetMembers calls cc.UsersAPI.GetMembers.
-func (c *usersAPIClient) GetMembers(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.Users], error) {
+func (c *usersAPIClient) GetMembers(ctx context.Context, req *connect.Request[cc.GetMembersRequest]) (*connect.Response[cc.Users], error) {
 	return c.getMembers.CallUnary(ctx, req)
 }
 
@@ -729,7 +729,7 @@ type UsersAPIHandler interface {
 	// Resolves given Users data by their UUIDs
 	// And returns all accessible Users for Requestor
 	Resolve(context.Context, *connect.Request[cc.Users]) (*connect.Response[cc.Users], error)
-	GetMembers(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Users], error)
+	GetMembers(context.Context, *connect.Request[cc.GetMembersRequest]) (*connect.Response[cc.Users], error)
 }
 
 // NewUsersAPIHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -817,7 +817,7 @@ func (UnimplementedUsersAPIHandler) Resolve(context.Context, *connect.Request[cc
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.UsersAPI.Resolve is not implemented"))
 }
 
-func (UnimplementedUsersAPIHandler) GetMembers(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.Users], error) {
+func (UnimplementedUsersAPIHandler) GetMembers(context.Context, *connect.Request[cc.GetMembersRequest]) (*connect.Response[cc.Users], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.UsersAPI.GetMembers is not implemented"))
 }
 

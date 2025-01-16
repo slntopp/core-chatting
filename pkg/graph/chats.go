@@ -206,7 +206,7 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 				if len(values) == 0 {
 					continue
 				}
-				filters += fmt.Sprintf(` FILTER c.status in @%s`, key)
+				filters += fmt.Sprintf(` FILTER TO_NUMBER(c.status) in @%s`, key)
 				vars[key] = values
 			} else if key == "department" {
 				values := value.GetListValue().AsSlice()

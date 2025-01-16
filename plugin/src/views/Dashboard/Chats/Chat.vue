@@ -52,9 +52,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, ref, watch } from "vue";
+import {
+  computed,
+  defineAsyncComponent,
+  nextTick,
+  onMounted,
+  ref,
+  watch,
+} from "vue";
 import { NAlert, NList, NListItem, NScrollbar, NSpace } from "naive-ui";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 
 import { useAppStore } from "../../../store/app";
 import { useCcStore } from "../../../store/chatting";
@@ -69,21 +76,14 @@ const MessageView = defineAsyncComponent(
 );
 
 const route = useRoute();
-const router = useRouter();
 
-const appStore = useAppStore()
+const appStore = useAppStore();
 const store = useCcStore();
 const scrollbar = ref();
 const isMessageLoading = ref(false);
 
 const chat = computed(() => {
-  try {
-    return store.chats.get(route.params.uuid as string) as Chat;
-  } catch (e) {
-    console.log(e);
-
-    router.push({ name: "Empty Chat" });
-  }
+  return store.chats.get(route.params.uuid as string) as Chat;
 });
 
 const messages = computed(() => {
@@ -131,8 +131,6 @@ async function load_chat() {
 }
 
 watch(chat, load_chat);
-load_chat();
-
 watch(
   messages,
   () => {
@@ -161,9 +159,14 @@ function handle_edit(message: Message) {
   }
 }
 
-const chatPaddingLeft = computed(() =>
-  (appStore.isMobile) ? '12px' : '16px'
-)
+const chatPaddingLeft = computed(() => (appStore.isMobile ? "12px" : "16px"));
+
+onMounted(async () => {
+  if (!chat.value) {
+    await store.get_chat(route.params.uuid as string);
+  }
+  load_chat();
+});
 </script>
 
 <style scoped>
@@ -171,6 +174,6 @@ const chatPaddingLeft = computed(() =>
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  padding-left: v-bind('chatPaddingLeft');
+  padding-left: v-bind("chatPaddingLeft");
 }
 </style>

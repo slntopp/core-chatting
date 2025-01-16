@@ -313,6 +313,7 @@ func (c *ChatsController) Count(ctx context.Context, requester string) (map[int3
 	}
 
 	resp := make(map[string]any)
+	log.Debug("Count response", zap.Any("body", resp))
 	if cur.HasMore() {
 		_, err := cur.ReadDocument(ctx, &resp)
 		if err != nil {
@@ -325,7 +326,8 @@ func (c *ChatsController) Count(ctx context.Context, requester string) (map[int3
 	res := make(map[int32]int64)
 	for key, val := range resp {
 		status, _ := strconv.Atoi(key)
-		res[int32(status)] = int64(val.(float64))
+		num, _ := val.(float64)
+		res[int32(status)] = int64(num)
 	}
 	return res, nil
 }

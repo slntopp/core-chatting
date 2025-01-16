@@ -295,7 +295,7 @@ const countChats = `
 FOR c in @@chats
 FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_account
 COLLECT status = c.status WITH COUNT INTO times
-RETURN { [status]: times }
+RETURN { status, times }
 `
 
 func (c *ChatsController) Count(ctx context.Context, requester string) (map[int32]int64, error) {

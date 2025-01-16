@@ -311,7 +311,7 @@ func (c *ChatsController) Count(ctx context.Context, requester string) (map[int3
 		return nil, err
 	}
 
-	resp := make(map[int32]int64)
+	resp := make(map[float64]float64)
 	if cur.HasMore() {
 		_, err := cur.ReadDocument(ctx, &resp)
 		if err != nil {
@@ -321,7 +321,11 @@ func (c *ChatsController) Count(ctx context.Context, requester string) (map[int3
 		return nil, fmt.Errorf("not found or internal")
 	}
 
-	return resp, nil
+	res := make(map[int32]int64)
+	for key, val := range resp {
+		res[int32(key)] = int64(val)
+	}
+	return res, nil
 }
 
 const deleteChatMessages = `

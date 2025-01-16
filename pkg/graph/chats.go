@@ -290,6 +290,40 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 	return resp.Pool, resp.Total, nil
 }
 
+const countChats = `
+FOR c in @@chats
+FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_account
+COLLECT status = c.status WITH COUNT INTO times
+RETURN { [status]: times }
+`
+
+func (c *ChatsController) Count(ctx context.Context, requester string) (map[int32]int64, error) {
+	log := c.log.Named("Count")
+	log.Debug("Req received")
+
+	vars := map[string]any{
+		"@chats":       CHATS_COLLECTION,
+		"requestor":    requester,
+		"root_account": schema.ROOT_ACCOUNT_KEY,
+	}
+	cur, err := c.db.Query(ctx, countChats, vars)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := make(map[int32]int64)
+	if cur.HasMore() {
+		_, err := cur.ReadDocument(ctx, &resp)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, fmt.Errorf("not found or internal")
+	}
+
+	return resp, nil
+}
+
 const deleteChatMessages = `
 FOR m in @@messages
 	FILTER m.chat == @chat

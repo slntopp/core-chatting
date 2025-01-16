@@ -177,6 +177,24 @@ func (s *ChatsServer) List(ctx context.Context, req *connect.Request[cc.ListChat
 	return resp, nil
 }
 
+func (s *ChatsServer) Count(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.CountChatsResponse], error) {
+	log := s.log.Named("Count")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requester := ctx.Value(core.ChatAccount).(string)
+
+	count, err := s.ctrl.Count(ctx, requester)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := connect.NewResponse[cc.CountChatsResponse](&cc.CountChatsResponse{
+		Statuses: count,
+	})
+
+	return resp, nil
+}
+
 func (s *ChatsServer) Delete(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
 	log := s.log.Named("Create")
 	log.Debug("Request received", zap.Any("req", req.Msg))

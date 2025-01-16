@@ -1,37 +1,42 @@
-import { NotificationApi } from 'naive-ui'
-import { Status } from './connect/cc/cc_pb'
+import { NotificationApi } from "naive-ui";
+import { Status } from "./connect/cc/cc_pb";
 
 export function addToClipboard(text: string, notification?: NotificationApi) {
   if (navigator?.clipboard) {
-    navigator.clipboard.writeText(text)
+    navigator.clipboard
+      .writeText(text)
       .then(() => {
         if (!notification) {
-          alert('Text copied')
-          return
+          alert("Text copied");
+          return;
         }
-        notification.success({ content: 'Text copied', duration: 3000 })
+        notification.success({ content: "Text copied", duration: 3000 });
       })
       .catch((res) => {
-        console.error(res)
-      })
+        console.error(res);
+      });
   } else {
     if (!notification) {
-      alert('Clipboard is not supported')
-      return
+      alert("Clipboard is not supported");
+      return;
     }
-    notification.error({ content: 'Clipboard is not supported' })
+    notification.error({ content: "Clipboard is not supported" });
   }
 }
 
 export function getImageUrl(name: string) {
-  const icons = import.meta.glob(`/**/*.png`)
-  let key = Object.keys(icons).find((key) => key.includes(`/${name}`)) ?? ''
+  const icons = import.meta.glob(`/**/*.png`);
+  let key = Object.keys(icons).find((key) => key.includes(`/${name}`)) ?? "";
 
-  if (!key.includes('cc.ui')) key = `/cc.ui${key}`
-  return key.replace('/dist', '').replace('/public', '')
+  if (!key.includes("cc.ui")) key = `/cc.ui${key}`;
+  return key.replace("/dist", "").replace("/public", "");
 }
 
-export function getRelativeTime(timestamp: number, now: number, isLifetime?: boolean) {
+export function getRelativeTime(
+  timestamp: number,
+  now: number,
+  isLifetime?: boolean
+) {
   const timeDifference = (now - timestamp) / 1000;
   const minutesDifference = Math.floor(timeDifference / 60);
 
@@ -40,43 +45,75 @@ export function getRelativeTime(timestamp: number, now: number, isLifetime?: boo
   } else if (minutesDifference >= 1440) {
     const daysDifference = Math.floor(minutesDifference / 1440);
 
-    return `${daysDifference} days${(isLifetime) ? '' : ' ago'}`;
+    return `${daysDifference} days${isLifetime ? "" : " ago"}`;
   } else if (minutesDifference >= 60) {
     const hoursDifference = Math.floor(minutesDifference / 60);
 
-    return `${hoursDifference} hours${(isLifetime) ? '' : ' ago'}`;
+    return `${hoursDifference} hours${isLifetime ? "" : " ago"}`;
   } else if (minutesDifference > 0) {
-    return `${minutesDifference} minutes${(isLifetime) ? '' : ' ago'}`;
+    return `${minutesDifference} minutes${isLifetime ? "" : " ago"}`;
   } else {
-    return 'just now';
+    return "just now";
   }
 }
 
 export function getStatusColor(status: Status) {
   switch (status) {
     case Status.NEW:
-      return '#5084ff'
+      return "#5084ff";
     case Status.ON_HOLD:
-      return '#00dbff'
+      return "#00dbff";
     case Status.OPEN:
-      return '#1ea01e'
+      return "#1ea01e";
     case Status.IN_PROGRESS:
-      return '#00ffaa'
+      return "#00ffaa";
     case Status.CUSTOMER_REPLY:
-      return '#ffcc55'
+      return "#ffcc55";
     case Status.RESOLVE:
     case Status.ANSWERED:
-      return '#ff8300'
+      return "#ff8300";
     case Status.CLOSE:
-      return '#e23535'
+      return "#e23535";
     default:
-      return undefined
+      return undefined;
   }
 }
 
-
 export function getStatusItems() {
-  const allowedStatuses = [0, 1, 8, 5, 4, 7, 3]
+  const allowedStatuses = [0, 1, 8, 5, 4, 7, 3];
 
-  return allowedStatuses.map((status) => ({ label: Status[status].replace("_", " "), value: status }))
+  return allowedStatuses.map((status) => ({
+    label: Status[status].replace("_", " "),
+    value: status,
+  }));
+}
+
+export const debounce = (callback: Function, wait: number) => {
+  let timeoutId: number;
+  return (...args: any) => {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => {
+      callback(...args);
+    }, wait);
+  };
+};
+
+export function cleanObject(object: any) {
+  Object.entries(object).forEach(([k, v]) => {
+    if (v && typeof v === "object") {
+      cleanObject(v);
+    }
+    if (
+      (v && typeof v === "object" && !Object.keys(v).length) ||
+      v === null ||
+      v === undefined
+    ) {
+      if (Array.isArray(object)) {
+        object.splice(k as any, 1);
+      } else {
+        delete object[k];
+      }
+    }
+  });
+  return object;
 }

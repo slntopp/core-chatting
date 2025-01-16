@@ -198,7 +198,7 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 				if len(values) == 0 {
 					continue
 				}
-				filters += fmt.Sprintf(` FILTER c.admins in @%s`, key)
+				filters += fmt.Sprintf(` FILTER CONTAINS_ARRAY(c.admins, @%s)`, key)
 				vars[key] = values
 			} else if key == "status" {
 				values := value.GetListValue().AsSlice()
@@ -229,7 +229,7 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 				filters += fmt.Sprintf(` FILTER @%s in c.admins || @%s in c.users || @%s == c.owner || @%s == c.responsible`, key, key, key, key)
 				vars[key] = values
 			} else if key == "search_param" {
-				filters += fmt.Sprintf(` FILTER c._key LIKE "%s" || c.topic LIKE "%s"`,
+				filters += fmt.Sprintf(` FILTER c._key LIKE "%s" || LOWER(c.topic) LIKE LOWER("%s")`,
 					"%"+value.GetStringValue()+"%", "%"+value.GetStringValue()+"%")
 			} else {
 				values := value.GetListValue().AsSlice()

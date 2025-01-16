@@ -199,7 +199,7 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 				if len(values) == 0 {
 					continue
 				}
-				filters += fmt.Sprintf(` FILTER CONTAINS_ARRAY(c.admins, @%s)`, key)
+				filters += fmt.Sprintf(` FILTER LENGTH(MINUS(@%s, c.admins)) == 0`, key)
 				vars[key] = values
 			} else if key == "status" {
 				values := value.GetListValue().AsSlice()

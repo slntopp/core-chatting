@@ -138,6 +138,7 @@ FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_ac
      )
     )
     %s
+    %s
 	LET messages = (
          FOR m in @@messages 
          FILTER m.chat == c._key 
@@ -257,18 +258,19 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 		}
 	}
 
+	limits := ""
 	if req.Page != nil && req.Limit != nil {
 		if req.GetLimit() != 0 {
 			limit, page := req.GetLimit(), req.GetPage()
 			offset := (page - 1) * limit
 
-			filters += ` LIMIT @offset, @count`
+			limits += ` LIMIT @offset, @count`
 			vars["offset"] = offset
 			vars["count"] = limit
 		}
 	}
 
-	query := fmt.Sprintf(listChatsQuery, filters, sorts, filters)
+	query := fmt.Sprintf(listChatsQuery, filters, limits, sorts, filters)
 	cur, err := c.db.Query(ctx, query, vars)
 	if err != nil {
 		return nil, 0, err

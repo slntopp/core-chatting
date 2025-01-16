@@ -153,6 +153,7 @@ FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_ac
 			FILTER m.sender != @requestor
 			RETURN m
 		)
+    %s
 	RETURN MERGE(c, {
 	  role: role,
       meta: {
@@ -241,16 +242,17 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 		}
 	}
 
+	sorts := ""
 	if req.Field != nil && req.Sort != nil {
 		subQuery := ` SORT c.%s %s`
 		field, sort := req.GetField(), req.GetSort()
 
 		if field == "sent" || field == "updated" {
-			filters += fmt.Sprintf(` SORT %s %s`, "last_message.sent", sort)
+			sorts += fmt.Sprintf(` SORT %s %s`, "last_message.sent", sort)
 		} else if field == "unread" {
-			filters += fmt.Sprintf(` SORT %s %s, c.created DESC`, "unread", sort)
+			sorts += fmt.Sprintf(` SORT %s %s, c.created DESC`, "unread", sort)
 		} else {
-			filters += fmt.Sprintf(subQuery, field, sort)
+			sorts += fmt.Sprintf(subQuery, field, sort)
 		}
 	}
 
@@ -265,7 +267,7 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 		}
 	}
 
-	query := fmt.Sprintf(listChatsQuery, filters, filters)
+	query := fmt.Sprintf(listChatsQuery, filters, sorts, filters)
 	cur, err := c.db.Query(ctx, query, vars)
 	if err != nil {
 		return nil, 0, err

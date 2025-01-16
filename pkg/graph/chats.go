@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/slntopp/nocloud/pkg/nocloud/schema"
 	"slices"
+	"strconv"
 	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
@@ -311,7 +312,7 @@ func (c *ChatsController) Count(ctx context.Context, requester string) (map[int3
 		return nil, err
 	}
 
-	resp := make(map[float64]float64)
+	resp := make(map[string]any)
 	if cur.HasMore() {
 		_, err := cur.ReadDocument(ctx, &resp)
 		if err != nil {
@@ -323,7 +324,8 @@ func (c *ChatsController) Count(ctx context.Context, requester string) (map[int3
 
 	res := make(map[int32]int64)
 	for key, val := range resp {
-		res[int32(key)] = int64(val)
+		status, _ := strconv.Atoi(key)
+		res[int32(status)] = int64(val.(float64))
 	}
 	return res, nil
 }

@@ -164,14 +164,14 @@ func (s *ChatsServer) List(ctx context.Context, req *connect.Request[cc.ListChat
 
 	requester := ctx.Value(core.ChatAccount).(string)
 
-	chats, err := s.ctrl.List(ctx, requester)
+	chats, total, err := s.ctrl.List(ctx, requester, req.Msg)
 	if err != nil {
 		return nil, err
 	}
 
 	resp := connect.NewResponse[cc.ListChatsResponse](&cc.ListChatsResponse{
 		Pool:  chats,
-		Total: int64(len(chats)),
+		Total: total,
 	})
 
 	return resp, nil

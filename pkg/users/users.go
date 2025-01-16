@@ -131,7 +131,7 @@ func (s *UsersServer) GetMembers(ctx context.Context, req *connect.Request[cc.Ge
 
 	//requestor := ctx.Value(core.ChatAccount).(string)
 
-	members, err := s.ctrl.GetMembers(ctx)
+	members, err := s.ctrl.GetMembers(ctx, req.Msg.GetUuids())
 	if err != nil {
 		return nil, err
 	}

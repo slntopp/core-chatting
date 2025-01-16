@@ -127,7 +127,7 @@ func (c *ChatsController) Get(ctx context.Context, uuid, requestor string) (*cc.
 }
 
 const listChatsQuery = `
-FOR c in @@chats
+LET chats = ( FOR c in @@chats
 FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_account
 	LET role = (
      @requestor in c.admins or @requestor == @root_account ? 3 : (
@@ -136,6 +136,7 @@ FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_ac
       )
      )
     )
+    %s
 	LET messages = (
          FOR m in @@messages 
          FILTER m.chat == c._key 
@@ -160,40 +161,131 @@ FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_ac
 		first_message: first_message,
 		data: c.meta.data
 	  }
-	})
+	}))
+LET total = COUNT(FOR c in @@chats %s RETURN c)
+RETURN { pool: chats, total: total }
 `
 
-func (c *ChatsController) List(ctx context.Context, requestor string) ([]*cc.Chat, error) {
+func (c *ChatsController) List(ctx context.Context, requester string, req *cc.ListChatsRequest) ([]*cc.Chat, int64, error) {
 	log := c.log.Named("List")
 	log.Debug("Req received")
 
-	cur, err := c.db.Query(ctx, listChatsQuery, map[string]interface{}{
+	vars := map[string]any{
 		"@chats":        CHATS_COLLECTION,
 		"@messages":     MESSAGES_COLLECTION,
-		"requestor":     requestor,
+		"requestor":     requester,
 		"root_account":  schema.ROOT_ACCOUNT_KEY,
 		"closed_status": cc.Status_CLOSE,
 		"admin_only":    cc.Kind_ADMIN_ONLY,
-	})
-
-	if err != nil {
-		return nil, err
 	}
+	filters := ""
+	if req.GetFilters() != nil {
+		for key, value := range req.GetFilters() {
+			if key == "created" {
+				values := value.GetStructValue().AsMap()
+				if val, ok := values["from"]; ok {
+					from := val.(float64)
+					filters += fmt.Sprintf(` FILTER c["%s"] >= %f`, key, from)
+				}
 
-	var chats []*cc.Chat
-
-	for cur.HasMore() {
-		var chat cc.Chat
-
-		_, err := cur.ReadDocument(ctx, &chat)
-		if err != nil {
-			return nil, err
+				if val, ok := values["to"]; ok {
+					to := val.(float64)
+					filters += fmt.Sprintf(` FILTER c["%s"] <= %f`, key, to)
+				}
+			} else if key == "admins" {
+				values := value.GetListValue().AsSlice()
+				if len(values) == 0 {
+					continue
+				}
+				filters += fmt.Sprintf(` FILTER c.admins in @%s`, key)
+				vars[key] = values
+			} else if key == "status" {
+				values := value.GetListValue().AsSlice()
+				if len(values) == 0 {
+					continue
+				}
+				filters += fmt.Sprintf(` FILTER c.status in @%s`, key)
+				vars[key] = values
+			} else if key == "department" {
+				values := value.GetListValue().AsSlice()
+				if len(values) == 0 {
+					continue
+				}
+				filters += fmt.Sprintf(` FILTER c.department in @%s`, key)
+				vars[key] = values
+			} else if key == "responsible" {
+				values := value.GetListValue().AsSlice()
+				if len(values) == 0 {
+					continue
+				}
+				filters += fmt.Sprintf(` FILTER c.responsible in @%s`, key)
+				vars[key] = values
+			} else if key == "account" {
+				values := value.GetStringValue()
+				if len(values) == 0 {
+					continue
+				}
+				filters += fmt.Sprintf(` FILTER @%s in c.admins || @%s in c.users || @%s == c.owner || @%s == c.responsible`, key, key, key, key)
+				vars[key] = values
+			} else if key == "search_param" {
+				filters += fmt.Sprintf(` FILTER c._key LIKE "%s" || c.topic LIKE "%s"`,
+					"%"+value.GetStringValue()+"%", "%"+value.GetStringValue()+"%")
+			} else {
+				values := value.GetListValue().AsSlice()
+				if len(values) == 0 {
+					continue
+				}
+				filters += fmt.Sprintf(` FILTER c["%s"] in @%s`, key, key)
+				vars[key] = values
+			}
 		}
-
-		chats = append(chats, &chat)
 	}
 
-	return chats, nil
+	if req.Field != nil && req.Sort != nil {
+		subQuery := ` SORT c.%s %s`
+		field, sort := req.GetField(), req.GetSort()
+
+		if field == "sent" || field == "updated" {
+			filters += fmt.Sprintf(` SORT %s %s`, "last_message.sent", sort)
+		} else if field == "unread" {
+			filters += fmt.Sprintf(` SORT %s %s, c.created DESC`, "unread", sort)
+		} else {
+			filters += fmt.Sprintf(subQuery, field, sort)
+		}
+	}
+
+	if req.Page != nil && req.Limit != nil {
+		if req.GetLimit() != 0 {
+			limit, page := req.GetLimit(), req.GetPage()
+			offset := (page - 1) * limit
+
+			filters += ` LIMIT @offset, @count`
+			vars["offset"] = offset
+			vars["count"] = limit
+		}
+	}
+
+	query := fmt.Sprintf(listChatsQuery, filters, filters)
+	cur, err := c.db.Query(ctx, query, vars)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	resp := struct {
+		Pool  []*cc.Chat `json:"pool"`
+		Total int64      `json:"total"`
+	}{}
+
+	if cur.HasMore() {
+		_, err := cur.ReadDocument(ctx, &resp)
+		if err != nil {
+			return nil, 0, err
+		}
+	} else {
+		return nil, 0, fmt.Errorf("not found or internal")
+	}
+
+	return resp.Pool, resp.Total, nil
 }
 
 const deleteChatMessages = `

@@ -248,7 +248,7 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 		field, sort := req.GetField(), req.GetSort()
 
 		if field == "sent" || field == "updated" {
-			sorts += fmt.Sprintf(` SORT %s %s`, "last_message.sent", sort)
+			sorts += fmt.Sprintf(` SORT %s %s, c.created %s`, "last_message.sent", sort, sort)
 		} else if field == "unread" {
 			sorts += fmt.Sprintf(` SORT %s %s, c.created DESC`, "unread", sort)
 		} else {

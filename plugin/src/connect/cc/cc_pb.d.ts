@@ -429,6 +429,30 @@ export declare class ListChatsResponse extends Message$1<ListChatsResponse> {
 }
 
 /**
+ * @generated from message cc.CountChatsResponse
+ */
+export declare class CountChatsResponse extends Message$1<CountChatsResponse> {
+  /**
+   * @generated from field: map<int32, int64> statuses = 1;
+   */
+  statuses: { [key: number]: bigint };
+
+  constructor(data?: PartialMessage<CountChatsResponse>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.CountChatsResponse";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CountChatsResponse;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CountChatsResponse;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CountChatsResponse;
+
+  static equals(a: CountChatsResponse | PlainMessage<CountChatsResponse> | undefined, b: CountChatsResponse | PlainMessage<CountChatsResponse> | undefined): boolean;
+}
+
+/**
  * @generated from message cc.Attachment
  */
 export declare class Attachment extends Message$1<Attachment> {

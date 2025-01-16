@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/slntopp/nocloud/pkg/nocloud/schema"
 	"slices"
-	"strconv"
 	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
@@ -296,7 +295,7 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 const countChats = `
 FOR c in @@chats
 FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_account
-COLLECT status = c.status WITH COUNT INTO times
+COLLECT status = TO_NUMBER(c.status) WITH COUNT INTO times
 RETURN { status, times }
 `
 
@@ -314,29 +313,19 @@ func (c *ChatsController) Count(ctx context.Context, requester string) (map[int3
 		return nil, err
 	}
 
-	resp := make(map[string]any)
+	res := make(map[int32]int64)
 	for cur.HasMore() {
 		row := struct {
-			status any
-			times  any
+			Status float64 `json:"status"`
+			Times  float64 `json:"times"`
 		}{}
 		_, err := cur.ReadDocument(ctx, &row)
 		if err != nil {
 			return nil, err
 		}
-		log.Debug("Row response", zap.Any("body", resp))
-		status, _ := row.status.(string)
-		resp[status] = row.times
+		res[int32(row.Status)] = int64(row.Times)
 	}
 
-	log.Debug("Count response", zap.Any("body", resp))
-
-	res := make(map[int32]int64)
-	for key, val := range resp {
-		status, _ := strconv.Atoi(key)
-		num, _ := val.(float64)
-		res[int32(status)] = int64(num)
-	}
 	return res, nil
 }
 

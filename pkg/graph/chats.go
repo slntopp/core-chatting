@@ -313,13 +313,16 @@ func (c *ChatsController) Count(ctx context.Context, requester string) (map[int3
 	}
 
 	resp := make(map[string]any)
-	if cur.HasMore() {
-		_, err := cur.ReadDocument(ctx, &resp)
+	for cur.HasMore() {
+		row := struct {
+			status any
+			times  any
+		}{}
+		_, err := cur.ReadDocument(ctx, &row)
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		return nil, fmt.Errorf("not found or internal")
+		resp[row.status.(string)] = row.times
 	}
 	log.Debug("Count response", zap.Any("body", resp))
 

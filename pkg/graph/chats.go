@@ -322,8 +322,10 @@ func (c *ChatsController) Count(ctx context.Context, requester string) (map[int3
 		if err != nil {
 			return nil, err
 		}
+		log.Debug("Row response", zap.Any("body", resp))
 		resp[row.status.(string)] = row.times
 	}
+
 	log.Debug("Count response", zap.Any("body", resp))
 
 	res := make(map[int32]int64)

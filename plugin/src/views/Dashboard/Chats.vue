@@ -239,7 +239,10 @@
 
       <n-scrollbar
         ref="scrollbar"
-        style="height: calc(100dvh - 120px); min-width: 150px"
+        :class="{
+          scrollBarClosed: appStore.displayMode !== 'half',
+          scrollBarOpened: appStore.displayMode === 'half',
+        }"
       >
         <n-popover trigger="manual" :show="isFirstMessageVisible" :x="x" :y="y">
           {{ firstMessage }}
@@ -272,18 +275,17 @@
             @select="selectChat"
           />
         </n-list>
-
-        <div class="chats_pagination" v-if="chats.length">
-          <n-pagination
-            :disabled="isLoading || isDefaultLoading"
-            v-model:page="page"
-            v-model:page-size="pageSize"
-            :page-count="pageCount"
-            show-size-picker
-            :page-sizes="[10, 20, 30, 50]"
-          />
-        </div>
       </n-scrollbar>
+      <div class="chats_pagination" v-if="chats.length">
+        <n-pagination
+          :disabled="isLoading || isDefaultLoading"
+          v-model:page="page"
+          v-model:page-size="pageSize"
+          :page-count="pageCount"
+          show-size-picker
+          :page-sizes="[10, 20, 30, 50]"
+        />
+      </div>
     </n-layout-sider>
   </div>
 
@@ -961,7 +963,7 @@ watch(page, () => {
   width: 100%;
   display: flex;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .no_chats_message {
@@ -970,6 +972,16 @@ watch(page, () => {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.scrollBarOpened {
+  height: calc(100dvh - 180px);
+  min-width: "150px";
+}
+
+.scrollBarClosed {
+  height: calc(100dvh - 140px);
+  min-width: "150px";
 }
 
 .fade-enter-active,

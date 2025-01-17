@@ -2,11 +2,7 @@
   <div
     v-if="appStore.displayMode !== 'none'"
     :class="{ chats__panel: true, closed: !isChatPanelOpen }"
-    :style="
-      appStore.displayMode === 'full'
-        ? 'min-width: 100%'
-        : undefined
-    "
+    :style="appStore.displayMode === 'full' ? 'min-width: 100%' : undefined"
   >
     <n-layout-sider
       style="margin-bottom: 25px"
@@ -201,7 +197,7 @@
         :wrap="false"
       >
         <n-checkbox
-          :style="(appStore.isMobile) ? undefined : 'padding-left: 10px'"
+          :style="appStore.isMobile ? undefined : 'padding-left: 10px'"
           v-model:checked="isAllChatsSelected"
         />
 
@@ -224,102 +220,54 @@
             </n-icon>
           </template>
 
-          <div>
-            <n-space align="center" style="gap: 5px" :wrap-item="false">
-              <n-text>Sort By:</n-text>
-              <n-icon
-                size="18"
-                style="cursor: pointer"
-                :style="{
-                  transform: sortType === 'desc' ? 'rotate(180deg)' : null,
-                }"
-                @click="
-                  sortType === 'desc' ? (sortType = 'asc') : (sortType = 'desc')
-                "
-              >
-                <up-icon />
-              </n-icon>
-            </n-space>
-
-            <n-divider style="margin: 5px 0" />
-            <n-radio-group v-model:value="sortBy">
-              <n-space :wrap-item="false">
-                <n-radio value="none" label="None" />
-                <n-radio value="created" label="Created" />
-                <n-radio value="sent" label="Sent" />
-                <n-radio value="status" label="Status" />
-              </n-space>
-            </n-radio-group>
-          </div>
-
           <chats-filters
             v-model:checkedDepartments="checkedDepartments"
             v-model:checkedStatuses="checkedStatuses"
             v-model:checkedAdmins="checkedAdmins"
             v-model:checkedResponsibles="checkedResponsibles"
-            v-model:update-date-range="updateDateRange"
-            v-model:create-date-range="createDateRange"
+            :update-date-range="updateDateRange"
+            :create-date-range="createDateRange"
+            @update:create-date-range="createDateRange = { ...$event }"
+            @update:update-date-range="updateDateRange = { ...$event }"
+            v-model:sort-by="sortBy"
+            v-model:sort-type="sortType"
+            @reset="resetFilters"
+            @close="isFilterOpen = false"
             :metricsOptions="metricsOptions"
-            @update:checked-metrics="
-              (key, value) => (metricsOptions[key] = value)
-            "
+            @update:checked-metrics="metricsOptions = $event"
           />
-
-          <div
-            style="
-              margin: 15px 10px 0px 0px;
-              display: flex;
-              justify-content: space-between;
-            "
-          >
-            <n-button
-              ghost
-              type="warning"
-              @click="downloadReport"
-              :loading="isReportLoading"
-            >
-              Report
-            </n-button>
-
-            <div>
-              <n-button
-                style="margin-right: 10px"
-                ghost
-                type="error"
-                @click="resetFilters"
-              >
-                Reset
-              </n-button>
-
-              <n-button ghost type="primary" @click="isFilterOpen = false">
-                Close
-              </n-button>
-            </div>
-          </div>
         </n-popover>
       </n-space>
 
       <n-scrollbar
         ref="scrollbar"
-        style="height: calc(100dvh - 100px); min-width: 150px"
+        :class="{
+          scrollBarClosed: appStore.displayMode !== 'half',
+          scrollBarOpened: appStore.displayMode === 'half',
+        }"
       >
         <n-popover trigger="manual" :show="isFirstMessageVisible" :x="x" :y="y">
           {{ firstMessage }}
         </n-popover>
 
-        <n-list
-          v-if="!(isLoading || isDefaultLoading)"
-          hoverable
-          clickable
-          style="margin-bottom: 25px"
-        >
+        <span ref="topPanel"></span>
+
+        <div v-if="isLoading || isDefaultLoading" class="chats_spin">
+          <n-spin size="large" />
+        </div>
+        <div class="no_chats_message" v-else-if="chats.length === 0">
+          <n-alert type="info" title="No chats available">
+            Try another search request
+          </n-alert>
+        </div>
+        <n-list v-else hoverable clickable style="margin-bottom: 25px">
           <chat-item
-            v-for="chat in viewedChats"
+            v-for="chat in chats"
             :selected="selectedChats"
             :hide-message="!isChatPanelOpen"
             :uuid="chat.uuid"
             :chat="chat"
-            :chats="viewedChats"
+            :chats="chats"
             :class="{
               active: chat.uuid === router.currentRoute.value.params.uuid,
             }"
@@ -329,12 +277,18 @@
             @select="selectChat"
           />
         </n-list>
-        <n-spin
-          v-if="isLoading || viewedChats.length < chats.length"
-          ref="loading"
-          style="display: flex; margin: 0 auto 20px"
-        />
       </n-scrollbar>
+
+      <div class="chats_pagination" v-if="chats.length">
+        <n-pagination
+          :disabled="isLoading || isDefaultLoading"
+          v-model:page="page"
+          v-model:page-size="pageSize"
+          :page-count="pageCount"
+          show-size-picker
+          :page-sizes="[10, 20, 30, 50]"
+        />
+      </div>
     </n-layout-sider>
   </div>
 
@@ -365,14 +319,13 @@ import {
   NScrollbar,
   NSpace,
   NPopover,
-  NRadioGroup,
-  NRadio,
-  NDivider,
   NTag,
   NText,
   NSpin,
+  NPagination,
   NSelect,
   NCheckbox,
+  NAlert,
   useNotification,
 } from "naive-ui";
 
@@ -380,14 +333,18 @@ import { useAppStore } from "../../store/app.ts";
 import { useCcStore } from "../../store/chatting.ts";
 
 import { useRoute, useRouter } from "vue-router";
-import { Chat, Status, User } from "../../connect/cc/cc_pb";
+import { Chat, ListChatsRequest, Status } from "../../connect/cc/cc_pb";
 import ChatItem from "../../components/chats/chat_item.vue";
 import ChatsFilters from "../../components/chats/chats_filters.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
 import useDefaults from "../../hooks/useDefaults.ts";
-import { getStatusColor, getStatusItems } from "../../functions.ts";
+import {
+  cleanObject,
+  debounce,
+  getStatusColor,
+  getStatusItems,
+} from "../../functions.ts";
 import { ConnectError } from "@connectrpc/connect";
-import ChatReportService from "../../services/ChatReportService.ts";
 
 defineEmits(["hover", "hoverEnd"]);
 
@@ -415,7 +372,6 @@ const deleteIcon = defineAsyncComponent(
 const mergeIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/GitMerge")
 );
-const upIcon = defineAsyncComponent(() => import("@vicons/ionicons5/ArrowUp"));
 
 const appStore = useAppStore();
 const store = useCcStore();
@@ -426,16 +382,17 @@ const { metrics, isDefaultLoading, fetch_defaults, admins, users } =
   useDefaults();
 const notification = useNotification();
 
+const topPanel = ref<any>(null);
+
 const selectedChats = ref<string[]>([]);
 const deleteLoading = ref(false);
 const mergeLoading = ref(false);
 const searchParam = ref("");
 const scrollbar = ref<InstanceType<typeof NScrollbar>>();
-const loading = ref<InstanceType<typeof NSpin>>();
 const page = ref(1);
+const pageSize = ref(10);
 const isLoading = ref(false);
 const isSyncLoading = ref(false);
-const isReportLoading = ref(false);
 const newStatus = ref();
 const isChangeStatusLoading = ref(false);
 const newDepartment = ref();
@@ -471,7 +428,7 @@ const responsibles = computed(() =>
 async function sync() {
   try {
     isLoading.value = true;
-    await store.list_chats();
+    fetch_chats();
     const { users } = await store.get_members();
 
     users.forEach((user) => {
@@ -483,6 +440,17 @@ async function sync() {
     isLoading.value = false;
   }
 }
+
+const fetch_chats = debounce(async () => {
+  try {
+    isLoading.value = true;
+    await store.list_chats(ListChatsRequest.fromJson(chatListOptions.value));
+  } catch (error) {
+    console.log(error);
+  } finally {
+    isLoading.value = false;
+  }
+}, 500);
 
 function startChat() {
   router.push({ name: "Start Chat" });
@@ -499,7 +467,7 @@ async function syncChats() {
   try {
     await store.sync_chats();
 
-    await store.list_chats();
+    fetch_chats();
   } finally {
     isSyncLoading.value = false;
   }
@@ -576,38 +544,21 @@ onMounted(() => {
   if (sorting) {
     sortBy.value = sorting.sortBy;
     sortType.value = sorting.sortType;
+    pageSize.value = sorting.pageSize ?? 10;
   }
   if (filters) {
-    checkedDepartments.value = filters.departments;
-    checkedStatuses.value = filters.statuses;
-    checkedAdmins.value = filters.admins;
-    checkedResponsibles.value = filters.responsibles;
+    checkedDepartments.value = filters.departments ?? [];
+    checkedStatuses.value = filters.statuses ?? [];
+    checkedAdmins.value = filters.admins ?? [];
+    checkedResponsibles.value = filters.responsibles ?? [];
     updateDateRange.value = filters.updated ?? { from: null, to: null };
     createDateRange.value = filters.created ?? { from: null, to: null };
   }
 
-  observe();
+  store.list_chats_count();
 });
 
-watch(loading, observe);
 sync();
-
-function observe () {
-  const options = {
-    root: scrollbar.value?.$el.nextElementSibling,
-    threshold: 1,
-  };
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(async ({ isIntersecting }) => {
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      if (isIntersecting) page.value += 1;
-    });
-  }, options);
-
-  if (!loading.value?.$el) return;
-  observer.observe(loading.value.$el);
-}
 
 function selectChat(uuid: string) {
   if (selectedChats.value.includes(uuid)) {
@@ -619,57 +570,11 @@ function selectChat(uuid: string) {
   }
 }
 
-function filterChat(chat: Chat, val: string): boolean {
-  if (!val) {
-    return true;
-  }
-  val = val.toLowerCase();
-
-  const includesKeys = ["topic", "uuid"];
-
-  for (const key of includesKeys) {
-    if ((chat as any)[key]?.toLowerCase().includes(val)) {
-      return true;
-    }
-  }
-
-  return (
-    !!chat.users.find((u) => {
-      const user = store.users.get(u)?.toJson() as any;
-      return (
-        u.startsWith(val) ||
-        user?.title.toLowerCase().includes(val) ||
-        user?.data?.email?.toLowerCase().includes(val)
-      );
-    }) ||
-    !!chat.admins.find(
-      (u) =>
-        u.startsWith(val) ||
-        store.users.get(u)?.title.toLocaleLowerCase().startsWith(val)
-    ) ||
-    !!chat.meta?.lastMessage?.content.toLowerCase().startsWith(val)
-  );
-}
-
 const sortBy = ref<"none" | "sent" | "created" | "status">("sent");
 const sortType = ref<"asc" | "desc">("desc");
 
-interface optionsIncludedType {
-  [index: string]: boolean;
-}
-
 const checkedStatuses = ref<Status[]>([]);
 const selectedStatus = ref<Status>();
-const statuses = computed(() =>
-  Object.keys(Status)
-    .filter((key) => isFinite(+key))
-    .map((key) => ({
-      label: getStatus(+key),
-      value: +key,
-    }))
-    .reverse()
-);
-
 function getStatus(statusCode: Status | number) {
   const status = Status[statusCode].toLowerCase().replace("_", " ");
 
@@ -684,143 +589,52 @@ function selectStatus(status: Status) {
   }
 }
 
-const chats = computed(() => {
-  const result = [...store.chats.values()].filter((chat) => {
-    const createdDate = Number(chat.created);
-    const isCreatedInDate =
-      (createDateRange.value.from ?? 0) <= createdDate &&
-      (createDateRange.value.to ?? Number.MAX_SAFE_INTEGER) >= createdDate;
-
-    const updatedDate = Number(
-      chat.meta?.lastMessage?.edited || chat.meta?.lastMessage?.sent || 0
-    );
-    const isUpdatedInDate =
-      (updateDateRange.value.from ?? 0) <= updatedDate &&
-      (updateDateRange.value.to ?? Number.MAX_SAFE_INTEGER) >= updatedDate;
-
-    let isDepartamentIncluded = true;
-    if (checkedDepartments.value.length > 0) {
-      isDepartamentIncluded = checkedDepartments.value.includes(
-        chat.department
-      );
-    }
-
-    const selectedStatuses =
+const chatFilters = computed(() => {
+  let filters = {
+    status:
       selectedStatus.value === undefined
         ? checkedStatuses.value
-        : [selectedStatus.value];
-    let isStatusIncluded = true;
-    if (selectedStatuses.length > 0) {
-      isStatusIncluded = selectedStatuses.includes(chat.status);
-    }
-
-    let isAdminsExist = true;
-    if (checkedAdmins.value.length > 0) {
-      isAdminsExist = !!checkedAdmins.value.find((uuid) =>
-        chat.admins.includes(uuid)
-      );
-    }
-
-    let isResponsibleExist = true;
-    if (checkedResponsibles.value?.length > 0) {
-      isAdminsExist = !!checkedResponsibles.value.includes(
-        chat.responsible || ""
-      );
-    }
-
-    let isOptionsIncluded: optionsIncludedType = {};
-    Object.entries(metricsOptions.value).forEach(([key, value]) => {
-      if (value.length < 1) {
-        isOptionsIncluded[key] = true;
-        return;
-      }
-      const metric = chat.meta?.data[key]?.kind.value as never;
-
-      isOptionsIncluded[key] = value.includes(metric);
-    });
-
-    let isAccountOwner = true;
-    if (appStore.conf?.params?.filterByAccount) {
-      isAccountOwner = [...chat.users, ...chat.admins].includes(
-        appStore.conf.params.filterByAccount
-      );
-    }
-
-    return (
-      filterChat(chat as Chat, searchParam.value) &&
-      isDepartamentIncluded &&
-      isStatusIncluded &&
-      isAdminsExist &&
-      isResponsibleExist &&
-      isAccountOwner &&
-      isCreatedInDate &&
-      isUpdatedInDate &&
-      Object.values(isOptionsIncluded).every((value) => value)
-    );
-  }) as Chat[];
-
-  const sortable = (chat: Chat) => {
-    if (sortBy.value === "status") {
-      return statuses.value.map(({ value }) => value).indexOf(chat.status);
-    }
-    if (chat.meta?.lastMessage && sortBy.value === "sent") {
-      return Number(chat.meta.lastMessage.sent);
-    }
-    if (sortBy.value === "none") {
-      return (chat.meta?.unread ?? 0) > 0 ? Date.now() : Number(chat.created);
-    }
-    return Number(chat.created);
+        : [selectedStatus.value],
+    department: checkedDepartments.value,
+    admins: checkedAdmins.value,
+    responsible: checkedResponsibles.value,
+    account: appStore.conf?.params?.filterByAccount,
+    updated: updateDateRange.value,
+    created: createDateRange.value,
+    search_param: searchParam.value,
   };
 
-  result.sort((a: Chat, b: Chat) =>
-    sortType.value === "desc"
-      ? sortable(b) - sortable(a)
-      : sortable(a) - sortable(b)
-  );
-
-  return result;
+  return cleanObject(filters);
 });
 
-const viewedChats = computed(
-  () => chats.value.slice(0, 10 * page.value) as Chat[]
-);
-
-const filteredChatsByAccount = computed(() =>
-  [...store.chats.values()].filter((chat) => {
-    let isAccountOwner = true;
-
-    if (appStore.conf?.params?.filterByAccount) {
-      isAccountOwner = [...chat.users, ...chat.admins].includes(
-        appStore.conf.params.filterByAccount
-      );
-    }
-
-    return isAccountOwner;
-  })
-);
-
-const chatsCountByStatus = computed(() => {
-  const result: { [key: string]: { status: number; count: number } } = {};
-
-  const allowedStatuses = getStatusItems();
-
-  allowedStatuses.forEach(
-    (_, index) =>
-      (result[index] = { status: allowedStatuses[index].value, count: 0 })
-  );
-
-  filteredChatsByAccount.value.forEach((chat) => {
-    if (!allowedStatuses.find((status) => status.value === +chat.status)) {
-      return;
-    }
-    const index = allowedStatuses.findIndex(
-      (status) => status.value === +chat.status
-    );
-    result[index].count++;
-  });
-
-  return result;
+const chatListOptions = computed(() => {
+  return {
+    limit: pageSize.value,
+    page: page.value,
+    filters: chatFilters.value,
+    field: sortBy.value,
+    sort: sortType.value,
+  };
 });
+
+const chats = computed(() => {
+  return [...store.chats.values()];
+});
+
+const totalChats = computed(() => {
+  return store.totalChats;
+});
+
+const pageCount = computed(() => Math.ceil(totalChats.value / pageSize.value));
+
+const chatsCountByStatus = computed(() =>
+  [...store.chats_count.keys()].map<{ count: number; status: number }>(
+    (key) => ({
+      count: store.chats_count.get(key) || 0,
+      status: +key,
+    })
+  )
+);
 
 const changeChatsStatus = async () => {
   isChangeStatusLoading.value = true;
@@ -942,6 +756,29 @@ const metricsOptions = ref<metricsOptionsType>(
     : metrics.value.reduce((result, { key }) => ({ ...result, [key]: [] }), {})
 );
 
+const saveSortingAndFilters = debounce(() => {
+  localStorage.setItem(
+    "filters",
+    JSON.stringify({
+      departments: checkedDepartments.value,
+      statuses: checkedStatuses.value,
+      admins: checkedAdmins.value,
+      responsibles: checkedResponsibles.value,
+      metrics: metricsOptions.value,
+      updated: updateDateRange.value,
+      created: createDateRange.value,
+    })
+  );
+  localStorage.setItem(
+    "sorting",
+    JSON.stringify({
+      sortBy: sortBy.value,
+      sortType: sortType.value,
+      pageSize: pageSize.value,
+    })
+  );
+}, 200);
+
 watch(metrics, (value) => {
   const filters = JSON.parse(localStorage.getItem("filters") ?? "null");
 
@@ -953,13 +790,7 @@ watch(metrics, (value) => {
 watch(
   [sortBy, sortType],
   () => {
-    localStorage.setItem(
-      "sorting",
-      JSON.stringify({
-        sortBy: sortBy.value,
-        sortType: sortType.value,
-      })
-    );
+    saveSortingAndFilters();
   },
   { deep: true }
 );
@@ -977,18 +808,7 @@ watch(
   () => {
     selectedStatus.value = undefined;
 
-    localStorage.setItem(
-      "filters",
-      JSON.stringify({
-        departments: checkedDepartments.value,
-        statuses: checkedStatuses.value,
-        admins: checkedAdmins.value,
-        responsibles: checkedResponsibles.value,
-        metrics: metricsOptions.value,
-        updated: updateDateRange.value,
-        created: createDateRange.value,
-      })
-    );
+    saveSortingAndFilters();
   },
   { deep: true }
 );
@@ -1011,16 +831,6 @@ async function resetFilters() {
   await nextTick();
   localStorage.removeItem("sorting");
   localStorage.removeItem("filters");
-}
-
-async function downloadReport() {
-  isReportLoading.value = true;
-
-  try {
-    await ChatReportService.generate(chats.value, responsibles.value as User[]);
-  } finally {
-    isReportLoading.value = false;
-  }
 }
 
 const isChatPanelOpen = ref(true);
@@ -1070,7 +880,7 @@ const resetSelectedChats = () => {
 };
 
 function choseAllChats() {
-  selectedChats.value = viewedChats.value.map((chat) => chat.uuid);
+  selectedChats.value = chats.value.map((chat) => chat.uuid);
 }
 
 watch(isAllChatsSelected, () => {
@@ -1079,6 +889,13 @@ watch(isAllChatsSelected, () => {
   } else {
     resetSelectedChats();
   }
+});
+
+watch([chatListOptions], fetch_chats, { deep: true });
+watch([pageSize, chatFilters], () => (page.value = 1), { deep: true });
+
+watch(page, () => {
+  topPanel.value.scrollIntoView({ behavior: "smooth" });
 });
 </script>
 
@@ -1149,6 +966,40 @@ watch(isAllChatsSelected, () => {
   height: 100%;
   min-width: 50%;
   width: 100%;
+}
+
+.chats_spin {
+  height: 80vh;
+  width: 100%;
+  display: flex;
+  justify-items: center;
+  align-items: center;
+  justify-content: center;
+}
+
+.chats_pagination {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.no_chats_message {
+  height: 80vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.scrollBarOpened {
+  height: calc(100vh - 220px);
+  min-width: 150px;
+}
+
+.scrollBarClosed {
+  height: calc(100vh - 155px);
+  min-width: 150px;
 }
 
 .fade-enter-active,

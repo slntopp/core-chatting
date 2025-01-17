@@ -765,6 +765,410 @@ var _ interface {
 	ErrorName() string
 } = MergeValidationError{}
 
+// Validate checks the field values on ListChatsRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ListChatsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListChatsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListChatsRequestMultiError, or nil if none found.
+func (m *ListChatsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListChatsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	{
+		sorted_keys := make([]string, len(m.GetFilters()))
+		i := 0
+		for key := range m.GetFilters() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetFilters()[key]
+			_ = val
+
+			// no validation rules for Filters[key]
+
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, ListChatsRequestValidationError{
+							field:  fmt.Sprintf("Filters[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, ListChatsRequestValidationError{
+							field:  fmt.Sprintf("Filters[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return ListChatsRequestValidationError{
+						field:  fmt.Sprintf("Filters[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
+				}
+			}
+
+		}
+	}
+
+	if m.Page != nil {
+		// no validation rules for Page
+	}
+
+	if m.Limit != nil {
+		// no validation rules for Limit
+	}
+
+	if m.Field != nil {
+		// no validation rules for Field
+	}
+
+	if m.Sort != nil {
+		// no validation rules for Sort
+	}
+
+	if len(errors) > 0 {
+		return ListChatsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListChatsRequestMultiError is an error wrapping multiple validation errors
+// returned by ListChatsRequest.ValidateAll() if the designated constraints
+// aren't met.
+type ListChatsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListChatsRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListChatsRequestMultiError) AllErrors() []error { return m }
+
+// ListChatsRequestValidationError is the validation error returned by
+// ListChatsRequest.Validate if the designated constraints aren't met.
+type ListChatsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListChatsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListChatsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListChatsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListChatsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListChatsRequestValidationError) ErrorName() string { return "ListChatsRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ListChatsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListChatsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListChatsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListChatsRequestValidationError{}
+
+// Validate checks the field values on ListChatsResponse with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ListChatsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListChatsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListChatsResponseMultiError, or nil if none found.
+func (m *ListChatsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListChatsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetPool() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListChatsResponseValidationError{
+						field:  fmt.Sprintf("Pool[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListChatsResponseValidationError{
+						field:  fmt.Sprintf("Pool[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListChatsResponseValidationError{
+					field:  fmt.Sprintf("Pool[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for Total
+
+	if len(errors) > 0 {
+		return ListChatsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListChatsResponseMultiError is an error wrapping multiple validation errors
+// returned by ListChatsResponse.ValidateAll() if the designated constraints
+// aren't met.
+type ListChatsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListChatsResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListChatsResponseMultiError) AllErrors() []error { return m }
+
+// ListChatsResponseValidationError is the validation error returned by
+// ListChatsResponse.Validate if the designated constraints aren't met.
+type ListChatsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListChatsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListChatsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListChatsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListChatsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListChatsResponseValidationError) ErrorName() string {
+	return "ListChatsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListChatsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListChatsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListChatsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListChatsResponseValidationError{}
+
+// Validate checks the field values on CountChatsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CountChatsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CountChatsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CountChatsResponseMultiError, or nil if none found.
+func (m *CountChatsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CountChatsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Statuses
+
+	if len(errors) > 0 {
+		return CountChatsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// CountChatsResponseMultiError is an error wrapping multiple validation errors
+// returned by CountChatsResponse.ValidateAll() if the designated constraints
+// aren't met.
+type CountChatsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CountChatsResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CountChatsResponseMultiError) AllErrors() []error { return m }
+
+// CountChatsResponseValidationError is the validation error returned by
+// CountChatsResponse.Validate if the designated constraints aren't met.
+type CountChatsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CountChatsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CountChatsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CountChatsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CountChatsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CountChatsResponseValidationError) ErrorName() string {
+	return "CountChatsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CountChatsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCountChatsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CountChatsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CountChatsResponseValidationError{}
+
 // Validate checks the field values on Attachment with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -2063,6 +2467,108 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = FetchDefaultsRequestValidationError{}
+
+// Validate checks the field values on GetMembersRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *GetMembersRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetMembersRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetMembersRequestMultiError, or nil if none found.
+func (m *GetMembersRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetMembersRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return GetMembersRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetMembersRequestMultiError is an error wrapping multiple validation errors
+// returned by GetMembersRequest.ValidateAll() if the designated constraints
+// aren't met.
+type GetMembersRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetMembersRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetMembersRequestMultiError) AllErrors() []error { return m }
+
+// GetMembersRequestValidationError is the validation error returned by
+// GetMembersRequest.Validate if the designated constraints aren't met.
+type GetMembersRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetMembersRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetMembersRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetMembersRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetMembersRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetMembersRequestValidationError) ErrorName() string {
+	return "GetMembersRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetMembersRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetMembersRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetMembersRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetMembersRequestValidationError{}
 
 // Validate checks the field values on Event with the rules defined in the
 // proto definition for this message. If any rules are violated, the first

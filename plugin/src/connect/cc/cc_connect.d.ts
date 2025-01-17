@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, Chats, Defaults, Empty, Event, FetchDefaultsRequest, Merge, Message, Messages, StreamRequest, User, Users } from "./cc_pb.js";
+import { Chat, CountChatsResponse, Defaults, Empty, Event, FetchDefaultsRequest, GetMembersRequest, ListChatsRequest, ListChatsResponse, Merge, Message, Messages, StreamRequest, User, Users } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -44,8 +44,17 @@ export declare const ChatsAPI: {
      */
     readonly list: {
       readonly name: "List",
+      readonly I: typeof ListChatsRequest,
+      readonly O: typeof ListChatsResponse,
+      readonly kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.ChatsAPI.Count
+     */
+    readonly count: {
+      readonly name: "Count",
       readonly I: typeof Empty,
-      readonly O: typeof Chats,
+      readonly O: typeof CountChatsResponse,
       readonly kind: MethodKind.Unary,
     },
     /**
@@ -227,7 +236,7 @@ export declare const UsersAPI: {
      */
     readonly getMembers: {
       readonly name: "GetMembers",
-      readonly I: typeof Empty,
+      readonly I: typeof GetMembersRequest,
       readonly O: typeof Users,
       readonly kind: MethodKind.Unary,
     },

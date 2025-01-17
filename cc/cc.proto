@@ -64,12 +64,30 @@ message Merge {
   repeated string chats = 1;
 }
 
+message ListChatsRequest{
+  optional uint64 page = 1;
+  optional uint64 limit = 2;
+  optional string field = 3; // Sort field
+  optional string sort = 4;  // Sort direction
+  map<string, google.protobuf.Value> filters = 5;
+}
+
+message ListChatsResponse{
+  repeated Chat pool = 1;
+  int64 total = 2;
+}
+
+message CountChatsResponse{
+  map<int32, int64> statuses = 1;
+}
+
 service ChatsAPI {
   rpc Create(Chat) returns (Chat);
   rpc Update(Chat) returns (Chat);
 
   rpc Get(Chat) returns (Chat);
-  rpc List(Empty) returns (Chats);
+  rpc List(ListChatsRequest) returns (ListChatsResponse);
+  rpc Count(Empty) returns (CountChatsResponse);
 
   rpc Delete(Chat) returns (Chat);
 
@@ -174,6 +192,10 @@ message FetchDefaultsRequest {
   bool fetch_templates = 1;
 }
 
+message GetMembersRequest{
+  repeated string uuids = 1;
+}
+
 service UsersAPI {
   rpc Me(Empty) returns (User);
   rpc FetchDefaults(FetchDefaultsRequest) returns (Defaults);
@@ -184,7 +206,7 @@ service UsersAPI {
   // Resolves given Users data by their UUIDs
   // And returns all accessible Users for Requestor
   rpc Resolve(Users) returns (Users);
-  rpc GetMembers(Empty) returns (Users);
+  rpc GetMembers(GetMembersRequest) returns (Users);
 }
 
 enum EventType {

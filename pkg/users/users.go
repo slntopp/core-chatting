@@ -125,13 +125,13 @@ func (s *UsersServer) Me(ctx context.Context, req *connect.Request[cc.Empty]) (*
 	return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("undexpected: User not found"))
 }
 
-func (s *UsersServer) GetMembers(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.Users], error) {
+func (s *UsersServer) GetMembers(ctx context.Context, req *connect.Request[cc.GetMembersRequest]) (*connect.Response[cc.Users], error) {
 	log := s.log.Named("Me")
 	log.Debug("Request received", zap.Any("req", req.Msg))
 
 	//requestor := ctx.Value(core.ChatAccount).(string)
 
-	members, err := s.ctrl.GetMembers(ctx)
+	members, err := s.ctrl.GetMembers(ctx, req.Msg.GetUuids())
 	if err != nil {
 		return nil, err
 	}

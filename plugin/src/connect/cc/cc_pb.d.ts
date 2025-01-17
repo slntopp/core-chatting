@@ -352,6 +352,107 @@ export declare class Merge extends Message$1<Merge> {
 }
 
 /**
+ * @generated from message cc.ListChatsRequest
+ */
+export declare class ListChatsRequest extends Message$1<ListChatsRequest> {
+  /**
+   * @generated from field: optional uint64 page = 1;
+   */
+  page?: bigint;
+
+  /**
+   * @generated from field: optional uint64 limit = 2;
+   */
+  limit?: bigint;
+
+  /**
+   * Sort field
+   *
+   * @generated from field: optional string field = 3;
+   */
+  field?: string;
+
+  /**
+   * Sort direction
+   *
+   * @generated from field: optional string sort = 4;
+   */
+  sort?: string;
+
+  /**
+   * @generated from field: map<string, google.protobuf.Value> filters = 5;
+   */
+  filters: { [key: string]: Value };
+
+  constructor(data?: PartialMessage<ListChatsRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.ListChatsRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListChatsRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListChatsRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListChatsRequest;
+
+  static equals(a: ListChatsRequest | PlainMessage<ListChatsRequest> | undefined, b: ListChatsRequest | PlainMessage<ListChatsRequest> | undefined): boolean;
+}
+
+/**
+ * @generated from message cc.ListChatsResponse
+ */
+export declare class ListChatsResponse extends Message$1<ListChatsResponse> {
+  /**
+   * @generated from field: repeated cc.Chat pool = 1;
+   */
+  pool: Chat[];
+
+  /**
+   * @generated from field: int64 total = 2;
+   */
+  total: bigint;
+
+  constructor(data?: PartialMessage<ListChatsResponse>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.ListChatsResponse";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListChatsResponse;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListChatsResponse;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListChatsResponse;
+
+  static equals(a: ListChatsResponse | PlainMessage<ListChatsResponse> | undefined, b: ListChatsResponse | PlainMessage<ListChatsResponse> | undefined): boolean;
+}
+
+/**
+ * @generated from message cc.CountChatsResponse
+ */
+export declare class CountChatsResponse extends Message$1<CountChatsResponse> {
+  /**
+   * @generated from field: map<int32, int64> statuses = 1;
+   */
+  statuses: { [key: number]: bigint };
+
+  constructor(data?: PartialMessage<CountChatsResponse>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.CountChatsResponse";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CountChatsResponse;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CountChatsResponse;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CountChatsResponse;
+
+  static equals(a: CountChatsResponse | PlainMessage<CountChatsResponse> | undefined, b: CountChatsResponse | PlainMessage<CountChatsResponse> | undefined): boolean;
+}
+
+/**
  * @generated from message cc.Attachment
  */
 export declare class Attachment extends Message$1<Attachment> {
@@ -736,6 +837,30 @@ export declare class FetchDefaultsRequest extends Message$1<FetchDefaultsRequest
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FetchDefaultsRequest;
 
   static equals(a: FetchDefaultsRequest | PlainMessage<FetchDefaultsRequest> | undefined, b: FetchDefaultsRequest | PlainMessage<FetchDefaultsRequest> | undefined): boolean;
+}
+
+/**
+ * @generated from message cc.GetMembersRequest
+ */
+export declare class GetMembersRequest extends Message$1<GetMembersRequest> {
+  /**
+   * @generated from field: repeated string uuids = 1;
+   */
+  uuids: string[];
+
+  constructor(data?: PartialMessage<GetMembersRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.GetMembersRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetMembersRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetMembersRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetMembersRequest;
+
+  static equals(a: GetMembersRequest | PlainMessage<GetMembersRequest> | undefined, b: GetMembersRequest | PlainMessage<GetMembersRequest> | undefined): boolean;
 }
 
 /**

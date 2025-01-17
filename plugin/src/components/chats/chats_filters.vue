@@ -23,7 +23,7 @@
       <n-space :wrap-item="false">
         <n-radio value="unread" label="None" />
         <n-radio value="created" label="Created" />
-        <n-radio value="updated " label="Sent" />
+        <n-radio value="updated" label="Sent" />
         <n-radio value="status" label="Status" />
       </n-space>
     </n-radio-group>
@@ -35,7 +35,7 @@
     <n-date-picker
       placeholder="From"
       size="small"
-      v-model="localFilter.createDateRange.from"
+      v-model:value="localFilter.createDateRange.from"
       style="margin-right: 10px"
       clearable
       :is-date-disabled="(ts:number)=>ts >= (localFilter.createDateRange.to || Number.MAX_SAFE_INTEGER)"
@@ -261,8 +261,8 @@ function onSearch() {
   emits("update:checkedDepartments", localFilter.value.checkedDepartments);
   emits("update:checkedResponsibles", localFilter.value.checkedResponsibles);
   emits("update:checkedStatuses", localFilter.value.checkedStatuses);
-  emits("update:createDateRange", localFilter.value.createDateRange);
-  emits("update:updateDateRange", localFilter.value.updateDateRange);
+  emits("update:createDateRange", { ...localFilter.value.createDateRange });
+  emits("update:updateDateRange", { ...localFilter.value.updateDateRange });
   emits("update:checkedMetrics", localFilter.value.metricsOptions);
   emits("update:sortBy", localFilter.value.sortBy);
   emits("update:sortType", localFilter.value.sortType);
@@ -275,12 +275,16 @@ function setLocalFilters() {
     checkedDepartments: checkedDepartments.value,
     checkedResponsibles: checkedResponsibles.value,
     checkedStatuses: checkedStatuses.value,
-    createDateRange: createDateRange.value,
+    createDateRange: {
+      to: createDateRange.value.to || null,
+      from: createDateRange.value.from || null,
+    },
     updateDateRange: updateDateRange.value,
     sortBy: sortBy.value,
     sortType: sortType.value,
     metricsOptions: metricsOptions.value,
   };
+
   localFilter.value = JSON.parse(JSON.stringify(data));
   startFilter.value = JSON.parse(JSON.stringify(data));
 }

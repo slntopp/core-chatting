@@ -225,8 +225,10 @@
             v-model:checkedStatuses="checkedStatuses"
             v-model:checkedAdmins="checkedAdmins"
             v-model:checkedResponsibles="checkedResponsibles"
-            v-model:update-date-range="updateDateRange"
-            v-model:create-date-range="createDateRange"
+            :update-date-range="updateDateRange"
+            :create-date-range="createDateRange"
+            @update:create-date-range="createDateRange = { ...$event }"
+            @update:update-date-range="updateDateRange = { ...$event }"
             v-model:sort-by="sortBy"
             v-model:sort-type="sortType"
             @reset="resetFilters"
@@ -239,7 +241,10 @@
 
       <n-scrollbar
         ref="scrollbar"
-        style="height: calc(100dvh - 100px); min-width: 150px"
+        :class="{
+          scrollBarClosed: appStore.displayMode !== 'half',
+          scrollBarOpened: appStore.displayMode === 'half',
+        }"
       >
         <n-popover trigger="manual" :show="isFirstMessageVisible" :x="x" :y="y">
           {{ firstMessage }}
@@ -272,18 +277,17 @@
             @select="selectChat"
           />
         </n-list>
-
-        <div class="chats_pagination" v-if="chats.length">
-          <n-pagination
-            :disabled="isLoading || isDefaultLoading"
-            v-model:page="page"
-            v-model:page-size="pageSize"
-            :page-count="pageCount"
-            show-size-picker
-            :page-sizes="[10, 20, 30, 50]"
-          />
-        </div>
       </n-scrollbar>
+      <div class="chats_pagination" v-if="chats.length">
+        <n-pagination
+          :disabled="isLoading || isDefaultLoading"
+          v-model:page="page"
+          v-model:page-size="pageSize"
+          :page-count="pageCount"
+          show-size-picker
+          :page-sizes="[10, 20, 30, 50]"
+        />
+      </div>
     </n-layout-sider>
   </div>
 
@@ -539,15 +543,15 @@ onMounted(() => {
   if (sorting) {
     sortBy.value = sorting.sortBy;
     sortType.value = sorting.sortType;
+    pageSize.value = sorting.pageSize ?? 10;
   }
   if (filters) {
-    checkedDepartments.value = filters.departments;
-    checkedStatuses.value = filters.statuses;
-    checkedAdmins.value = filters.admins;
-    checkedResponsibles.value = filters.responsibles;
+    checkedDepartments.value = filters.departments ?? [];
+    checkedStatuses.value = filters.statuses ?? [];
+    checkedAdmins.value = filters.admins ?? [];
+    checkedResponsibles.value = filters.responsibles ?? [];
     updateDateRange.value = filters.updated ?? { from: null, to: null };
     createDateRange.value = filters.created ?? { from: null, to: null };
-    pageSize.value = filters.pageSize ?? 10;
   }
 });
 
@@ -741,6 +745,29 @@ const metricsOptions = ref<metricsOptionsType>(
     : metrics.value.reduce((result, { key }) => ({ ...result, [key]: [] }), {})
 );
 
+const saveSortingAndFilters = debounce(() => {
+  localStorage.setItem(
+    "filters",
+    JSON.stringify({
+      departments: checkedDepartments.value,
+      statuses: checkedStatuses.value,
+      admins: checkedAdmins.value,
+      responsibles: checkedResponsibles.value,
+      metrics: metricsOptions.value,
+      updated: updateDateRange.value,
+      created: createDateRange.value,
+    })
+  );
+  localStorage.setItem(
+    "sorting",
+    JSON.stringify({
+      sortBy: sortBy.value,
+      sortType: sortType.value,
+      pageSize: pageSize.value,
+    })
+  );
+}, 200);
+
 watch(metrics, (value) => {
   const filters = JSON.parse(localStorage.getItem("filters") ?? "null");
 
@@ -752,13 +779,7 @@ watch(metrics, (value) => {
 watch(
   [sortBy, sortType],
   () => {
-    localStorage.setItem(
-      "sorting",
-      JSON.stringify({
-        sortBy: sortBy.value,
-        sortType: sortType.value,
-      })
-    );
+    saveSortingAndFilters();
   },
   { deep: true }
 );
@@ -776,19 +797,7 @@ watch(
   () => {
     selectedStatus.value = undefined;
 
-    localStorage.setItem(
-      "filters",
-      JSON.stringify({
-        departments: checkedDepartments.value,
-        statuses: checkedStatuses.value,
-        admins: checkedAdmins.value,
-        responsibles: checkedResponsibles.value,
-        metrics: metricsOptions.value,
-        updated: updateDateRange.value,
-        created: createDateRange.value,
-        pageSize: pageSize.value,
-      })
-    );
+    saveSortingAndFilters();
   },
   { deep: true }
 );
@@ -961,7 +970,7 @@ watch(page, () => {
   width: 100%;
   display: flex;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .no_chats_message {
@@ -970,6 +979,16 @@ watch(page, () => {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.scrollBarOpened {
+  height: calc(100dvh - 180px);
+  min-width: "150px";
+}
+
+.scrollBarClosed {
+  height: calc(100dvh - 140px);
+  min-width: "150px";
 }
 
 .fade-enter-active,

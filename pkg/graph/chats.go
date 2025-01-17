@@ -269,7 +269,7 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 		vars["count"] = 0
 	}
 
-	query := fmt.Sprintf(listChatsQuery, filters, sorts, filters)
+	query := fmt.Sprintf(listChatsQuery, filters, sorts)
 	cur, err := c.db.Query(ctx, query, vars)
 	if err != nil {
 		return nil, 0, err

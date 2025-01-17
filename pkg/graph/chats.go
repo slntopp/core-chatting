@@ -137,7 +137,6 @@ FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_ac
      )
     )
     %s
-    %s
 	LET messages = (
          FOR m in @@messages 
          FILTER m.chat == c._key 
@@ -154,6 +153,7 @@ FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_ac
 			FILTER m.sender != @requestor
 			RETURN m
 		)
+    %s
     %s
 	RETURN MERGE(c, {
 	  role: role,
@@ -255,6 +255,7 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 		} else {
 			sorts += fmt.Sprintf(subQuery, field, sort)
 		}
+		sorts += ",c._id" // add tiebreaker
 	}
 
 	limits := ""
@@ -269,7 +270,7 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 		}
 	}
 
-	query := fmt.Sprintf(listChatsQuery, filters, limits, sorts, filters)
+	query := fmt.Sprintf(listChatsQuery, filters, sorts, limits, filters)
 	cur, err := c.db.Query(ctx, query, vars)
 	if err != nil {
 		return nil, 0, err

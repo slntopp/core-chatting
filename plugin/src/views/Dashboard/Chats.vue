@@ -373,6 +373,9 @@ const mergeIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/GitMerge")
 );
 
+const SORTING_KEY = "chats-sorting";
+const FILTERS_KEY = "chats-filters";
+
 const appStore = useAppStore();
 const store = useCcStore();
 const router = useRouter();
@@ -538,8 +541,13 @@ onMounted(() => {
     second: document.querySelector(".chat__item")!,
   });
 
-  const sorting = JSON.parse(localStorage.getItem("sorting") ?? "null");
-  const filters = JSON.parse(localStorage.getItem("filters") ?? "null");
+  const sorting = JSON.parse(
+    localStorage.getItem(SORTING_KEY) ?? '{"sortBy":"unread","sortType":"desc"}'
+  );
+  const filters = JSON.parse(
+    localStorage.getItem(FILTERS_KEY) ??
+      `{"admins":[],"departments":[],"responsibles":[],"statuses":[0,1,4,5,7,8]}`
+  );
 
   if (sorting) {
     sortBy.value = sorting.sortBy;
@@ -553,6 +561,7 @@ onMounted(() => {
     checkedResponsibles.value = filters.responsibles ?? [];
     updateDateRange.value = filters.updated ?? { from: null, to: null };
     createDateRange.value = filters.created ?? { from: null, to: null };
+    metricsOptions.value = filters.metrics ?? {};
   }
 
   store.list_chats_count();
@@ -749,16 +758,13 @@ interface metricsOptionsType {
   [index: string]: [];
 }
 
-const filters = JSON.parse(localStorage.getItem("filters") ?? "null");
 const metricsOptions = ref<metricsOptionsType>(
-  filters
-    ? filters.metrics
-    : metrics.value.reduce((result, { key }) => ({ ...result, [key]: [] }), {})
+  metrics.value.reduce((result, { key }) => ({ ...result, [key]: [] }), {})
 );
 
 const saveSortingAndFilters = debounce(() => {
   localStorage.setItem(
-    "filters",
+    FILTERS_KEY,
     JSON.stringify({
       departments: checkedDepartments.value,
       statuses: checkedStatuses.value,
@@ -770,7 +776,7 @@ const saveSortingAndFilters = debounce(() => {
     })
   );
   localStorage.setItem(
-    "sorting",
+    SORTING_KEY,
     JSON.stringify({
       sortBy: sortBy.value,
       sortType: sortType.value,
@@ -780,7 +786,7 @@ const saveSortingAndFilters = debounce(() => {
 }, 200);
 
 watch(metrics, (value) => {
-  const filters = JSON.parse(localStorage.getItem("filters") ?? "null");
+  const filters = JSON.parse(localStorage.getItem(FILTERS_KEY) ?? "null");
 
   metricsOptions.value = filters
     ? filters.metrics
@@ -829,8 +835,8 @@ async function resetFilters() {
   );
 
   await nextTick();
-  localStorage.removeItem("sorting");
-  localStorage.removeItem("filters");
+  localStorage.removeItem(SORTING_KEY);
+  localStorage.removeItem(FILTERS_KEY);
 }
 
 const isChatPanelOpen = ref(true);

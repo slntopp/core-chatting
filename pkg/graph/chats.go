@@ -164,7 +164,7 @@ FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_ac
 	  }
 	}))
 LET total = LENGTH(chats)
-RETURN { pool: @count>0 ? SLICE(filtered_chats, @offset, @limit) : chats, total: total }
+RETURN { pool: @count>0 ? SLICE(chats, @offset, @count) : chats, total: total }
 `
 
 func (c *ChatsController) List(ctx context.Context, requester string, req *cc.ListChatsRequest) ([]*cc.Chat, int64, error) {

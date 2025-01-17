@@ -23,7 +23,7 @@
       <n-space :wrap-item="false">
         <n-radio value="unread" label="None" />
         <n-radio value="created" label="Created" />
-        <n-radio value="updated " label="Sent" />
+        <n-radio value="updated" label="Sent" />
         <n-radio value="status" label="Status" />
       </n-space>
     </n-radio-group>

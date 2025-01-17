@@ -278,6 +278,7 @@
           />
         </n-list>
       </n-scrollbar>
+
       <div class="chats_pagination" v-if="chats.length">
         <n-pagination
           :disabled="isLoading || isDefaultLoading"
@@ -553,6 +554,8 @@ onMounted(() => {
     updateDateRange.value = filters.updated ?? { from: null, to: null };
     createDateRange.value = filters.created ?? { from: null, to: null };
   }
+
+  store.list_chats_count();
 });
 
 sync();
@@ -598,6 +601,7 @@ const chatFilters = computed(() => {
     account: appStore.conf?.params?.filterByAccount,
     updated: updateDateRange.value,
     created: createDateRange.value,
+    search_param: searchParam.value,
   };
 
   return cleanObject(filters);
@@ -623,7 +627,14 @@ const totalChats = computed(() => {
 
 const pageCount = computed(() => Math.ceil(totalChats.value / pageSize.value));
 
-const chatsCountByStatus = computed(() => []);
+const chatsCountByStatus = computed(() =>
+  [...store.chats_count.keys()].map<{ count: number; status: number }>(
+    (key) => ({
+      count: store.chats_count.get(key) || 0,
+      status: +key,
+    })
+  )
+);
 
 const changeChatsStatus = async () => {
   isChangeStatusLoading.value = true;
@@ -982,13 +993,13 @@ watch(page, () => {
 }
 
 .scrollBarOpened {
-  height: calc(100dvh - 180px);
-  min-width: "150px";
+  height: calc(100vh - 220px);
+  min-width: 150px;
 }
 
 .scrollBarClosed {
-  height: calc(100dvh - 140px);
-  min-width: "150px";
+  height: calc(100vh - 155px);
+  min-width: 150px;
 }
 
 .fade-enter-active,

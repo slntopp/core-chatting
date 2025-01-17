@@ -65,6 +65,7 @@ export const useCcStore = defineStore("cc", () => {
   const notification = useNotification();
 
   const chats = ref<Map<string, Chat>>(new Map());
+  const chats_count = ref<Map<string, number>>(new Map());
   const totalChats = ref<number>(0);
   const users = ref<Map<string, User>>(new Map());
   const departments = ref<Department[]>([]);
@@ -101,6 +102,16 @@ export const useCcStore = defineStore("cc", () => {
     totalChats.value = Number(result.total);
 
     resolve(result.pool.map((chat) => [...chat.admins, ...chat.users]).flat());
+  }
+
+  async function list_chats_count() {
+    let result = await chats_c.count(new Empty());
+
+    chats_count.value = new Map<string, number>(
+      Object.keys(result.statuses).map((key) => {
+        return [key, Number(result.statuses[+key])];
+      })
+    );
   }
 
   async function create_chat(chat: Chat) {
@@ -387,6 +398,8 @@ export const useCcStore = defineStore("cc", () => {
     merge_chats,
     sync_chats,
     get_chat,
+    list_chats_count,
+    chats_count,
 
     current_message,
     updating,

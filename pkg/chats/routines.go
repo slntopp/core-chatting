@@ -36,7 +36,8 @@ func (s *ChatsServer) sendCloseChatMessage(ctx context.Context, log *zap.Logger,
 func (s *ChatsServer) CloseInactiveChats(ctx context.Context, log *zap.Logger, conf TicketsSettingsConf, eventPublisher func(ctx context.Context, event *events.Event)) error {
 	log = log.Named("CloseInactiveChats")
 
-	chats, err := s.ctrl.List(ctx, schema.ROOT_ACCOUNT_KEY)
+	page, limit := uint64(1), uint64(10000)
+	chats, _, err := s.ctrl.List(ctx, schema.ROOT_ACCOUNT_KEY, &cc.ListChatsRequest{Page: &page, Limit: &limit})
 	if err != nil {
 		return err
 	}

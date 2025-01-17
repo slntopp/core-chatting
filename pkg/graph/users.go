@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/arangodb/go-driver"
 	"github.com/slntopp/core-chatting/cc"
@@ -56,18 +57,27 @@ func (c *UsersController) Resolve(ctx context.Context, uuids []string) ([]*cc.Us
 
 const getMembers = `
 FOR a in @@accounts
+  %s
   RETURN MERGE(a, {
   	uuid: a._key
   })
 `
 
-func (c *UsersController) GetMembers(ctx context.Context) ([]*cc.User, error) {
+func (c *UsersController) GetMembers(ctx context.Context, uuids []string) ([]*cc.User, error) {
 	log := c.log.Named("GetMembers")
 	log.Debug("Request received")
 
-	cur, err := c.db.Query(ctx, getMembers, map[string]interface{}{
+	vars := map[string]interface{}{
 		"@accounts": c.colname,
-	})
+	}
+	filters := ""
+	if len(uuids) > 0 {
+		filters += " FILTER a._key IN @uuids"
+		vars["uuids"] = uuids
+	}
+
+	query := fmt.Sprintf(getMembers, filters)
+	cur, err := c.db.Query(ctx, query, vars)
 	if err != nil {
 		return nil, err
 	}

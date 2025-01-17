@@ -77,12 +77,17 @@ message ListChatsResponse{
   int64 total = 2;
 }
 
+message CountChatsResponse{
+  map<int32, int64> statuses = 1;
+}
+
 service ChatsAPI {
   rpc Create(Chat) returns (Chat);
   rpc Update(Chat) returns (Chat);
 
   rpc Get(Chat) returns (Chat);
   rpc List(ListChatsRequest) returns (ListChatsResponse);
+  rpc Count(Empty) returns (CountChatsResponse);
 
   rpc Delete(Chat) returns (Chat);
 

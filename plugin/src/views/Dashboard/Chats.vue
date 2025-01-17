@@ -278,6 +278,7 @@
           />
         </n-list>
       </n-scrollbar>
+
       <div class="chats_pagination" v-if="chats.length">
         <n-pagination
           :disabled="isLoading || isDefaultLoading"
@@ -982,13 +983,13 @@ watch(page, () => {
 }
 
 .scrollBarOpened {
-  height: calc(100dvh - 180px);
-  min-width: "150px";
+  height: calc(100vh - 220px);
+  min-width: 150px;
 }
 
 .scrollBarClosed {
-  height: calc(100dvh - 140px);
-  min-width: "150px";
+  height: calc(100vh - 155px);
+  min-width: 150px;
 }
 
 .fade-enter-active,

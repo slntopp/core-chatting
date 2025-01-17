@@ -147,11 +147,10 @@ FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_ac
 	LET first_message = FIRST(messages)
 	LET last_message = LAST(messages)
 	LET unread = c.status == @closed_status ? 0 : LENGTH(
-		FOR m in @@messages 
-			FILTER m.chat == c._key
+		FOR m in messages
 			FILTER @requestor not in m.readers
 			FILTER m.sender != @requestor
-			RETURN m
+			RETURN true
 		)
     %s
 	RETURN MERGE(c, {

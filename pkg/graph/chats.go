@@ -147,13 +147,11 @@ FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_ac
 	LET first_message = FIRST(messages)
 	LET last_message = LAST(messages)
 	LET unread = c.status == @closed_status ? 0 : LENGTH(
-		FOR m in @@messages 
-			FILTER m.chat == c._key
+		FOR m in messages
 			FILTER @requestor not in m.readers
 			FILTER m.sender != @requestor
-			RETURN m
+			RETURN true
 		)
-    %s
     %s
 	RETURN MERGE(c, {
 	  role: role,
@@ -164,8 +162,8 @@ FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_ac
 		data: c.meta.data
 	  }
 	}))
-LET total = COUNT(FOR c in @@chats %s RETURN c)
-RETURN { pool: chats, total: total }
+LET total = LENGTH(chats)
+RETURN { pool: @count>0 ? SLICE(chats, @offset, @count) : chats, total: total }
 `
 
 func (c *ChatsController) List(ctx context.Context, requester string, req *cc.ListChatsRequest) ([]*cc.Chat, int64, error) {
@@ -260,19 +258,17 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 		sorts += ",c._id" // add tiebreaker
 	}
 
-	limits := ""
-	if req.Page != nil && req.Limit != nil {
-		if req.GetLimit() != 0 {
-			limit, page := req.GetLimit(), req.GetPage()
-			offset := (page - 1) * limit
-
-			limits += ` LIMIT @offset, @count`
-			vars["offset"] = offset
-			vars["count"] = limit
-		}
+	if req.Page != nil && req.Limit != nil && req.GetLimit() != 0 {
+		limit, page := req.GetLimit(), req.GetPage()
+		offset := (page - 1) * limit
+		vars["offset"] = offset
+		vars["count"] = limit
+	} else {
+		vars["offset"] = 0
+		vars["count"] = 0
 	}
 
-	query := fmt.Sprintf(listChatsQuery, filters, sorts, limits, filters)
+	query := fmt.Sprintf(listChatsQuery, filters, sorts)
 	cur, err := c.db.Query(ctx, query, vars)
 	if err != nil {
 		return nil, 0, err

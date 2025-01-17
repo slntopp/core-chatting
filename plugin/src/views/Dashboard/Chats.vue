@@ -554,6 +554,8 @@ onMounted(() => {
     updateDateRange.value = filters.updated ?? { from: null, to: null };
     createDateRange.value = filters.created ?? { from: null, to: null };
   }
+
+  store.list_chats_count();
 });
 
 sync();
@@ -624,7 +626,14 @@ const totalChats = computed(() => {
 
 const pageCount = computed(() => Math.ceil(totalChats.value / pageSize.value));
 
-const chatsCountByStatus = computed(() => []);
+const chatsCountByStatus = computed(() =>
+  [...store.chats_count.keys()].map<{ count: number; status: number }>(
+    (key) => ({
+      count: store.chats_count.get(key) || 0,
+      status: +key,
+    })
+  )
+);
 
 const changeChatsStatus = async () => {
   isChangeStatusLoading.value = true;

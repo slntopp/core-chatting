@@ -90,7 +90,7 @@ const getChatQuery = `
 LET chat = Document(@chat)
 
 LET role = (
- @requestor in chat.admins ? 3 : (
+ @requestor in chat.admins or @requestor == @root_account ? 3 : (
   chat.owner == @requestor ? 2 : (
    @requestor in chat.users ? 1 : 0
   )
@@ -107,8 +107,9 @@ func (c *ChatsController) Get(ctx context.Context, uuid, requestor string) (*cc.
 	log.Debug("Req received")
 
 	cur, err := c.db.Query(ctx, getChatQuery, map[string]interface{}{
-		"chat":      driver.NewDocumentID(CHATS_COLLECTION, uuid),
-		"requestor": requestor,
+		"chat":         driver.NewDocumentID(CHATS_COLLECTION, uuid),
+		"requestor":    requestor,
+		"root_account": schema.ROOT_ACCOUNT_KEY,
 	})
 
 	if err != nil {

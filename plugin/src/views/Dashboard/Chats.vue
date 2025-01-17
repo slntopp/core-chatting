@@ -601,6 +601,7 @@ const chatFilters = computed(() => {
     account: appStore.conf?.params?.filterByAccount,
     updated: updateDateRange.value,
     created: createDateRange.value,
+    search_param: searchParam.value,
   };
 
   return cleanObject(filters);

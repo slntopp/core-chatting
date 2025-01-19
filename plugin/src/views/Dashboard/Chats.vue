@@ -391,6 +391,7 @@ const selectedChats = ref<string[]>([]);
 const deleteLoading = ref(false);
 const mergeLoading = ref(false);
 const searchParam = ref("");
+const listSearchParam = ref("");
 const scrollbar = ref<InstanceType<typeof NScrollbar>>();
 const page = ref(1);
 const pageSize = ref(10);
@@ -431,7 +432,7 @@ const responsibles = computed(() =>
 async function sync() {
   try {
     isLoading.value = true;
-    fetch_chats();
+    fetch_chats_debounced();
     const { users } = await store.get_members();
 
     users.forEach((user) => {
@@ -444,7 +445,7 @@ async function sync() {
   }
 }
 
-const fetch_chats = debounce(async () => {
+const fetch_chats = async () => {
   try {
     isLoading.value = true;
     await store.list_chats(ListChatsRequest.fromJson(chatListOptions.value));
@@ -453,7 +454,9 @@ const fetch_chats = debounce(async () => {
   } finally {
     isLoading.value = false;
   }
-}, 500);
+};
+
+const fetch_chats_debounced = debounce(fetch_chats, 100);
 
 function startChat() {
   router.push({ name: "Start Chat" });
@@ -470,7 +473,7 @@ async function syncChats() {
   try {
     await store.sync_chats();
 
-    fetch_chats();
+    fetch_chats_debounced();
   } finally {
     isSyncLoading.value = false;
   }
@@ -610,7 +613,7 @@ const chatFilters = computed(() => {
     account: appStore.conf?.params?.filterByAccount,
     updated: updateDateRange.value,
     created: createDateRange.value,
-    search_param: searchParam.value,
+    search_param: listSearchParam.value,
   };
 
   return cleanObject(filters);
@@ -895,6 +898,11 @@ function choseAllChats() {
   selectedChats.value = chats.value.map((chat) => chat.uuid);
 }
 
+const changeListSearchParam = debounce(
+  () => (listSearchParam.value = searchParam.value),
+  600
+);
+
 watch(isAllChatsSelected, () => {
   if (isAllChatsSelected.value) {
     choseAllChats();
@@ -903,8 +911,9 @@ watch(isAllChatsSelected, () => {
   }
 });
 
-watch([chatListOptions], fetch_chats, { deep: true });
+watch([chatListOptions], fetch_chats_debounced, { deep: true });
 watch([pageSize, chatFilters], () => (page.value = 1), { deep: true });
+watch(searchParam, changeListSearchParam);
 
 watch(page, () => {
   topPanel.value.scrollIntoView({ behavior: "smooth" });

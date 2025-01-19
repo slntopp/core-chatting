@@ -636,14 +636,20 @@ const totalChats = computed(() => {
 
 const pageCount = computed(() => Math.ceil(totalChats.value / pageSize.value));
 
-const chatsCountByStatus = computed(() =>
-  [...store.chats_count.keys()].map<{ count: number; status: number }>(
-    (key) => ({
+const chatsCountByStatus = computed(() => {
+  const order = [0, 1, 5, 4, 7, 8, 3, 6, 2];
+
+  return [...store.chats_count.keys()]
+    .map<{ count: number; status: number }>((key) => ({
       count: store.chats_count.get(key) || 0,
       status: +key,
-    })
-  )
-);
+    }))
+    .sort(
+      (a, b) =>
+        order.findIndex((v) => v === a.status) -
+        order.findIndex((v) => v === b.status)
+    );
+});
 
 const changeChatsStatus = async () => {
   isChangeStatusLoading.value = true;

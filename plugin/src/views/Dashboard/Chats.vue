@@ -407,14 +407,7 @@ const isAllChatsSelected = ref(false);
 const isFilterOpen = ref(false);
 
 const isMergeVisible = computed(() => {
-  const list = selectedChats.value.map(
-    (uuid) => new Chat(store.chats.get(uuid))
-  );
-
-  const dep = list.at(0)?.department;
-  const isDepsEqual = list.every(({ department }) => department === dep);
-
-  return isSelectedChats.value && isDepsEqual;
+  return isSelectedChats.value;
 });
 
 const isSelectedChats = computed(() => selectedChats.value.length > 0);

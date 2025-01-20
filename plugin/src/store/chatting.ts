@@ -268,6 +268,9 @@ export const useCcStore = defineStore("cc", () => {
 
     switch (event.type) {
       case EventType.MESSAGE_SENT:
+        if (messages.value.get(msg.chat)?.find(mesage => mesage.uuid === msg.uuid)) {
+          break;
+        }
         messages.value.get(msg.chat)!.push(msg);
         chats.value.get(msg.chat)!.meta = new ChatMeta({
           unread: chats.value.get(msg.chat)!.meta!.unread + 1,

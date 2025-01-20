@@ -327,10 +327,6 @@ export const useCcStore = defineStore("cc", () => {
     }
   };
 
-  const sync_chats = () => {
-    return chats_c.syncChats(new Empty());
-  };
-
   const get_chat = async (uuid: string) => {
     try {
       const data = await chats_c.get(Chat.fromJson({ uuid }));
@@ -399,7 +395,6 @@ export const useCcStore = defineStore("cc", () => {
     delete_chat,
     update_chat,
     merge_chats,
-    sync_chats,
     get_chat,
     list_chats_count,
     chats_count,

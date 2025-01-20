@@ -80,17 +80,6 @@
             "
             @update:value="selectStatus"
           />
-
-          <n-button
-            v-if="
-              isChatPanelOpen &&
-              appStore.displayMode === 'full' &&
-              !appStore.isMobile
-            "
-            @click="syncChats()"
-            :loading="isSyncLoading"
-            >Sync</n-button
-          >
         </template>
 
         <n-space v-else>
@@ -396,7 +385,6 @@ const scrollbar = ref<InstanceType<typeof NScrollbar>>();
 const page = ref(1);
 const pageSize = ref(10);
 const isLoading = ref(false);
-const isSyncLoading = ref(false);
 const newStatus = ref();
 const isChangeStatusLoading = ref(false);
 const newDepartment = ref();
@@ -459,17 +447,6 @@ function startChat() {
 function goToStatistics() {
   router.push({ name: "Statistics" });
   appStore.displayMode = "none";
-}
-
-async function syncChats() {
-  isSyncLoading.value = true;
-  try {
-    await store.sync_chats();
-
-    fetch_chats_debounced();
-  } finally {
-    isSyncLoading.value = false;
-  }
 }
 
 async function deleteChats() {

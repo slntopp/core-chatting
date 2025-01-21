@@ -296,6 +296,10 @@ export const useCcStore = defineStore("cc", () => {
   };
 
   const chat_handler = (event: Event) => {
+    if (app.conf?.params?.filterByAccount) {
+      return;
+    }
+
     console.log("Received Chat Event", event);
 
     const chat = event.item.value as Chat;
@@ -308,7 +312,12 @@ export const useCcStore = defineStore("cc", () => {
 
     switch (event.type) {
       case EventType.CHAT_CREATED:
+        const localChats = [...chats.value.values()];
+        chats.value.clear()
         chats.value.set(chat.uuid, chat);
+        localChats.forEach(c =>
+          chats.value.set(c.uuid, c)
+        )
         break;
       case EventType.CHAT_DEPARTMENT_CHANGED:
       case EventType.CHAT_STATUS_CHANGED:

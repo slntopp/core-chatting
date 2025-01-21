@@ -67,6 +67,7 @@ export const useCcStore = defineStore("cc", () => {
   const chats = ref<Map<string, Chat>>(new Map());
   const chats_count = ref<Map<string, number>>(new Map());
   const totalChats = ref<number>(0);
+  const currentChat = ref<Chat | null>(null);
   const users = ref<Map<string, User>>(new Map());
   const departments = ref<Department[]>([]);
   const metrics = ref<MetricWithKey[]>([]);
@@ -262,7 +263,8 @@ export const useCcStore = defineStore("cc", () => {
     let idx: number;
 
     if (!msg.chat) return console.warn("message without chat", msg);
-    if (!chats.value.get(msg.chat)) return console.warn("no chat");
+    const chat = currentChat.value || chats.value.get(msg.chat);
+    if (!chat) return console.warn("no chat");
 
     if (!messages.value.get(msg.chat)) messages.value.set(msg.chat, []);
 
@@ -272,8 +274,8 @@ export const useCcStore = defineStore("cc", () => {
           break;
         }
         messages.value.get(msg.chat)!.push(msg);
-        chats.value.get(msg.chat)!.meta = new ChatMeta({
-          unread: chats.value.get(msg.chat)!.meta!.unread + 1,
+        chat!.meta = new ChatMeta({
+          unread: chat!.meta!.unread + 1,
           lastMessage: msg,
         });
         break;
@@ -282,7 +284,7 @@ export const useCcStore = defineStore("cc", () => {
           .get(msg.chat)!
           .findIndex((el) => el.uuid == msg.uuid);
         messages.value.get(msg.chat)![idx] = msg;
-        chats.value.get(msg.chat)!.meta!.unread++;
+        chat!.meta!.unread++;
         break;
       case EventType.MESSAGE_DELETED:
         idx = messages.value
@@ -337,6 +339,8 @@ export const useCcStore = defineStore("cc", () => {
   };
 
   const get_chat = async (uuid: string) => {
+    currentChat.value = null;
+
     try {
       const data = await chats_c.get(Chat.fromJson({ uuid }));
 
@@ -346,7 +350,7 @@ export const useCcStore = defineStore("cc", () => {
         });
       }
 
-      chats.value.set(uuid, data);
+      currentChat.value = data;
     } catch (e) {
       console.warn(e);
     }
@@ -398,6 +402,7 @@ export const useCcStore = defineStore("cc", () => {
     metrics,
 
     chats,
+    currentChat,
     totalChats,
     list_chats,
     create_chat,

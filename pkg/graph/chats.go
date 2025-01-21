@@ -295,11 +295,12 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 const countChats = `
 FOR c in @@chats
 FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_account
+%s
 COLLECT status = TO_NUMBER(c.status) WITH COUNT INTO times
 RETURN { status, times }
 `
 
-func (c *ChatsController) Count(ctx context.Context, requester string) (map[int32]int64, error) {
+func (c *ChatsController) Count(ctx context.Context, requester string, filters map[string]*structpb.Value) (map[int32]int64, error) {
 	log := c.log.Named("Count")
 	log.Debug("Req received")
 
@@ -308,7 +309,21 @@ func (c *ChatsController) Count(ctx context.Context, requester string) (map[int3
 		"requestor":    requester,
 		"root_account": schema.ROOT_ACCOUNT_KEY,
 	}
-	cur, err := c.db.Query(ctx, countChats, vars)
+
+	var filterQuery string
+	for key, value := range filters {
+		if key == "account" {
+			values := value.GetStringValue()
+			if len(values) == 0 {
+				continue
+			}
+			filterQuery += fmt.Sprintf(` FILTER @%s in c.admins || @%s in c.users || @%s == c.owner || @%s == c.responsible`, key, key, key, key)
+			vars[key] = values
+		}
+	}
+
+	query := fmt.Sprintf(countChats, filterQuery)
+	cur, err := c.db.Query(ctx, query, vars)
 	if err != nil {
 		return nil, err
 	}

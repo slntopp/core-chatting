@@ -36,7 +36,7 @@ class ChatsAPIStub(object):
                 )
         self.Count = channel.unary_unary(
                 '/cc.ChatsAPI/Count',
-                request_serializer=cc_dot_cc__pb2.Empty.SerializeToString,
+                request_serializer=cc_dot_cc__pb2.CountChatsRequest.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.CountChatsResponse.FromString,
                 )
         self.Delete = channel.unary_unary(
@@ -187,7 +187,7 @@ def add_ChatsAPIServicer_to_server(servicer, server):
             ),
             'Count': grpc.unary_unary_rpc_method_handler(
                     servicer.Count,
-                    request_deserializer=cc_dot_cc__pb2.Empty.FromString,
+                    request_deserializer=cc_dot_cc__pb2.CountChatsRequest.FromString,
                     response_serializer=cc_dot_cc__pb2.CountChatsResponse.SerializeToString,
             ),
             'Delete': grpc.unary_unary_rpc_method_handler(
@@ -320,7 +320,7 @@ class ChatsAPI(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/cc.ChatsAPI/Count',
-            cc_dot_cc__pb2.Empty.SerializeToString,
+            cc_dot_cc__pb2.CountChatsRequest.SerializeToString,
             cc_dot_cc__pb2.CountChatsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

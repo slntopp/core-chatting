@@ -24,6 +24,7 @@ import {
   FetchDefaultsRequest,
   GetMembersRequest,
   ListChatsRequest,
+  CountChatsRequest,
 } from "../connect/cc/cc_pb";
 import {
   ChatsAPI,
@@ -105,8 +106,8 @@ export const useCcStore = defineStore("cc", () => {
     resolve(result.pool.map((chat) => [...chat.admins, ...chat.users]).flat());
   }
 
-  async function list_chats_count() {
-    let result = await chats_c.count(new Empty());
+  async function list_chats_count(data: CountChatsRequest) {
+    let result = await chats_c.count(data);
 
     chats_count.value = new Map<string, number>(
       Object.keys(result.statuses).map((key) => {

@@ -322,7 +322,12 @@ import { useAppStore } from "../../store/app.ts";
 import { useCcStore } from "../../store/chatting.ts";
 
 import { useRoute, useRouter } from "vue-router";
-import { Chat, ListChatsRequest, Status } from "../../connect/cc/cc_pb";
+import {
+  Chat,
+  CountChatsRequest,
+  ListChatsRequest,
+  Status,
+} from "../../connect/cc/cc_pb";
 import ChatItem from "../../components/chats/chat_item.vue";
 import ChatsFilters from "../../components/chats/chats_filters.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
@@ -537,7 +542,13 @@ onMounted(() => {
     metricsOptions.value = filters.metrics ?? {};
   }
 
-  store.list_chats_count();
+  store.list_chats_count(
+    appStore.conf?.params?.filterByAccount
+      ? CountChatsRequest.fromJson({
+          filters: { account: appStore.conf?.params?.filterByAccount },
+        })
+      : new CountChatsRequest()
+  );
 });
 
 sync();

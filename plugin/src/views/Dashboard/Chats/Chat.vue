@@ -61,7 +61,7 @@ import {
   watch,
 } from "vue";
 import { NAlert, NList, NListItem, NScrollbar, NSpace } from "naive-ui";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 import { useAppStore } from "../../../store/app";
 import { useCcStore } from "../../../store/chatting";
@@ -76,15 +76,15 @@ const MessageView = defineAsyncComponent(
 );
 
 const route = useRoute();
+const router = useRouter();
 
 const appStore = useAppStore();
 const store = useCcStore();
 const scrollbar = ref();
 const isMessageLoading = ref(false);
 
-const chat = computed(() => {
-  return store.chats.get(route.params.uuid as string) as Chat;
-});
+const chatUuid = computed(() => route.params.uuid);
+const chat = computed(() => (store.currentChat as Chat) ?? null);
 
 const messages = computed(() => {
   const chatMessages = store.chat_messages(chat.value! as Chat);
@@ -161,12 +161,21 @@ function handle_edit(message: Message) {
 
 const chatPaddingLeft = computed(() => (appStore.isMobile ? "12px" : "16px"));
 
-onMounted(async () => {
-  if (!chat.value) {
+const fetchChat = async () => {
+  try {
     await store.get_chat(route.params.uuid as string);
+    if (chat.value == null) {
+      throw new Error("Chat not found");
+    }
+    load_chat();
+  } catch (e) {
+    console.warn(e);
+    router.push("/dashboard");
   }
-  load_chat();
-});
+};
+
+onMounted(fetchChat);
+watch(chatUuid, fetchChat);
 </script>
 
 <style scoped>

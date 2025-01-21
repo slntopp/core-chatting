@@ -177,13 +177,13 @@ func (s *ChatsServer) List(ctx context.Context, req *connect.Request[cc.ListChat
 	return resp, nil
 }
 
-func (s *ChatsServer) Count(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.CountChatsResponse], error) {
+func (s *ChatsServer) Count(ctx context.Context, req *connect.Request[cc.CountChatsRequest]) (*connect.Response[cc.CountChatsResponse], error) {
 	log := s.log.Named("Count")
 	log.Debug("Request received", zap.Any("req", req.Msg))
 
 	requester := ctx.Value(core.ChatAccount).(string)
 
-	count, err := s.ctrl.Count(ctx, requester)
+	count, err := s.ctrl.Count(ctx, requester, req.Msg.GetFilters())
 	if err != nil {
 		return nil, err
 	}

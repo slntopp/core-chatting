@@ -90,7 +90,7 @@ const getChatQuery = `
 LET chat = Document(@chat)
 
 LET role = (
- @requestor in chat.admins ? 3 : (
+ @requestor in chat.admins or @requestor == @root_account ? 3 : (
   chat.owner == @requestor ? 2 : (
    @requestor in chat.users ? 1 : 0
   )
@@ -107,8 +107,9 @@ func (c *ChatsController) Get(ctx context.Context, uuid, requestor string) (*cc.
 	log.Debug("Req received")
 
 	cur, err := c.db.Query(ctx, getChatQuery, map[string]interface{}{
-		"chat":      driver.NewDocumentID(CHATS_COLLECTION, uuid),
-		"requestor": requestor,
+		"chat":         driver.NewDocumentID(CHATS_COLLECTION, uuid),
+		"requestor":    requestor,
+		"root_account": schema.ROOT_ACCOUNT_KEY,
 	})
 
 	if err != nil {
@@ -137,7 +138,6 @@ FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_ac
      )
     )
     %s
-    %s
 	LET messages = (
          FOR m in @@messages 
          FILTER m.chat == c._key 
@@ -148,11 +148,10 @@ FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_ac
 	LET first_message = FIRST(messages)
 	LET last_message = LAST(messages)
 	LET unread = c.status == @closed_status ? 0 : LENGTH(
-		FOR m in @@messages 
-			FILTER m.chat == c._key
+		FOR m in messages
 			FILTER @requestor not in m.readers
 			FILTER m.sender != @requestor
-			RETURN m
+			RETURN true
 		)
     %s
 	RETURN MERGE(c, {
@@ -164,8 +163,8 @@ FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_ac
 		data: c.meta.data
 	  }
 	}))
-LET total = COUNT(FOR c in @@chats %s RETURN c)
-RETURN { pool: chats, total: total }
+LET total = LENGTH(chats)
+RETURN { pool: @count>0 ? SLICE(chats, @offset, @count) : chats, total: total }
 `
 
 func (c *ChatsController) List(ctx context.Context, requester string, req *cc.ListChatsRequest) ([]*cc.Chat, int64, error) {
@@ -249,27 +248,28 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 		field, sort := req.GetField(), req.GetSort()
 
 		if field == "sent" || field == "updated" {
-			sorts += fmt.Sprintf(` SORT %s %s, c.created %s`, "last_message.sent", sort, sort)
+			sorts += fmt.Sprintf(` SORT %s %s, c.created %s`, "TO_NUMBER(last_message.sent)", sort, sort)
 		} else if field == "unread" {
-			sorts += fmt.Sprintf(` SORT %s %s, last_message.sent DESC, c.created DESC`, "unread", sort)
+			sorts += fmt.Sprintf(` SORT %s %s, TO_NUMBER(last_message.sent) DESC, c.created DESC`, "unread", sort)
+		} else if field == "status" {
+			sorts += fmt.Sprintf(" SORT TO_NUMBER(c.%s) %s", field, sort)
 		} else {
 			sorts += fmt.Sprintf(subQuery, field, sort)
 		}
+		sorts += ",c._id" // add tiebreaker
 	}
 
-	limits := ""
-	if req.Page != nil && req.Limit != nil {
-		if req.GetLimit() != 0 {
-			limit, page := req.GetLimit(), req.GetPage()
-			offset := (page - 1) * limit
-
-			limits += ` LIMIT @offset, @count`
-			vars["offset"] = offset
-			vars["count"] = limit
-		}
+	if req.Page != nil && req.Limit != nil && req.GetLimit() != 0 {
+		limit, page := req.GetLimit(), req.GetPage()
+		offset := (page - 1) * limit
+		vars["offset"] = offset
+		vars["count"] = limit
+	} else {
+		vars["offset"] = 0
+		vars["count"] = 0
 	}
 
-	query := fmt.Sprintf(listChatsQuery, filters, limits, sorts, filters)
+	query := fmt.Sprintf(listChatsQuery, filters, sorts)
 	cur, err := c.db.Query(ctx, query, vars)
 	if err != nil {
 		return nil, 0, err
@@ -295,11 +295,12 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 const countChats = `
 FOR c in @@chats
 FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_account
+%s
 COLLECT status = TO_NUMBER(c.status) WITH COUNT INTO times
 RETURN { status, times }
 `
 
-func (c *ChatsController) Count(ctx context.Context, requester string) (map[int32]int64, error) {
+func (c *ChatsController) Count(ctx context.Context, requester string, filters map[string]*structpb.Value) (map[int32]int64, error) {
 	log := c.log.Named("Count")
 	log.Debug("Req received")
 
@@ -308,7 +309,21 @@ func (c *ChatsController) Count(ctx context.Context, requester string) (map[int3
 		"requestor":    requester,
 		"root_account": schema.ROOT_ACCOUNT_KEY,
 	}
-	cur, err := c.db.Query(ctx, countChats, vars)
+
+	var filterQuery string
+	for key, value := range filters {
+		if key == "account" {
+			values := value.GetStringValue()
+			if len(values) == 0 {
+				continue
+			}
+			filterQuery += fmt.Sprintf(` FILTER @%s in c.admins || @%s in c.users || @%s == c.owner || @%s == c.responsible`, key, key, key, key)
+			vars[key] = values
+		}
+	}
+
+	query := fmt.Sprintf(countChats, filterQuery)
+	cur, err := c.db.Query(ctx, query, vars)
 	if err != nil {
 		return nil, err
 	}

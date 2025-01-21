@@ -1065,6 +1065,154 @@ var _ interface {
 	ErrorName() string
 } = ListChatsResponseValidationError{}
 
+// Validate checks the field values on CountChatsRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *CountChatsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CountChatsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CountChatsRequestMultiError, or nil if none found.
+func (m *CountChatsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CountChatsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	{
+		sorted_keys := make([]string, len(m.GetFilters()))
+		i := 0
+		for key := range m.GetFilters() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetFilters()[key]
+			_ = val
+
+			// no validation rules for Filters[key]
+
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, CountChatsRequestValidationError{
+							field:  fmt.Sprintf("Filters[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, CountChatsRequestValidationError{
+							field:  fmt.Sprintf("Filters[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return CountChatsRequestValidationError{
+						field:  fmt.Sprintf("Filters[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
+				}
+			}
+
+		}
+	}
+
+	if len(errors) > 0 {
+		return CountChatsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CountChatsRequestMultiError is an error wrapping multiple validation errors
+// returned by CountChatsRequest.ValidateAll() if the designated constraints
+// aren't met.
+type CountChatsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CountChatsRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CountChatsRequestMultiError) AllErrors() []error { return m }
+
+// CountChatsRequestValidationError is the validation error returned by
+// CountChatsRequest.Validate if the designated constraints aren't met.
+type CountChatsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CountChatsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CountChatsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CountChatsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CountChatsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CountChatsRequestValidationError) ErrorName() string {
+	return "CountChatsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CountChatsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCountChatsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CountChatsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CountChatsRequestValidationError{}
+
 // Validate checks the field values on CountChatsResponse with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

@@ -429,6 +429,30 @@ export declare class ListChatsResponse extends Message$1<ListChatsResponse> {
 }
 
 /**
+ * @generated from message cc.CountChatsRequest
+ */
+export declare class CountChatsRequest extends Message$1<CountChatsRequest> {
+  /**
+   * @generated from field: map<string, google.protobuf.Value> filters = 1;
+   */
+  filters: { [key: string]: Value };
+
+  constructor(data?: PartialMessage<CountChatsRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.CountChatsRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CountChatsRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CountChatsRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CountChatsRequest;
+
+  static equals(a: CountChatsRequest | PlainMessage<CountChatsRequest> | undefined, b: CountChatsRequest | PlainMessage<CountChatsRequest> | undefined): boolean;
+}
+
+/**
  * @generated from message cc.CountChatsResponse
  */
 export declare class CountChatsResponse extends Message$1<CountChatsResponse> {

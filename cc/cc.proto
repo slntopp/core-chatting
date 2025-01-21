@@ -77,6 +77,9 @@ message ListChatsResponse{
   int64 total = 2;
 }
 
+message CountChatsRequest{
+  map<string, google.protobuf.Value> filters = 1;
+}
 message CountChatsResponse{
   map<int32, int64> statuses = 1;
 }
@@ -87,7 +90,7 @@ service ChatsAPI {
 
   rpc Get(Chat) returns (Chat);
   rpc List(ListChatsRequest) returns (ListChatsResponse);
-  rpc Count(Empty) returns (CountChatsResponse);
+  rpc Count(CountChatsRequest) returns (CountChatsResponse);
 
   rpc Delete(Chat) returns (Chat);
 

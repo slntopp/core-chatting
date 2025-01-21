@@ -157,6 +157,16 @@ export const ListChatsResponse = /*@__PURE__*/ proto3.makeMessageType(
 );
 
 /**
+ * @generated from message cc.CountChatsRequest
+ */
+export const CountChatsRequest = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.CountChatsRequest",
+  () => [
+    { no: 1, name: "filters", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
+  ],
+);
+
+/**
  * @generated from message cc.CountChatsResponse
  */
 export const CountChatsResponse = /*@__PURE__*/ proto3.makeMessageType(

@@ -128,7 +128,7 @@ type ChatsAPIClient interface {
 	Update(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	Get(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	List(context.Context, *connect.Request[cc.ListChatsRequest]) (*connect.Response[cc.ListChatsResponse], error)
-	Count(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.CountChatsResponse], error)
+	Count(context.Context, *connect.Request[cc.CountChatsRequest]) (*connect.Response[cc.CountChatsResponse], error)
 	Delete(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	SetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	GetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
@@ -173,7 +173,7 @@ func NewChatsAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 			connect.WithSchema(chatsAPIListMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
-		count: connect.NewClient[cc.Empty, cc.CountChatsResponse](
+		count: connect.NewClient[cc.CountChatsRequest, cc.CountChatsResponse](
 			httpClient,
 			baseURL+ChatsAPICountProcedure,
 			connect.WithSchema(chatsAPICountMethodDescriptor),
@@ -236,7 +236,7 @@ type chatsAPIClient struct {
 	update           *connect.Client[cc.Chat, cc.Chat]
 	get              *connect.Client[cc.Chat, cc.Chat]
 	list             *connect.Client[cc.ListChatsRequest, cc.ListChatsResponse]
-	count            *connect.Client[cc.Empty, cc.CountChatsResponse]
+	count            *connect.Client[cc.CountChatsRequest, cc.CountChatsResponse]
 	delete           *connect.Client[cc.Chat, cc.Chat]
 	setBotState      *connect.Client[cc.Chat, cc.Chat]
 	getBotState      *connect.Client[cc.Chat, cc.Chat]
@@ -268,7 +268,7 @@ func (c *chatsAPIClient) List(ctx context.Context, req *connect.Request[cc.ListC
 }
 
 // Count calls cc.ChatsAPI.Count.
-func (c *chatsAPIClient) Count(ctx context.Context, req *connect.Request[cc.Empty]) (*connect.Response[cc.CountChatsResponse], error) {
+func (c *chatsAPIClient) Count(ctx context.Context, req *connect.Request[cc.CountChatsRequest]) (*connect.Response[cc.CountChatsResponse], error) {
 	return c.count.CallUnary(ctx, req)
 }
 
@@ -318,7 +318,7 @@ type ChatsAPIHandler interface {
 	Update(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	Get(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	List(context.Context, *connect.Request[cc.ListChatsRequest]) (*connect.Response[cc.ListChatsResponse], error)
-	Count(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.CountChatsResponse], error)
+	Count(context.Context, *connect.Request[cc.CountChatsRequest]) (*connect.Response[cc.CountChatsResponse], error)
 	Delete(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	SetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	GetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
@@ -466,7 +466,7 @@ func (UnimplementedChatsAPIHandler) List(context.Context, *connect.Request[cc.Li
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.List is not implemented"))
 }
 
-func (UnimplementedChatsAPIHandler) Count(context.Context, *connect.Request[cc.Empty]) (*connect.Response[cc.CountChatsResponse], error) {
+func (UnimplementedChatsAPIHandler) Count(context.Context, *connect.Request[cc.CountChatsRequest]) (*connect.Response[cc.CountChatsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.Count is not implemented"))
 }
 

@@ -400,6 +400,50 @@ export declare class ListChatsRequest extends Message$1<ListChatsRequest> {
 }
 
 /**
+ * @generated from message cc.SetBotStateRequest
+ */
+export declare class SetBotStateRequest extends Message$1<SetBotStateRequest> {
+  /**
+   * @generated from field: string chat = 1;
+   */
+  chat: string;
+
+  /**
+   * @generated from field: map<string, google.protobuf.Value> state = 2;
+   */
+  state: { [key: string]: Value };
+
+  /**
+   * @generated from field: optional bool disabled = 3;
+   */
+  disabled?: boolean;
+
+  /**
+   * @generated from field: optional bool escalated = 4;
+   */
+  escalated?: boolean;
+
+  /**
+   * @generated from field: optional bool skip_review = 5;
+   */
+  skipReview?: boolean;
+
+  constructor(data?: PartialMessage<SetBotStateRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.SetBotStateRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SetBotStateRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SetBotStateRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SetBotStateRequest;
+
+  static equals(a: SetBotStateRequest | PlainMessage<SetBotStateRequest> | undefined, b: SetBotStateRequest | PlainMessage<SetBotStateRequest> | undefined): boolean;
+}
+
+/**
  * @generated from message cc.ListChatsResponse
  */
 export declare class ListChatsResponse extends Message$1<ListChatsResponse> {

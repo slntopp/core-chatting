@@ -229,13 +229,13 @@ func (s *ChatsServer) Delete(ctx context.Context, req *connect.Request[cc.Chat])
 	return resp, nil
 }
 
-func (s *ChatsServer) SetBotState(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+func (s *ChatsServer) SetBotState(ctx context.Context, req *connect.Request[cc.SetBotStateRequest]) (*connect.Response[cc.Chat], error) {
 	log := s.log.Named("SetBotState")
 	log.Debug("Request received", zap.Any("req", req.Msg))
 
 	requestor := ctx.Value(core.ChatAccount).(string)
 
-	chat, err := s.ctrl.Get(ctx, req.Msg.Uuid, requestor)
+	chat, err := s.ctrl.Get(ctx, req.Msg.Chat, requestor)
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +244,7 @@ func (s *ChatsServer) SetBotState(ctx context.Context, req *connect.Request[cc.C
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
 	}
 
-	chat, err = s.ctrl.SetBotState(ctx, req.Msg)
+	err = s.ctrl.SetBotState(ctx, req.Msg)
 	if err != nil {
 		return nil, err
 	}

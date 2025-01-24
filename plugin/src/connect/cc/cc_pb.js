@@ -146,6 +146,20 @@ export const ListChatsRequest = /*@__PURE__*/ proto3.makeMessageType(
 );
 
 /**
+ * @generated from message cc.SetBotStateRequest
+ */
+export const SetBotStateRequest = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.SetBotStateRequest",
+  () => [
+    { no: 1, name: "chat", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "state", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
+    { no: 3, name: "disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 4, name: "escalated", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 5, name: "skip_review", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+  ],
+);
+
+/**
  * @generated from message cc.ListChatsResponse
  */
 export const ListChatsResponse = /*@__PURE__*/ proto3.makeMessageType(

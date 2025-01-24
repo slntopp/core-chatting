@@ -130,7 +130,7 @@ type ChatsAPIClient interface {
 	List(context.Context, *connect.Request[cc.ListChatsRequest]) (*connect.Response[cc.ListChatsResponse], error)
 	Count(context.Context, *connect.Request[cc.CountChatsRequest]) (*connect.Response[cc.CountChatsResponse], error)
 	Delete(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
-	SetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
+	SetBotState(context.Context, *connect.Request[cc.SetBotStateRequest]) (*connect.Response[cc.Chat], error)
 	GetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	ChangeDepartment(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	ChangeGateway(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
@@ -185,7 +185,7 @@ func NewChatsAPIClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 			connect.WithSchema(chatsAPIDeleteMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
-		setBotState: connect.NewClient[cc.Chat, cc.Chat](
+		setBotState: connect.NewClient[cc.SetBotStateRequest, cc.Chat](
 			httpClient,
 			baseURL+ChatsAPISetBotStateProcedure,
 			connect.WithSchema(chatsAPISetBotStateMethodDescriptor),
@@ -238,7 +238,7 @@ type chatsAPIClient struct {
 	list             *connect.Client[cc.ListChatsRequest, cc.ListChatsResponse]
 	count            *connect.Client[cc.CountChatsRequest, cc.CountChatsResponse]
 	delete           *connect.Client[cc.Chat, cc.Chat]
-	setBotState      *connect.Client[cc.Chat, cc.Chat]
+	setBotState      *connect.Client[cc.SetBotStateRequest, cc.Chat]
 	getBotState      *connect.Client[cc.Chat, cc.Chat]
 	changeDepartment *connect.Client[cc.Chat, cc.Chat]
 	changeGateway    *connect.Client[cc.Chat, cc.Chat]
@@ -278,7 +278,7 @@ func (c *chatsAPIClient) Delete(ctx context.Context, req *connect.Request[cc.Cha
 }
 
 // SetBotState calls cc.ChatsAPI.SetBotState.
-func (c *chatsAPIClient) SetBotState(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+func (c *chatsAPIClient) SetBotState(ctx context.Context, req *connect.Request[cc.SetBotStateRequest]) (*connect.Response[cc.Chat], error) {
 	return c.setBotState.CallUnary(ctx, req)
 }
 
@@ -320,7 +320,7 @@ type ChatsAPIHandler interface {
 	List(context.Context, *connect.Request[cc.ListChatsRequest]) (*connect.Response[cc.ListChatsResponse], error)
 	Count(context.Context, *connect.Request[cc.CountChatsRequest]) (*connect.Response[cc.CountChatsResponse], error)
 	Delete(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
-	SetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
+	SetBotState(context.Context, *connect.Request[cc.SetBotStateRequest]) (*connect.Response[cc.Chat], error)
 	GetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	ChangeDepartment(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
 	ChangeGateway(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error)
@@ -474,7 +474,7 @@ func (UnimplementedChatsAPIHandler) Delete(context.Context, *connect.Request[cc.
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.Delete is not implemented"))
 }
 
-func (UnimplementedChatsAPIHandler) SetBotState(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+func (UnimplementedChatsAPIHandler) SetBotState(context.Context, *connect.Request[cc.SetBotStateRequest]) (*connect.Response[cc.Chat], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.ChatsAPI.SetBotState is not implemented"))
 }
 

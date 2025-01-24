@@ -72,6 +72,14 @@ message ListChatsRequest{
   map<string, google.protobuf.Value> filters = 5;
 }
 
+message SetBotStateRequest{
+  string chat = 1;
+  map<string, google.protobuf.Value> state = 2;
+  optional bool disabled = 3;
+  optional bool escalated = 4;
+  optional bool skip_review = 5;
+}
+
 message ListChatsResponse{
   repeated Chat pool = 1;
   int64 total = 2;
@@ -94,7 +102,7 @@ service ChatsAPI {
 
   rpc Delete(Chat) returns (Chat);
 
-  rpc SetBotState(Chat) returns (Chat);
+  rpc SetBotState(SetBotStateRequest) returns (Chat);
   rpc GetBotState(Chat) returns (Chat);
 
   rpc ChangeDepartment(Chat) returns (Chat);

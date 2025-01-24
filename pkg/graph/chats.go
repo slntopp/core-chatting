@@ -509,7 +509,7 @@ func (c *ChatsController) DeleteGateways(ctx context.Context, fields map[string]
 	return nil
 }
 
-func (c *ChatsController) SetBotState(ctx context.Context, req *cc.SetBotStateRequest) error {
+func (c *ChatsController) SetBotState(ctx context.Context, req *cc.SetBotStateRequest, chat *cc.Chat) error {
 	log := c.log.Named("Set state")
 	log.Debug("Req received")
 
@@ -522,9 +522,12 @@ func (c *ChatsController) SetBotState(ctx context.Context, req *cc.SetBotStateRe
 		return err
 	}
 
-	state := req.GetState()
+	state := req.State
 	if state == nil {
-		state = map[string]*structpb.Value{}
+		state = chat.BotState
+		if state == nil {
+			state = map[string]*structpb.Value{}
+		}
 	}
 	if req.Disabled != nil {
 		state["disabled"] = structpb.NewBoolValue(req.GetDisabled())

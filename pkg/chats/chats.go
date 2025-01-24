@@ -244,7 +244,7 @@ func (s *ChatsServer) SetBotState(ctx context.Context, req *connect.Request[cc.S
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
 	}
 
-	err = s.ctrl.SetBotState(ctx, req.Msg)
+	err = s.ctrl.SetBotState(ctx, req.Msg, chat)
 	if err != nil {
 		return nil, err
 	}

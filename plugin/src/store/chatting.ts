@@ -325,7 +325,11 @@ export const useCcStore = defineStore("cc", () => {
       case EventType.CHAT_DEPARTMENT_CHANGED:
       case EventType.CHAT_STATUS_CHANGED:
       case EventType.CHAT_UPDATED:
-        chats.value.set(chat.uuid, chat);
+        if (chat.uuid === currentChat.value?.uuid) {
+          currentChat.value = chat;
+        } else if (chats.value.has(chat.uuid)) {
+          chats.value.set(chat.uuid, chat)
+        }
         break;
       case EventType.CHAT_DELETED:
         if (route.name == "Chat" && route.params.uuid == chat.uuid) {

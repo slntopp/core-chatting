@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, CountChatsRequest, CountChatsResponse, Defaults, Empty, Event, FetchDefaultsRequest, GetMembersRequest, ListChatsRequest, ListChatsResponse, Merge, Message, Messages, StreamRequest, User, Users } from "./cc_pb.js";
+import { Chat, CountChatsRequest, CountChatsResponse, Defaults, Empty, Event, FetchDefaultsRequest, GetMembersRequest, ListChatsRequest, ListChatsResponse, Merge, Message, Messages, SetBotStateRequest, StreamRequest, User, Users } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -71,7 +71,7 @@ export const ChatsAPI = {
      */
     setBotState: {
       name: "SetBotState",
-      I: Chat,
+      I: SetBotStateRequest,
       O: Chat,
       kind: MethodKind.Unary,
     },

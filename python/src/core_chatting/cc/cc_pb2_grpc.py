@@ -46,7 +46,7 @@ class ChatsAPIStub(object):
                 )
         self.SetBotState = channel.unary_unary(
                 '/cc.ChatsAPI/SetBotState',
-                request_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
+                request_serializer=cc_dot_cc__pb2.SetBotStateRequest.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Chat.FromString,
                 )
         self.GetBotState = channel.unary_unary(
@@ -197,7 +197,7 @@ def add_ChatsAPIServicer_to_server(servicer, server):
             ),
             'SetBotState': grpc.unary_unary_rpc_method_handler(
                     servicer.SetBotState,
-                    request_deserializer=cc_dot_cc__pb2.Chat.FromString,
+                    request_deserializer=cc_dot_cc__pb2.SetBotStateRequest.FromString,
                     response_serializer=cc_dot_cc__pb2.Chat.SerializeToString,
             ),
             'GetBotState': grpc.unary_unary_rpc_method_handler(
@@ -354,7 +354,7 @@ class ChatsAPI(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/cc.ChatsAPI/SetBotState',
-            cc_dot_cc__pb2.Chat.SerializeToString,
+            cc_dot_cc__pb2.SetBotStateRequest.SerializeToString,
             cc_dot_cc__pb2.Chat.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

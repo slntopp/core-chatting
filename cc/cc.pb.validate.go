@@ -69,7 +69,7 @@ type EmptyMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m EmptyMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -274,7 +274,7 @@ type ChatMetaMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m ChatMetaMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -471,7 +471,7 @@ type ChatMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m ChatMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -603,7 +603,7 @@ type ChatsMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m ChatsMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -701,7 +701,7 @@ type MergeMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m MergeMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -863,7 +863,7 @@ type ListChatsRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m ListChatsRequestMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -926,6 +926,168 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListChatsRequestValidationError{}
+
+// Validate checks the field values on SetBotStateRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SetBotStateRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SetBotStateRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SetBotStateRequestMultiError, or nil if none found.
+func (m *SetBotStateRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SetBotStateRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Chat
+
+	{
+		sorted_keys := make([]string, len(m.GetState()))
+		i := 0
+		for key := range m.GetState() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetState()[key]
+			_ = val
+
+			// no validation rules for State[key]
+
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, SetBotStateRequestValidationError{
+							field:  fmt.Sprintf("State[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, SetBotStateRequestValidationError{
+							field:  fmt.Sprintf("State[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return SetBotStateRequestValidationError{
+						field:  fmt.Sprintf("State[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
+				}
+			}
+
+		}
+	}
+
+	if m.Disabled != nil {
+		// no validation rules for Disabled
+	}
+
+	if m.Escalated != nil {
+		// no validation rules for Escalated
+	}
+
+	if m.SkipReview != nil {
+		// no validation rules for SkipReview
+	}
+
+	if len(errors) > 0 {
+		return SetBotStateRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// SetBotStateRequestMultiError is an error wrapping multiple validation errors
+// returned by SetBotStateRequest.ValidateAll() if the designated constraints
+// aren't met.
+type SetBotStateRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SetBotStateRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SetBotStateRequestMultiError) AllErrors() []error { return m }
+
+// SetBotStateRequestValidationError is the validation error returned by
+// SetBotStateRequest.Validate if the designated constraints aren't met.
+type SetBotStateRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SetBotStateRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SetBotStateRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SetBotStateRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SetBotStateRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SetBotStateRequestValidationError) ErrorName() string {
+	return "SetBotStateRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SetBotStateRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSetBotStateRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SetBotStateRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SetBotStateRequestValidationError{}
 
 // Validate checks the field values on ListChatsResponse with the rules defined
 // in the proto definition for this message. If any rules are violated, the
@@ -999,7 +1161,7 @@ type ListChatsResponseMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m ListChatsResponseMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1147,7 +1309,7 @@ type CountChatsRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m CountChatsRequestMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1251,7 +1413,7 @@ type CountChatsResponseMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m CountChatsResponseMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1356,7 +1518,7 @@ type AttachmentMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m AttachmentMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1518,7 +1680,7 @@ type MessageMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m MessageMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1651,7 +1813,7 @@ type MessagesMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m MessagesMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1788,7 +1950,7 @@ type UserMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m UserMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1899,7 +2061,7 @@ type DepartmentMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m DepartmentMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -2001,7 +2163,7 @@ type OptionMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m OptionMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -2135,7 +2297,7 @@ type MetricMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m MetricMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -2303,6 +2465,35 @@ func (m *Defaults) validate(all bool) error {
 
 	// no validation rules for Templates
 
+	if all {
+		switch v := interface{}(m.GetBot()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DefaultsValidationError{
+					field:  "Bot",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DefaultsValidationError{
+					field:  "Bot",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetBot()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DefaultsValidationError{
+				field:  "Bot",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return DefaultsMultiError(errors)
 	}
@@ -2316,7 +2507,7 @@ type DefaultsMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m DefaultsMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -2379,6 +2570,112 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = DefaultsValidationError{}
+
+// Validate checks the field values on Bot with the rules defined in the proto
+// definition for this message. If any rules are violated, the first error
+// encountered is returned, or nil if there are no violations.
+func (m *Bot) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Bot with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in BotMultiError, or nil if none found.
+func (m *Bot) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Bot) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Prompt
+
+	// no validation rules for EnableReviewInNewChats
+
+	// no validation rules for EnableBotInNewChats
+
+	// no validation rules for CustomValues
+
+	if len(errors) > 0 {
+		return BotMultiError(errors)
+	}
+
+	return nil
+}
+
+// BotMultiError is an error wrapping multiple validation errors returned by
+// Bot.ValidateAll() if the designated constraints aren't met.
+type BotMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m BotMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m BotMultiError) AllErrors() []error { return m }
+
+// BotValidationError is the validation error returned by Bot.Validate if the
+// designated constraints aren't met.
+type BotValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e BotValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e BotValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e BotValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e BotValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e BotValidationError) ErrorName() string { return "BotValidationError" }
+
+// Error satisfies the builtin error interface
+func (e BotValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sBot.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = BotValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = BotValidationError{}
 
 // Validate checks the field values on Users with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -2448,7 +2745,7 @@ type UsersMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m UsersMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -2550,7 +2847,7 @@ type FetchDefaultsRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m FetchDefaultsRequestMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -2652,7 +2949,7 @@ type GetMembersRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m GetMembersRequestMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -2841,7 +3138,7 @@ type EventMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m EventMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -2943,7 +3240,7 @@ type StreamRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m StreamRequestMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}

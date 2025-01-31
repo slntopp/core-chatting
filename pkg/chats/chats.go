@@ -84,7 +84,25 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 		}
 	}
 
-	chat, err := s.ctrl.Create(ctx, req.Msg)
+	// Manage chat parameters
+	conf, err := core.Config()
+	if err != nil {
+		log.Error("Failed to get chats config", zap.Error(err))
+		return nil, err
+	}
+	newChat := req.Msg
+	if newChat.BotState == nil {
+		newChat.BotState = map[string]*structpb.Value{}
+	}
+	if conf.Bot == nil {
+		conf.Bot = &cc.Bot{
+			EnableBotInNewChats:    true,
+			EnableReviewInNewChats: true,
+		}
+	}
+	newChat.BotState["disabled"] = structpb.NewBoolValue(!conf.Bot.EnableBotInNewChats)
+	newChat.BotState["skip_review"] = structpb.NewBoolValue(!conf.Bot.EnableReviewInNewChats)
+	chat, err := s.ctrl.Create(ctx, newChat)
 	if err != nil {
 		return nil, err
 	}
@@ -229,13 +247,13 @@ func (s *ChatsServer) Delete(ctx context.Context, req *connect.Request[cc.Chat])
 	return resp, nil
 }
 
-func (s *ChatsServer) SetBotState(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
+func (s *ChatsServer) SetBotState(ctx context.Context, req *connect.Request[cc.SetBotStateRequest]) (*connect.Response[cc.Chat], error) {
 	log := s.log.Named("SetBotState")
 	log.Debug("Request received", zap.Any("req", req.Msg))
 
 	requestor := ctx.Value(core.ChatAccount).(string)
 
-	chat, err := s.ctrl.Get(ctx, req.Msg.Uuid, requestor)
+	chat, err := s.ctrl.Get(ctx, req.Msg.Chat, requestor)
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +262,7 @@ func (s *ChatsServer) SetBotState(ctx context.Context, req *connect.Request[cc.C
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
 	}
 
-	chat, err = s.ctrl.SetBotState(ctx, req.Msg)
+	err = s.ctrl.SetBotState(ctx, req.Msg, chat)
 	if err != nil {
 		return nil, err
 	}

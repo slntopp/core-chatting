@@ -509,32 +509,48 @@ func (c *ChatsController) DeleteGateways(ctx context.Context, fields map[string]
 	return nil
 }
 
-func (c *ChatsController) SetBotState(ctx context.Context, chat *cc.Chat) (*cc.Chat, error) {
+func (c *ChatsController) SetBotState(ctx context.Context, req *cc.SetBotStateRequest, chat *cc.Chat) error {
 	log := c.log.Named("Set state")
 	log.Debug("Req received")
 
 	_, err := c.col.Database().Query(ctx, resetState, map[string]interface{}{
-		"key":    driver.NewDocumentID(CHATS_COLLECTION, chat.GetUuid()),
+		"key":    driver.NewDocumentID(CHATS_COLLECTION, req.GetChat()),
 		"@chats": CHATS_COLLECTION,
 	})
-
 	if err != nil {
 		log.Error("Failed to reset state", zap.Error(err))
-		return nil, err
+		return err
+	}
+
+	state := req.State
+	if state == nil {
+		state = chat.BotState
+		if state == nil {
+			state = map[string]*structpb.Value{}
+		}
+	}
+	if req.Disabled != nil {
+		state["disabled"] = structpb.NewBoolValue(req.GetDisabled())
+	}
+	if req.SkipReview != nil {
+		state["skip_review"] = structpb.NewBoolValue(req.GetSkipReview())
+	}
+	if req.Escalated != nil {
+		state["escalated"] = structpb.NewBoolValue(req.GetEscalated())
 	}
 
 	_, err = c.col.Database().Query(ctx, setState, map[string]interface{}{
-		"key":       driver.NewDocumentID(CHATS_COLLECTION, chat.GetUuid()),
+		"key":       driver.NewDocumentID(CHATS_COLLECTION, req.GetChat()),
 		"@chats":    CHATS_COLLECTION,
-		"bot_state": chat.GetBotState(),
+		"bot_state": state,
 	})
 
 	if err != nil {
 		log.Error("Failed to set state", zap.Error(err))
-		return nil, err
+		return err
 	}
 
-	return chat, nil
+	return nil
 }
 
 const getEarliest = `

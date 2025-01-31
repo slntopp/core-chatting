@@ -84,7 +84,25 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 		}
 	}
 
-	chat, err := s.ctrl.Create(ctx, req.Msg)
+	// Manage chat parameters
+	conf, err := core.Config()
+	if err != nil {
+		log.Error("Failed to get chats config", zap.Error(err))
+		return nil, err
+	}
+	newChat := req.Msg
+	if newChat.BotState == nil {
+		newChat.BotState = map[string]*structpb.Value{}
+	}
+	if conf.Bot == nil {
+		conf.Bot = &cc.Bot{
+			EnableBotInNewChats:    true,
+			EnableReviewInNewChats: true,
+		}
+	}
+	newChat.BotState["disabled"] = structpb.NewBoolValue(!conf.Bot.EnableBotInNewChats)
+	newChat.BotState["skip_review"] = structpb.NewBoolValue(!conf.Bot.EnableReviewInNewChats)
+	chat, err := s.ctrl.Create(ctx, newChat)
 	if err != nil {
 		return nil, err
 	}

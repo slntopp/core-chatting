@@ -844,6 +844,11 @@ export declare class Defaults extends Message$1<Defaults> {
    */
   templates: { [key: string]: string };
 
+  /**
+   * @generated from field: cc.Bot bot = 6;
+   */
+  bot?: Bot;
+
   constructor(data?: PartialMessage<Defaults>);
 
   static readonly runtime: typeof proto3;
@@ -857,6 +862,45 @@ export declare class Defaults extends Message$1<Defaults> {
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Defaults;
 
   static equals(a: Defaults | PlainMessage<Defaults> | undefined, b: Defaults | PlainMessage<Defaults> | undefined): boolean;
+}
+
+/**
+ * @generated from message cc.Bot
+ */
+export declare class Bot extends Message$1<Bot> {
+  /**
+   * @generated from field: string prompt = 1;
+   */
+  prompt: string;
+
+  /**
+   * @generated from field: bool enable_review_in_new_chats = 2;
+   */
+  enableReviewInNewChats: boolean;
+
+  /**
+   * @generated from field: bool enable_bot_in_new_chats = 3;
+   */
+  enableBotInNewChats: boolean;
+
+  /**
+   * @generated from field: map<string, string> custom_values = 4;
+   */
+  customValues: { [key: string]: string };
+
+  constructor(data?: PartialMessage<Bot>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.Bot";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Bot;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Bot;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Bot;
+
+  static equals(a: Bot | PlainMessage<Bot> | undefined, b: Bot | PlainMessage<Bot> | undefined): boolean;
 }
 
 /**

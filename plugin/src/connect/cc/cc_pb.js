@@ -296,6 +296,20 @@ export const Defaults = /*@__PURE__*/ proto3.makeMessageType(
     { no: 3, name: "departments", kind: "message", T: Department, repeated: true },
     { no: 4, name: "metrics", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Metric} },
     { no: 5, name: "templates", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
+    { no: 6, name: "bot", kind: "message", T: Bot },
+  ],
+);
+
+/**
+ * @generated from message cc.Bot
+ */
+export const Bot = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.Bot",
+  () => [
+    { no: 1, name: "prompt", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "enable_review_in_new_chats", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 3, name: "enable_bot_in_new_chats", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "custom_values", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
   ],
 );
 

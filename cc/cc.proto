@@ -193,6 +193,14 @@ message Defaults {
   repeated Department departments = 3;
   map<string, Metric> metrics = 4;
   map<string, string> templates = 5;
+  Bot bot = 6;
+}
+
+message Bot {
+  string prompt = 1;
+  bool enable_review_in_new_chats = 2;
+  bool enable_bot_in_new_chats = 3;
+  map<string, string> custom_values = 4;
 }
 
 message Users {

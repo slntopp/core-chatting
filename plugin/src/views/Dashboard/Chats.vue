@@ -621,7 +621,7 @@ const totalChats = computed(() => {
 const pageCount = computed(() => Math.ceil(totalChats.value / pageSize.value));
 
 const chatsCountByStatus = computed(() => {
-  const order = [0, 1, 5, 4, 7, 8, 3, 6, 2];
+  const order = [0, 1, 5, 8, 4, 7, 3];
 
   return [...store.chats_count.keys()]
     .map<{ count: number; status: number }>((key) => ({

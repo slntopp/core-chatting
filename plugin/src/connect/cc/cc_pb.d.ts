@@ -874,19 +874,19 @@ export declare class Bot extends Message$1<Bot> {
   prompt: string;
 
   /**
-   * @generated from field: bool enable_review_in_new_chats = 2;
+   * @generated from field: bool review = 2;
    */
-  enableReviewInNewChats: boolean;
+  review: boolean;
 
   /**
-   * @generated from field: bool enable_bot_in_new_chats = 3;
+   * @generated from field: bool enable = 3;
    */
-  enableBotInNewChats: boolean;
+  enable: boolean;
 
   /**
-   * @generated from field: map<string, string> custom_values = 4;
+   * @generated from field: map<string, string> values = 4;
    */
-  customValues: { [key: string]: string };
+  values: { [key: string]: string };
 
   constructor(data?: PartialMessage<Bot>);
 

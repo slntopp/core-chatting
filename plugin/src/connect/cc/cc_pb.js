@@ -307,9 +307,9 @@ export const Bot = /*@__PURE__*/ proto3.makeMessageType(
   "cc.Bot",
   () => [
     { no: 1, name: "prompt", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "enable_review_in_new_chats", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 3, name: "enable_bot_in_new_chats", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 4, name: "custom_values", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
+    { no: 2, name: "review", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 3, name: "enable", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "values", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
   ],
 );
 

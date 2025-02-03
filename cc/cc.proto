@@ -198,9 +198,9 @@ message Defaults {
 
 message Bot {
   string prompt = 1;
-  bool enable_review_in_new_chats = 2;
-  bool enable_bot_in_new_chats = 3;
-  map<string, string> custom_values = 4;
+  bool review = 2;
+  bool enable = 3;
+  map<string, string> values = 4;
 }
 
 message Users {

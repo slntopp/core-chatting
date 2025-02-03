@@ -2594,11 +2594,11 @@ func (m *Bot) validate(all bool) error {
 
 	// no validation rules for Prompt
 
-	// no validation rules for EnableReviewInNewChats
+	// no validation rules for Review
 
-	// no validation rules for EnableBotInNewChats
+	// no validation rules for Enable
 
-	// no validation rules for CustomValues
+	// no validation rules for Values
 
 	if len(errors) > 0 {
 		return BotMultiError(errors)

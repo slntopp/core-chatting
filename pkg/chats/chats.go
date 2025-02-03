@@ -90,6 +90,7 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 		log.Error("Failed to get chats config", zap.Error(err))
 		return nil, err
 	}
+	log.Debug("Unmarshalled config", zap.Any("conf", conf))
 	newChat := req.Msg
 	if newChat.BotState == nil {
 		newChat.BotState = map[string]*structpb.Value{}

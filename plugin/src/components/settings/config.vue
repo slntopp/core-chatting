@@ -205,9 +205,12 @@ import {
   Option,
   User,
 } from "../../connect/cc/cc_pb";
-import { useCcStore } from "../../store/chatting.ts";
-import { MessageTemplate, MetricWithKey } from "../../hooks/useDefaults.ts";
 import { ref } from "vue";
+import {
+  MessageTemplate,
+  MetricWithKey,
+  useDefaultsStore,
+} from "../../store/defaults.ts";
 
 const saveIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/SaveOutline")
@@ -270,7 +273,7 @@ const { admins, departments, gateways, metrics, users, templates } =
 
 const emit = defineEmits(["refresh"]);
 
-const store = useCcStore();
+const defaultsStore = useDefaultsStore();
 const notification = useNotification();
 
 const isEditLoading = ref(false);
@@ -409,7 +412,7 @@ const options = computed<optionsType>(() => ({
 async function submit() {
   try {
     isEditLoading.value = true;
-    await store.update_defaults(
+    await defaultsStore.update_defaults(
       new Defaults({
         ...config,
         metrics: config.metrics.reduce(

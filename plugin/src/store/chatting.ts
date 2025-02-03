@@ -9,7 +9,6 @@ import { useAppStore } from "./app";
 import {
   Empty,
   Chat,
-  Defaults,
   Users,
   User,
   Messages,
@@ -21,7 +20,6 @@ import {
   StreamRequest,
   Department,
   Merge,
-  FetchDefaultsRequest,
   GetMembersRequest,
   ListChatsRequest,
   CountChatsRequest,
@@ -34,7 +32,7 @@ import {
 } from "../connect/cc/cc_connect";
 import { useRoute, useRouter } from "vue-router";
 import { useNotification } from "naive-ui";
-import { MetricWithKey } from "../hooks/useDefaults";
+import { MetricWithKey } from "./defaults";
 
 export const useCcStore = defineStore("cc", () => {
   const app = useAppStore();
@@ -44,11 +42,12 @@ export const useCcStore = defineStore("cc", () => {
     baseUrl = import.meta.env.VITE_API_URL;
   } else if (import.meta.env.DEV) {
     baseUrl = "http://localhost:8080";
+    baseUrl = "https://api.nc2dev.support.by/";
   }
 
   const transport = createGrpcWebTransport({
     baseUrl: baseUrl,
-    useBinaryFormat: true,
+    useBinaryFormat: false,
     interceptors: [
       (next) => async (req) => {
         req.header.set("Authorization", `Bearer ${app.conf?.token}`);
@@ -139,14 +138,6 @@ export const useCcStore = defineStore("cc", () => {
     await chats_c.delete(chat);
 
     chats.value.delete(chat.uuid);
-  }
-
-  function fetch_defaults(fetchTemplates: boolean = false): Promise<Defaults> {
-    return users_c.fetchDefaults(new FetchDefaultsRequest({ fetchTemplates }));
-  }
-
-  function update_defaults(config: Defaults): Promise<Defaults> {
-    return users_c.setConfig(config);
   }
 
   function change_department(chat: Chat): Promise<Chat> {
@@ -428,8 +419,7 @@ export const useCcStore = defineStore("cc", () => {
     update_message,
     delete_message,
 
-    fetch_defaults,
-    update_defaults,
+    users_c,
     change_department,
     change_status,
     resolve,

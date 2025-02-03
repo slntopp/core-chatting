@@ -157,7 +157,8 @@ import { Chat, Kind, Message, Role } from "../../../connect/cc/cc_pb";
 import { useAppStore } from "../../../store/app";
 import { Value } from "@bufbuild/protobuf";
 import templatesView from "../../settings/templates.vue";
-import useDefaults from "../../../hooks/useDefaults";
+import { useDefaultsStore } from "../../../store/defaults";
+import { storeToRefs } from "pinia";
 
 const SendIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/SendOutline")
@@ -173,7 +174,8 @@ interface ChatFooterProps {
 const props = defineProps<ChatFooterProps>();
 const store = useCcStore();
 const appStore = useAppStore();
-const { fetch_defaults, admins, templates, users } = useDefaults();
+const defaultsStore = useDefaultsStore();
+const { admins, templates, users } = storeToRefs(defaultsStore);
 
 interface FileInfo extends UploadFileInfo {
   uuid?: string;
@@ -389,8 +391,6 @@ async function handle_open_templates() {
   isTemplatesLoading.value = true;
   try {
     if (!templatesOptions.value) {
-      await fetch_defaults(true);
-
       templatesOptions.value = {
         admins: admins.value,
         users: users.value,

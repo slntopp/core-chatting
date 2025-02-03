@@ -121,10 +121,11 @@ import { useRouter } from "vue-router";
 import { useCcStore } from "../../store/chatting.ts";
 import { useAppStore } from "../../store/app.ts";
 import { Chat, ChatMeta, Role } from "../../connect/cc/cc_pb";
-import useDefaults from "../../hooks/useDefaults.ts";
 import MemberSelect from "../users/member_select.vue";
 import { ValueAtom } from "naive-ui/es/select/src/interface";
 import { Value } from "@bufbuild/protobuf";
+import { useDefaultsStore } from "../../store/defaults.ts";
+import { storeToRefs } from "pinia";
 
 interface ChatOptionsProps {
   minHeight?: string;
@@ -144,15 +145,9 @@ const emit = defineEmits(["close"]);
 const router = useRouter();
 const store = useCcStore();
 const appStore = useAppStore();
-const {
-  admins,
-  fetch_defaults,
-  isDefaultLoading,
-  users,
-  gateways,
-  metrics,
-  departments,
-} = useDefaults();
+const defaultsStore = useDefaultsStore();
+const { admins, isDefaultLoading, users, gateways, metrics, departments } =
+  storeToRefs(defaultsStore);
 
 const form = ref<FormInst>();
 const rules = {
@@ -215,8 +210,6 @@ onMounted(() => {
 });
 
 onMounted(async () => {
-  await fetch_defaults();
-
   admins_options.value = admins.value.map((admin) => {
     return {
       label: store.users.get(admin)?.title ?? "Unknown",

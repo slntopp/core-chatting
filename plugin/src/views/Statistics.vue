@@ -162,8 +162,9 @@ import { ref } from "vue";
 import { Chat, Messages } from "../connect/cc/cc_pb";
 import { ApexOptions } from "apexcharts";
 import { useRouter } from "vue-router";
-import useDefaults from "../hooks/useDefaults";
 import { useAppStore } from "../store/app";
+import { useDefaultsStore } from "../store/defaults";
+import { storeToRefs } from "pinia";
 
 const nextIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/ChevronForwardOutline")
@@ -175,7 +176,8 @@ const prevIcon = defineAsyncComponent(
 const store = useCcStore();
 const appStore = useAppStore();
 const router = useRouter();
-const { admins, fetch_defaults } = useDefaults();
+const defaultsStore = useDefaultsStore();
+const { admins } = storeToRefs(defaultsStore);
 
 const months = [
   "Jan",
@@ -262,7 +264,6 @@ const usersActivityOffset = ref(0);
 onMounted(async () => {
   try {
     isChatsMessagesLoading.value = true;
-    fetch_defaults();
     await Promise.all(
       chats.value.map(async (chat) => {
         const messagesData = await store.get_messages(chat, false);

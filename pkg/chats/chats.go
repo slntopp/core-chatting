@@ -97,12 +97,12 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 	}
 	if conf.Bot == nil {
 		conf.Bot = &cc.Bot{
-			EnableBotInNewChats:    true,
-			EnableReviewInNewChats: true,
+			Enable: true,
+			Review: true,
 		}
 	}
-	newChat.BotState["disabled"] = structpb.NewBoolValue(!conf.Bot.EnableBotInNewChats)
-	newChat.BotState["skip_review"] = structpb.NewBoolValue(!conf.Bot.EnableReviewInNewChats)
+	newChat.BotState["disabled"] = structpb.NewBoolValue(!conf.Bot.Enable)
+	newChat.BotState["skip_review"] = structpb.NewBoolValue(!conf.Bot.Review)
 	chat, err := s.ctrl.Create(ctx, newChat)
 	if err != nil {
 		return nil, err

@@ -22,6 +22,7 @@
           :admins="admins"
           :gateways="gateways"
           :templates="templates"
+          :bot="bot as Bot"
         />
       </n-tab-pane>
       <n-tab-pane name="templates" tab="Templates">
@@ -68,6 +69,7 @@ const {
   metrics,
   users,
   templates,
+  bot,
 } = storeToRefs(defaultsStore);
 
 const isRefresh = ref(false);
@@ -77,5 +79,5 @@ async function fetchData() {
   isRefresh.value = true;
 }
 
-fetchData();
+setTimeout(() => fetchData, 100);
 </script>

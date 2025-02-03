@@ -159,15 +159,87 @@
             type="info"
             v-for="(value, i) of config[key as keyof configType]"
             :key="i"
-            @close="option.onClose && option.onClose(i)"
+            @close="option.onClose && option.onClose(+i)"
           >
             {{ value }}
           </n-tag>
         </n-space>
       </div>
 
+      <div>
+        <n-space>
+          <n-text>Bot</n-text>
+        </n-space>
+
+        <n-space>
+          <n-switch v-model:value="config.bot.enable">
+            <template #checked> Bot active </template>
+            <template #unchecked> Bot disabled </template>
+          </n-switch>
+
+          <n-switch v-model:value="config.bot.review">
+            <template #checked> Review by default </template>
+            <template #unchecked> No review by default </template>
+          </n-switch>
+        </n-space>
+
+        <n-space style="margin-top: 20px">
+          <n-text>Promt</n-text>
+        </n-space>
+        <n-input
+          v-model:value="config.bot.prompt"
+          type="textarea"
+          autosize
+          placeholder="Bot Promt"
+        />
+
+        <n-space style="margin-top: 20px">
+          <n-text>Custom values</n-text>
+        </n-space>
+
+        <n-table :bordered="false" :single-line="false">
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>Value</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(value, index) in botCustomValues">
+              <td>
+                <n-input v-model:value="value.key" />
+              </td>
+              <td>
+                <n-input v-model:value="value.value" />
+              </td>
+              <td>
+                <n-button
+                  ghost
+                  @click="deleteNewBotCustomValue(index)"
+                  type="warning"
+                  >Delete</n-button
+                >
+              </td>
+            </tr>
+
+            <tr>
+              <td></td>
+              <td></td>
+              <td>
+                <n-space justify="end">
+                  <n-button ghost @click="addNewBotCustomValue" type="success"
+                    >Add</n-button
+                  >
+                </n-space>
+              </td>
+            </tr>
+          </tbody>
+        </n-table>
+      </div>
+
       <n-space justify="end" style="margin-bottom: 10px">
-        <n-button :loading="isEditLoading" ghost type="success" @click="submit">
+        <n-button :loading="isEditLoading" ghost type="info" @click="submit">
           Update
         </n-button>
       </n-space>
@@ -195,10 +267,12 @@ import {
   onMounted,
   reactive,
   toRefs,
+  watch,
 } from "vue";
 import { Value } from "naive-ui/es/select/src/interface";
 import { JsonObject } from "@bufbuild/protobuf";
 import {
+  Bot,
   Defaults,
   Department,
   Metric,
@@ -261,6 +335,7 @@ interface configType {
   gateways: string[];
   metrics: MetricWithKey[];
   templates: MessageTemplate[];
+  bot: Bot;
 }
 
 interface ConfigProps extends configType {
@@ -268,13 +343,15 @@ interface ConfigProps extends configType {
 }
 
 const props = defineProps<ConfigProps>();
-const { admins, departments, gateways, metrics, users, templates } =
+const { admins, departments, gateways, metrics, users, templates, bot } =
   toRefs(props);
 
 const emit = defineEmits(["refresh"]);
 
 const defaultsStore = useDefaultsStore();
 const notification = useNotification();
+
+const botCustomValues = ref<{ value: string; key: string }[]>();
 
 const isEditLoading = ref(false);
 const inputs = reactive<inputsType>({
@@ -288,6 +365,7 @@ const config = reactive<configType>({
   gateways: [],
   metrics: [],
   templates: [],
+  bot: Bot.fromJson({}),
 });
 
 onMounted(() => {
@@ -415,6 +493,13 @@ async function submit() {
     await defaultsStore.update_defaults(
       new Defaults({
         ...config,
+        bot: {
+          ...config.bot,
+          values: botCustomValues.value?.reduce<any>((acc, curr) => {
+            acc[curr.key] = curr.value;
+            return acc;
+          }, {}),
+        },
         metrics: config.metrics.reduce(
           (result, metric) => ({
             ...result,
@@ -448,5 +533,26 @@ function setDefaultConfig() {
   config.gateways = gateways.value;
   config.departments = departments.value;
   config.templates = templates.value;
+  config.bot = bot.value || Bot.fromJson({});
 }
+
+function addNewBotCustomValue() {
+  botCustomValues.value?.push({ key: "", value: "" });
+}
+
+function deleteNewBotCustomValue(index: number) {
+  botCustomValues.value = botCustomValues.value?.filter(
+    (_, current) => current !== index
+  );
+}
+
+watch(
+  () => config.bot.values,
+  () => {
+    botCustomValues.value = Object.keys(config.bot.values).map((key) => ({
+      key,
+      value: config.bot.values[key],
+    }));
+  }
+);
 </script>

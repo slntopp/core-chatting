@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { Defaults, Department, FetchDefaultsRequest, Metric, User, Users } from '../connect/cc/cc_pb';
+import { Bot, Defaults, Department, FetchDefaultsRequest, Metric, User, Users } from '../connect/cc/cc_pb';
 import { ref } from 'vue';
 import { useCcStore } from './chatting';
 
@@ -24,6 +24,7 @@ export const useDefaultsStore = defineStore('defaults', () => {
     const metrics = ref<MetricWithKey[]>([]);
     const departments = ref<Department[]>([]);
     const templates = ref<MessageTemplate[]>([]);
+    const bot = ref<Bot>();
 
 
     async function fetch_defaults(fetchTemplates = false) {
@@ -58,10 +59,12 @@ export const useDefaultsStore = defineStore('defaults', () => {
                 ...value,
             })) as MetricWithKey[];
 
+            bot.value = defaults.bot;
+
             cc_store.departments = defaults.departments;
             cc_store.metrics = metrics.value;
         } catch (e) {
-            console.log(e);
+            console.log(e, 232323324);
         } finally {
             isDefaultLoading.value = false;
         }
@@ -83,6 +86,7 @@ export const useDefaultsStore = defineStore('defaults', () => {
         metrics,
         departments,
         templates,
+        bot,
 
         fetch_defaults,
         update_defaults

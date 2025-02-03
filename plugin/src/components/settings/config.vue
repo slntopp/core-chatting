@@ -159,7 +159,7 @@
             type="info"
             v-for="(value, i) of config[key as keyof configType]"
             :key="i"
-            @close="option.onClose && option.onClose(i)"
+            @close="option.onClose && option.onClose(+i)"
           >
             {{ value }}
           </n-tag>

@@ -46,7 +46,7 @@ export const useCcStore = defineStore("cc", () => {
 
   const transport = createGrpcWebTransport({
     baseUrl: baseUrl,
-    useBinaryFormat: false,
+    useBinaryFormat: true,
     interceptors: [
       (next) => async (req) => {
         req.header.set("Authorization", `Bearer ${app.conf?.token}`);

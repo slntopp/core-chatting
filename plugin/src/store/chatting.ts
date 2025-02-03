@@ -42,12 +42,11 @@ export const useCcStore = defineStore("cc", () => {
     baseUrl = import.meta.env.VITE_API_URL;
   } else if (import.meta.env.DEV) {
     baseUrl = "http://localhost:8080";
-    baseUrl = "https://api.nc2dev.support.by/";
   }
 
   const transport = createGrpcWebTransport({
     baseUrl: baseUrl,
-    useBinaryFormat: false,
+    useBinaryFormat: true,
     interceptors: [
       (next) => async (req) => {
         req.header.set("Authorization", `Bearer ${app.conf?.token}`);

@@ -42,6 +42,10 @@
             {{ store.users.get(chat.owner)?.title }}
           </n-text>
 
+          <n-icon v-if="chat.botState.escalated" size="20" color="red">
+            <escalated-icon />
+          </n-icon>
+
           <n-icon size="20" @click.stop="openChat(chat.owner)">
             <login-icon v-if="!appStore.isMobile" />
           </n-icon>
@@ -195,6 +199,10 @@ const MailIcon = defineAsyncComponent(
 );
 const LoginIcon = defineAsyncComponent(
   () => import("../../assets/icons/LoginOutline.svg")
+);
+
+const escalatedIcon = defineAsyncComponent(
+  () => import("@vicons/ionicons5/NotificationsOutline")
 );
 
 interface ChatItemProps {

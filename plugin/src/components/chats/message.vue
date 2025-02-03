@@ -90,6 +90,8 @@ import { useAppStore } from "../../store/app";
 import UserAvatar from "../ui/user_avatar.vue";
 import UserItem from "../users/user_item.vue";
 import { addToClipboard, getRelativeTime } from "../../functions.ts";
+import { useDefaultsStore } from "../../store/defaults.ts";
+import { storeToRefs } from "pinia";
 
 interface MessageProps {
   message: Message;
@@ -134,6 +136,8 @@ const emit = defineEmits(["approve", "convert", "edit", "delete"]);
 const theme = useThemeVars();
 const appStore = useAppStore();
 const store = useCcStore();
+
+const { admins } = storeToRefs(useDefaultsStore());
 
 const sender = computed(
   () => store.users.get(message.value.sender)?.title ?? "Unknown"
@@ -282,6 +286,19 @@ function avatar() {
 
 const container_style = computed(() => {
   const is_sender = message.value.sender == store.me.uuid;
+  const is_admin = admins.value.includes(message.value.sender);
+
+  console.log(
+    "admin",
+    is_admin,
+    "admins",
+    admins.value,
+    "sender",
+    message.value.sender,
+    "me",
+    is_sender
+  );
+
   const paddingRight = appStore.isMobile ? "35px" : "45px";
 
   let style = {
@@ -289,7 +306,11 @@ const container_style = computed(() => {
     borderRadius: theme.value.borderRadius,
     maxWidth: `calc(100% - ${paddingRight})`,
     border: `1px solid ${theme.value.borderColor}`,
-    backgroundColor: is_sender ? "var(--n-color-hover)" : null,
+    backgroundColor: is_sender
+      ? "var(--n-color-hover)"
+      : is_admin
+      ? "color-mix(in hsl, var(--n-color-hover), white 10%)"
+      : null,
   };
 
   if (message.value.underReview)

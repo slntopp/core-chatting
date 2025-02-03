@@ -10,6 +10,11 @@
           round
           size="large"
           class="chat__avatar"
+          :style="{
+            backgroundColor:
+              chat.responsible === store.me.uuid &&
+              'var(--main-app-primary-color)',
+          }"
           :avatar="
             hovered || selected.includes(chat.uuid) ? ' ' : members.join(' ')
           "
@@ -19,7 +24,7 @@
           <n-checkbox
             v-if="hovered || selected.includes(chat.uuid)"
             style="position: absolute; top: 21px"
-            :style="{ left: (appStore.isMobile) ? '12px' : '22px' }"
+            :style="{ left: appStore.isMobile ? '12px' : '22px' }"
             :checked="selected.includes(chat.uuid)"
             @update:checked="emits('select', chat.uuid)"
             @click.stop
@@ -232,7 +237,7 @@ const department = computed(
 // })
 const hovered = ref(false);
 
-if (appStore.isMobile) hovered.value = true
+if (appStore.isMobile) hovered.value = true;
 
 const chatTopic = computed(() => {
   const topic = chat.value.topic ?? members.value.join(", ");
@@ -294,14 +299,12 @@ const chatRightColumn = computed(() =>
   appStore.displayMode === "full" ? 6 : 3
 );
 const avatarScale = computed(() => {
-  if (appStore.isMobile) return 0
+  if (appStore.isMobile) return 0;
 
-  return props.selected.includes(chat.value.uuid) ? 0.5 : 1
+  return props.selected.includes(chat.value.uuid) ? 0.5 : 1;
 });
 
-const chatAvatarWidth = computed(() =>
-  (appStore.isMobile) ? '15px' : null
-)
+const chatAvatarWidth = computed(() => (appStore.isMobile ? "15px" : null));
 
 const onlyMainInfo = computed(
   () => appStore.isMobile || appStore.displayMode === "half"
@@ -454,7 +457,7 @@ function openChat(user: string) {
 
 .chat__avatar-wrapper {
   height: fit-content;
-  width: v-bind('chatAvatarWidth');
+  width: v-bind("chatAvatarWidth");
 }
 
 .chat__avatar {

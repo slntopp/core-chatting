@@ -331,7 +331,6 @@ import {
 import ChatItem from "../../components/chats/chat_item.vue";
 import ChatsFilters from "../../components/chats/chats_filters.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
-import useDefaults from "../../hooks/useDefaults.ts";
 import {
   cleanObject,
   debounce,
@@ -339,6 +338,8 @@ import {
   getStatusItems,
 } from "../../functions.ts";
 import { ConnectError } from "@connectrpc/connect";
+import { storeToRefs } from "pinia";
+import { useDefaultsStore } from "../../store/defaults.ts";
 
 defineEmits(["hover", "hoverEnd"]);
 
@@ -375,8 +376,8 @@ const store = useCcStore();
 const router = useRouter();
 const route = useRoute();
 const { makeDraggable } = useDraggable();
-const { metrics, isDefaultLoading, fetch_defaults, admins, users } =
-  useDefaults();
+const defaultsStore = useDefaultsStore();
+const { metrics, isDefaultLoading, admins, users } = storeToRefs(defaultsStore);
 const notification = useNotification();
 
 const topPanel = ref<any>(null);
@@ -742,7 +743,7 @@ const updateDateRange = ref<{ from: null | number; to: null | number }>({
   to: null,
 });
 
-if (Object.keys(metrics.value).length < 1) fetch_defaults();
+if (Object.keys(metrics.value).length < 1) defaultsStore.fetch_defaults();
 
 interface metricsOptionsType {
   [index: string]: [];

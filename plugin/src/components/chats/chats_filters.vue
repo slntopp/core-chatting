@@ -169,8 +169,8 @@ import {
 import { useCcStore } from "../../store/chatting";
 import { Chat, Status } from "../../connect/cc/cc_pb";
 import { SelectMixedOption } from "naive-ui/es/select/src/interface";
-import { MetricWithKey } from "../../hooks/useDefaults";
 import { getStatusItems } from "../../functions";
+import { MetricWithKey } from "../../store/defaults";
 
 const upIcon = defineAsyncComponent(() => import("@vicons/ionicons5/ArrowUp"));
 

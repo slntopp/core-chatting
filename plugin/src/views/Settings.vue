@@ -16,9 +16,9 @@
         <!-- @vue-ignore -->
         <config-view
           @refresh="fetchData"
-          :users="users"
-          :metrics="metrics"
-          :departments="departments"
+          :users="users as User[]"
+          :metrics="metrics as MetricWithKey[]"
+          :departments="departments as Department[]"
           :admins="admins"
           :gateways="gateways"
           :templates="templates"
@@ -31,9 +31,9 @@
         <!-- @vue-ignore -->
         <templates-view
           @refresh="fetchData"
-          :users="users"
-          :metrics="metrics"
-          :departments="departments"
+          :users="users as User[]"
+          :metrics="metrics as MetricWithKey[]"
+          :departments="departments as Department[]"
           :admins="admins"
           :gateways="gateways"
           :templates="templates"
@@ -52,13 +52,15 @@
 
 <script setup lang="ts">
 import { NSpin, NTabs, NTabPane, NSpace, NH3 } from "naive-ui";
-import useDefaults from "../hooks/useDefaults.ts";
 import templatesView from "../components/settings/templates.vue";
 import configView from "../components/settings/config.vue";
 import { ref } from "vue";
+import { storeToRefs } from "pinia";
+import { MetricWithKey, useDefaultsStore } from "../store/defaults";
+import { Department } from "../connect/cc/cc_pb";
 
+const defaultsStore = useDefaultsStore();
 const {
-  fetch_defaults,
   isDefaultLoading,
   admins,
   departments,
@@ -66,12 +68,12 @@ const {
   metrics,
   users,
   templates,
-} = useDefaults();
+} = storeToRefs(defaultsStore);
 
 const isRefresh = ref(false);
 
 async function fetchData() {
-  await fetch_defaults(true);
+  await defaultsStore.fetch_defaults(true);
   isRefresh.value = true;
 }
 

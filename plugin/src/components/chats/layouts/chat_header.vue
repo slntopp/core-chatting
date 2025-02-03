@@ -235,7 +235,14 @@
 (increase width)
 
 <script setup lang="ts">
-import { type DefineComponent, computed, defineAsyncComponent, nextTick, ref, toRefs } from "vue";
+import {
+  type DefineComponent,
+  computed,
+  defineAsyncComponent,
+  nextTick,
+  ref,
+  toRefs,
+} from "vue";
 import {
   NButton,
   NCard,
@@ -260,7 +267,6 @@ import { useAppStore } from "../../../store/app";
 import ChatOptions from "../chat_options.vue";
 import UserAvatar from "../../ui/user_avatar.vue";
 import MembersDropdown from "../../users/members_dropdown.vue";
-import useDefaults from "../../../hooks/useDefaults.ts";
 import MemberSelect from "../../users/member_select.vue";
 import {
   addToClipboard,
@@ -270,6 +276,8 @@ import {
 import ChatStatus from "../chat_status.vue";
 import ChatActions from "../chat_actions.vue";
 import ChatDates from "../chat_dates.vue";
+import { useDefaultsStore } from "../../../store/defaults.ts";
+import { storeToRefs } from "pinia";
 
 const EditIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/PencilSharp")
@@ -299,14 +307,9 @@ const { chat } = toRefs(props);
 const appStore = useAppStore();
 const store = useCcStore();
 const notification = useNotification();
-const {
-  fetch_defaults,
-  isDefaultLoading,
-  users,
-  admins,
-  metrics,
-  departments,
-} = useDefaults();
+const defaultsStore = useDefaultsStore();
+const { isDefaultLoading, users, admins, metrics, departments } =
+  storeToRefs(defaultsStore);
 
 const isEdit = ref<boolean>(false);
 const isAddDialog = ref<boolean>(false);
@@ -315,7 +318,9 @@ const availableMembersOptions = ref<SelectOption[]>([]);
 const isAddSaveLoading = ref<boolean>(false);
 const newStatus = ref();
 const isChangeStatusLoading = ref(false);
-const isSettingsVisible = ref((document.documentElement.clientWidth > 768) ? true : false)
+const isSettingsVisible = ref(
+  document.documentElement.clientWidth > 768 ? true : false
+);
 
 const members = computed(() => {
   const uuids = new Set([
@@ -341,8 +346,6 @@ const statusesOptions = computed(() =>
     value: status.value,
   }))
 );
-
-fetch_defaults();
 
 const metricsOptions = computed(() => {
   const metricsEntries = Object.entries(chat.value.meta?.data ?? {});
@@ -517,7 +520,11 @@ const onlyMainInfo = computed(() => appStore.isMobile || appStore.isTablet);
   text-overflow: ellipsis;
 }
 
-.chat__settings.n-collapse:deep(.n-collapse-item .n-collapse-item__content-wrapper .n-collapse-item__content-inner) {
+.chat__settings.n-collapse:deep(
+    .n-collapse-item
+      .n-collapse-item__content-wrapper
+      .n-collapse-item__content-inner
+  ) {
   padding: 4px 0 0 12px;
 }
 </style>

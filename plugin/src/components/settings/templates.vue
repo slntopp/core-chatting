@@ -65,7 +65,7 @@
 
             <!-- @vue-ignore -->
             <message-content
-              :message="{ content: template.content }"
+              :message="{ content: template.content } as any"
               :attach-files="[]"
             />
           </n-list-item>
@@ -129,9 +129,12 @@ import {
   useNotification,
 } from "naive-ui";
 import messageContent from "../../components/chats/message/message_content.vue";
-import { MessageTemplate, MetricWithKey } from "../../hooks/useDefaults";
 import { Defaults, Department, User } from "../../connect/cc/cc_pb";
-import { useCcStore } from "../../store/chatting";
+import {
+  MessageTemplate,
+  MetricWithKey,
+  useDefaultsStore,
+} from "../../store/defaults";
 
 const deleteIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/CloseOutline")
@@ -160,7 +163,7 @@ const { admins, users, templates, departments, gateways, metrics, isEdit } =
 const emit = defineEmits(["refresh", "select"]);
 
 const notification = useNotification();
-const store = useCcStore();
+const store = useDefaultsStore();
 
 const searchParam = ref("");
 

@@ -23,6 +23,7 @@ import {
   GetMembersRequest,
   ListChatsRequest,
   CountChatsRequest,
+  SetBotStateRequest,
 } from "../connect/cc/cc_pb";
 import {
   ChatsAPI,
@@ -141,6 +142,10 @@ export const useCcStore = defineStore("cc", () => {
 
   function change_department(chat: Chat): Promise<Chat> {
     return chats_c.changeDepartment(chat);
+  }
+
+  function update_bot_state(data: SetBotStateRequest): Promise<Chat> {
+    return chats_c.setBotState(data);
   }
 
   function change_status(chat: Chat): Promise<Chat> {
@@ -421,6 +426,7 @@ export const useCcStore = defineStore("cc", () => {
     users_c,
     change_department,
     change_status,
+    update_bot_state,
     resolve,
   };
 });

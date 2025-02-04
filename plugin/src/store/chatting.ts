@@ -291,6 +291,13 @@ export const useCcStore = defineStore("cc", () => {
       default:
         console.warn("unknown event type", event.type);
     }
+
+    if (currentChat.value?.uuid === chat.uuid) {
+      currentChat.value = chat;
+    }
+    if (chats.value.has(chat.uuid)) {
+      chats.value.set(chat.uuid, chat as Chat)
+    }
   };
 
   const chat_handler = (event: Event) => {

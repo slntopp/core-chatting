@@ -912,6 +912,11 @@ export declare class Users extends Message$1<Users> {
    */
   users: User[];
 
+  /**
+   * @generated from field: int64 total = 2;
+   */
+  total: bigint;
+
   constructor(data?: PartialMessage<Users>);
 
   static readonly runtime: typeof proto3;
@@ -959,6 +964,35 @@ export declare class GetMembersRequest extends Message$1<GetMembersRequest> {
    * @generated from field: repeated string uuids = 1;
    */
   uuids: string[];
+
+  /**
+   * @generated from field: optional uint64 page = 2;
+   */
+  page?: bigint;
+
+  /**
+   * @generated from field: optional uint64 limit = 3;
+   */
+  limit?: bigint;
+
+  /**
+   * Sort field
+   *
+   * @generated from field: optional string field = 4;
+   */
+  field?: string;
+
+  /**
+   * Sort direction
+   *
+   * @generated from field: optional string sort = 5;
+   */
+  sort?: string;
+
+  /**
+   * @generated from field: map<string, google.protobuf.Value> filters = 6;
+   */
+  filters: { [key: string]: Value };
 
   constructor(data?: PartialMessage<GetMembersRequest>);
 

@@ -205,6 +205,7 @@ message Bot {
 
 message Users {
   repeated User users = 1;
+  int64 total = 2;
 }
 
 message FetchDefaultsRequest {
@@ -213,6 +214,11 @@ message FetchDefaultsRequest {
 
 message GetMembersRequest{
   repeated string uuids = 1;
+  optional uint64 page = 2;
+  optional uint64 limit = 3;
+  optional string field = 4; // Sort field
+  optional string sort = 5;  // Sort direction
+  map<string, google.protobuf.Value> filters = 6;
 }
 
 service UsersAPI {

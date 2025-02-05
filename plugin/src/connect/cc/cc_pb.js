@@ -320,6 +320,7 @@ export const Users = /*@__PURE__*/ proto3.makeMessageType(
   "cc.Users",
   () => [
     { no: 1, name: "users", kind: "message", T: User, repeated: true },
+    { no: 2, name: "total", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
   ],
 );
 
@@ -340,6 +341,11 @@ export const GetMembersRequest = /*@__PURE__*/ proto3.makeMessageType(
   "cc.GetMembersRequest",
   () => [
     { no: 1, name: "uuids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 2, name: "page", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 3, name: "limit", kind: "scalar", T: 4 /* ScalarType.UINT64 */, opt: true },
+    { no: 4, name: "field", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 5, name: "sort", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 6, name: "filters", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
   ],
 );
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -43,6 +44,7 @@ func (s *AttachmentsServer) Hander(router *mux.Router) {
 	router.Path("/attachments").HandlerFunc(s.upload).Methods(http.MethodPut)
 	router.Path("/attachments/{uuid}").HandlerFunc(s.download).Methods(http.MethodGet)
 	router.Path("/attachments/{uuid}").HandlerFunc(s.delete).Methods(http.MethodDelete)
+	router.Path("/attachments/batch").HandlerFunc(s.downloadBatch).Methods(http.MethodGet)
 }
 
 func (s *AttachmentsServer) upload(w http.ResponseWriter, r *http.Request) {
@@ -97,7 +99,7 @@ func (s *AttachmentsServer) upload(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *AttachmentsServer) download(w http.ResponseWriter, r *http.Request) {
-	log := s.log.Named("Upload")
+	log := s.log.Named("Download")
 	ctx := r.Context()
 
 	vars := mux.Vars(r)
@@ -115,6 +117,36 @@ func (s *AttachmentsServer) download(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf(`{"url": "%s:%s/%s/%s%s"}`, s.host, s.port, s.bucket, result.Uuid, result.Ext)))
 
 	//http.Redirect(w, r, fmt.Sprintf("%s/%s/%s", s.host, s.bucket, result.Uuid), http.StatusPermanentRedirect)
+}
+
+func (s *AttachmentsServer) downloadBatch(w http.ResponseWriter, r *http.Request) {
+	log := s.log.Named("DownloadBatch")
+	ctx := r.Context()
+
+	const queryField = "ids"
+	if !r.URL.Query().Has(queryField) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, "no required query with name: "+queryField)))
+		return
+	}
+	uuids := strings.Split(r.URL.Query().Get(queryField), ",")
+
+	responseValues := make([]string, 0)
+	for _, uuid := range uuids {
+		if uuid == "" {
+			continue
+		}
+		result, err := s.ctrl.Get(ctx, uuid)
+		if err != nil {
+			log.Error("Failed to get attachment", zap.Error(err), zap.String("uuid", uuid))
+			continue
+		}
+		responseValues = append(responseValues, fmt.Sprintf(`"%s":"%s:%s/%s/%s%s"`, uuid, s.host, s.port, s.bucket, result.Uuid, result.Ext))
+	}
+
+	w.WriteHeader(http.StatusOK)
+	result := fmt.Sprintf(`{%s}`, strings.Join(responseValues, ","))
+	_, _ = w.Write([]byte(result))
 }
 
 func (s *AttachmentsServer) delete(w http.ResponseWriter, r *http.Request) {

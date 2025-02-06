@@ -141,7 +141,7 @@ func (s *AttachmentsServer) downloadBatch(w http.ResponseWriter, r *http.Request
 			log.Error("Failed to get attachment", zap.Error(err), zap.String("uuid", uuid))
 			continue
 		}
-		responseValues = append(responseValues, fmt.Sprintf(`"%s":"%s:%s/%s/%s%s"`, uuid, s.host, s.port, s.bucket, result.Uuid, result.Ext))
+		responseValues = append(responseValues, fmt.Sprintf(`"%s":{"url":%s:%s/%s/%s%s,"title":"%s"}`, uuid, s.host, s.port, s.bucket, result.Uuid, result.Ext, result.Title))
 	}
 
 	w.WriteHeader(http.StatusOK)

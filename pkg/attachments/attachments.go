@@ -114,7 +114,7 @@ func (s *AttachmentsServer) download(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf(`{"url": "%s:%s/%s/%s%s"}`, s.host, s.port, s.bucket, result.Uuid, result.Ext)))
+	w.Write([]byte(fmt.Sprintf(`{"url": "%s:%s/%s/%s%s","title":"%s"}`, s.host, s.port, s.bucket, result.Uuid, result.Ext, result.Title)))
 
 	//http.Redirect(w, r, fmt.Sprintf("%s/%s/%s", s.host, s.bucket, result.Uuid), http.StatusPermanentRedirect)
 }

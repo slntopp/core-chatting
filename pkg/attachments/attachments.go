@@ -44,7 +44,7 @@ func (s *AttachmentsServer) Hander(router *mux.Router) {
 	router.Path("/attachments").HandlerFunc(s.upload).Methods(http.MethodPut)
 	router.Path("/attachments/{uuid}").HandlerFunc(s.download).Methods(http.MethodGet)
 	router.Path("/attachments/{uuid}").HandlerFunc(s.delete).Methods(http.MethodDelete)
-	router.Path("/attachments/batch").HandlerFunc(s.downloadBatch).Methods(http.MethodGet)
+	router.Path("/attachments").HandlerFunc(s.downloadBatch).Methods(http.MethodGet)
 }
 
 func (s *AttachmentsServer) upload(w http.ResponseWriter, r *http.Request) {

@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
+	"strings"
 	"sync"
 	"time"
 )
@@ -62,6 +63,14 @@ func (s *ChatsServer) CloseInactiveChats(ctx context.Context, log *zap.Logger, c
 		if _, err = s.ctrl.Update(ctx, chat); err != nil {
 			return err
 		}
+		users, err := s.users_ctrl.Resolve(ctx, chat.GetUsers())
+		if err != nil {
+			log.Error("failed to resolve chat users", zap.Error(err))
+		}
+		user := &cc.User{Title: "Unknown"}
+		if len(users) > 0 {
+			user.Title = users[0].Title
+		}
 		go eventPublisher(ctx, &events.Event{
 			Key:  "inactive_chat_closed",
 			Type: "email",
@@ -73,7 +82,7 @@ func (s *ChatsServer) CloseInactiveChats(ctx context.Context, log *zap.Logger, c
 		if err = s.sendCloseChatMessage(ctx, log, chat, &cc.Message{
 			Sent:    time.Now().UnixMilli(),
 			Sender:  schema.ROOT_ACCOUNT_KEY,
-			Content: conf.CloseMessageContent,
+			Content: insertPlaceholders(conf.CloseMessageContent, user.Title),
 			Chat:    &chat.Uuid,
 		}); err != nil {
 			return err
@@ -81,6 +90,10 @@ func (s *ChatsServer) CloseInactiveChats(ctx context.Context, log *zap.Logger, c
 	}
 
 	return nil
+}
+
+func insertPlaceholders(text, userTitle string) string {
+	return strings.ReplaceAll(text, "{CLIENT_NAME}", userTitle)
 }
 
 func setupEventPublisher(_ context.Context, log *zap.Logger, rbmq *amqp091.Connection) func(ctx context.Context, event *events.Event) {

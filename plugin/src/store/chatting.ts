@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { defineStore } from "pinia";
 
 import { ConnectError, createPromiseClient } from "@connectrpc/connect";
@@ -170,6 +170,7 @@ export const useCcStore = defineStore("cc", () => {
   }
 
   const messages = ref<Map<string, Message[]>>(new Map());
+  const attachments = ref<Map<string, any>>(new Map());
 
   function chat_messages(chat: Chat | undefined): Message[] {
     if (!chat) return [];
@@ -190,6 +191,30 @@ export const useCcStore = defineStore("cc", () => {
     messages.value.set(chat.uuid, res.messages);
     return res;
   }
+
+  async function fetch_attachments(uuids: string[]) {
+    if (!uuids || uuids.length === 0) {
+      return;
+    }
+
+    try {
+      const url = baseUrl.endsWith("/")
+        ? baseUrl.slice(0, -1)
+        : baseUrl;
+      var response = await fetch(`${url}/attachments?ids=${uuids.join(',')}`)
+      var data: { [key: string]: string } = await response.json()
+
+      Object.keys(data).forEach(key => {
+        attachments.value.set(key, data[key])
+      })
+
+    } catch (e) {
+      uuids.forEach(uuid => {
+        attachments.value.delete(uuid);
+      })
+    }
+  }
+
   function send_message(message: Message): Promise<Empty> {
     return messages_c.send(message);
   }
@@ -399,6 +424,22 @@ export const useCcStore = defineStore("cc", () => {
     }
   })();
 
+  watch(messages.value, () => {
+    var attachmentsForFetch: string[] = [];
+    if (currentChat.value?.uuid && messages.value.get(currentChat.value.uuid)) {
+      for (const message of (messages.value.get(currentChat.value.uuid) || [])) {
+        for (const attachment of message.attachments) {
+          if (!attachments.value.has(attachment)) {
+            attachmentsForFetch.push(attachment);
+            attachments.value.set(attachment, true);
+          }
+        }
+      }
+    }
+
+    fetch_attachments(attachmentsForFetch);
+  })
+
   return {
     users,
     load_me,
@@ -429,6 +470,8 @@ export const useCcStore = defineStore("cc", () => {
     send_message,
     update_message,
     delete_message,
+
+    attachments,
 
     users_c,
     change_department,

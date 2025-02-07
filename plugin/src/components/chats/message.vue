@@ -224,7 +224,6 @@ const options = computed(() => {
 function handle_select(
   key: "approve" | "convert" | "edit" | "delete" | "download"
 ) {
-  console.log(key);
   show.value = false;
 
   switch (key) {
@@ -288,17 +287,6 @@ const container_style = computed(() => {
   const is_sender = message.value.sender == store.me.uuid;
   const is_admin = admins.value.includes(message.value.sender);
 
-  console.log(
-    "admin",
-    is_admin,
-    "admins",
-    admins.value,
-    "sender",
-    message.value.sender,
-    "me",
-    is_sender
-  );
-
   const paddingRight = appStore.isMobile ? "35px" : "45px";
 
   let style = {
@@ -330,23 +318,24 @@ const container_style = computed(() => {
 });
 
 const attachFiles = computed<AttachFile[]>(() => {
-  if (!message.value.meta?.attachments?.toJson) {
+  if (!message.value?.attachments) {
     return [];
   }
 
-  const attachments = message.value.meta?.attachments.toJson() as any;
+  const attachments: { url: string; title: string }[] =
+    message.value?.attachments
+      .map((uuid) => store.attachments.get(uuid))
+      .filter((v) => !!v && v !== true);
 
   if (!attachments || !attachments.length) {
     return [];
   }
 
-  const files: AttachFile[] = attachments?.map((file: any) => {
+  const files: AttachFile[] = attachments?.map(({ url, title }) => {
     return {
-      url: file.url,
-      name: file.name,
-      type: !!file.name.match(/\.(jpg|jpeg|png|gif|svg)$/i)
-        ? "image"
-        : "document",
+      url: `https://${url}`,
+      name: title,
+      type: !!title.match(/\.(jpg|jpeg|png|gif|svg)$/i) ? "image" : "document",
     };
   });
 

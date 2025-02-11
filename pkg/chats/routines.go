@@ -76,7 +76,7 @@ func (s *ChatsServer) CloseInactiveChats(ctx context.Context, log *zap.Logger, c
 			Type: "email",
 			Data: map[string]*structpb.Value{
 				"subject":     structpb.NewStringValue(chat.GetTopic()),
-				"client_name": structpb.NewStringValue(chat.GetTopic()),
+				"client_name": structpb.NewStringValue(user.GetTitle()),
 			},
 			Uuid: chat.GetOwner(),
 		})

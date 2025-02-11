@@ -130,7 +130,7 @@ async function fetchExisted() {
   for (const uuid of props.value) {
     if (options.value.findIndex((option) => option.value === uuid) == -1) {
       if (usersStore.users.get(uuid)) {
-        inCache.push(usersStore.users.get(uuid)!);
+        inCache.push(usersStore.users.get(uuid) as User);
       }
       notExisted.push(uuid);
     }

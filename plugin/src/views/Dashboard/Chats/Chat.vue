@@ -1,5 +1,5 @@
 <template>
-  <n-list v-if="chat" class="chat">
+  <n-list class="chat">
     <template #header>
       <chat-header :chat="chat" />
     </template>
@@ -17,7 +17,6 @@
       </template>
 
       <n-list-item v-else v-for="message in messages" :key="message.uuid">
-        <!-- @vue-ignore -->
         <message-view
           :message="message"
           @approve="(a) => handle_approve(message, a)"

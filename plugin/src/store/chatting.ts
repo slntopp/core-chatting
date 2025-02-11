@@ -68,7 +68,6 @@ export const useCcStore = defineStore("cc", () => {
   const chats_count = ref<Map<string, number>>(new Map());
   const totalChats = ref<number>(0);
   const currentChat = ref<Chat | null>(null);
-  const users = ref<Map<string, User>>(new Map());
   const departments = ref<Department[]>([]);
   const metrics = ref<MetricWithKey[]>([]);
 
@@ -101,8 +100,6 @@ export const useCcStore = defineStore("cc", () => {
 
     lastChatsParams.value = data;
     totalChats.value = Number(result.total);
-
-    resolve(result.pool.map((chat) => [...chat.admins, ...chat.users]).flat());
   }
 
   async function list_chats_count(data: CountChatsRequest) {
@@ -154,19 +151,6 @@ export const useCcStore = defineStore("cc", () => {
 
   function merge_chats(chats: string[]) {
     return chats_c.mergeChats(new Merge({ chats }));
-  }
-
-  async function resolve(req_users: string[] = []): Promise<Users> {
-    let result = await users_c.resolve(
-      new Users({ users: req_users.map((uuid) => new User({ uuid })) })
-    );
-    console.debug("Got Users", result.users);
-
-    for (let user of result.users) {
-      users.value.set(user.uuid, user);
-    }
-
-    return result;
   }
 
   const messages = ref<Map<string, Message[]>>(new Map());
@@ -441,7 +425,6 @@ export const useCcStore = defineStore("cc", () => {
   })
 
   return {
-    users,
     load_me,
     me,
     get_members,
@@ -477,6 +460,5 @@ export const useCcStore = defineStore("cc", () => {
     change_department,
     change_status,
     update_bot_state,
-    resolve,
   };
 });

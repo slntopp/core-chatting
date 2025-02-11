@@ -16,7 +16,6 @@
         <!-- @vue-ignore -->
         <config-view
           @refresh="fetchData"
-          :users="users as User[]"
           :metrics="metrics as MetricWithKey[]"
           :departments="departments as Department[]"
           :admins="admins"
@@ -32,10 +31,9 @@
         <!-- @vue-ignore -->
         <templates-view
           @refresh="fetchData"
-          :users="users as User[]"
           :metrics="metrics as MetricWithKey[]"
           :departments="departments as Department[]"
-          :admins="admins"
+          :admins="adminsUuids"
           :gateways="gateways"
           :templates="templates"
           is-edit
@@ -55,22 +53,25 @@
 import { NSpin, NTabs, NTabPane, NSpace, NH3 } from "naive-ui";
 import templatesView from "../components/settings/templates.vue";
 import configView from "../components/settings/config.vue";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { MetricWithKey, useDefaultsStore } from "../store/defaults";
 import { Department } from "../connect/cc/cc_pb";
+import { useUsersStore } from "../store/users";
 
 const defaultsStore = useDefaultsStore();
+const usersStore = useUsersStore();
+
 const {
   isDefaultLoading,
-  admins,
+  admins: adminsUuids,
   departments,
   gateways,
   metrics,
-  users,
   templates,
   bot,
 } = storeToRefs(defaultsStore);
+const { users, isUsersLoading } = storeToRefs(usersStore);
 
 const isRefresh = ref(false);
 
@@ -79,5 +80,15 @@ async function fetchData() {
   isRefresh.value = true;
 }
 
-setTimeout(() => fetchData, 100);
+const admins = computed(() => {
+  if (isUsersLoading.value) {
+    return [];
+  }
+
+  return adminsUuids.value
+    .map((uuid) => users.value.get(uuid))
+    .filter((v) => !!v);
+});
+
+setTimeout(() => fetchData(), 100);
 </script>

@@ -165,6 +165,7 @@ import { useRouter } from "vue-router";
 import { useAppStore } from "../store/app";
 import { useDefaultsStore } from "../store/defaults";
 import { storeToRefs } from "pinia";
+import { useUsersStore } from "../store/users";
 
 const nextIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/ChevronForwardOutline")
@@ -177,7 +178,10 @@ const store = useCcStore();
 const appStore = useAppStore();
 const router = useRouter();
 const defaultsStore = useDefaultsStore();
+const usersStore = useUsersStore();
+
 const { admins } = storeToRefs(defaultsStore);
+const { users } = storeToRefs(usersStore);
 
 const months = [
   "Jan",
@@ -568,7 +572,7 @@ function getChartOptions({
   if (!isTypeAll) {
     series = series.map((s) => ({
       ...s,
-      name: store.users.get(s.name || "")?.title || "Unknown",
+      name: users.value.get(s.name || "")?.title || "Unknown",
     }));
   }
 
@@ -839,7 +843,7 @@ function goBack() {
 
 function openUser(e: Event) {
   const name = (e.target as any).innerText.split(":")[0];
-  const user = [...store.users.values()].find((u) => u.title === name);
+  const user = [...users.value.values()].find((u) => u.title === name);
   if (user) {
     window.open(
       `${appStore.conf?.params.fullUrl.split("plugin")[0]}accounts/${

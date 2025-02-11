@@ -48,12 +48,11 @@
             <n-select
               filterable
               ref="responsibleSelect"
-              label-field="title"
-              value-field="uuid"
               placeholder="Responsible"
               style="min-width: 200px; width: 100%"
               :value="chat.responsible"
               :options="adminsItems"
+              :loading="isUsersLoading"
               @update:value="changeResponsible"
             />
           </template>
@@ -126,12 +125,11 @@
           <n-select
             filterable
             ref="responsibleSelect"
-            label-field="title"
-            value-field="uuid"
             placeholder="Responsible"
             style="min-width: 200px; width: 100%"
             :value="chat.responsible"
             :options="adminsItems"
+            :loading="isUsersLoading"
             @update:value="changeResponsible"
           />
         </n-collapse-item>
@@ -212,10 +210,8 @@
       style="width: 400px"
     >
       <template v-if="!isDefaultLoading">
-        <member-select
-          v-model:value="chatWithNewMembers!.users"
-          :options="availableMembersOptions"
-        />
+        <member-select-pagination v-model:value="chatWithNewMembers!.users" />
+
         <n-space style="margin-top: 10px" vertical align="end" justify="end">
           <n-button :loading="isAddSaveLoading" @click="saveMembers"
             >Save</n-button
@@ -255,7 +251,6 @@ import {
   NText,
   NTooltip,
   NSelect,
-  SelectOption,
   useNotification,
   NCollapse,
   NCollapseItem,
@@ -267,7 +262,6 @@ import { useAppStore } from "../../../store/app";
 import ChatOptions from "../chat_options.vue";
 import UserAvatar from "../../ui/user_avatar.vue";
 import MembersDropdown from "../../users/members_dropdown.vue";
-import MemberSelect from "../../users/member_select.vue";
 import {
   addToClipboard,
   getImageUrl,
@@ -278,6 +272,8 @@ import ChatActions from "../chat_actions.vue";
 import ChatDates from "../chat_dates.vue";
 import { useDefaultsStore } from "../../../store/defaults.ts";
 import { storeToRefs } from "pinia";
+import { useUsersStore } from "../../../store/users.ts";
+import MemberSelectPagination from "../../users/member_select_pagination.vue";
 
 const EditIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/PencilSharp")
@@ -308,13 +304,15 @@ const appStore = useAppStore();
 const store = useCcStore();
 const notification = useNotification();
 const defaultsStore = useDefaultsStore();
-const { isDefaultLoading, users, admins, metrics, departments } =
+const { isDefaultLoading, admins, metrics, departments } =
   storeToRefs(defaultsStore);
+
+const usersStore = useUsersStore();
+const { users, isUsersLoading } = storeToRefs(usersStore);
 
 const isEdit = ref<boolean>(false);
 const isAddDialog = ref<boolean>(false);
 const chatWithNewMembers = ref<Chat>();
-const availableMembersOptions = ref<SelectOption[]>([]);
 const isAddSaveLoading = ref<boolean>(false);
 const newStatus = ref();
 const isChangeStatusLoading = ref(false);
@@ -332,12 +330,11 @@ const members = computed(() => {
 
   uuids.forEach((uuid) => {
     if (!uuid) return;
-    result.push(store.users.get(uuid) as User);
+    result.push(users.value.get(uuid) as User);
   });
 
   return result;
 });
-const me = computed(() => store.me);
 
 const statusesOptions = computed(() =>
   getStatusItems().map((status) => ({
@@ -409,13 +406,11 @@ const changeDepartment = async (key: string) => {
 };
 
 const adminsItems = computed(() =>
-  admins.value.map(
-    (admin) => users.value.find(({ uuid }) => uuid === admin) ?? { uuid: admin }
-  )
+  admins.value
+    .map((admin) => users.value.get(admin))
+    .filter((u) => !!u)
+    .map((user) => ({ label: user!.title, value: user!.uuid }))
 );
-// const responsible = computed(() =>
-//   users.value.find(({ uuid }) => uuid === chat.value.responsible) as User
-// )
 
 const isVisible = ref<boolean>();
 const responsibleSelect = ref<any>();
@@ -432,19 +427,7 @@ const deleteMember = (uuid: string) => {
   store.update_chat({ ...chat.value, users } as Chat);
 };
 
-const fetchAvailableUsers = () => {
-  availableMembersOptions.value = users.value.map((user) => {
-    return {
-      label: user.title,
-      value: user.uuid,
-      disabled: me.value.uuid !== user.uuid && admins.value.includes(user.uuid),
-    };
-  });
-};
-
 const startAddMembers = () => {
-  fetchAvailableUsers();
-
   chatWithNewMembers.value = { ...chat.value } as Chat;
   isAddDialog.value = true;
 };

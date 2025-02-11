@@ -56,7 +56,6 @@ marked.use({
 });
 // @ts-ignore
 marked.use(mangle);
-
 const renderer = new Renderer();
 renderer.code = (code, language) => {
   if (!language) language = "plaintext";

@@ -144,7 +144,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref, watch } from "vue";
+import { computed, defineAsyncComponent, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import {
   NButton,
@@ -171,6 +171,7 @@ import { useCcStore } from "../../store/chatting.ts";
 import { addToClipboard } from "../../functions.ts";
 import { storeToRefs } from "pinia";
 import { useUsersStore } from "../../store/users.ts";
+import { onUnmounted } from "vue";
 
 const copyIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/CopyOutline")
@@ -241,10 +242,18 @@ const isBotSettingsOpen = ref(false);
 const isSaveBotStateLoading = ref(false);
 const botState = ref<{ [key: string]: any }>({});
 
-window.addEventListener("message", ({ data, origin }) => {
+const onMessage = ({ data, origin }: any) => {
   if (origin.includes("localhost:8081")) return;
   if (data.type !== "button-title") return;
   buttonTitle.value = data.value;
+};
+
+onMounted(() => {
+  window.addEventListener("message", onMessage);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("message", onMessage);
 });
 
 const hoverInstancesButton = (event: MouseEvent) => {

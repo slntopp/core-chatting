@@ -424,6 +424,12 @@ export const useCcStore = defineStore("cc", () => {
     fetch_attachments(attachmentsForFetch);
   })
 
+  watch(currentChat, (curr) => {
+    if (curr == null) {
+      messages.value.clear()
+    }
+  })
+
   return {
     load_me,
     me,

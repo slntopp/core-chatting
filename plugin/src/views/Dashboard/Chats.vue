@@ -254,11 +254,12 @@
             :selected="selectedChats"
             :hide-message="!isChatPanelOpen"
             :uuid="chat.uuid"
-            :chat="chat"
-            :chats="chats"
+            :chat="chat as Chat"
+            :chats="chats as Chat[]"
             :class="{
               active: chat.uuid === router.currentRoute.value.params.uuid,
             }"
+            :key="chat.uuid"
             @click="changeMode('none')"
             @hover="onMouseMove"
             @hoverEnd="isFirstMessageVisible = false"
@@ -281,7 +282,7 @@
   </div>
 
   <div id="separator" v-show="appStore.displayMode === 'half'"></div>
-  <div class="chat__item" v-if="appStore.displayMode !== 'full'">
+  <div class="chat__item" v-show="appStore.displayMode !== 'full'">
     <n-layout-content>
       <router-view />
     </n-layout-content>

@@ -103,7 +103,7 @@
         <template v-if="!onlyMainInfo">
           <n-icon
             size="18"
-            @mouseenter="(e) => emits('hover', e.clientX, e.clientY, chat.uuid)"
+            @mouseenter="(e:any) => emits('hover', e.clientX, e.clientY, chat.uuid)"
             @mouseleave="emits('hoverEnd')"
           >
             <mail-icon />
@@ -172,6 +172,7 @@ import {
   defineAsyncComponent,
   nextTick,
   onMounted,
+  onUnmounted,
   ref,
   toRefs,
   watch,
@@ -332,8 +333,16 @@ const onlyMainInfo = computed(
   () => appStore.isMobile || appStore.displayMode === "half"
 );
 
+const interval = ref<number>();
 const now = ref(Date.now());
-setInterval(() => (now.value = Date.now()), 1000);
+
+onMounted(() => {
+  interval.value = setInterval(() => (now.value = Date.now()), 1000);
+});
+
+onUnmounted(() => {
+  clearInterval(interval.value);
+});
 
 const lastUpdate = computed(() =>
   Number(

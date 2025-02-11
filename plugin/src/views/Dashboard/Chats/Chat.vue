@@ -140,7 +140,7 @@ watch(
   { deep: true }
 );
 
-watch(isMessageLoading, scrollToBottom);
+watch(messages, () => scrollToBottom());
 watch(scrollbar, scrollToBottom);
 
 const footer = ref();

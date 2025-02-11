@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/slntopp/core-chatting/cc"
+	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/pubsub"
 	"github.com/slntopp/nocloud-proto/events"
 	"github.com/slntopp/nocloud/pkg/nocloud/schema"
@@ -71,12 +72,24 @@ func (s *ChatsServer) CloseInactiveChats(ctx context.Context, log *zap.Logger, c
 		if len(users) > 0 {
 			user.Title = users[0].Title
 		}
+		chatsConfig, err := core.Config()
+		if err != nil {
+			log.Error("Failed to get chats config", zap.Error(err))
+		}
+		var depName = "Unknown"
+		for _, dep := range chatsConfig.GetDepartments() {
+			if dep.Key == chat.GetDepartment() {
+				depName = dep.Title
+				break
+			}
+		}
 		go eventPublisher(ctx, &events.Event{
 			Key:  "inactive_chat_closed",
 			Type: "email",
 			Data: map[string]*structpb.Value{
 				"subject":     structpb.NewStringValue(chat.GetTopic()),
 				"client_name": structpb.NewStringValue(user.GetTitle()),
+				"department":  structpb.NewStringValue(depName),
 			},
 			Uuid: chat.GetOwner(),
 		})

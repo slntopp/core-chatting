@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { defineStore } from "pinia";
 
 import { ConnectError, createPromiseClient } from "@connectrpc/connect";
@@ -9,7 +9,6 @@ import { useAppStore } from "./app";
 import {
   Empty,
   Chat,
-  Defaults,
   Users,
   User,
   Messages,
@@ -21,10 +20,10 @@ import {
   StreamRequest,
   Department,
   Merge,
-  FetchDefaultsRequest,
   GetMembersRequest,
   ListChatsRequest,
   CountChatsRequest,
+  SetBotStateRequest,
 } from "../connect/cc/cc_pb";
 import {
   ChatsAPI,
@@ -34,7 +33,7 @@ import {
 } from "../connect/cc/cc_connect";
 import { useRoute, useRouter } from "vue-router";
 import { useNotification } from "naive-ui";
-import { MetricWithKey } from "../hooks/useDefaults";
+import { MetricWithKey } from "./defaults";
 
 export const useCcStore = defineStore("cc", () => {
   const app = useAppStore();
@@ -69,7 +68,6 @@ export const useCcStore = defineStore("cc", () => {
   const chats_count = ref<Map<string, number>>(new Map());
   const totalChats = ref<number>(0);
   const currentChat = ref<Chat | null>(null);
-  const users = ref<Map<string, User>>(new Map());
   const departments = ref<Department[]>([]);
   const metrics = ref<MetricWithKey[]>([]);
 
@@ -102,8 +100,6 @@ export const useCcStore = defineStore("cc", () => {
 
     lastChatsParams.value = data;
     totalChats.value = Number(result.total);
-
-    resolve(result.pool.map((chat) => [...chat.admins, ...chat.users]).flat());
   }
 
   async function list_chats_count(data: CountChatsRequest) {
@@ -141,16 +137,12 @@ export const useCcStore = defineStore("cc", () => {
     chats.value.delete(chat.uuid);
   }
 
-  function fetch_defaults(fetchTemplates: boolean = false): Promise<Defaults> {
-    return users_c.fetchDefaults(new FetchDefaultsRequest({ fetchTemplates }));
-  }
-
-  function update_defaults(config: Defaults): Promise<Defaults> {
-    return users_c.setConfig(config);
-  }
-
   function change_department(chat: Chat): Promise<Chat> {
     return chats_c.changeDepartment(chat);
+  }
+
+  function update_bot_state(data: SetBotStateRequest): Promise<Chat> {
+    return chats_c.setBotState(data);
   }
 
   function change_status(chat: Chat): Promise<Chat> {
@@ -161,20 +153,8 @@ export const useCcStore = defineStore("cc", () => {
     return chats_c.mergeChats(new Merge({ chats }));
   }
 
-  async function resolve(req_users: string[] = []): Promise<Users> {
-    let result = await users_c.resolve(
-      new Users({ users: req_users.map((uuid) => new User({ uuid })) })
-    );
-    console.debug("Got Users", result.users);
-
-    for (let user of result.users) {
-      users.value.set(user.uuid, user);
-    }
-
-    return result;
-  }
-
   const messages = ref<Map<string, Message[]>>(new Map());
+  const attachments = ref<Map<string, any>>(new Map());
 
   function chat_messages(chat: Chat | undefined): Message[] {
     if (!chat) return [];
@@ -195,6 +175,30 @@ export const useCcStore = defineStore("cc", () => {
     messages.value.set(chat.uuid, res.messages);
     return res;
   }
+
+  async function fetch_attachments(uuids: string[]) {
+    if (!uuids || uuids.length === 0) {
+      return;
+    }
+
+    try {
+      const url = baseUrl.endsWith("/")
+        ? baseUrl.slice(0, -1)
+        : baseUrl;
+      var response = await fetch(`${url}/attachments?ids=${uuids.join(',')}`)
+      var data: { [key: string]: string } = await response.json()
+
+      Object.keys(data).forEach(key => {
+        attachments.value.set(key, data[key])
+      })
+
+    } catch (e) {
+      uuids.forEach(uuid => {
+        attachments.value.delete(uuid);
+      })
+    }
+  }
+
   function send_message(message: Message): Promise<Empty> {
     return messages_c.send(message);
   }
@@ -295,6 +299,13 @@ export const useCcStore = defineStore("cc", () => {
         break;
       default:
         console.warn("unknown event type", event.type);
+    }
+
+    if (currentChat.value?.uuid === chat.uuid) {
+      currentChat.value = chat;
+    }
+    if (chats.value.has(chat.uuid)) {
+      chats.value.set(chat.uuid, chat as Chat)
     }
   };
 
@@ -397,8 +408,23 @@ export const useCcStore = defineStore("cc", () => {
     }
   })();
 
+  watch(messages.value, () => {
+    var attachmentsForFetch: string[] = [];
+    if (currentChat.value?.uuid && messages.value.get(currentChat.value.uuid)) {
+      for (const message of (messages.value.get(currentChat.value.uuid) || [])) {
+        for (const attachment of message.attachments) {
+          if (!attachments.value.has(attachment)) {
+            attachmentsForFetch.push(attachment);
+            attachments.value.set(attachment, true);
+          }
+        }
+      }
+    }
+
+    fetch_attachments(attachmentsForFetch);
+  })
+
   return {
-    users,
     load_me,
     me,
     get_members,
@@ -428,10 +454,11 @@ export const useCcStore = defineStore("cc", () => {
     update_message,
     delete_message,
 
-    fetch_defaults,
-    update_defaults,
+    attachments,
+
+    users_c,
     change_department,
     change_status,
-    resolve,
+    update_bot_state,
   };
 });

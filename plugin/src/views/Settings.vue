@@ -16,12 +16,12 @@
         <!-- @vue-ignore -->
         <config-view
           @refresh="fetchData"
-          :users="users"
-          :metrics="metrics"
-          :departments="departments"
+          :metrics="metrics as MetricWithKey[]"
+          :departments="departments as Department[]"
           :admins="admins"
           :gateways="gateways"
           :templates="templates"
+          :bot="bot as Bot"
         />
       </n-tab-pane>
       <n-tab-pane name="templates" tab="Templates">
@@ -31,10 +31,9 @@
         <!-- @vue-ignore -->
         <templates-view
           @refresh="fetchData"
-          :users="users"
-          :metrics="metrics"
-          :departments="departments"
-          :admins="admins"
+          :metrics="metrics as MetricWithKey[]"
+          :departments="departments as Department[]"
+          :admins="adminsUuids"
           :gateways="gateways"
           :templates="templates"
           is-edit
@@ -52,28 +51,44 @@
 
 <script setup lang="ts">
 import { NSpin, NTabs, NTabPane, NSpace, NH3 } from "naive-ui";
-import useDefaults from "../hooks/useDefaults.ts";
 import templatesView from "../components/settings/templates.vue";
 import configView from "../components/settings/config.vue";
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { storeToRefs } from "pinia";
+import { MetricWithKey, useDefaultsStore } from "../store/defaults";
+import { Department } from "../connect/cc/cc_pb";
+import { useUsersStore } from "../store/users";
+
+const defaultsStore = useDefaultsStore();
+const usersStore = useUsersStore();
 
 const {
-  fetch_defaults,
   isDefaultLoading,
-  admins,
+  admins: adminsUuids,
   departments,
   gateways,
   metrics,
-  users,
   templates,
-} = useDefaults();
+  bot,
+} = storeToRefs(defaultsStore);
+const { users, isUsersLoading } = storeToRefs(usersStore);
 
 const isRefresh = ref(false);
 
 async function fetchData() {
-  await fetch_defaults(true);
+  await defaultsStore.fetch_defaults(true);
   isRefresh.value = true;
 }
 
-fetchData();
+const admins = computed(() => {
+  if (isUsersLoading.value) {
+    return [];
+  }
+
+  return adminsUuids.value
+    .map((uuid) => users.value.get(uuid))
+    .filter((v) => !!v);
+});
+
+setTimeout(() => fetchData(), 100);
 </script>

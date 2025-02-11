@@ -155,8 +155,7 @@
               clearable
               placeholder="Responsible"
               :options="responsibles"
-              label-field="title"
-              value-field="uuid"
+              :loading="isUsersLoading"
             />
             <n-button
               :disabled="!newResponsible"
@@ -331,7 +330,6 @@ import {
 import ChatItem from "../../components/chats/chat_item.vue";
 import ChatsFilters from "../../components/chats/chats_filters.vue";
 import useDraggable from "../../hooks/useDraggable.ts";
-import useDefaults from "../../hooks/useDefaults.ts";
 import {
   cleanObject,
   debounce,
@@ -339,6 +337,9 @@ import {
   getStatusItems,
 } from "../../functions.ts";
 import { ConnectError } from "@connectrpc/connect";
+import { storeToRefs } from "pinia";
+import { useDefaultsStore } from "../../store/defaults.ts";
+import { useUsersStore } from "../../store/users.ts";
 
 defineEmits(["hover", "hoverEnd"]);
 
@@ -375,8 +376,10 @@ const store = useCcStore();
 const router = useRouter();
 const route = useRoute();
 const { makeDraggable } = useDraggable();
-const { metrics, isDefaultLoading, fetch_defaults, admins, users } =
-  useDefaults();
+const defaultsStore = useDefaultsStore();
+const { metrics, isDefaultLoading, admins } = storeToRefs(defaultsStore);
+const usersStore = useUsersStore();
+const { isUsersLoading, users } = storeToRefs(usersStore);
 const notification = useNotification();
 
 const topPanel = ref<any>(null);
@@ -410,20 +413,19 @@ const departments = computed(() =>
 );
 
 const responsibles = computed(() =>
-  admins.value.map(
-    (admin) => users.value.find(({ uuid }) => uuid === admin) ?? { uuid: admin }
-  )
+  admins.value
+    .map((admin) => users.value.get(admin))
+    .filter((u) => !!u)
+    .map((user) => ({
+      label: user?.title,
+      value: user?.uuid,
+    }))
 );
 
 async function sync() {
   try {
     isLoading.value = true;
     fetch_chats_debounced();
-    const { users } = await store.get_members();
-
-    users.forEach((user) => {
-      store.users.set(user.uuid, user);
-    });
   } catch (error) {
     console.log(error);
   } finally {
@@ -742,7 +744,7 @@ const updateDateRange = ref<{ from: null | number; to: null | number }>({
   to: null,
 });
 
-if (Object.keys(metrics.value).length < 1) fetch_defaults();
+if (Object.keys(metrics.value).length < 1) defaultsStore.fetch_defaults();
 
 interface metricsOptionsType {
   [index: string]: [];

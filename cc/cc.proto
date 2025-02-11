@@ -198,13 +198,14 @@ message Defaults {
 
 message Bot {
   string prompt = 1;
-  bool enable_review_in_new_chats = 2;
-  bool enable_bot_in_new_chats = 3;
-  map<string, string> custom_values = 4;
+  bool review = 2;
+  bool enable = 3;
+  map<string, string> values = 4;
 }
 
 message Users {
   repeated User users = 1;
+  int64 total = 2;
 }
 
 message FetchDefaultsRequest {
@@ -213,6 +214,11 @@ message FetchDefaultsRequest {
 
 message GetMembersRequest{
   repeated string uuids = 1;
+  optional uint64 page = 2;
+  optional uint64 limit = 3;
+  optional string field = 4; // Sort field
+  optional string sort = 5;  // Sort direction
+  map<string, google.protobuf.Value> filters = 6;
 }
 
 service UsersAPI {

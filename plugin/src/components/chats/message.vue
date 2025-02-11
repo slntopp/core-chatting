@@ -90,6 +90,9 @@ import { useAppStore } from "../../store/app";
 import UserAvatar from "../ui/user_avatar.vue";
 import UserItem from "../users/user_item.vue";
 import { addToClipboard, getRelativeTime } from "../../functions.ts";
+import { useDefaultsStore } from "../../store/defaults.ts";
+import { storeToRefs } from "pinia";
+import { useUsersStore } from "../../store/users.ts";
 
 interface MessageProps {
   message: Message;
@@ -134,9 +137,14 @@ const emit = defineEmits(["approve", "convert", "edit", "delete"]);
 const theme = useThemeVars();
 const appStore = useAppStore();
 const store = useCcStore();
+const usersStore = useUsersStore();
+const defaultsStore = useDefaultsStore();
+
+const { admins } = storeToRefs(defaultsStore);
+const { users } = storeToRefs(usersStore);
 
 const sender = computed(
-  () => store.users.get(message.value.sender)?.title ?? "Unknown"
+  () => users.value.get(message.value.sender)?.title ?? "Unknown"
 );
 
 const x = ref(0);
@@ -210,7 +218,7 @@ const options = computed(() => {
       key: r,
       type: "render",
       render: () =>
-        h(UserItem, { user: store.users.get(r) as User, actions: false }),
+        h(UserItem, { user: users.value.get(r) as User, actions: false }),
     })),
   });
 
@@ -220,7 +228,6 @@ const options = computed(() => {
 function handle_select(
   key: "approve" | "convert" | "edit" | "delete" | "download"
 ) {
-  console.log(key);
   show.value = false;
 
   switch (key) {
@@ -282,6 +289,8 @@ function avatar() {
 
 const container_style = computed(() => {
   const is_sender = message.value.sender == store.me.uuid;
+  const is_admin = admins.value.includes(message.value.sender);
+
   const paddingRight = appStore.isMobile ? "35px" : "45px";
 
   let style = {
@@ -289,7 +298,11 @@ const container_style = computed(() => {
     borderRadius: theme.value.borderRadius,
     maxWidth: `calc(100% - ${paddingRight})`,
     border: `1px solid ${theme.value.borderColor}`,
-    backgroundColor: is_sender ? "var(--n-color-hover)" : null,
+    backgroundColor: is_sender
+      ? "var(--n-color-hover)"
+      : is_admin
+      ? "color-mix(in hsl, var(--n-color-hover), white 10%)"
+      : null,
   };
 
   if (message.value.underReview)
@@ -309,23 +322,24 @@ const container_style = computed(() => {
 });
 
 const attachFiles = computed<AttachFile[]>(() => {
-  if (!message.value.meta?.attachments?.toJson) {
+  if (!message.value?.attachments) {
     return [];
   }
 
-  const attachments = message.value.meta?.attachments.toJson() as any;
+  const attachments: { url: string; title: string }[] =
+    message.value?.attachments
+      .map((uuid) => store.attachments.get(uuid))
+      .filter((v) => !!v && v !== true);
 
   if (!attachments || !attachments.length) {
     return [];
   }
 
-  const files: AttachFile[] = attachments?.map((file: any) => {
+  const files: AttachFile[] = attachments?.map(({ url, title }) => {
     return {
-      url: file.url,
-      name: file.name,
-      type: !!file.name.match(/\.(jpg|jpeg|png|gif|svg)$/i)
-        ? "image"
-        : "document",
+      url: `https://${url}`,
+      name: title,
+      type: !!title.match(/\.(jpg|jpeg|png|gif|svg)$/i) ? "image" : "document",
     };
   });
 

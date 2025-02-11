@@ -162,8 +162,10 @@ import { ref } from "vue";
 import { Chat, Messages } from "../connect/cc/cc_pb";
 import { ApexOptions } from "apexcharts";
 import { useRouter } from "vue-router";
-import useDefaults from "../hooks/useDefaults";
 import { useAppStore } from "../store/app";
+import { useDefaultsStore } from "../store/defaults";
+import { storeToRefs } from "pinia";
+import { useUsersStore } from "../store/users";
 
 const nextIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/ChevronForwardOutline")
@@ -175,7 +177,11 @@ const prevIcon = defineAsyncComponent(
 const store = useCcStore();
 const appStore = useAppStore();
 const router = useRouter();
-const { admins, fetch_defaults } = useDefaults();
+const defaultsStore = useDefaultsStore();
+const usersStore = useUsersStore();
+
+const { admins } = storeToRefs(defaultsStore);
+const { users } = storeToRefs(usersStore);
 
 const months = [
   "Jan",
@@ -262,7 +268,6 @@ const usersActivityOffset = ref(0);
 onMounted(async () => {
   try {
     isChatsMessagesLoading.value = true;
-    fetch_defaults();
     await Promise.all(
       chats.value.map(async (chat) => {
         const messagesData = await store.get_messages(chat, false);
@@ -567,7 +572,7 @@ function getChartOptions({
   if (!isTypeAll) {
     series = series.map((s) => ({
       ...s,
-      name: store.users.get(s.name || "")?.title || "Unknown",
+      name: users.value.get(s.name || "")?.title || "Unknown",
     }));
   }
 
@@ -838,7 +843,7 @@ function goBack() {
 
 function openUser(e: Event) {
   const name = (e.target as any).innerText.split(":")[0];
-  const user = [...store.users.values()].find((u) => u.title === name);
+  const user = [...users.value.values()].find((u) => u.title === name);
   if (user) {
     window.open(
       `${appStore.conf?.params.fullUrl.split("plugin")[0]}accounts/${

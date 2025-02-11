@@ -90,18 +90,19 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 		log.Error("Failed to get chats config", zap.Error(err))
 		return nil, err
 	}
+	log.Debug("Unmarshalled config", zap.Any("conf", conf))
 	newChat := req.Msg
 	if newChat.BotState == nil {
 		newChat.BotState = map[string]*structpb.Value{}
 	}
 	if conf.Bot == nil {
 		conf.Bot = &cc.Bot{
-			EnableBotInNewChats:    true,
-			EnableReviewInNewChats: true,
+			Enable: true,
+			Review: true,
 		}
 	}
-	newChat.BotState["disabled"] = structpb.NewBoolValue(!conf.Bot.EnableBotInNewChats)
-	newChat.BotState["skip_review"] = structpb.NewBoolValue(!conf.Bot.EnableReviewInNewChats)
+	newChat.BotState["disabled"] = structpb.NewBoolValue(!conf.Bot.Enable)
+	newChat.BotState["skip_review"] = structpb.NewBoolValue(!conf.Bot.Review)
 	chat, err := s.ctrl.Create(ctx, newChat)
 	if err != nil {
 		return nil, err

@@ -155,9 +155,10 @@ import {
 import { useCcStore } from "../../../store/chatting";
 import { Chat, Kind, Message, Role } from "../../../connect/cc/cc_pb";
 import { useAppStore } from "../../../store/app";
-import { Value } from "@bufbuild/protobuf";
 import templatesView from "../../settings/templates.vue";
-import useDefaults from "../../../hooks/useDefaults";
+import { useDefaultsStore } from "../../../store/defaults";
+import { storeToRefs } from "pinia";
+import { useUsersStore } from "../../../store/users";
 
 const SendIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/SendOutline")
@@ -173,7 +174,12 @@ interface ChatFooterProps {
 const props = defineProps<ChatFooterProps>();
 const store = useCcStore();
 const appStore = useAppStore();
-const { fetch_defaults, admins, templates, users } = useDefaults();
+const defaultsStore = useDefaultsStore();
+const usersStore = useUsersStore();
+
+const { admins, templates, metrics, departments, gateways } =
+  storeToRefs(defaultsStore);
+const { users, isUsersLoading } = storeToRefs(usersStore);
 
 interface FileInfo extends UploadFileInfo {
   uuid?: string;
@@ -189,12 +195,12 @@ const isTemplatesOpen = ref(false);
 const isTemplatesLoading = ref(false);
 
 const mentionsOptions = computed(() => {
-  if (!props.chat) return [];
+  if (!props.chat || isUsersLoading.value) return [];
   const uuids = new Set([...props.chat.users, ...props.chat.admins]);
   const result: MentionOption[] = [];
 
   uuids.forEach((uuid) => {
-    const { title } = store.users.get(uuid) ?? {};
+    const { title } = users.value.get(uuid) ?? {};
 
     result.push({
       label: title ?? uuid,
@@ -240,24 +246,24 @@ watch(
   () => store.updating,
   (value) => {
     if (value) {
-      console.log(store.current_message);
-
       const message = store.current_message;
 
-      const attachments = message.meta?.attachments as any;
-      if (!attachments) {
+      const attachments: { url: string; title: string; uuid: string }[] =
+        message.attachments
+          .map((uuid) =>
+            store.attachments.has(uuid)
+              ? { ...store.attachments.get(uuid), uuid }
+              : null
+          )
+          .filter((v) => !!v && v !== true);
+      if (!attachments || !attachments.length) {
         return;
       }
 
-      attachments.forEach((file: any) => {
-        const { url: thumbnailUrl, name } = file;
-        const uuid = message.attachments?.find((id: string) =>
-          thumbnailUrl.includes(id)
-        );
-
+      attachments.forEach(({ uuid, title, url }) => {
         fileList.value.push({
-          thumbnailUrl,
-          name,
+          thumbnailUrl: `https://${url}`,
+          name: title,
           uuid,
           id: uuid ?? "",
           status: "finished",
@@ -282,13 +288,13 @@ function onInput({ target }: { target: HTMLTextAreaElement }) {
 }
 
 function check_mentioned() {
-  const users = Array.from(store.users.values());
+  const existed = Array.from(users.value.values());
   const titles = store.current_message.content.match(/@[\w\d-]{1,}/g);
 
   store.current_message.mentioned = [];
   titles?.forEach((title) => {
     const { uuid } =
-      users.find(
+      existed.find(
         (user) => user.title.replace(" ", "_") === title.replace("@", "")
       ) ?? {};
     const mention = store.current_message.mentioned.includes(uuid ?? title);
@@ -301,13 +307,6 @@ function check_mentioned() {
 async function handle_send() {
   if (fileList.value.length > 0) {
     await handle_send_files();
-
-    store.current_message.meta.attachments = Value.fromJson(
-      fileList.value.map((f) => ({
-        name: f.name,
-        url: f.url!,
-      }))
-    );
 
     store.current_message.attachments = fileList.value.map(
       (f) => f.uuid
@@ -388,13 +387,18 @@ function handle_new_line() {
 async function handle_open_templates() {
   isTemplatesLoading.value = true;
   try {
-    if (!templatesOptions.value) {
-      await fetch_defaults(true);
+    if (templates.value.length === 0) {
+      await defaultsStore.fetch_defaults(true);
+    }
 
+    if (!templatesOptions.value) {
       templatesOptions.value = {
         admins: admins.value,
-        users: users.value,
+        metrics: metrics.value,
+        departments: departments.value,
+        users: [...users.value.values()],
         templates: templates.value,
+        gateways: gateways.value,
         isEdit: false,
       };
     }

@@ -129,15 +129,14 @@ func (s *UsersServer) GetMembers(ctx context.Context, req *connect.Request[cc.Ge
 	log := s.log.Named("Me")
 	log.Debug("Request received", zap.Any("req", req.Msg))
 
-	//requestor := ctx.Value(core.ChatAccount).(string)
-
-	members, err := s.ctrl.GetMembers(ctx, req.Msg.GetUuids())
+	members, total, err := s.ctrl.GetMembers(ctx, req.Msg)
 	if err != nil {
 		return nil, err
 	}
 
 	resp := connect.NewResponse[cc.Users](&cc.Users{
 		Users: members,
+		Total: total,
 	})
 
 	return resp, nil

@@ -87,3 +87,9 @@ setDevice();
 window.addEventListener("resize", setDevice, true);
 watch(() => store.conf?.fullscreen, setDevice);
 </script>
+
+<style>
+:root {
+  --main-app-primary-color: #ff00ff;
+}
+</style>

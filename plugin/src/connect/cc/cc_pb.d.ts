@@ -874,19 +874,19 @@ export declare class Bot extends Message$1<Bot> {
   prompt: string;
 
   /**
-   * @generated from field: bool enable_review_in_new_chats = 2;
+   * @generated from field: bool review = 2;
    */
-  enableReviewInNewChats: boolean;
+  review: boolean;
 
   /**
-   * @generated from field: bool enable_bot_in_new_chats = 3;
+   * @generated from field: bool enable = 3;
    */
-  enableBotInNewChats: boolean;
+  enable: boolean;
 
   /**
-   * @generated from field: map<string, string> custom_values = 4;
+   * @generated from field: map<string, string> values = 4;
    */
-  customValues: { [key: string]: string };
+  values: { [key: string]: string };
 
   constructor(data?: PartialMessage<Bot>);
 
@@ -911,6 +911,11 @@ export declare class Users extends Message$1<Users> {
    * @generated from field: repeated cc.User users = 1;
    */
   users: User[];
+
+  /**
+   * @generated from field: int64 total = 2;
+   */
+  total: bigint;
 
   constructor(data?: PartialMessage<Users>);
 
@@ -959,6 +964,35 @@ export declare class GetMembersRequest extends Message$1<GetMembersRequest> {
    * @generated from field: repeated string uuids = 1;
    */
   uuids: string[];
+
+  /**
+   * @generated from field: optional uint64 page = 2;
+   */
+  page?: bigint;
+
+  /**
+   * @generated from field: optional uint64 limit = 3;
+   */
+  limit?: bigint;
+
+  /**
+   * Sort field
+   *
+   * @generated from field: optional string field = 4;
+   */
+  field?: string;
+
+  /**
+   * Sort direction
+   *
+   * @generated from field: optional string sort = 5;
+   */
+  sort?: string;
+
+  /**
+   * @generated from field: map<string, google.protobuf.Value> filters = 6;
+   */
+  filters: { [key: string]: Value };
 
   constructor(data?: PartialMessage<GetMembersRequest>);
 

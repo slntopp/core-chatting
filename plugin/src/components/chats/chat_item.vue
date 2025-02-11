@@ -10,6 +10,11 @@
           round
           size="large"
           class="chat__avatar"
+          :style="{
+            backgroundColor:
+              chat.responsible === store.me.uuid &&
+              'var(--main-app-primary-color)',
+          }"
           :avatar="
             hovered || selected.includes(chat.uuid) ? ' ' : members.join(' ')
           "
@@ -19,7 +24,7 @@
           <n-checkbox
             v-if="hovered || selected.includes(chat.uuid)"
             style="position: absolute; top: 21px"
-            :style="{ left: (appStore.isMobile) ? '12px' : '22px' }"
+            :style="{ left: appStore.isMobile ? '12px' : '22px' }"
             :checked="selected.includes(chat.uuid)"
             @update:checked="emits('select', chat.uuid)"
             @click.stop
@@ -33,17 +38,28 @@
           :wrap-item="false"
           style="gap: 5px; width: 100%"
         >
-          <n-text depth="3" class="sub" @click.stop="openUser(chat.owner)">
-            {{ store.users.get(chat.owner)?.title }}
+          <n-skeleton width="40%" text v-if="isUsersLoading" />
+          <n-text
+            v-else
+            depth="3"
+            class="sub"
+            @click.stop="openUser(chat.owner)"
+          >
+            {{ allUsers.get(chat.owner)?.title }}
           </n-text>
+
+          <n-icon v-if="chat.botState.escalated" size="20" color="red">
+            <escalated-icon />
+          </n-icon>
 
           <n-icon size="20" @click.stop="openChat(chat.owner)">
             <login-icon v-if="!appStore.isMobile" />
           </n-icon>
         </n-space>
         <template v-if="appStore.displayMode === 'full' && !onlyMainInfo">
-          <n-text class="responsible" depth="3">
-            {{ store.users.get(chat.responsible ?? "")?.title }}
+          <n-skeleton width="40%" text v-if="isUsersLoading" />
+          <n-text v-else class="responsible" depth="3">
+            {{ allUsers.get(chat.responsible ?? "")?.title }}
           </n-text>
 
           <n-space class="department">
@@ -169,6 +185,7 @@ import {
   NSpace,
   NText,
   NTooltip,
+  NSkeleton,
   useNotification,
 } from "naive-ui";
 import { Chat } from "../../connect/cc/cc_pb";
@@ -181,6 +198,8 @@ import {
 import UserAvatar from "../ui/user_avatar.vue";
 import ChatStatus from "./chat_status.vue";
 import { useAppStore } from "../../store/app.ts";
+import { useUsersStore } from "../../store/users.ts";
+import { storeToRefs } from "pinia";
 
 const CopyIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/CopyOutline")
@@ -190,6 +209,10 @@ const MailIcon = defineAsyncComponent(
 );
 const LoginIcon = defineAsyncComponent(
   () => import("../../assets/icons/LoginOutline.svg")
+);
+
+const escalatedIcon = defineAsyncComponent(
+  () => import("@vicons/ionicons5/NotificationsOutline")
 );
 
 interface ChatItemProps {
@@ -206,17 +229,21 @@ const { chat, uuid, chats } = toRefs(props);
 
 const store = useCcStore();
 const appStore = useAppStore();
+const usersStore = useUsersStore();
+const { users: allUsers, isUsersLoading } = storeToRefs(usersStore);
+
 const router = useRouter();
 const notification = useNotification();
 
 const users = computed(() =>
-  chat.value.users.map((uuid) => store.users.get(uuid)?.title ?? "Unknown")
+  chat.value.users.map((uuid) => allUsers.value.get(uuid)?.title ?? "Unknown")
 );
 const admins = computed(() =>
-  chat.value.admins.map((uuid) => store.users.get(uuid)?.title ?? "Unknown")
+  chat.value.admins.map((uuid) => allUsers.value.get(uuid)?.title ?? "Unknown")
 );
 
 const members = computed(() => users.value.concat(admins.value));
+
 const department = computed(
   () =>
     store.departments.find(({ key }) => key === chat.value.department)?.title ??
@@ -232,7 +259,7 @@ const department = computed(
 // })
 const hovered = ref(false);
 
-if (appStore.isMobile) hovered.value = true
+if (appStore.isMobile) hovered.value = true;
 
 const chatTopic = computed(() => {
   const topic = chat.value.topic ?? members.value.join(", ");
@@ -294,14 +321,12 @@ const chatRightColumn = computed(() =>
   appStore.displayMode === "full" ? 6 : 3
 );
 const avatarScale = computed(() => {
-  if (appStore.isMobile) return 0
+  if (appStore.isMobile) return 0;
 
-  return props.selected.includes(chat.value.uuid) ? 0.5 : 1
+  return props.selected.includes(chat.value.uuid) ? 0.5 : 1;
 });
 
-const chatAvatarWidth = computed(() =>
-  (appStore.isMobile) ? '15px' : null
-)
+const chatAvatarWidth = computed(() => (appStore.isMobile ? "15px" : null));
 
 const onlyMainInfo = computed(
   () => appStore.isMobile || appStore.displayMode === "half"
@@ -454,7 +479,7 @@ function openChat(user: string) {
 
 .chat__avatar-wrapper {
   height: fit-content;
-  width: v-bind('chatAvatarWidth');
+  width: v-bind("chatAvatarWidth");
 }
 
 .chat__avatar {

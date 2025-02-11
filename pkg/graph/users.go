@@ -56,14 +56,18 @@ func (c *UsersController) Resolve(ctx context.Context, uuids []string) ([]*cc.Us
 }
 
 const getMembers = `
-FOR a in @@accounts
+LET members = ( FOR a in @@accounts
+  %s
   %s
   RETURN MERGE(a, {
   	uuid: a._key
   })
+)
+LET total = LENGTH(members)
+RETURN { pool: @count>0 ? SLICE(members, @offset, @count) : members, total: total }
 `
 
-func (c *UsersController) GetMembers(ctx context.Context, uuids []string) ([]*cc.User, error) {
+func (c *UsersController) GetMembers(ctx context.Context, req *cc.GetMembersRequest) ([]*cc.User, int64, error) {
 	log := c.log.Named("GetMembers")
 	log.Debug("Request received")
 
@@ -71,33 +75,79 @@ func (c *UsersController) GetMembers(ctx context.Context, uuids []string) ([]*cc
 		"@accounts": c.colname,
 	}
 	filters := ""
-	if len(uuids) > 0 {
-		filters += " FILTER a._key IN @uuids"
-		vars["uuids"] = uuids
+	if req.GetFilters() != nil {
+		for key, value := range req.GetFilters() {
+			if key == "uuid" || key == "uuids" {
+				values := value.GetListValue().AsSlice()
+				if len(values) == 0 {
+					continue
+				}
+				filters += fmt.Sprintf(` FILTER a._key in @%s`, key)
+				vars[key] = values
+			} else if key == "search_param" {
+				filters += fmt.Sprintf(` FILTER a._key LIKE "%s"`,
+					"%"+value.GetStringValue()+"%")
+			} else if key == "exclude_uuids" {
+				values := value.GetListValue().AsSlice()
+				if len(values) == 0 {
+					continue
+				}
+				filters += fmt.Sprintf(` FILTER a._key NOT IN @%s`, key)
+				vars[key] = values
+			} else {
+				values := value.GetListValue().AsSlice()
+				if len(values) == 0 {
+					continue
+				}
+				filters += fmt.Sprintf(` FILTER a["%s"] in @%s`, key, key)
+				vars[key] = values
+			}
+		}
+	}
+	if len(req.GetUuids()) > 0 {
+		key := "includedUuids"
+		filters += fmt.Sprintf(` FILTER a._key in @%s`, key)
+		vars[key] = req.GetUuids()
 	}
 
-	query := fmt.Sprintf(getMembers, filters)
+	sorts := ""
+	if req.Field != nil && req.Sort != nil {
+		subQuery := ` SORT c.%s %s`
+		field, sort := req.GetField(), req.GetSort()
+		sorts += fmt.Sprintf(subQuery, field, sort)
+	}
+
+	if req.Page != nil && req.Limit != nil && req.GetLimit() != 0 {
+		limit, page := req.GetLimit(), req.GetPage()
+		offset := (page - 1) * limit
+		vars["offset"] = offset
+		vars["count"] = limit
+	} else {
+		vars["offset"] = 0
+		vars["count"] = 0
+	}
+
+	query := fmt.Sprintf(getMembers, filters, sorts)
 	cur, err := c.db.Query(ctx, query, vars)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	var members []*cc.User
+	resp := struct {
+		Pool  []*cc.User `json:"pool"`
+		Total int64      `json:"total"`
+	}{}
 
-	for cur.HasMore() {
-		var member cc.User
-
-		_, err := cur.ReadDocument(ctx, &member)
+	if cur.HasMore() {
+		_, err := cur.ReadDocument(ctx, &resp)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
-
-		members = append(members, &member)
+	} else {
+		return nil, 0, fmt.Errorf("not found or internal")
 	}
 
-	log.Debug("Len", zap.Int("len", len(members)))
-
-	return members, nil
+	return resp.Pool, resp.Total, nil
 }
 
 const removeCommandsQuery = `

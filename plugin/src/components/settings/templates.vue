@@ -129,12 +129,14 @@ import {
   useNotification,
 } from "naive-ui";
 import messageContent from "../../components/chats/message/message_content.vue";
-import { Defaults, Department, User } from "../../connect/cc/cc_pb";
+import { Defaults, Department } from "../../connect/cc/cc_pb";
 import {
   MessageTemplate,
   MetricWithKey,
   useDefaultsStore,
 } from "../../store/defaults";
+import { useUsersStore } from "../../store/users";
+import { storeToRefs } from "pinia";
 
 const deleteIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/CloseOutline")
@@ -151,19 +153,22 @@ interface TemplatesProps {
   departments: Department[];
   gateways: string[];
   metrics: MetricWithKey[];
-  users: User[];
   templates: MessageTemplate[];
   isEdit: boolean;
 }
 
 const props = defineProps<TemplatesProps>();
-const { admins, users, templates, departments, gateways, metrics, isEdit } =
+const { admins, templates, departments, gateways, metrics, isEdit } =
   toRefs(props);
 
 const emit = defineEmits(["refresh", "select"]);
 
 const notification = useNotification();
 const store = useDefaultsStore();
+const usersStore = useUsersStore();
+const defaultsStore = useDefaultsStore();
+
+const { users } = storeToRefs(usersStore);
 
 const searchParam = ref("");
 
@@ -188,15 +193,13 @@ const filtredTemplates = computed(() => {
 });
 
 const mentionsOptions = computed(() => {
-  const uuids = new Set([...admins.value]);
   const result: MentionOption[] = [];
 
-  uuids.forEach((uuid) => {
-    const { title } = users.value.find((user) => user.uuid === uuid) ?? {};
-
+  admins.value.forEach((admin) => {
+    const user = users.value.get(admin)!;
     result.push({
-      label: title ?? uuid,
-      value: title?.replace(" ", "_") ?? uuid,
+      label: user.title ?? admin,
+      value: user.title?.replace(" ", "_") ?? admin,
     });
   });
 
@@ -219,8 +222,6 @@ async function saveTemplates() {
   try {
     isSaveLoading.value = true;
 
-    console.log(newTemplates.value);
-
     const data = new Defaults({
       admins: admins.value,
       departments: departments.value,
@@ -232,6 +233,7 @@ async function saveTemplates() {
         }),
         {}
       ),
+      bot: defaultsStore.bot,
       templates: newTemplates.value.reduce(
         (result, template) => ({
           ...result,
@@ -240,8 +242,6 @@ async function saveTemplates() {
         {}
       ),
     });
-
-    console.log(data);
 
     await store.update_defaults(data);
 

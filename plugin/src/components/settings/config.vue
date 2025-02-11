@@ -141,6 +141,11 @@
           </tbody>
         </n-table>
 
+        <member-select-pagination
+          v-else-if="option.isUsers"
+          v-model:value="newAdmins"
+        />
+
         <n-select
           v-else-if="option.items"
           multiple
@@ -270,7 +275,6 @@ import {
   watch,
 } from "vue";
 import { Value } from "naive-ui/es/select/src/interface";
-import { JsonObject } from "@bufbuild/protobuf";
 import {
   Bot,
   Defaults,
@@ -285,6 +289,7 @@ import {
   MetricWithKey,
   useDefaultsStore,
 } from "../../store/defaults.ts";
+import MemberSelectPagination from "../users/member_select_pagination.vue";
 
 const saveIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/SaveOutline")
@@ -322,6 +327,7 @@ interface optionsType {
     ];
     items?: any[];
     isInput?: boolean;
+    isUsers?: boolean;
 
     onClick?: () => void;
     onSave?: (i?: number) => void;
@@ -330,7 +336,7 @@ interface optionsType {
 }
 
 interface configType {
-  admins: string[];
+  admins: User[];
   departments: Department[];
   gateways: string[];
   metrics: MetricWithKey[];
@@ -338,12 +344,8 @@ interface configType {
   bot: Bot;
 }
 
-interface ConfigProps extends configType {
-  users: User[];
-}
-
-const props = defineProps<ConfigProps>();
-const { admins, departments, gateways, metrics, users, templates, bot } =
+const props = defineProps<configType>();
+const { admins, departments, gateways, metrics, templates, bot } =
   toRefs(props);
 
 const emit = defineEmits(["refresh"]);
@@ -352,7 +354,7 @@ const defaultsStore = useDefaultsStore();
 const notification = useNotification();
 
 const botCustomValues = ref<{ value: string; key: string }[]>();
-
+const newAdmins = ref<string[]>([]);
 const isEditLoading = ref(false);
 const inputs = reactive<inputsType>({
   gateways: { editMode: false, value: "" },
@@ -372,15 +374,6 @@ onMounted(() => {
   setDefaultConfig();
 });
 
-const adminsOptions = computed(() => ({
-  key: "Admins",
-  items: users.value.map((user) => {
-    const { email } = (user.data?.toJson() as JsonObject) ?? {};
-
-    return { ...user, title: `${user.title} ${email ? `(${email})` : ""}` };
-  }),
-}));
-
 const departmentsOptions = computed(() => ({
   key: "Departments",
   headers: [
@@ -390,13 +383,12 @@ const departmentsOptions = computed(() => ({
     {
       title: "Admins",
       value: "admins",
-      options: config.admins.map((uuid) => {
-        const user = users.value.find((user) => user.uuid === uuid);
-        const { email } = (user?.data?.toJson() as JsonObject) ?? {};
+      options: admins.value.map((admin) => {
+        const { email } = (admin?.data as any) ?? {};
 
         return {
-          ...user,
-          title: `${user?.title} ${email ? `(${email})` : ""}`,
+          ...admin,
+          title: `${admin?.title} ${email ? `(${email})` : ""}`,
         };
       }),
     },
@@ -479,6 +471,11 @@ const metricsOptions = computed(() => ({
   },
 }));
 
+const adminsOptions = computed(() => ({
+  key: "Admins",
+  isUsers: true,
+}));
+
 /* @ts-ignore */
 const options = computed<optionsType>(() => ({
   admins: adminsOptions.value,
@@ -493,6 +490,7 @@ async function submit() {
     await defaultsStore.update_defaults(
       new Defaults({
         ...config,
+        admins: newAdmins.value,
         bot: {
           ...config.bot,
           values: botCustomValues.value?.reduce<any>((acc, curr) => {
@@ -555,4 +553,16 @@ watch(
     }));
   }
 );
+
+newAdmins.value = admins.value.map((a) => a.uuid);
+
+watch(admins, () => {
+  newAdmins.value = admins.value.map((a) => a.uuid);
+});
+</script>
+
+<script lang="ts">
+export default {
+  name: "settings-config",
+};
 </script>

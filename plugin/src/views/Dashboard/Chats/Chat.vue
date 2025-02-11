@@ -121,10 +121,7 @@ async function load_chat() {
   if (!chat.value) return;
   try {
     isMessageLoading.value = true;
-    await Promise.all([
-      store.resolve([...chat.value.users, ...chat.value.admins]),
-      store.get_messages(chat.value as Chat),
-    ]);
+    await Promise.all([store.get_messages(chat.value as Chat)]);
   } finally {
     isMessageLoading.value = false;
   }

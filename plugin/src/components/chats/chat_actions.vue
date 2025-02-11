@@ -170,6 +170,7 @@ import { useAppStore } from "../../store/app.ts";
 import { useCcStore } from "../../store/chatting.ts";
 import { addToClipboard } from "../../functions.ts";
 import { storeToRefs } from "pinia";
+import { useUsersStore } from "../../store/users.ts";
 
 const copyIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/CopyOutline")
@@ -194,9 +195,11 @@ interface ChatActionsProps {
 
 const appStore = useAppStore();
 const store = useCcStore();
+const usersStore = useUsersStore();
 const notification = useNotification();
 
 const { currentChat } = storeToRefs(store);
+const { users } = storeToRefs(usersStore);
 
 const props = defineProps<ChatActionsProps>();
 const router = useRouter();
@@ -269,7 +272,7 @@ const commands = computed(() => {
   const result: commandType[] = [];
 
   props.chat.admins.forEach((uuid) => {
-    const bot = store.users.get(uuid);
+    const bot = users.value.get(uuid);
 
     if (!bot?.ccIsBot) return;
     Object.entries(bot.ccCommands).forEach(([key, description]) => {

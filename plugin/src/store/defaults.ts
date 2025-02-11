@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { Bot, Defaults, Department, FetchDefaultsRequest, Metric, User, Users } from '../connect/cc/cc_pb';
+import { Bot, Defaults, Department, FetchDefaultsRequest, Metric, } from '../connect/cc/cc_pb';
 import { ref } from 'vue';
 import { useCcStore } from './chatting';
 
@@ -19,7 +19,6 @@ export const useDefaultsStore = defineStore('defaults', () => {
 
     const isDefaultLoading = ref(false);
     const admins = ref<string[]>([]);
-    const users = ref<User[]>([]);
     const gateways = ref<string[]>([]);
     const metrics = ref<MetricWithKey[]>([]);
     const departments = ref<Department[]>([]);
@@ -28,19 +27,15 @@ export const useDefaultsStore = defineStore('defaults', () => {
 
 
     async function fetch_defaults(fetchTemplates = false) {
-        if (isDefaultLoading.value) {
+        if (isDefaultLoading.value && !fetchTemplates) {
             return;
         }
 
         try {
             isDefaultLoading.value = true;
 
-            const data = await Promise.all([
-                cc_store.get_members(),
-                cc_store.users_c.fetchDefaults(new FetchDefaultsRequest({ fetchTemplates }))
-            ]);
-            const members = data[0] as Users;
-            const defaults = data[1] as any as Defaults;
+            const data = await cc_store.users_c.fetchDefaults(new FetchDefaultsRequest({ fetchTemplates }))
+            const defaults = data as Defaults;
 
             console.debug("Defaults", defaults);
 
@@ -53,7 +48,6 @@ export const useDefaultsStore = defineStore('defaults', () => {
                     content: value,
                 })
             );
-            users.value = members.users;
             metrics.value = Object.entries(defaults.metrics).map(([key, value]) => ({
                 key,
                 ...value,
@@ -63,8 +57,6 @@ export const useDefaultsStore = defineStore('defaults', () => {
 
             cc_store.departments = defaults.departments;
             cc_store.metrics = metrics.value;
-        } catch (e) {
-            console.log(e, 232323324);
         } finally {
             isDefaultLoading.value = false;
         }
@@ -81,7 +73,6 @@ export const useDefaultsStore = defineStore('defaults', () => {
         isDefaultLoading,
 
         admins,
-        users,
         gateways,
         metrics,
         departments,

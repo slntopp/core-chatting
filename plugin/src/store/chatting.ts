@@ -62,7 +62,6 @@ export const useCcStore = defineStore("cc", () => {
 
   const route = useRoute();
   const router = useRouter();
-  const notification = useNotification();
 
   const chats = ref<Map<string, Chat>>(new Map());
   const chats_count = ref<Map<string, number>>(new Map());
@@ -238,6 +237,8 @@ export const useCcStore = defineStore("cc", () => {
       }
     } catch (e) {
       if (e instanceof ConnectError) {
+        const notification = useNotification();
+
         notification.error({
           title: "Error",
           description: e.message,
@@ -422,6 +423,12 @@ export const useCcStore = defineStore("cc", () => {
     }
 
     fetch_attachments(attachmentsForFetch);
+  })
+
+  watch(currentChat, (curr) => {
+    if (curr == null) {
+      messages.value.clear()
+    }
   })
 
   return {

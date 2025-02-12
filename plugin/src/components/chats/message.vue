@@ -64,6 +64,8 @@ import {
   defineAsyncComponent,
   h,
   nextTick,
+  onMounted,
+  onUnmounted,
   reactive,
   ref,
   toRefs,
@@ -347,7 +349,15 @@ const attachFiles = computed<AttachFile[]>(() => {
 });
 
 const now = ref(Date.now());
-setInterval(() => (now.value = Date.now()), 1000);
+const interval = ref<number>();
+
+onMounted(() => {
+  interval.value = setInterval(() => (now.value = Date.now()), 1000);
+});
+
+onUnmounted(() => {
+  clearInterval(interval.value);
+});
 
 function timestamp() {
   let result = "";

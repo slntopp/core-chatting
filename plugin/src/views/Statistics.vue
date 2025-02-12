@@ -270,7 +270,7 @@ onMounted(async () => {
     isChatsMessagesLoading.value = true;
     await Promise.all(
       chats.value.map(async (chat) => {
-        const messagesData = await store.get_messages(chat, false);
+        const messagesData = await store.get_messages(chat as Chat, false);
         chatMessagesMap.value.set(chat.uuid, messagesData);
       })
     );
@@ -399,7 +399,7 @@ function getChartOptions({
   const endDate = new Date(durationTuples[1].getTime());
 
   filtredChats = chatsFilter({
-    chats: filtredChats,
+    chats: filtredChats as Chat[],
     endDate,
     startDate,
   });
@@ -478,7 +478,7 @@ function getChartOptions({
         if (
           !(createdDateTs > firstDayTs) ||
           !(createdDateTs < lastDayTs) ||
-          !filter(chat)
+          !filter(chat as Chat)
         ) {
           return;
         }
@@ -487,7 +487,7 @@ function getChartOptions({
           Number(chat.created) - firstDayTs
         ).getDate();
 
-        setToChartMap({ map: seriesMap, key: currentDay, chat });
+        setToChartMap({ map: seriesMap, key: currentDay, chat: chat as Chat });
       });
 
       break;
@@ -498,18 +498,18 @@ function getChartOptions({
       filtredChats.forEach((chat) => {
         const createdDate = new Date(Number(chat.created));
 
-        if (createdDate.getMonth() !== currentMonth || !filter(chat)) {
+        if (createdDate.getMonth() !== currentMonth || !filter(chat as Chat)) {
           return;
         }
 
         const currentDay = Math.ceil(createdDate.getDate() / 7);
-        setToChartMap({ map: seriesMap, key: currentDay, chat });
+        setToChartMap({ map: seriesMap, key: currentDay, chat: chat as Chat });
       });
       break;
     }
     case "month": {
       filtredChats.forEach((chat) => {
-        setToChartMap({ map: seriesMap, key: 1, chat });
+        setToChartMap({ map: seriesMap, key: 1, chat: chat as Chat });
       });
       break;
     }
@@ -518,7 +518,10 @@ function getChartOptions({
       filtredChats.forEach((chat) => {
         const createdDate = new Date(Number(chat.created));
 
-        if (createdDate.getFullYear() !== currentYear || !filter(chat)) {
+        if (
+          createdDate.getFullYear() !== currentYear ||
+          !filter(chat as Chat)
+        ) {
           return;
         }
 
@@ -526,7 +529,7 @@ function getChartOptions({
         setToChartMap({
           map: seriesMap,
           key: currentMonth,
-          chat,
+          chat: chat as Chat,
         });
       });
 
@@ -538,7 +541,7 @@ function getChartOptions({
         setToChartMap({
           map: seriesMap,
           key: 1,
-          chat,
+          chat: chat as Chat,
         });
       });
 

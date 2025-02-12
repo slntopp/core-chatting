@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref } from "vue";
+import { watch, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import {
   NConfigProvider,
@@ -22,6 +22,7 @@ import {
   lightTheme,
 } from "naive-ui";
 import { useAppStore } from "./store/app.ts";
+import { onUnmounted } from "vue";
 
 const router = useRouter();
 const store = useAppStore();
@@ -45,10 +46,21 @@ watch(
   }
 );
 
-window.addEventListener("message", ({ data, origin }) => {
+const onMessage = ({ data, origin }: any) => {
   if (origin.includes("localhost")) return;
   if (data.type !== "start-page") return;
   router.push({ path: "/dashboard" });
+};
+
+onMounted(() => {
+  window.addEventListener("message", onMessage);
+
+  window.addEventListener("resize", setDevice, true);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("message", onMessage);
+  window.removeEventListener("resize", setDevice, true);
 });
 
 router.beforeResolve((to, from, next) => {
@@ -84,7 +96,6 @@ function setDevice() {
 }
 
 setDevice();
-window.addEventListener("resize", setDevice, true);
 watch(() => store.conf?.fullscreen, setDevice);
 </script>
 

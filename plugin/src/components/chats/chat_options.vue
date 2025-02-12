@@ -124,6 +124,7 @@ import { useDefaultsStore } from "../../store/defaults.ts";
 import { storeToRefs } from "pinia";
 import { useUsersStore } from "../../store/users.ts";
 import memberSelectPagination from "../users/member_select_pagination.vue";
+import { onUnmounted } from "vue";
 
 interface ChatOptionsProps {
   minHeight?: string;
@@ -170,10 +171,18 @@ const chat = ref<Chat>(
   })
 );
 
-window.addEventListener("message", ({ data, origin }) => {
+const onMessage = ({ data, origin }: any) => {
   if (origin.includes("localhost")) return;
   if (data.type !== "user-uuid") return;
   chat.value.users.push(data.value);
+};
+
+onMounted(() => {
+  window.addEventListener("message", onMessage);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("message", onMessage);
 });
 
 const adminsWithoutDuplicates = computed(() =>

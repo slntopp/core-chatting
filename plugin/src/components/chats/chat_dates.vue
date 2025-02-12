@@ -43,21 +43,30 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { NSpace, NText, NTooltip } from 'naive-ui'
-import { Chat } from '../../connect/cc/cc_pb'
-import { getRelativeTime } from '../../functions'
+import { computed, onMounted, onUnmounted, ref } from "vue";
+import { NSpace, NText, NTooltip } from "naive-ui";
+import { Chat } from "../../connect/cc/cc_pb";
+import { getRelativeTime } from "../../functions";
 
 interface ChatDatesProps {
-  chat: Chat
+  chat: Chat;
 }
 
-const props = defineProps<ChatDatesProps>()
-const now = ref(Date.now())
-
-setInterval(() => now.value = Date.now(), 1000)
+const props = defineProps<ChatDatesProps>();
+const now = ref(Date.now());
+const interval = ref<number>();
 
 const lastUpdate = computed(() =>
-  Number(props.chat.meta?.lastMessage?.edited || props.chat.meta?.lastMessage?.sent)
-)
+  Number(
+    props.chat.meta?.lastMessage?.edited || props.chat.meta?.lastMessage?.sent
+  )
+);
+
+onMounted(() => {
+  interval.value = setInterval(() => (now.value = Date.now()), 1000);
+});
+
+onUnmounted(() => {
+  clearInterval(interval.value);
+});
 </script>

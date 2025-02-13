@@ -80,7 +80,7 @@ async function onSearch(value?: string) {
         GetMembersRequest.fromJson({
           limit: 20,
           page: 1,
-          filters: { search: value, exclude_uuids: [...props.value] },
+          filters: { search_param: value, exclude_uuids: [...props.value] },
         })
       )
     ).toJson() as any as Users;

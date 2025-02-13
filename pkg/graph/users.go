@@ -85,8 +85,8 @@ func (c *UsersController) GetMembers(ctx context.Context, req *cc.GetMembersRequ
 				filters += fmt.Sprintf(` FILTER a._key in @%s`, key)
 				vars[key] = values
 			} else if key == "search_param" {
-				filters += fmt.Sprintf(` FILTER a._key LIKE "%s"`,
-					"%"+value.GetStringValue()+"%")
+				filters += fmt.Sprintf(` FILTER a._key LIKE "%s" || LOWER(a.data["email"]) LIKE LOWER("%s") || LOWER(a.title) LIKE LOWER("%s")`,
+					"%"+value.GetStringValue()+"%", "%"+value.GetStringValue()+"%", "%"+value.GetStringValue()+"%")
 			} else if key == "exclude_uuids" {
 				values := value.GetListValue().AsSlice()
 				if len(values) == 0 {

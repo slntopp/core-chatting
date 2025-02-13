@@ -25,10 +25,7 @@
         </n-form-item>
 
         <n-form-item label="Members" label-align="left" label-width="100">
-          <member-select
-            v-model:value="chat.users"
-            :options="membersWithoutDuplicates"
-          />
+          <member-select-pagination v-model:value="chat.users" />
         </n-form-item>
 
         <n-form-item label="Departament" label-align="left" label-width="100">
@@ -44,6 +41,7 @@
           <n-select
             v-model:value="chat.admins"
             multiple
+            :loading="isUsersLoading"
             :options="adminsWithoutDuplicates"
             filterable
           />
@@ -114,18 +112,19 @@ import {
   NSpace,
   NSpin,
   NText,
-  SelectOption,
 } from "naive-ui";
 
 import { useRouter } from "vue-router";
 import { useCcStore } from "../../store/chatting.ts";
 import { useAppStore } from "../../store/app.ts";
 import { Chat, ChatMeta, Role } from "../../connect/cc/cc_pb";
-import MemberSelect from "../users/member_select.vue";
 import { ValueAtom } from "naive-ui/es/select/src/interface";
 import { Value } from "@bufbuild/protobuf";
 import { useDefaultsStore } from "../../store/defaults.ts";
 import { storeToRefs } from "pinia";
+import { useUsersStore } from "../../store/users.ts";
+import memberSelectPagination from "../users/member_select_pagination.vue";
+import { onUnmounted } from "vue";
 
 interface ChatOptionsProps {
   minHeight?: string;
@@ -146,8 +145,11 @@ const router = useRouter();
 const store = useCcStore();
 const appStore = useAppStore();
 const defaultsStore = useDefaultsStore();
-const { admins, isDefaultLoading, users, gateways, metrics, departments } =
+const usersStore = useUsersStore();
+
+const { admins, isDefaultLoading, gateways, metrics, departments } =
   storeToRefs(defaultsStore);
+const { users, isUsersLoading } = storeToRefs(usersStore);
 
 const form = ref<FormInst>();
 const rules = {
@@ -169,26 +171,23 @@ const chat = ref<Chat>(
   })
 );
 
-window.addEventListener("message", ({ data, origin }) => {
+const onMessage = ({ data, origin }: any) => {
   if (origin.includes("localhost")) return;
   if (data.type !== "user-uuid") return;
   chat.value.users.push(data.value);
+};
+
+onMounted(() => {
+  window.addEventListener("message", onMessage);
 });
 
-const admins_options = ref<SelectOption[]>([]);
-const gateways_options = ref<SelectOption[]>([]);
-const members_options = ref<SelectOption[]>([]);
+onUnmounted(() => {
+  window.removeEventListener("message", onMessage);
+});
 
 const adminsWithoutDuplicates = computed(() =>
   admins_options.value.map((op) => {
     const disabled = !!chat.value.users.find((m) => m === op.value);
-    return { ...op, disabled };
-  })
-);
-
-const membersWithoutDuplicates = computed(() =>
-  members_options.value.map((op) => {
-    const disabled = !!chat.value.admins.find((m) => m === op.value);
     return { ...op, disabled };
   })
 );
@@ -200,38 +199,31 @@ const departamentsOptions = computed(() =>
   }))
 );
 
-const me = computed(() => store.me);
+const gateways_options = computed(() =>
+  gateways.value.map((gateway) => {
+    return {
+      label: gateway,
+      value: gateway,
+    };
+  })
+);
+
+const admins_options = computed(() =>
+  admins.value.map((admin) => {
+    return {
+      label: users.value.get(admin)?.title ?? "Unknown",
+      value: admin,
+    };
+  })
+);
 
 onMounted(() => {
   if (isEdit?.value && oldChat?.value) {
     chat.value = { ...oldChat.value } as Chat;
   }
   window.top?.postMessage({ type: "get-user" }, "*");
-});
 
-onMounted(async () => {
-  admins_options.value = admins.value.map((admin) => {
-    return {
-      label: store.users.get(admin)?.title ?? "Unknown",
-      value: admin,
-    };
-  });
-
-  gateways_options.value = gateways.value.map((gateway) => {
-    return {
-      label: gateway,
-      value: gateway,
-    };
-  });
   chat.value.gateways = gateways.value;
-
-  members_options.value = users.value.map((user) => {
-    return {
-      label: user.title,
-      value: user.uuid,
-      disabled: me.value.uuid !== user.uuid && admins.value.includes(user.uuid),
-    };
-  });
 });
 
 function submit() {
@@ -293,6 +285,10 @@ watch(
     }
   }
 );
+
+watch(gateways, () => {
+  chat.value.gateways = gateways.value;
+});
 </script>
 
 <style scoped>

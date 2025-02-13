@@ -155,8 +155,7 @@
               clearable
               placeholder="Responsible"
               :options="responsibles"
-              label-field="title"
-              value-field="uuid"
+              :loading="isUsersLoading"
             />
             <n-button
               :disabled="!newResponsible"
@@ -255,11 +254,12 @@
             :selected="selectedChats"
             :hide-message="!isChatPanelOpen"
             :uuid="chat.uuid"
-            :chat="chat"
-            :chats="chats"
+            :chat="chat as Chat"
+            :chats="chats as Chat[]"
             :class="{
               active: chat.uuid === router.currentRoute.value.params.uuid,
             }"
+            :key="chat.uuid"
             @click="changeMode('none')"
             @hover="onMouseMove"
             @hoverEnd="isFirstMessageVisible = false"
@@ -282,7 +282,7 @@
   </div>
 
   <div id="separator" v-show="appStore.displayMode === 'half'"></div>
-  <div class="chat__item" v-if="appStore.displayMode !== 'full'">
+  <div class="chat__item" v-show="appStore.displayMode !== 'full'">
     <n-layout-content>
       <router-view />
     </n-layout-content>
@@ -340,6 +340,7 @@ import {
 import { ConnectError } from "@connectrpc/connect";
 import { storeToRefs } from "pinia";
 import { useDefaultsStore } from "../../store/defaults.ts";
+import { useUsersStore } from "../../store/users.ts";
 
 defineEmits(["hover", "hoverEnd"]);
 
@@ -377,7 +378,9 @@ const router = useRouter();
 const route = useRoute();
 const { makeDraggable } = useDraggable();
 const defaultsStore = useDefaultsStore();
-const { metrics, isDefaultLoading, admins, users } = storeToRefs(defaultsStore);
+const { metrics, isDefaultLoading, admins } = storeToRefs(defaultsStore);
+const usersStore = useUsersStore();
+const { isUsersLoading, users } = storeToRefs(usersStore);
 const notification = useNotification();
 
 const topPanel = ref<any>(null);
@@ -411,20 +414,19 @@ const departments = computed(() =>
 );
 
 const responsibles = computed(() =>
-  admins.value.map(
-    (admin) => users.value.find(({ uuid }) => uuid === admin) ?? { uuid: admin }
-  )
+  admins.value
+    .map((admin) => users.value.get(admin))
+    .filter((u) => !!u)
+    .map((user) => ({
+      label: user?.title,
+      value: user?.uuid,
+    }))
 );
 
 async function sync() {
   try {
     isLoading.value = true;
     fetch_chats_debounced();
-    const { users } = await store.get_members();
-
-    users.forEach((user) => {
-      store.users.set(user.uuid, user);
-    });
   } catch (error) {
     console.log(error);
   } finally {

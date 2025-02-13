@@ -1,5 +1,5 @@
 <template>
-  <n-list v-if="chat" class="chat">
+  <n-list class="chat">
     <template #header>
       <chat-header :chat="chat" />
     </template>
@@ -17,7 +17,6 @@
       </template>
 
       <n-list-item v-else v-for="message in messages" :key="message.uuid">
-        <!-- @vue-ignore -->
         <message-view
           :message="message"
           @approve="(a) => handle_approve(message, a)"
@@ -121,10 +120,7 @@ async function load_chat() {
   if (!chat.value) return;
   try {
     isMessageLoading.value = true;
-    await Promise.all([
-      store.resolve([...chat.value.users, ...chat.value.admins]),
-      store.get_messages(chat.value as Chat),
-    ]);
+    await Promise.all([store.get_messages(chat.value as Chat)]);
   } finally {
     isMessageLoading.value = false;
   }
@@ -143,7 +139,7 @@ watch(
   { deep: true }
 );
 
-watch(isMessageLoading, scrollToBottom);
+watch(messages, () => scrollToBottom());
 watch(scrollbar, scrollToBottom);
 
 const footer = ref();

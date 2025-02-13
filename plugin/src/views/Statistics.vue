@@ -165,6 +165,7 @@ import { useRouter } from "vue-router";
 import { useAppStore } from "../store/app";
 import { useDefaultsStore } from "../store/defaults";
 import { storeToRefs } from "pinia";
+import { useUsersStore } from "../store/users";
 
 const nextIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/ChevronForwardOutline")
@@ -177,7 +178,10 @@ const store = useCcStore();
 const appStore = useAppStore();
 const router = useRouter();
 const defaultsStore = useDefaultsStore();
+const usersStore = useUsersStore();
+
 const { admins } = storeToRefs(defaultsStore);
+const { users } = storeToRefs(usersStore);
 
 const months = [
   "Jan",
@@ -266,7 +270,7 @@ onMounted(async () => {
     isChatsMessagesLoading.value = true;
     await Promise.all(
       chats.value.map(async (chat) => {
-        const messagesData = await store.get_messages(chat, false);
+        const messagesData = await store.get_messages(chat as Chat, false);
         chatMessagesMap.value.set(chat.uuid, messagesData);
       })
     );
@@ -395,7 +399,7 @@ function getChartOptions({
   const endDate = new Date(durationTuples[1].getTime());
 
   filtredChats = chatsFilter({
-    chats: filtredChats,
+    chats: filtredChats as Chat[],
     endDate,
     startDate,
   });
@@ -474,7 +478,7 @@ function getChartOptions({
         if (
           !(createdDateTs > firstDayTs) ||
           !(createdDateTs < lastDayTs) ||
-          !filter(chat)
+          !filter(chat as Chat)
         ) {
           return;
         }
@@ -483,7 +487,7 @@ function getChartOptions({
           Number(chat.created) - firstDayTs
         ).getDate();
 
-        setToChartMap({ map: seriesMap, key: currentDay, chat });
+        setToChartMap({ map: seriesMap, key: currentDay, chat: chat as Chat });
       });
 
       break;
@@ -494,18 +498,18 @@ function getChartOptions({
       filtredChats.forEach((chat) => {
         const createdDate = new Date(Number(chat.created));
 
-        if (createdDate.getMonth() !== currentMonth || !filter(chat)) {
+        if (createdDate.getMonth() !== currentMonth || !filter(chat as Chat)) {
           return;
         }
 
         const currentDay = Math.ceil(createdDate.getDate() / 7);
-        setToChartMap({ map: seriesMap, key: currentDay, chat });
+        setToChartMap({ map: seriesMap, key: currentDay, chat: chat as Chat });
       });
       break;
     }
     case "month": {
       filtredChats.forEach((chat) => {
-        setToChartMap({ map: seriesMap, key: 1, chat });
+        setToChartMap({ map: seriesMap, key: 1, chat: chat as Chat });
       });
       break;
     }
@@ -514,7 +518,10 @@ function getChartOptions({
       filtredChats.forEach((chat) => {
         const createdDate = new Date(Number(chat.created));
 
-        if (createdDate.getFullYear() !== currentYear || !filter(chat)) {
+        if (
+          createdDate.getFullYear() !== currentYear ||
+          !filter(chat as Chat)
+        ) {
           return;
         }
 
@@ -522,7 +529,7 @@ function getChartOptions({
         setToChartMap({
           map: seriesMap,
           key: currentMonth,
-          chat,
+          chat: chat as Chat,
         });
       });
 
@@ -534,7 +541,7 @@ function getChartOptions({
         setToChartMap({
           map: seriesMap,
           key: 1,
-          chat,
+          chat: chat as Chat,
         });
       });
 
@@ -568,7 +575,7 @@ function getChartOptions({
   if (!isTypeAll) {
     series = series.map((s) => ({
       ...s,
-      name: store.users.get(s.name || "")?.title || "Unknown",
+      name: users.value.get(s.name || "")?.title || "Unknown",
     }));
   }
 
@@ -839,7 +846,7 @@ function goBack() {
 
 function openUser(e: Event) {
   const name = (e.target as any).innerText.split(":")[0];
-  const user = [...store.users.values()].find((u) => u.title === name);
+  const user = [...users.value.values()].find((u) => u.title === name);
   if (user) {
     window.open(
       `${appStore.conf?.params.fullUrl.split("plugin")[0]}accounts/${

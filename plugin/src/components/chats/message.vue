@@ -64,6 +64,8 @@ import {
   defineAsyncComponent,
   h,
   nextTick,
+  onMounted,
+  onUnmounted,
   reactive,
   ref,
   toRefs,
@@ -92,6 +94,7 @@ import UserItem from "../users/user_item.vue";
 import { addToClipboard, getRelativeTime } from "../../functions.ts";
 import { useDefaultsStore } from "../../store/defaults.ts";
 import { storeToRefs } from "pinia";
+import { useUsersStore } from "../../store/users.ts";
 
 interface MessageProps {
   message: Message;
@@ -136,11 +139,14 @@ const emit = defineEmits(["approve", "convert", "edit", "delete"]);
 const theme = useThemeVars();
 const appStore = useAppStore();
 const store = useCcStore();
+const usersStore = useUsersStore();
+const defaultsStore = useDefaultsStore();
 
-const { admins } = storeToRefs(useDefaultsStore());
+const { admins } = storeToRefs(defaultsStore);
+const { users } = storeToRefs(usersStore);
 
 const sender = computed(
-  () => store.users.get(message.value.sender)?.title ?? "Unknown"
+  () => users.value.get(message.value.sender)?.title ?? "Unknown"
 );
 
 const x = ref(0);
@@ -214,7 +220,7 @@ const options = computed(() => {
       key: r,
       type: "render",
       render: () =>
-        h(UserItem, { user: store.users.get(r) as User, actions: false }),
+        h(UserItem, { user: users.value.get(r) as User, actions: false }),
     })),
   });
 
@@ -343,7 +349,15 @@ const attachFiles = computed<AttachFile[]>(() => {
 });
 
 const now = ref(Date.now());
-setInterval(() => (now.value = Date.now()), 1000);
+const interval = ref<number>();
+
+onMounted(() => {
+  interval.value = setInterval(() => (now.value = Date.now()), 1000);
+});
+
+onUnmounted(() => {
+  clearInterval(interval.value);
+});
 
 function timestamp() {
   let result = "";

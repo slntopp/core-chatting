@@ -94,6 +94,7 @@
     <n-select
       filterable
       :options="admins"
+      :loading="isUsersLoading"
       v-model:value="localFilter.checkedAdmins"
       multiple
     />
@@ -104,6 +105,7 @@
     <n-select
       filterable
       :options="admins"
+      :loading="isUsersLoading"
       v-model:value="localFilter.checkedResponsibles"
       multiple
     />
@@ -167,10 +169,11 @@ import {
 } from "naive-ui";
 
 import { useCcStore } from "../../store/chatting";
-import { Chat, Status } from "../../connect/cc/cc_pb";
-import { SelectMixedOption } from "naive-ui/es/select/src/interface";
+import { Status } from "../../connect/cc/cc_pb";
 import { getStatusItems } from "../../functions";
-import { MetricWithKey } from "../../store/defaults";
+import { MetricWithKey, useDefaultsStore } from "../../store/defaults";
+import { storeToRefs } from "pinia";
+import { useUsersStore } from "../../store/users";
 
 const upIcon = defineAsyncComponent(() => import("@vicons/ionicons5/ArrowUp"));
 
@@ -214,6 +217,12 @@ const {
   updateDateRange,
 } = toRefs(props);
 
+const defaultsStore = useDefaultsStore();
+const { admins: adminsUuids } = storeToRefs(defaultsStore);
+
+const usersStore = useUsersStore();
+const { users, isUsersLoading } = storeToRefs(usersStore);
+
 const localFilter = ref<ChatsFiltersProps>({} as ChatsFiltersProps);
 const startFilter = ref<ChatsFiltersProps>({} as ChatsFiltersProps);
 
@@ -230,24 +239,14 @@ const isEdited = computed(
   () => JSON.stringify(startFilter.value) !== JSON.stringify(localFilter.value)
 );
 
-const admins = computed(() => {
-  const result: SelectMixedOption[] = [];
-
-  (store.chats as Map<string, Chat>).forEach((chat: Chat) => {
-    chat.admins.forEach((uuid) => {
-      const element = result.find(({ value }) => uuid === value);
-
-      if (element) return;
-      else
-        result.push({
-          value: uuid,
-          label: store.users.get(uuid)?.title ?? uuid,
-        });
-    });
-  });
-
-  return result;
-});
+const admins = computed(() =>
+  adminsUuids.value.map((uuid) => {
+    return {
+      value: uuid,
+      label: users.value.get(uuid)?.title ?? uuid,
+    };
+  })
+);
 
 function getMetricOptions(metric: MetricWithKey) {
   return metric.options.map((option) => ({

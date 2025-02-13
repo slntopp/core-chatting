@@ -158,6 +158,7 @@ import { useAppStore } from "../../../store/app";
 import templatesView from "../../settings/templates.vue";
 import { useDefaultsStore } from "../../../store/defaults";
 import { storeToRefs } from "pinia";
+import { useUsersStore } from "../../../store/users";
 
 const SendIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/SendOutline")
@@ -174,7 +175,11 @@ const props = defineProps<ChatFooterProps>();
 const store = useCcStore();
 const appStore = useAppStore();
 const defaultsStore = useDefaultsStore();
-const { admins, templates, users } = storeToRefs(defaultsStore);
+const usersStore = useUsersStore();
+
+const { admins, templates, metrics, departments, gateways } =
+  storeToRefs(defaultsStore);
+const { users, isUsersLoading } = storeToRefs(usersStore);
 
 interface FileInfo extends UploadFileInfo {
   uuid?: string;
@@ -190,12 +195,12 @@ const isTemplatesOpen = ref(false);
 const isTemplatesLoading = ref(false);
 
 const mentionsOptions = computed(() => {
-  if (!props.chat) return [];
+  if (!props.chat || isUsersLoading.value) return [];
   const uuids = new Set([...props.chat.users, ...props.chat.admins]);
   const result: MentionOption[] = [];
 
   uuids.forEach((uuid) => {
-    const { title } = store.users.get(uuid) ?? {};
+    const { title } = users.value.get(uuid) ?? {};
 
     result.push({
       label: title ?? uuid,
@@ -283,13 +288,13 @@ function onInput({ target }: { target: HTMLTextAreaElement }) {
 }
 
 function check_mentioned() {
-  const users = Array.from(store.users.values());
+  const existed = Array.from(users.value.values());
   const titles = store.current_message.content.match(/@[\w\d-]{1,}/g);
 
   store.current_message.mentioned = [];
   titles?.forEach((title) => {
     const { uuid } =
-      users.find(
+      existed.find(
         (user) => user.title.replace(" ", "_") === title.replace("@", "")
       ) ?? {};
     const mention = store.current_message.mentioned.includes(uuid ?? title);
@@ -382,11 +387,18 @@ function handle_new_line() {
 async function handle_open_templates() {
   isTemplatesLoading.value = true;
   try {
+    if (templates.value.length === 0) {
+      await defaultsStore.fetch_defaults(true);
+    }
+
     if (!templatesOptions.value) {
       templatesOptions.value = {
         admins: admins.value,
-        users: users.value,
+        metrics: metrics.value,
+        departments: departments.value,
+        users: [...users.value.values()],
         templates: templates.value,
+        gateways: gateways.value,
         isEdit: false,
       };
     }

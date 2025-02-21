@@ -134,7 +134,7 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 
 	go pubsub.HandleNotifyMessage(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_SENT)
 
-	if s.whmcsTickets && chat.GetDepartment() != "openai" {
+	if s.whmcsTickets && chat.GetDepartment() != "openai" && !msg.GetUnderReview() {
 		go s.ps.PubWhmcs(ctx, &cc.Event{
 			Type: cc.EventType_MESSAGE_SENT,
 			Item: &cc.Event_Msg{Msg: message},
@@ -218,8 +218,12 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 	}
 
 	if s.whmcsTickets && chat.GetDepartment() != "openai" {
+		var tpe = cc.EventType_MESSAGE_UPDATED
+		if oldMessage.GetUnderReview() && !message.GetUnderReview() {
+			tpe = cc.EventType_MESSAGE_SENT
+		}
 		go s.ps.PubWhmcs(ctx, &cc.Event{
-			Type: cc.EventType_MESSAGE_UPDATED,
+			Type: tpe,
 			Item: &cc.Event_Msg{Msg: message},
 		})
 	}

@@ -25,17 +25,17 @@
     >
       <div class="bot_state_settings_field">
         <span>Bot state:</span>
-        <n-switch v-model:value="botState.disabled">
-          <template #checked> disabled (no bot)</template>
-          <template #unchecked> active </template>
+        <n-switch v-model:value="botState.enabled">
+          <template #checked> active </template>
+          <template #unchecked> disabled (no bot) </template>
         </n-switch>
       </div>
 
       <div class="bot_state_settings_field">
         <span>Review:</span>
-        <n-switch v-model:value="botState.skip_review">
-          <template #checked> open mode (skip preview) </template>
-          <template #unchecked> review mode </template>
+        <n-switch v-model:value="botState.review">
+          <template #unchecked> open mode (skip preview) </template>
+          <template #checked> review mode </template>
         </n-switch>
       </div>
 
@@ -311,6 +311,8 @@ async function sendCommand(content: string) {
 
 function setBotState() {
   botState.value = (currentChat.value?.toJson() as any as Chat).botState;
+  botState.value.enabled = !botState.value.disabled;
+  botState.value.review = !botState.value.skip_review;
 }
 
 async function saveBotState() {
@@ -320,8 +322,8 @@ async function saveBotState() {
     await store.update_bot_state(
       SetBotStateRequest.fromJson({
         chat: currentChat.value!.uuid,
-        disabled: !!botState.value.disabled,
-        skipReview: !!botState.value.skip_review,
+        disabled: !botState.value.enabled,
+        skipReview: !botState.value.review,
       })
     );
 

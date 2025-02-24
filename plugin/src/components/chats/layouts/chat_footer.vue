@@ -124,7 +124,7 @@
     </n-upload>
 
     <n-modal v-model:show="isTemplatesOpen">
-      <n-card style="max-width: 800px; width: 90vw; min-height: 80vh">
+      <n-card style="max-width: 60vw; width: 60vw; min-height: 80vh">
         <templates-view
           @select="handle_select_template"
           v-bind="templatesOptions"

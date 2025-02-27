@@ -92,7 +92,7 @@ function addLinkTarget() {
 </script>
 
 <style>
-span.code {
+div.code {
   padding: 8px;
   background-color: black;
   border-radius: 6px;

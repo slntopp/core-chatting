@@ -74,6 +74,8 @@ const (
 	MessagesAPIUpdateProcedure = "/cc.MessagesAPI/Update"
 	// MessagesAPIDeleteProcedure is the fully-qualified name of the MessagesAPI's Delete RPC.
 	MessagesAPIDeleteProcedure = "/cc.MessagesAPI/Delete"
+	// MessagesAPIListProcedure is the fully-qualified name of the MessagesAPI's List RPC.
+	MessagesAPIListProcedure = "/cc.MessagesAPI/List"
 	// UsersAPIMeProcedure is the fully-qualified name of the UsersAPI's Me RPC.
 	UsersAPIMeProcedure = "/cc.UsersAPI/Me"
 	// UsersAPIFetchDefaultsProcedure is the fully-qualified name of the UsersAPI's FetchDefaults RPC.
@@ -111,6 +113,7 @@ var (
 	messagesAPISendMethodDescriptor          = messagesAPIServiceDescriptor.Methods().ByName("Send")
 	messagesAPIUpdateMethodDescriptor        = messagesAPIServiceDescriptor.Methods().ByName("Update")
 	messagesAPIDeleteMethodDescriptor        = messagesAPIServiceDescriptor.Methods().ByName("Delete")
+	messagesAPIListMethodDescriptor          = messagesAPIServiceDescriptor.Methods().ByName("List")
 	usersAPIServiceDescriptor                = cc.File_cc_cc_proto.Services().ByName("UsersAPI")
 	usersAPIMeMethodDescriptor               = usersAPIServiceDescriptor.Methods().ByName("Me")
 	usersAPIFetchDefaultsMethodDescriptor    = usersAPIServiceDescriptor.Methods().ByName("FetchDefaults")
@@ -508,6 +511,7 @@ type MessagesAPIClient interface {
 	Send(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Update(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Delete(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
+	List(context.Context, *connect.Request[cc.MessagesListRequest]) (*connect.Response[cc.Messages], error)
 }
 
 // NewMessagesAPIClient constructs a client for the cc.MessagesAPI service. By default, it uses the
@@ -544,6 +548,12 @@ func NewMessagesAPIClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(messagesAPIDeleteMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		list: connect.NewClient[cc.MessagesListRequest, cc.Messages](
+			httpClient,
+			baseURL+MessagesAPIListProcedure,
+			connect.WithSchema(messagesAPIListMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -553,6 +563,7 @@ type messagesAPIClient struct {
 	send   *connect.Client[cc.Message, cc.Message]
 	update *connect.Client[cc.Message, cc.Message]
 	delete *connect.Client[cc.Message, cc.Message]
+	list   *connect.Client[cc.MessagesListRequest, cc.Messages]
 }
 
 // Get calls cc.MessagesAPI.Get.
@@ -575,12 +586,18 @@ func (c *messagesAPIClient) Delete(ctx context.Context, req *connect.Request[cc.
 	return c.delete.CallUnary(ctx, req)
 }
 
+// List calls cc.MessagesAPI.List.
+func (c *messagesAPIClient) List(ctx context.Context, req *connect.Request[cc.MessagesListRequest]) (*connect.Response[cc.Messages], error) {
+	return c.list.CallUnary(ctx, req)
+}
+
 // MessagesAPIHandler is an implementation of the cc.MessagesAPI service.
 type MessagesAPIHandler interface {
 	Get(context.Context, *connect.Request[cc.Chat]) (*connect.Response[cc.Messages], error)
 	Send(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Update(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Delete(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
+	List(context.Context, *connect.Request[cc.MessagesListRequest]) (*connect.Response[cc.Messages], error)
 }
 
 // NewMessagesAPIHandler builds an HTTP handler from the service implementation. It returns the path
@@ -613,6 +630,12 @@ func NewMessagesAPIHandler(svc MessagesAPIHandler, opts ...connect.HandlerOption
 		connect.WithSchema(messagesAPIDeleteMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	messagesAPIListHandler := connect.NewUnaryHandler(
+		MessagesAPIListProcedure,
+		svc.List,
+		connect.WithSchema(messagesAPIListMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cc.MessagesAPI/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case MessagesAPIGetProcedure:
@@ -623,6 +646,8 @@ func NewMessagesAPIHandler(svc MessagesAPIHandler, opts ...connect.HandlerOption
 			messagesAPIUpdateHandler.ServeHTTP(w, r)
 		case MessagesAPIDeleteProcedure:
 			messagesAPIDeleteHandler.ServeHTTP(w, r)
+		case MessagesAPIListProcedure:
+			messagesAPIListHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -646,6 +671,10 @@ func (UnimplementedMessagesAPIHandler) Update(context.Context, *connect.Request[
 
 func (UnimplementedMessagesAPIHandler) Delete(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.MessagesAPI.Delete is not implemented"))
+}
+
+func (UnimplementedMessagesAPIHandler) List(context.Context, *connect.Request[cc.MessagesListRequest]) (*connect.Response[cc.Messages], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.MessagesAPI.List is not implemented"))
 }
 
 // UsersAPIClient is a client for the cc.UsersAPI service.

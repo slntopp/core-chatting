@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/slntopp/nocloud/pkg/nocloud/schema"
 	"reflect"
 	"slices"
 	"time"
@@ -71,6 +72,26 @@ func (s *MessagesServer) Get(ctx context.Context, req *connect.Request[cc.Chat])
 	})
 
 	go s.ps.Pub(ctx, requestor, &cc.Event{Type: cc.EventType_CHAT_READ, Item: &cc.Event_Chat{Chat: req.Msg}})
+
+	return resp, nil
+}
+
+func (s *MessagesServer) List(ctx context.Context, req *connect.Request[cc.MessagesListRequest]) (*connect.Response[cc.Messages], error) {
+	log := s.log.Named("List")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+	requester := ctx.Value(core.ChatAccount).(string)
+	if schema.ROOT_ACCOUNT_KEY != requester {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access rights"))
+	}
+
+	messages, err := s.msgCtrl.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := connect.NewResponse[cc.Messages](&cc.Messages{
+		Messages: messages,
+	})
 
 	return resp, nil
 }

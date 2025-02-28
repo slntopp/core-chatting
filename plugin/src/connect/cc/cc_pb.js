@@ -234,6 +234,14 @@ export const Messages = /*@__PURE__*/ proto3.makeMessageType(
 );
 
 /**
+ * @generated from message cc.MessagesListRequest
+ */
+export const MessagesListRequest = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.MessagesListRequest",
+  [],
+);
+
+/**
  * @generated from message cc.User
  */
 export const User = /*@__PURE__*/ proto3.makeMessageType(

@@ -148,3 +148,32 @@ func (c *MessagesController) Get(ctx context.Context, uuid string) (*cc.Message,
 
 	return &msg, nil
 }
+
+const listMessages = `
+LET messages = (
+	FOR m IN @@messages
+	RETURN m
+)
+RETURN messages
+`
+
+func (c *MessagesController) List(ctx context.Context) ([]*cc.Message, error) {
+	log := c.log.Named("List")
+	log.Debug("Req received")
+
+	var msg []*cc.Message
+
+	cur, err := c.db.Query(ctx, listMessages, map[string]interface{}{
+		"@messages": MESSAGES_COLLECTION,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = cur.ReadDocument(ctx, &msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return msg, nil
+}

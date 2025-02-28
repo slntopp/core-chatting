@@ -491,6 +491,11 @@ class MessagesAPIStub(object):
                 request_serializer=cc_dot_cc__pb2.Message.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Message.FromString,
                 )
+        self.List = channel.unary_unary(
+                '/cc.MessagesAPI/List',
+                request_serializer=cc_dot_cc__pb2.MessagesListRequest.SerializeToString,
+                response_deserializer=cc_dot_cc__pb2.Messages.FromString,
+                )
 
 
 class MessagesAPIServicer(object):
@@ -520,6 +525,12 @@ class MessagesAPIServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def List(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MessagesAPIServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -542,6 +553,11 @@ def add_MessagesAPIServicer_to_server(servicer, server):
                     servicer.Delete,
                     request_deserializer=cc_dot_cc__pb2.Message.FromString,
                     response_serializer=cc_dot_cc__pb2.Message.SerializeToString,
+            ),
+            'List': grpc.unary_unary_rpc_method_handler(
+                    servicer.List,
+                    request_deserializer=cc_dot_cc__pb2.MessagesListRequest.FromString,
+                    response_serializer=cc_dot_cc__pb2.Messages.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -618,6 +634,23 @@ class MessagesAPI(object):
         return grpc.experimental.unary_unary(request, target, '/cc.MessagesAPI/Delete',
             cc_dot_cc__pb2.Message.SerializeToString,
             cc_dot_cc__pb2.Message.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def List(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cc.MessagesAPI/List',
+            cc_dot_cc__pb2.MessagesListRequest.SerializeToString,
+            cc_dot_cc__pb2.Messages.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

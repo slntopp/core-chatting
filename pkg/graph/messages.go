@@ -150,8 +150,11 @@ func (c *MessagesController) Get(ctx context.Context, uuid string) (*cc.Message,
 }
 
 const listMessages = `
-FOR m IN @@messages
-RETURN m
+LET messages = (
+	FOR m IN @@messages
+	RETURN m
+)
+RETURN messages
 `
 
 func (c *MessagesController) List(ctx context.Context) ([]*cc.Message, error) {

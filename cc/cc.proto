@@ -149,6 +149,8 @@ message Messages {
   repeated Message messages = 1;
 }
 
+message MessagesListRequest{}
+
 service MessagesAPI {
   rpc Get(Chat) returns (Messages);
 
@@ -156,6 +158,8 @@ service MessagesAPI {
   rpc Update(Message) returns (Message);
 
   rpc Delete(Message) returns (Message);
+
+  rpc List(MessagesListRequest) returns (Messages);
 }
 
 message User {

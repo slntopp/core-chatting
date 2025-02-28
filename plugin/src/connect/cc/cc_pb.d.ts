@@ -660,6 +660,25 @@ export declare class Messages extends Message$1<Messages> {
 }
 
 /**
+ * @generated from message cc.MessagesListRequest
+ */
+export declare class MessagesListRequest extends Message$1<MessagesListRequest> {
+  constructor(data?: PartialMessage<MessagesListRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.MessagesListRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MessagesListRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MessagesListRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MessagesListRequest;
+
+  static equals(a: MessagesListRequest | PlainMessage<MessagesListRequest> | undefined, b: MessagesListRequest | PlainMessage<MessagesListRequest> | undefined): boolean;
+}
+
+/**
  * @generated from message cc.User
  */
 export declare class User extends Message$1<User> {

@@ -1877,6 +1877,108 @@ var _ interface {
 	ErrorName() string
 } = MessagesValidationError{}
 
+// Validate checks the field values on MessagesListRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *MessagesListRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on MessagesListRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// MessagesListRequestMultiError, or nil if none found.
+func (m *MessagesListRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *MessagesListRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return MessagesListRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// MessagesListRequestMultiError is an error wrapping multiple validation
+// errors returned by MessagesListRequest.ValidateAll() if the designated
+// constraints aren't met.
+type MessagesListRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m MessagesListRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m MessagesListRequestMultiError) AllErrors() []error { return m }
+
+// MessagesListRequestValidationError is the validation error returned by
+// MessagesListRequest.Validate if the designated constraints aren't met.
+type MessagesListRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MessagesListRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MessagesListRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MessagesListRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MessagesListRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MessagesListRequestValidationError) ErrorName() string {
+	return "MessagesListRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e MessagesListRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMessagesListRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MessagesListRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MessagesListRequestValidationError{}
+
 // Validate checks the field values on User with the rules defined in the proto
 // definition for this message. If any rules are violated, the first error
 // encountered is returned, or nil if there are no violations.

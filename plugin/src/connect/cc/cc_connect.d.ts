@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, CountChatsRequest, CountChatsResponse, Defaults, Empty, Event, FetchDefaultsRequest, GetMembersRequest, ListChatsRequest, ListChatsResponse, Merge, Message, Messages, SetBotStateRequest, StreamRequest, User, Users } from "./cc_pb.js";
+import { Chat, CountChatsRequest, CountChatsResponse, Defaults, Empty, Event, FetchDefaultsRequest, GetMembersRequest, ListChatsRequest, ListChatsResponse, Merge, Message, Messages, MessagesListRequest, SetBotStateRequest, StreamRequest, User, Users } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -172,6 +172,15 @@ export declare const MessagesAPI: {
       readonly name: "Delete",
       readonly I: typeof Message,
       readonly O: typeof Message,
+      readonly kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.MessagesAPI.List
+     */
+    readonly list: {
+      readonly name: "List",
+      readonly I: typeof MessagesListRequest,
+      readonly O: typeof Messages,
       readonly kind: MethodKind.Unary,
     },
   }

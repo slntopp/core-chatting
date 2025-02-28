@@ -60,7 +60,7 @@ const renderer = new Renderer();
 renderer.code = (code, language) => {
   if (!language) language = "plaintext";
 
-  return `<div class="code"><code>${
+  return `<div class="code ${appStore.conf?.theme}-code"><code>${
     hljs.highlight(code, { language }).value
   }</code></div>`;
 };
@@ -94,9 +94,15 @@ function addLinkTarget() {
 <style>
 div.code {
   padding: 8px;
-  background-color: black;
   border-radius: 6px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+div.dark-code {
+  background-color: black;
+}
+div.light-code {
+  background-color: white;
 }
 </style>

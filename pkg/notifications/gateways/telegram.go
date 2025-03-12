@@ -3,6 +3,7 @@ package gateways
 import (
 	"fmt"
 	"github.com/slntopp/core-chatting/cc"
+	"github.com/slntopp/core-chatting/pkg/notifications/params"
 	"github.com/slntopp/core-chatting/pkg/notifications/types"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v4"
@@ -52,7 +53,7 @@ func (tg *TelegramGateway) Send(event string, meta types.EventMeta, payload inte
 			return nil
 		}
 		tgChat := &destination{id: fmt.Sprintf("-%d", tg.chatID)}
-		_, err := tg.bot.Send(tgChat, meta.Message)
+		_, err := tg.bot.Send(tgChat, params.ParseParameters(meta.Message, params.ParametersFromChat(chat)))
 		if err != nil {
 			return fmt.Errorf("failed to send telegram message: %w", err)
 		}
@@ -67,7 +68,7 @@ func (tg *TelegramGateway) Send(event string, meta types.EventMeta, payload inte
 			return nil
 		}
 		tgChat := &destination{id: fmt.Sprintf("-%d", tg.chatID)}
-		_, err := tg.bot.Send(tgChat, meta.Message)
+		_, err := tg.bot.Send(tgChat, params.ParseParameters(meta.Message, params.ParametersFromChat(chat)))
 		if err != nil {
 			return fmt.Errorf("failed to send telegram message: %w", err)
 		}

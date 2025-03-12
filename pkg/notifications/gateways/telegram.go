@@ -53,7 +53,9 @@ func (tg *TelegramGateway) Send(event string, meta types.EventMeta, payload inte
 			return nil
 		}
 		tgChat := &destination{id: fmt.Sprintf("-%d", tg.chatID)}
-		_, err := tg.bot.Send(tgChat, params.ParseParameters(meta.Message, params.ParametersFromChat(chat)), tele.ModeMarkdown)
+		result := params.ParseParameters(meta.Message, params.ParametersFromChat(chat))
+		log.Debug("result answer", zap.String("answer", result))
+		_, err := tg.bot.Send(tgChat, result, tele.ModeMarkdown)
 		if err != nil {
 			return fmt.Errorf("failed to send telegram message: %w", err)
 		}
@@ -68,7 +70,9 @@ func (tg *TelegramGateway) Send(event string, meta types.EventMeta, payload inte
 			return nil
 		}
 		tgChat := &destination{id: fmt.Sprintf("-%d", tg.chatID)}
-		_, err := tg.bot.Send(tgChat, params.ParseParameters(meta.Message, params.ParametersFromChat(chat)), tele.ModeMarkdown)
+		result := params.ParseParameters(meta.Message, params.ParametersFromChat(chat))
+		log.Debug("result answer", zap.String("answer", result))
+		_, err := tg.bot.Send(tgChat, result, tele.ModeMarkdown)
 		if err != nil {
 			return fmt.Errorf("failed to send telegram message: %w", err)
 		}

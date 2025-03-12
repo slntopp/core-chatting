@@ -34,8 +34,7 @@ func NewUsersController(logger *zap.Logger, db driver.Database, colname string) 
 }
 
 func (c *UsersController) Resolve(ctx context.Context, uuids []string) ([]*cc.User, error) {
-	log := c.log.Named("Resolve")
-	log.Debug("Request received", zap.Strings("uuids", uuids))
+	_ = c.log.Named("Resolve")
 
 	var users []*cc.User
 	// TODO: Check Access i.e. search on Graph
@@ -49,8 +48,6 @@ func (c *UsersController) Resolve(ctx context.Context, uuids []string) ([]*cc.Us
 		user.Uuid = uuid
 		users = append(users, &user)
 	}
-
-	log.Debug("Found users", zap.Any("users", users))
 
 	return users, nil
 }

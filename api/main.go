@@ -3,13 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/slntopp/core-chatting/pkg/notifications"
 	http_server "github.com/slntopp/nocloud/pkg/nocloud/http"
 	"github.com/slntopp/nocloud/pkg/nocloud/rabbitmq"
 	"github.com/slntopp/nocloud/pkg/nocloud/schema"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"gopkg.in/yaml.v2"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/gorilla/mux"
@@ -58,6 +61,8 @@ var (
 	SIGNING_KEY []byte
 
 	settingsHost string
+
+	gatewaysConfigYaml string
 )
 
 func init() {
@@ -101,6 +106,10 @@ func init() {
 
 	viper.SetDefault("SETTINGS_HOST", "settings:8000")
 	settingsHost = viper.GetString("SETTINGS_HOST")
+
+	viper.SetDefault("NOTIFY_GATEWAYS_CONFIG", "./gateways_config.yaml")
+	gatewaysConfigYaml = viper.GetString("NOTIFY_GATEWAYS_CONFIG")
+
 }
 
 func main() {
@@ -156,7 +165,20 @@ func main() {
 	}
 	log.Info("Settings server connection established")
 
-	chatServer := chats.NewChatsServer(log, chatCtrl, usersCtrl, msgCtrl, ps, whmcsTickets, settingsClient, conn)
+	log.Info("Obtaining notify gateways configurations")
+	notifyConfigYaml, err := os.ReadFile(gatewaysConfigYaml)
+	if err != nil {
+		log.Fatal("Failed to read gateways config file", zap.Error(err))
+	}
+	var configs []notifications.GatewayConfig
+	err = yaml.Unmarshal(notifyConfigYaml, &configs)
+	if err != nil {
+		log.Fatal("Failed to parse yaml config", zap.Error(err))
+	}
+	notify := notifications.NewNotificationDispatcher(log, configs)
+	log.Info("Notification dispatcher initialized")
+
+	chatServer := chats.NewChatsServer(log, chatCtrl, usersCtrl, msgCtrl, ps, whmcsTickets, settingsClient, conn, notify)
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 	go chatServer.CloseInactiveChatsRoutine(ctx, worker(workers))

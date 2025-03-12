@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/rabbitmq/amqp091-go"
+	"github.com/slntopp/core-chatting/pkg/notifications"
 	settingspb "github.com/slntopp/nocloud-proto/settings"
 	"slices"
 
@@ -30,12 +31,14 @@ type ChatsServer struct {
 	settingsClient settingspb.SettingsServiceClient
 
 	whmcsTickets bool
+
+	dispatcher notifications.NotificationDispatcher
 }
 
 func NewChatsServer(logger *zap.Logger, ctrl *graph.ChatsController, users_ctrl *graph.UsersController, msgsCtrl *graph.MessagesController,
-	ps *pubsub.PubSub, whmcsTickets bool, settingsClient settingspb.SettingsServiceClient, conn *amqp091.Connection) *ChatsServer {
+	ps *pubsub.PubSub, whmcsTickets bool, settingsClient settingspb.SettingsServiceClient, conn *amqp091.Connection, dispatcher notifications.NotificationDispatcher) *ChatsServer {
 	return &ChatsServer{log: logger.Named("ChatsServer"), ctrl: ctrl, users_ctrl: users_ctrl,
-		ps: ps, whmcsTickets: whmcsTickets, settingsClient: settingsClient, conn: conn, msgsCtrl: msgsCtrl}
+		ps: ps, whmcsTickets: whmcsTickets, settingsClient: settingsClient, conn: conn, msgsCtrl: msgsCtrl, dispatcher: dispatcher}
 }
 
 func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Chat], error) {
@@ -116,6 +119,8 @@ func (s *ChatsServer) Create(ctx context.Context, req *connect.Request[cc.Chat])
 			Item: &cc.Event_Chat{Chat: chat},
 		})
 	}
+
+	s.dispatcher.Notify(notifications.EventToNotification(cc.EventType_CHAT_CREATED), chat)
 
 	resp := connect.NewResponse[cc.Chat](chat)
 

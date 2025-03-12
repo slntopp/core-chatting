@@ -144,18 +144,20 @@ func (s *ChatsServer) CheckSLAViolation(ctx context.Context, log *zap.Logger, co
 		}
 		msgSent := int64(0)
 		msgSender := ""
+		underReview := false
 		lastMsg := chat.GetMeta().LastMessage
 		if lastMsg != nil {
 			msgSent = lastMsg.Sent / 1000
 			msgSender = lastMsg.Sender
+			underReview = lastMsg.GetUnderReview()
 		}
 		if msgSent == 0 {
 			continue
 		}
-		if now-msgSent < violatedAfter {
+		if (now-msgSent < violatedAfter) && !underReview {
 			continue
 		}
-		if slices.Contains(chat.GetAdmins(), msgSender) || slices.Contains(chatsConfig.GetAdmins(), msgSender) {
+		if (slices.Contains(chat.GetAdmins(), msgSender) || slices.Contains(chatsConfig.GetAdmins(), msgSender)) && !underReview {
 			users, err := s.users_ctrl.Resolve(ctx, []string{msgSender})
 			if err != nil {
 				log.Error("Failed to resolve admin", zap.Error(err))

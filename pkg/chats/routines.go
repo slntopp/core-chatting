@@ -37,7 +37,7 @@ func (s *ChatsServer) sendCloseChatMessage(ctx context.Context, log *zap.Logger,
 	return nil
 }
 
-func (s *ChatsServer) CloseInactiveChats(ctx context.Context, log *zap.Logger, conf TicketsSettingsConf, eventPublisher func(ctx context.Context, event *events.Event)) error {
+func (s *ChatsServer) CloseInactiveChats(ctx context.Context, log *zap.Logger, conf TicketsSettingsConf, eventPublisher func(ctx context.Context, event *events.Event), bannedDepartments []string) error {
 	log = log.Named("CloseInactiveChats")
 
 	page, limit := uint64(1), uint64(10000)
@@ -50,6 +50,9 @@ func (s *ChatsServer) CloseInactiveChats(ctx context.Context, log *zap.Logger, c
 	closeAfterSeconds := int64(conf.CloseInactiveChatsAfterHours * 60 * 60)
 	for _, chat := range chats {
 		if chat.Status != cc.Status_ANSWERED {
+			continue
+		}
+		if slices.Contains(bannedDepartments, chat.GetDepartment()) {
 			continue
 		}
 		if chat.Meta == nil || chat.GetMeta().LastMessage == nil {
@@ -108,11 +111,11 @@ func (s *ChatsServer) CloseInactiveChats(ctx context.Context, log *zap.Logger, c
 	return nil
 }
 
-func (s *ChatsServer) CheckSLAViolation(ctx context.Context, log *zap.Logger, conf TicketsSettingsConf) error {
+func (s *ChatsServer) CheckSLAViolation(ctx context.Context, log *zap.Logger, conf TicketsSettingsConf, bannedDepartments []string) error {
 	log = log.Named("CheckSLAViolation")
 	slaLvl1Key := "sla_violation_level_1_notification"
 
-	page, limit := uint64(1), uint64(10000)
+	page, limit := uint64(1), uint64(1000000)
 	chats, _, err := s.ctrl.List(ctx, schema.ROOT_ACCOUNT_KEY, &cc.ListChatsRequest{Page: &page, Limit: &limit})
 	if err != nil {
 		return err
@@ -134,6 +137,9 @@ func (s *ChatsServer) CheckSLAViolation(ctx context.Context, log *zap.Logger, co
 			chat.Meta.Data = map[string]*structpb.Value{}
 		}
 		if chat.Status == cc.Status_ANSWERED || chat.Status == cc.Status_CLOSE {
+			continue
+		}
+		if slices.Contains(bannedDepartments, chat.GetDepartment()) {
 			continue
 		}
 		msgSent := int64(0)
@@ -193,7 +199,7 @@ func setupEventPublisher(_ context.Context, log *zap.Logger, rbmq *amqp091.Conne
 	}
 }
 
-func (s *ChatsServer) CloseInactiveChatsRoutine(_ctx context.Context, wg *sync.WaitGroup) {
+func (s *ChatsServer) CloseInactiveChatsRoutine(_ctx context.Context, bannedDepartments []string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	ctx := context.WithoutCancel(_ctx)
 
@@ -213,7 +219,7 @@ start:
 	tick := time.Now()
 	for {
 		log.Info("Entering new Iteration", zap.Time("ts", tick))
-		if err := s.CloseInactiveChats(ctx, log, ticketsConf, eventPublisher); err != nil {
+		if err := s.CloseInactiveChats(ctx, log, ticketsConf, eventPublisher, bannedDepartments); err != nil {
 			log.Error("Error while closing inactive chats", zap.Error(err))
 		}
 		select {
@@ -229,7 +235,7 @@ start:
 	}
 }
 
-func (s *ChatsServer) SLAViolationRoutine(_ctx context.Context, wg *sync.WaitGroup) {
+func (s *ChatsServer) SLAViolationRoutine(_ctx context.Context, bannedDepartments []string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	ctx := context.WithoutCancel(_ctx)
 
@@ -248,7 +254,7 @@ start:
 	tick := time.Now()
 	for {
 		log.Info("Entering new Iteration", zap.Time("ts", tick))
-		if err := s.CheckSLAViolation(ctx, log, ticketsConf); err != nil {
+		if err := s.CheckSLAViolation(ctx, log, ticketsConf, bannedDepartments); err != nil {
 			log.Error("Error while checking sla violation", zap.Error(err))
 		}
 		select {

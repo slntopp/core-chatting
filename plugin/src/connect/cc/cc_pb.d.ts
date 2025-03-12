@@ -888,24 +888,46 @@ export declare class Defaults extends Message$1<Defaults> {
  */
 export declare class Bot extends Message$1<Bot> {
   /**
+   * Bot's prompt.
+   *
    * @generated from field: string prompt = 1;
    */
   prompt: string;
 
   /**
+   * If bot's messages always under review.
+   *
    * @generated from field: bool review = 2;
    */
   review: boolean;
 
   /**
+   * If bot enabled or disabled in new chats.
+   *
    * @generated from field: bool enable = 3;
    */
   enable: boolean;
 
   /**
+   * Custom key-value variables for bot's prompt (prompt field). Use it like this in prompt - {VALUE_KEY}
+   *
    * @generated from field: map<string, string> values = 4;
    */
   values: { [key: string]: string };
+
+  /**
+   * If bot's FIRST message ignoring 'review' state. That means bot ALWAYS sends his first message no matter what.
+   *
+   * @generated from field: bool initiator = 5;
+   */
+  initiator: boolean;
+
+  /**
+   * True - If some emergency situation happens. Bot should check this state and base his response on this field.
+   *
+   * @generated from field: bool emergency = 6;
+   */
+  emergency: boolean;
 
   constructor(data?: PartialMessage<Bot>);
 

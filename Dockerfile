@@ -9,6 +9,7 @@ RUN pnpm i && pnpm build
 FROM golang:1.21-alpine AS server-builder
 
 RUN apk add upx
+RUN apk add -U --no-cache ca-certificates
 
 WORKDIR /go/src/github.com/slntopp/core-chatting
 
@@ -25,6 +26,7 @@ FROM scratch
 
 COPY --from=app-builder /app/dist/ /dist
 COPY --from=server-builder /go/src/github.com/slntopp/core-chatting/server /server
+COPY --from=server-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 LABEL org.opencontainers.image.source https://github.com/slntopp/core-chatting
 

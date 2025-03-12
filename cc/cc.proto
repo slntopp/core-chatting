@@ -201,10 +201,12 @@ message Defaults {
 }
 
 message Bot {
-  string prompt = 1;
-  bool review = 2;
-  bool enable = 3;
-  map<string, string> values = 4;
+  string prompt = 1;               // Bot's prompt.
+  bool review = 2;                 // If bot's messages always under review.
+  bool enable = 3;                 // If bot enabled or disabled in new chats.
+  map<string, string> values = 4;  // Custom key-value variables for bot's prompt (prompt field). Use it like this in prompt - {VALUE_KEY}
+  bool initiator = 5;              // If bot's FIRST message ignoring 'review' state. That means bot ALWAYS sends his first message no matter what.
+  bool emergency = 6;              // True - If some emergency situation happens. Bot should check this state and base his response on this field.
 }
 
 message Users {

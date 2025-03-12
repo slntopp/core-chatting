@@ -2,20 +2,20 @@ package gateways
 
 import (
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/notifications/types"
 	"go.uber.org/zap"
+	tele "gopkg.in/telebot.v4"
 	"strings"
 )
 
 type TelegramGateway struct {
 	log    *zap.Logger
-	bot    *tgbotapi.BotAPI
+	bot    *tele.Bot
 	chatID int64
 }
 
-func NewTelegramGateway(log *zap.Logger, bot *tgbotapi.BotAPI, chatID int64) *TelegramGateway {
+func NewTelegramGateway(log *zap.Logger, bot *tele.Bot, chatID int64) *TelegramGateway {
 	return &TelegramGateway{log: log.Named("TelegramGateway"), bot: bot, chatID: chatID}
 }
 
@@ -44,9 +44,10 @@ func (tg *TelegramGateway) Send(event string, meta types.EventMeta, payload inte
 				return nil
 			}
 		}
-		msg := tgbotapi.NewMessage(tg.chatID, meta.Message)
-		if _, err := tg.bot.Send(msg); err != nil {
-			return fmt.Errorf("failed to send message: %w", err)
+		tgChat := &tele.Chat{ID: tg.chatID}
+		_, err := tg.bot.Send(tgChat, meta.Message)
+		if err != nil {
+			return fmt.Errorf("failed to send telegram message: %w", err)
 		}
 
 	default:

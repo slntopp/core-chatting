@@ -44,7 +44,8 @@ func (tg *TelegramGateway) Send(event string, meta types.EventMeta, payload inte
 				return nil
 			}
 		}
-		tgChat := &tele.Chat{ID: tg.chatID}
+		tgChat := &destination{id: fmt.Sprintf("-%d", tg.chatID)}
+		log.Debug("Sending to chat", zap.String("id", tgChat.Recipient()))
 		_, err := tg.bot.Send(tgChat, meta.Message)
 		if err != nil {
 			return fmt.Errorf("failed to send telegram message: %w", err)
@@ -55,4 +56,12 @@ func (tg *TelegramGateway) Send(event string, meta types.EventMeta, payload inte
 	}
 
 	return nil
+}
+
+type destination struct {
+	id string
+}
+
+func (d destination) Recipient() string {
+	return d.id
 }

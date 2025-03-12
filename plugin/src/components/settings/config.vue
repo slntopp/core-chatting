@@ -200,8 +200,8 @@
 
           <div class="bots_config_switch">
             <n-switch class="switch" v-model:value="config.bot.initiator">
-              <template #checked> Ignore </template>
-              <template #unchecked> Basic </template>
+              <template #checked> Active </template>
+              <template #unchecked> Disabled </template>
             </n-switch>
 
             <span>
@@ -213,8 +213,8 @@
 
           <div class="bots_config_switch">
             <n-switch class="switch" v-model:value="config.bot.emergency">
-              <template #checked> Emergency </template>
-              <template #unchecked> Basic </template>
+              <template #checked> Active </template>
+              <template #unchecked> Disabled </template>
             </n-switch>
 
             <span>

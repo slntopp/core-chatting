@@ -154,7 +154,7 @@ func (s *ChatsServer) CheckSLAViolation(ctx context.Context, log *zap.Logger, co
 		if msgSent == 0 {
 			continue
 		}
-		if (now-msgSent < violatedAfter) && !underReview {
+		if now-msgSent < violatedAfter {
 			continue
 		}
 		if (slices.Contains(chat.GetAdmins(), msgSender) || slices.Contains(chatsConfig.GetAdmins(), msgSender)) && !underReview {

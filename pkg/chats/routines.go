@@ -2,6 +2,7 @@ package chats
 
 import (
 	"context"
+	"fmt"
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
@@ -12,6 +13,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -106,6 +108,64 @@ func (s *ChatsServer) CloseInactiveChats(ctx context.Context, log *zap.Logger, c
 	return nil
 }
 
+func (s *ChatsServer) CheckSLAViolation(ctx context.Context, log *zap.Logger, conf TicketsSettingsConf) error {
+	log = log.Named("CheckSLAViolation")
+	slaLvl1Key := "sla_violation_level_1_notification"
+
+	page, limit := uint64(1), uint64(10000)
+	chats, _, err := s.ctrl.List(ctx, schema.ROOT_ACCOUNT_KEY, &cc.ListChatsRequest{Page: &page, Limit: &limit})
+	if err != nil {
+		return err
+	}
+
+	chatsConfig, err := core.Config()
+	if err != nil {
+		log.Error("Failed to get chats config", zap.Error(err))
+		return fmt.Errorf("failed to get chats config: %w", err)
+	}
+
+	now := time.Now().Unix()
+	violatedAfter := int64(conf.ViolationAfterMinutes * 60)
+	for _, chat := range chats {
+		if chat.Meta == nil {
+			chat.Meta = &cc.ChatMeta{}
+		}
+		if chat.Meta.Data == nil {
+			chat.Meta.Data = map[string]*structpb.Value{}
+		}
+		if chat.Status == cc.Status_ANSWERED || chat.Status == cc.Status_CLOSE {
+			continue
+		}
+		msgSent := int64(0)
+		msgSender := ""
+		lastMsg := chat.GetMeta().LastMessage
+		if lastMsg != nil {
+			msgSent = lastMsg.Sent / 1000
+			msgSender = lastMsg.Sender
+		}
+		if msgSent == 0 {
+			continue
+		}
+		if now-msgSent < violatedAfter {
+			continue
+		}
+		if slices.Contains(chat.GetAdmins(), msgSender) || slices.Contains(chatsConfig.GetAdmins(), msgSender) {
+			continue
+		}
+		if chat.Meta.Data[slaLvl1Key].GetBoolValue() {
+			continue
+		}
+		s.dispatcher.Notify("sla_violation_level_1", chat)
+		chat.Meta.Data[slaLvl1Key] = structpb.NewBoolValue(true)
+		if _, err = s.ctrl.Update(ctx, chat); err != nil {
+			log.Error("Failed to update chat", zap.Error(err))
+			continue
+		}
+	}
+
+	return nil
+}
+
 func insertPlaceholders(text, userTitle string) string {
 	return strings.ReplaceAll(text, "{CLIENT_NAME}", userTitle)
 }
@@ -155,6 +215,41 @@ start:
 		log.Info("Entering new Iteration", zap.Time("ts", tick))
 		if err := s.CloseInactiveChats(ctx, log, ticketsConf, eventPublisher); err != nil {
 			log.Error("Error while closing inactive chats", zap.Error(err))
+		}
+		select {
+		case <-_ctx.Done():
+			log.Info("Context is done. Quitting")
+			return
+		case tick = <-ticker.C:
+			continue
+		case <-upd:
+			log.Info("New Configuration Received, restarting Routine")
+			goto start
+		}
+	}
+}
+
+func (s *ChatsServer) SLAViolationRoutine(_ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+	ctx := context.WithoutCancel(_ctx)
+
+	log := s.log.Named("SLAViolationRoutine")
+
+start:
+
+	ticketsConf := MakeTicketsConf(ctx, log, &s.settingsClient)
+
+	upd := make(chan bool, 1)
+	go sc.Subscribe([]string{ticketsKey}, upd)
+
+	log.Info("Got Configuration", zap.Any("conf", ticketsConf))
+
+	ticker := time.NewTicker(time.Second * time.Duration(ticketsConf.RoutineFrequency))
+	tick := time.Now()
+	for {
+		log.Info("Entering new Iteration", zap.Time("ts", tick))
+		if err := s.CheckSLAViolation(ctx, log, ticketsConf); err != nil {
+			log.Error("Error while checking sla violation", zap.Error(err))
 		}
 		select {
 		case <-_ctx.Done():

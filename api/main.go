@@ -182,6 +182,7 @@ func main() {
 	path, handler := cc.NewChatsAPIHandler(chatServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 	go chatServer.CloseInactiveChatsRoutine(ctx, worker(workers))
+	go chatServer.SLAViolationRoutine(ctx, worker(workers))
 
 	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrl, attachmentsCtrl, ps, whmcsTickets)
 	path, handler = cc.NewMessagesAPIHandler(messagesServer, interceptors)

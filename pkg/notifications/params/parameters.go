@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/slntopp/core-chatting/cc"
+	"strings"
 	"text/template"
 	"time"
 )
@@ -42,7 +43,7 @@ func ParseParameters(text string, values ...map[string]any) string {
 		panic(err)
 	}
 	result := buf.String()
-	return result
+	return strings.ReplaceAll(result, `\n`, "\n")
 }
 
 func ParametersFromChat(chat *cc.Chat) map[string]any {

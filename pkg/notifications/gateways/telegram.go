@@ -38,6 +38,18 @@ func matchingDepartments(chat *cc.Chat, meta types.EventMeta) bool {
 	return true
 }
 
+func escapeMarkdown(text string) string {
+	replacer := strings.NewReplacer(
+		"_", "\\_",
+		"*", "\\*",
+		"[", "\\[",
+		"]", "\\]",
+		"(", "\\(",
+		")", "\\)",
+	)
+	return replacer.Replace(text)
+}
+
 func (tg *TelegramGateway) Send(event string, meta types.EventMeta, payload interface{}) error {
 	log := tg.log.With(zap.String("event", event))
 	log.Debug("New event", zap.Any("meta", meta), zap.Any("payload", payload))
@@ -55,7 +67,7 @@ func (tg *TelegramGateway) Send(event string, meta types.EventMeta, payload inte
 		tgChat := &destination{id: fmt.Sprintf("-%d", tg.chatID)}
 		result := params.ParseParameters(meta.Message, params.ParametersFromChat(chat))
 		log.Debug("result answer", zap.String("answer", result))
-		_, err := tg.bot.Send(tgChat, result, tele.ModeMarkdown)
+		_, err := tg.bot.Send(tgChat, escapeMarkdown(result), tele.ModeMarkdown)
 		if err != nil {
 			return fmt.Errorf("failed to send telegram message: %w", err)
 		}
@@ -72,7 +84,7 @@ func (tg *TelegramGateway) Send(event string, meta types.EventMeta, payload inte
 		tgChat := &destination{id: fmt.Sprintf("-%d", tg.chatID)}
 		result := params.ParseParameters(meta.Message, params.ParametersFromChat(chat))
 		log.Debug("result answer", zap.String("answer", result))
-		_, err := tg.bot.Send(tgChat, result, tele.ModeMarkdown)
+		_, err := tg.bot.Send(tgChat, escapeMarkdown(result), tele.ModeMarkdown)
 		if err != nil {
 			return fmt.Errorf("failed to send telegram message: %w", err)
 		}

@@ -156,7 +156,14 @@ func (s *ChatsServer) CheckSLAViolation(ctx context.Context, log *zap.Logger, co
 			continue
 		}
 		if slices.Contains(chat.GetAdmins(), msgSender) || slices.Contains(chatsConfig.GetAdmins(), msgSender) {
-			continue
+			users, err := s.users_ctrl.Resolve(ctx, []string{msgSender})
+			if err != nil {
+				log.Error("Failed to resolve admin", zap.Error(err))
+				continue
+			}
+			if !users[0].GetCcIsBot() {
+				continue
+			}
 		}
 		if chat.Meta.Data[slaLvl1Key].GetBoolValue() {
 			continue

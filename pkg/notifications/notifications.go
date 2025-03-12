@@ -1,10 +1,12 @@
 package notifications
 
 import (
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/notifications/gateways"
 	"github.com/slntopp/core-chatting/pkg/notifications/types"
 	"go.uber.org/zap"
+	"strconv"
 )
 
 type NotificationDispatcher interface {
@@ -51,7 +53,15 @@ func NewNotificationDispatcher(_log *zap.Logger, configs []GatewayConfig) Notifi
 			if !ok {
 				log.Fatal("No telegram token in credentials")
 			}
-			tg := gateways.NewTelegramGateway(log, token)
+			chatID, err := strconv.Atoi(cfg.Credentials["chat_id"])
+			if err != nil {
+				log.Fatal("No valid telegram chat id in credentials")
+			}
+			bot, err := tgbotapi.NewBotAPI(token)
+			if err != nil {
+				log.Fatal("Failed to initialize telegram bot", zap.Error(err))
+			}
+			tg := gateways.NewTelegramGateway(log, bot, int64(chatID))
 			gws = append(gws, GatewayHolder{
 				Gateway: tg,
 				Events:  cfg.Events,

@@ -5,6 +5,7 @@ go 1.21
 require (
 	connectrpc.com/connect v1.15.0
 	github.com/arangodb/go-driver v1.6.2
+	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.1
@@ -18,6 +19,7 @@ require (
 	golang.org/x/net v0.23.0
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.2
+	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

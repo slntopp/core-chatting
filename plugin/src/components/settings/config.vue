@@ -176,17 +176,53 @@
           <n-text>Bot</n-text>
         </n-space>
 
-        <n-space>
-          <n-switch v-model:value="config.bot.enable">
-            <template #checked> Bot active </template>
-            <template #unchecked> Bot disabled </template>
-          </n-switch>
+        <div class="bots_config_switches">
+          <div class="bots_config_switch">
+            <n-switch class="switch" v-model:value="config.bot.enable">
+              <template #checked> Active </template>
+              <template #unchecked> Disabled </template>
+            </n-switch>
 
-          <n-switch v-model:value="config.bot.review">
-            <template #checked> Review by default </template>
-            <template #unchecked> No review by default </template>
-          </n-switch>
-        </n-space>
+            <span> Enable bot in new chats. </span>
+          </div>
+
+          <div class="bots_config_switch">
+            <n-switch class="switch" v-model:value="config.bot.review">
+              <template #checked> Review </template>
+              <template #unchecked> No review </template>
+            </n-switch>
+
+            <span>
+              Enable Pre-Moderation mode. New bot messages will be visible only
+              to administrators.
+            </span>
+          </div>
+
+          <div class="bots_config_switch">
+            <n-switch class="switch" v-model:value="config.bot.initiator">
+              <template #checked> Active </template>
+              <template #unchecked> Disabled </template>
+            </n-switch>
+
+            <span>
+              Enable Hybrid-Moderation mode. The first message from the bot will
+              be published, and subsequent messages will be visible only to
+              administrators.
+            </span>
+          </div>
+
+          <div class="bots_config_switch">
+            <n-switch class="switch" v-model:value="config.bot.emergency">
+              <template #checked> Active </template>
+              <template #unchecked> Disabled </template>
+            </n-switch>
+
+            <span>
+              Enable EMERGENCY mode. The bot will respond according to the
+              instructions given to it.
+            </span>
+          </div>
+        </div>
 
         <n-space style="margin-top: 20px">
           <n-text>Promt</n-text>
@@ -566,3 +602,26 @@ export default {
   name: "settings-config",
 };
 </script>
+
+<style scoped>
+.bots_config_switches {
+  display: flex;
+  flex-direction: column;
+  justify-content: baseline;
+}
+
+.bots_config_switch {
+  display: flex;
+  margin: 5px 0px;
+  align-items: center;
+}
+
+.bots_config_switch span {
+  font-size: 1.2rem;
+}
+
+.bots_config_switches .switch {
+  width: 200px;
+  justify-content: normal;
+}
+</style>

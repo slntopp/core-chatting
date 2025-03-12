@@ -2,7 +2,7 @@
   <div
     v-if="!isDefaultLoading || isRefresh"
     class="chat-options"
-    style="max-width: 1200px; margin: auto; padding-left: 16px; gap: 20px"
+    style="max-width: 95vw; margin: auto; padding-left: 16px; gap: 20px"
   >
     <n-tabs
       class="card-tabs"

@@ -40,7 +40,8 @@ func ParseParameters(text string, values ...map[string]any) string {
 	}
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, data); err != nil {
-		panic(err)
+		fmt.Println("error: " + err.Error())
+		return text
 	}
 	result := buf.String()
 	return strings.ReplaceAll(result, `\n`, "\n")

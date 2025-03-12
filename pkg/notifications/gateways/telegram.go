@@ -31,7 +31,7 @@ func (tg *TelegramGateway) Send(event string, meta types.EventMeta, payload inte
 		}
 		depStr, _ := meta.Meta["departments"].(string)
 		deps := strings.Split(depStr, ",")
-		if len(deps) > 0 {
+		if len(deps) > 0 && depStr != "" {
 			found := false
 			for _, dep := range deps {
 				if dep == chat.Department {

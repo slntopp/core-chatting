@@ -17,6 +17,42 @@ func add(a, b int) int {
 	return a + b
 }
 
+func escapeMarkdown(text string) string {
+	replacer := strings.NewReplacer(
+		"_", "\\_",
+		"*", "\\*",
+		"[", "\\[",
+		"]", "\\]",
+		"(", "\\(",
+		")", "\\)",
+	)
+	return replacer.Replace(text)
+}
+
+func escapeMarkdownV2(text string) string {
+	replacer := strings.NewReplacer(
+		"_", "\\_",
+		"*", "\\*",
+		"[", "\\[",
+		"]", "\\]",
+		"(", "\\(",
+		")", "\\)",
+		"~", "\\~",
+		"`", "\\`",
+		">", "\\>",
+		"#", "\\#",
+		"+", "\\+",
+		"-", "\\-",
+		"=", "\\=",
+		"|", "\\|",
+		"{", "\\{",
+		"}", "\\}",
+		".", "\\.",
+		"!", "\\!",
+	)
+	return replacer.Replace(text)
+}
+
 func mergeMaps(maps ...map[string]any) map[string]any {
 	result := make(map[string]any)
 	for _, m := range maps {
@@ -29,7 +65,9 @@ func mergeMaps(maps ...map[string]any) map[string]any {
 
 func ParseParameters(text string, values ...map[string]any) string {
 	tmpl, err := template.New("custom").Funcs(template.FuncMap{
-		"add": add,
+		"add":      add,
+		"escapeV2": escapeMarkdownV2,
+		"escape":   escapeMarkdown,
 	}).Parse(text)
 	if err != nil {
 		fmt.Println("error: " + err.Error())

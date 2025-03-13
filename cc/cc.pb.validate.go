@@ -2702,6 +2702,10 @@ func (m *Bot) validate(all bool) error {
 
 	// no validation rules for Values
 
+	// no validation rules for Initiator
+
+	// no validation rules for Emergency
+
 	if len(errors) > 0 {
 		return BotMultiError(errors)
 	}

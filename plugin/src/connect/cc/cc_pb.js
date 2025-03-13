@@ -318,6 +318,8 @@ export const Bot = /*@__PURE__*/ proto3.makeMessageType(
     { no: 2, name: "review", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 3, name: "enable", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 4, name: "values", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
+    { no: 5, name: "initiator", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 6, name: "emergency", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ],
 );
 

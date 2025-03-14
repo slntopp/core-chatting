@@ -68,14 +68,14 @@ func ParseParameters(text string, values ...map[string]any) string {
 		"add":      add,
 		"escapeV2": escapeMarkdownV2,
 		"escape":   escapeMarkdown,
-		"time": func(t time.Time, locStr string) string {
+		"timeSeconds": func(t time.Time, locStr string) string {
 			loc, err := time.LoadLocation(locStr)
 			if err != nil {
 				loc = time.UTC
 			}
 			return t.In(loc).Format("15:04:05")
 		},
-		"timeSeconds": func(t time.Time, locStr string) string {
+		"time": func(t time.Time, locStr string) string {
 			loc, err := time.LoadLocation(locStr)
 			if err != nil {
 				loc = time.UTC

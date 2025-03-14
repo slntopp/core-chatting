@@ -7,6 +7,7 @@ import (
 	"strings"
 	"text/template"
 	"time"
+	_ "time/tzdata"
 )
 
 type Data struct {

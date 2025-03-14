@@ -115,12 +115,8 @@ func ParametersFromChat(chat *cc.Chat) map[string]any {
 	sent := time.Unix(sentSecs, 0)
 
 	return map[string]any{
-		"CHAT_TOPIC":                chat.GetTopic(),
-		"CHAT_ID":                   chat.GetUuid(),
-		"CHAT_LAST_MESSAGE_MINUTES": sent.Minute(),
-		"CHAT_LAST_MESSAGE_HOURS":   sent.Hour(),
-		"CHAT_LAST_MESSAGE_YEAR":    sent.Year(),
-		"CHAT_LAST_MESSAGE_MONTH":   int(sent.Month()),
-		"CHAT_LAST_MESSAGE_DAY":     sent.Day(),
+		"CHAT_TOPIC":             chat.GetTopic(),
+		"CHAT_ID":                chat.GetUuid(),
+		"CHAT_LAST_MESSAGE_DATE": sent,
 	}
 }

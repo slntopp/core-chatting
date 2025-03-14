@@ -136,7 +136,7 @@ func (s *ChatsServer) CheckSLAViolation(ctx context.Context, log *zap.Logger, co
 		if chat.Meta.Data == nil {
 			chat.Meta.Data = map[string]*structpb.Value{}
 		}
-		if chat.Status == cc.Status_ANSWERED || chat.Status == cc.Status_CLOSE {
+		if chat.Status == cc.Status_ANSWERED || chat.Status == cc.Status_CLOSE || chat.Status == cc.Status_ON_HOLD {
 			continue
 		}
 		if slices.Contains(bannedDepartments, chat.GetDepartment()) {

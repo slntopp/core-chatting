@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/slntopp/core-chatting/cc"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func HandleSpecialNotify(ctx context.Context, log *zap.Logger, ps *PubSub, msg *cc.Message, oldMsg *cc.Message, chat *cc.Chat) {
@@ -27,6 +28,13 @@ func HandleSpecialNotify(ctx context.Context, log *zap.Logger, ps *PubSub, msg *
 	diffReviews := msg.GetUnderReview() != oldMsg.GetUnderReview()
 
 	sendEvent := (diffKinds || diffReviews) && msg.GetKind() == cc.Kind_DEFAULT && !msg.GetUnderReview()
+
+	if diffReviews && !msg.GetUnderReview() {
+		if msg.Meta == nil {
+			msg.Meta = make(map[string]*structpb.Value)
+		}
+		msg.Meta["approved"] = structpb.NewBoolValue(true)
+	}
 
 	deleteEvent := (diffKinds && msg.GetKind() == cc.Kind_ADMIN_ONLY) ||
 		(diffReviews && msg.GetUnderReview())

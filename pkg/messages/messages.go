@@ -144,7 +144,7 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 
 	log.Info("Sending result message", zap.Any("message", message))
 
-	if chat.GetResponsible() == "" && slices.Contains(chat.GetAdmins(), requestor) {
+	if chat.GetResponsible() == "" && slices.Contains(chat.GetAdmins(), requestor) && !msg.GetUnderReview() {
 		chat.Responsible = &requestor
 		chat, err = s.chatCtrl.Update(ctx, chat)
 		if err != nil {

@@ -1,6 +1,7 @@
 package chats
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"github.com/rabbitmq/amqp091-go"
@@ -13,6 +14,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
+	"os"
 	"slices"
 	"strings"
 	"sync"
@@ -33,6 +35,81 @@ func (s *ChatsServer) sendCloseChatMessage(ctx context.Context, log *zap.Logger,
 			Item: &cc.Event_Msg{Msg: message},
 		})
 	}
+
+	return nil
+}
+
+func (s *ChatsServer) HandleEmergency(_ context.Context, log *zap.Logger, _ TicketsSettingsConf, _ func(ctx context.Context, event *events.Event), logsFile string) error {
+	log = log.Named("HandleEmergency")
+
+	log.Debug("Ensuring emergency")
+
+	threshold := time.Now().Add(-time.Duration(10) * time.Minute)
+
+	file, err := os.Open(logsFile)
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	emergency := false
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if strings.HasPrefix(line, "====") {
+			continue
+		}
+
+		parts := strings.Fields(line)
+		if len(parts) < 3 {
+			log.Error("line has more or less than 3 parts")
+			continue
+		}
+
+		timestamp, err := time.Parse(time.RFC3339, parts[0])
+		if err != nil {
+			log.Error("invalid time format", zap.Error(err))
+			continue
+		}
+
+		if timestamp.Before(threshold) {
+			continue
+		}
+
+		status := parts[len(parts)-1]
+		if status != "UP" {
+			emergency = true
+			break
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("reading file error: %w", err)
+	}
+
+	chatsConf, err := core.Config()
+	if err != nil {
+		return fmt.Errorf("failed to get chats config: %w", err)
+	}
+	changed := false
+	if chatsConf.Bot == nil {
+		chatsConf.Bot = &cc.Bot{}
+		changed = true
+	}
+	if chatsConf.GetBot().GetEmergency() != emergency {
+		chatsConf.Bot.Emergency = emergency
+		changed = true
+	}
+	if changed {
+		if _, err = core.SetConfig(schema.ROOT_ACCOUNT_KEY, chatsConf); err != nil {
+			return fmt.Errorf("failed to set chats config: %w", err)
+		}
+		log.Debug("Emergency updated", zap.Bool("new_value", emergency))
+	}
+
+	log.Debug("Finished ensuring emergency")
 
 	return nil
 }
@@ -265,6 +342,42 @@ start:
 		log.Info("Entering new Iteration", zap.Time("ts", tick))
 		if err := s.CheckSLAViolation(ctx, log, ticketsConf, bannedDepartments); err != nil {
 			log.Error("Error while checking sla violation", zap.Error(err))
+		}
+		select {
+		case <-_ctx.Done():
+			log.Info("Context is done. Quitting")
+			return
+		case tick = <-ticker.C:
+			continue
+		case <-upd:
+			log.Info("New Configuration Received, restarting Routine")
+			goto start
+		}
+	}
+}
+
+func (s *ChatsServer) EmergencyRoutine(_ctx context.Context, logsFile string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	ctx := context.WithoutCancel(_ctx)
+
+	log := s.log.Named("EmergencyRoutine")
+	eventPublisher := setupEventPublisher(ctx, log, s.conn)
+
+start:
+
+	ticketsConf := MakeTicketsConf(ctx, log, &s.settingsClient)
+
+	upd := make(chan bool, 1)
+	go sc.Subscribe([]string{ticketsKey}, upd)
+
+	log.Info("Got Configuration", zap.Any("conf", ticketsConf))
+
+	ticker := time.NewTicker(time.Second * time.Duration(600))
+	tick := time.Now()
+	for {
+		log.Info("Entering new Iteration", zap.Time("ts", tick))
+		if err := s.HandleEmergency(ctx, log, ticketsConf, eventPublisher, logsFile); err != nil {
+			log.Error("Error while handling emergency", zap.Error(err))
 		}
 		select {
 		case <-_ctx.Done():

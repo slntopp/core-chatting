@@ -44,7 +44,7 @@ func (s *ChatsServer) HandleEmergency(_ context.Context, log *zap.Logger, _ Tick
 
 	log.Debug("Ensuring emergency")
 
-	threshold := time.Now().Add(-time.Duration(10) * time.Minute)
+	threshold := time.Now().UTC().Add(-time.Duration(10) * time.Minute)
 
 	file, err := os.Open(logsFile)
 	if err != nil {
@@ -68,7 +68,7 @@ func (s *ChatsServer) HandleEmergency(_ context.Context, log *zap.Logger, _ Tick
 			continue
 		}
 
-		timestamp, err := time.Parse(time.RFC3339, parts[0])
+		timestamp, err := time.ParseInLocation(time.RFC3339, parts[0], time.UTC)
 		if err != nil {
 			log.Error("invalid time format", zap.Error(err))
 			continue

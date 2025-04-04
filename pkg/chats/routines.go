@@ -67,6 +67,7 @@ func (s *ChatsServer) HandleEmergency(_ context.Context, log *zap.Logger, _ Tick
 			log.Error("line has more or less than 3 parts")
 			continue
 		}
+		log.Debug("parts", zap.Any("parts", parts))
 
 		timestamp, err := time.ParseInLocation(time.RFC3339, parts[0], time.UTC)
 		if err != nil {
@@ -80,6 +81,7 @@ func (s *ChatsServer) HandleEmergency(_ context.Context, log *zap.Logger, _ Tick
 
 		status := parts[len(parts)-1]
 		if status != "UP" {
+			log.Debug("Failed node", zap.Any("parts", parts), zap.Any("thr", threshold))
 			emergency = true
 			break
 		}

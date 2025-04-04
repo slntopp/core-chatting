@@ -65,6 +65,8 @@ var (
 	gatewaysConfigYaml string
 
 	bannedRoutineDepartments []string
+
+	monitoringLogsFile string
 )
 
 func init() {
@@ -114,6 +116,9 @@ func init() {
 
 	viper.SetDefault("BANNED_ROUTINE_DEPARTMENTS", "openai")
 	bannedRoutineDepartments = viper.GetStringSlice("BANNED_ROUTINE_DEPARTMENTS")
+
+	viper.SetDefault("MONITORING_LOGS_FILE", "./monitoring.log")
+	monitoringLogsFile = viper.GetString("MONITORING_LOGS_FILE")
 }
 
 func main() {
@@ -187,6 +192,7 @@ func main() {
 	router.PathPrefix(path).Handler(handler)
 	go chatServer.CloseInactiveChatsRoutine(ctx, bannedRoutineDepartments, worker(workers))
 	go chatServer.SLAViolationRoutine(ctx, bannedRoutineDepartments, worker(workers))
+	go chatServer.EmergencyRoutine(ctx, monitoringLogsFile, worker(workers))
 
 	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrl, attachmentsCtrl, ps, whmcsTickets)
 	path, handler = cc.NewMessagesAPIHandler(messagesServer, interceptors)

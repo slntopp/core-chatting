@@ -234,6 +234,15 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 
 	if oldMessage.GetKind() != message.GetKind() || oldMessage.GetUnderReview() != message.GetUnderReview() {
 		go pubsub.HandleSpecialNotify(ctx, log, s.ps, message, oldMessage, chat)
+		sender := message.GetSender()
+		if chat.GetResponsible() == "" && slices.Contains(chat.GetAdmins(), sender) && !message.GetUnderReview() {
+			chat.Responsible = &sender
+			chat, err = s.chatCtrl.Update(ctx, chat)
+			if err != nil {
+				log.Error("Failed to update chat", zap.Error(err))
+				go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_UPDATED)
+			}
+		}
 	} else {
 		go pubsub.HandleNotifyMessage(ctx, log, s.ps, message, chat, cc.EventType_MESSAGE_UPDATED)
 	}

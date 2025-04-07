@@ -63,11 +63,10 @@ func (s *ChatsServer) HandleEmergency(_ context.Context, log *zap.Logger, _ Tick
 		}
 
 		parts := strings.Fields(line)
-		if len(parts) < 3 {
-			log.Error("line has more or less than 3 parts")
+		if len(parts) != 3 || (len(parts) == 3 && parts[2] != "UP" && parts[2] != "DOWN") {
+			log.Error("line has more or less than 3 parts or invalid format", zap.Any("parts", parts))
 			continue
 		}
-		log.Debug("parts", zap.Any("parts", parts))
 
 		timestamp, err := time.ParseInLocation(time.RFC3339, parts[0], time.UTC)
 		if err != nil {
@@ -79,7 +78,7 @@ func (s *ChatsServer) HandleEmergency(_ context.Context, log *zap.Logger, _ Tick
 			continue
 		}
 
-		status := parts[len(parts)-1]
+		status := parts[2]
 		if status != "UP" {
 			log.Debug("Failed node", zap.Any("parts", parts), zap.Any("thr", threshold))
 			emergency = true

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { Bot, Defaults, Department, FetchDefaultsRequest, Metric, } from '../connect/cc/cc_pb';
 import { ref } from 'vue';
 import { useCcStore } from './chatting';
+import { useAppStore } from './app';
 
 
 export interface MetricWithKey extends Metric {
@@ -15,6 +16,7 @@ export interface MessageTemplate {
 
 export const useDefaultsStore = defineStore('defaults', () => {
     const cc_store = useCcStore()
+    const app_store = useAppStore()
 
 
     const isDefaultLoading = ref(false);
@@ -54,6 +56,8 @@ export const useDefaultsStore = defineStore('defaults', () => {
             })) as MetricWithKey[];
 
             bot.value = defaults.bot;
+
+            app_store.isEmergencyMode = bot.value!.emergency
 
             cc_store.departments = defaults.departments;
             cc_store.metrics = metrics.value;

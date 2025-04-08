@@ -5,6 +5,18 @@
         <n-global-style />
 
         <router-view />
+
+        <div
+          v-if="store.isEmergencyMode"
+          style="position: fixed; top: 10px; right: 40px; z-index: 10000"
+        >
+          <n-alert
+            closable
+            title="There is an emergency situation happening now!!!"
+            type="error"
+          >
+          </n-alert>
+        </div>
       </n-notification-provider>
     </n-loading-bar-provider>
   </n-config-provider>
@@ -20,6 +32,7 @@ import {
   NNotificationProvider,
   darkTheme,
   lightTheme,
+  NAlert,
 } from "naive-ui";
 import { useAppStore } from "./store/app.ts";
 import { onUnmounted } from "vue";

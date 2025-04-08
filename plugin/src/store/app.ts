@@ -17,6 +17,7 @@ export interface PluginConf {
 }
 
 export const useAppStore = defineStore('app', () => {
+    const isEmergencyMode = ref(false)
 
     const conf = ref<PluginConf>()
     const loading = ref(false)
@@ -31,6 +32,8 @@ export const useAppStore = defineStore('app', () => {
     return {
         conf, loading, displayMode, device,
 
-        isPC, isMobile, isTablet
+        isPC, isMobile, isTablet,
+
+        isEmergencyMode
     }
 })

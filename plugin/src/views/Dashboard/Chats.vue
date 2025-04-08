@@ -453,8 +453,7 @@ function startChat() {
 }
 
 function goToStatistics() {
-  router.push({ name: "Statistics" });
-  appStore.displayMode = "none";
+  window.top?.postMessage({ type: "open-chats-statistics", value: {} }, "*");
 }
 
 async function deleteChats() {

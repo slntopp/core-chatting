@@ -150,19 +150,30 @@ func (s *AttachmentsServer) downloadBatch(w http.ResponseWriter, r *http.Request
 }
 
 func (s *AttachmentsServer) delete(w http.ResponseWriter, r *http.Request) {
-	log := s.log.Named("Upload")
+	log := s.log.Named("Delete")
 	ctx := r.Context()
 
-	vars := mux.Vars(r)
-	uuid := vars["uuid"]
+	uuid := mux.Vars(r)["uuid"]
 
-	err := s.ctrl.Delete(ctx, uuid)
+	att, err := s.ctrl.Get(ctx, uuid)
 	if err != nil {
-		log.Error("Failed to save attachment", zap.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+		log.Error("Failed to get attachment", zap.Error(err))
+		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusNotFound)
+		return
+	}
+
+	objectName := fmt.Sprintf("%s%s", att.Uuid, att.Ext)
+	err = s.s3Client.RemoveObject(ctx, s.bucket, objectName, minio.RemoveObjectOptions{})
+	if err != nil {
+		log.Warn("Failed to remove object from S3", zap.String("object", objectName), zap.Error(err))
+	}
+
+	if err = s.ctrl.Delete(ctx, uuid); err != nil {
+		log.Error("Failed to delete attachment record", zap.Error(err))
+		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
 }

@@ -65,9 +65,34 @@ UPDATE @key WITH {
 } IN @@messages
 `
 
-func (c *MessagesController) Update(ctx context.Context, msg *cc.Message) (*cc.Message, error) {
-	log := c.log.Named("Update")
-	log.Debug("Req received")
+func (c *MessagesController) Update(ctx context.Context, msg *cc.Message, withTransaction ...bool) (*cc.Message, error) {
+	_ = c.log.Named("Update")
+
+	var (
+		inTransaction = len(withTransaction) > 0 && withTransaction[0]
+		trID          driver.TransactionID
+		err           error
+	)
+	if inTransaction {
+		trID, err = c.db.BeginTransaction(ctx, driver.TransactionCollections{
+			Exclusive: []string{MESSAGES_COLLECTION},
+		}, &driver.BeginTransactionOptions{AllowImplicit: true})
+		if err != nil {
+			return nil, err
+		}
+		ctx = driver.WithTransactionID(ctx, trID)
+	}
+	commit := func() error {
+		if inTransaction {
+			return c.db.CommitTransaction(ctx, trID, nil)
+		}
+		return nil
+	}
+	abort := func() {
+		if inTransaction {
+			_ = c.db.AbortTransaction(ctx, trID, nil)
+		}
+	}
 
 	params := map[string]interface{}{
 		"kind":         msg.GetKind(),
@@ -79,14 +104,14 @@ func (c *MessagesController) Update(ctx context.Context, msg *cc.Message) (*cc.M
 		"meta":         msg.GetMeta(),
 		"@messages":    MESSAGES_COLLECTION,
 	}
-
-	_, err := c.db.Query(ctx, updateMessageQuery, params)
-
+	_, err = c.db.Query(ctx, updateMessageQuery, params)
 	if err != nil {
+		abort()
 		return nil, err
 	}
 
-	return msg, nil
+	err = commit()
+	return msg, err
 }
 
 const readMessageQuery = `

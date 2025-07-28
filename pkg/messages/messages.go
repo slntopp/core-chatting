@@ -227,7 +227,7 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 		return nil, err
 	}
 
-	message, err := s.msgCtrl.Update(ctx, req.Msg)
+	message, err := s.msgCtrl.Update(ctx, req.Msg, true)
 	if err != nil {
 		return nil, err
 	}

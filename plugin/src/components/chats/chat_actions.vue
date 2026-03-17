@@ -284,7 +284,7 @@ const commands = computed(() => {
     const bot = users.value.get(uuid);
 
     if (!bot?.ccIsBot) return;
-    Object.entries(bot.ccCommands).forEach(([key, description]) => {
+    Object.entries(bot.ccCommands || {}).forEach(([key, description]) => {
       result.push({ key: `/${key}`, description });
     });
   });

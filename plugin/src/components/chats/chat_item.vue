@@ -103,7 +103,9 @@
         <template v-if="!onlyMainInfo">
           <n-icon
             size="18"
-            @mouseenter="(e:any) => emits('hover', e.clientX, e.clientY, chat.uuid)"
+            @mouseenter="
+              (e: any) => emits('hover', e.clientX, e.clientY, chat.uuid)
+            "
             @mouseleave="emits('hoverEnd')"
           >
             <mail-icon />
@@ -203,17 +205,17 @@ import { useUsersStore } from "../../store/users.ts";
 import { storeToRefs } from "pinia";
 
 const CopyIcon = defineAsyncComponent(
-  () => import("@vicons/ionicons5/CopyOutline")
+  () => import("@vicons/ionicons5/CopyOutline"),
 );
 const MailIcon = defineAsyncComponent(
-  () => import("@vicons/ionicons5/ChatbubbleEllipsesOutline")
+  () => import("@vicons/ionicons5/ChatbubbleEllipsesOutline"),
 );
 const LoginIcon = defineAsyncComponent(
-  () => import("../../assets/icons/LoginOutline.svg")
+  () => import("../../assets/icons/LoginOutline.svg"),
 );
 
 const escalatedIcon = defineAsyncComponent(
-  () => import("@vicons/ionicons5/NotificationsOutline")
+  () => import("@vicons/ionicons5/NotificationsOutline"),
 );
 
 interface ChatItemProps {
@@ -237,10 +239,10 @@ const router = useRouter();
 const notification = useNotification();
 
 const users = computed(() =>
-  chat.value.users.map((uuid) => allUsers.value.get(uuid)?.title ?? "Unknown")
+  chat.value.users.map((uuid) => allUsers.value.get(uuid)?.title ?? "Unknown"),
 );
 const admins = computed(() =>
-  chat.value.admins.map((uuid) => allUsers.value.get(uuid)?.title ?? "Unknown")
+  chat.value.admins.map((uuid) => allUsers.value.get(uuid)?.title ?? "Unknown"),
 );
 
 const members = computed(() => users.value.concat(admins.value));
@@ -248,7 +250,7 @@ const members = computed(() => users.value.concat(admins.value));
 const department = computed(
   () =>
     store.departments.find(({ key }) => key === chat.value.department)?.title ??
-    chat.value.department
+    chat.value.department,
 );
 
 // const sub = computed(() => {
@@ -272,7 +274,7 @@ const chatTopic = computed(() => {
   return topic || "-";
 });
 const isUnreadMessages = computed(
-  () => chat.value.meta && chat.value.meta.unread > 0
+  () => chat.value.meta && chat.value.meta.unread > 0,
 );
 
 const responsibleColsWidth = ref("auto");
@@ -313,13 +315,13 @@ async function setColumns() {
 const previewColumns = computed(() =>
   appStore.displayMode === "full"
     ? `1fr ${responsibleColsWidth.value} ${departmentColsWidth.value} 210px`
-    : ""
+    : "",
 );
 
 const subDecoration = computed(() => (window.top ? "underline" : "none"));
 
 const chatRightColumn = computed(() =>
-  appStore.displayMode === "full" ? 6 : 3
+  appStore.displayMode === "full" ? 6 : 3,
 );
 const avatarScale = computed(() => {
   if (appStore.isMobile) return 0;
@@ -330,7 +332,7 @@ const avatarScale = computed(() => {
 const chatAvatarWidth = computed(() => (appStore.isMobile ? "15px" : null));
 
 const onlyMainInfo = computed(
-  () => appStore.isMobile || appStore.displayMode === "half"
+  () => appStore.isMobile || appStore.displayMode === "half",
 );
 
 const interval = ref<number>();
@@ -346,8 +348,8 @@ onUnmounted(() => {
 
 const lastUpdate = computed(() =>
   Number(
-    chat.value.meta?.lastMessage?.edited || chat.value.meta?.lastMessage?.sent
-  )
+    chat.value.meta?.lastMessage?.edited || chat.value.meta?.lastMessage?.sent,
+  ),
 );
 
 function copyLink() {
@@ -359,14 +361,6 @@ function copyLink() {
 
 function goToChat() {
   router.push({ name: "Chat", params: { uuid: uuid.value } });
-
-  window.top?.postMessage(
-    {
-      type: "send-user",
-      value: { uuid: chat.value.owner },
-    },
-    "*"
-  );
 }
 
 function openUser(uuid: string) {
@@ -379,7 +373,7 @@ function openChat(user: string) {
       type: "open-chat",
       value: { uuid: chat.value.uuid, user },
     },
-    "*"
+    "*",
   );
 }
 </script>

@@ -71,7 +71,7 @@ import ChatFooter from "../../../components/chats/layouts/chat_footer.vue";
 import MockMessage from "../../../components/chats/mock_message.vue";
 
 const MessageView = defineAsyncComponent(
-  () => import("../../../components/chats/message.vue")
+  () => import("../../../components/chats/message.vue"),
 );
 
 const route = useRoute();
@@ -136,7 +136,7 @@ watch(
 
     if (scrollbar.value) scrollToBottom();
   },
-  { deep: true }
+  { deep: true },
 );
 
 watch(messages, () => scrollToBottom());
@@ -169,6 +169,31 @@ const fetchChat = async () => {
     router.push("/dashboard");
   }
 };
+
+function sendUser() {
+  let userUuid = chat.value.owner;
+
+  const isAdmin = chat.value.admins.includes(store.me.uuid);
+  if (isAdmin) {
+    userUuid =
+      chat.value.users.find((u) => u !== store.me.uuid) ?? chat.value.owner;
+  }
+
+  window.top?.postMessage(
+    {
+      type: "send-user",
+      value: { uuid: userUuid },
+    },
+    "*",
+  );
+}
+
+watch(
+  () => chat.value?.owner,
+  () => {
+    sendUser();
+  },
+);
 
 onMounted(fetchChat);
 watch(chatUuid, fetchChat);

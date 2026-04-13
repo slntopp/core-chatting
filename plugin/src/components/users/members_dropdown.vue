@@ -13,63 +13,78 @@
 </template>
 
 <script setup lang="ts">
-import { Component, computed, h, useSlots } from 'vue'
-import { DropdownOption, NDropdown, NText } from 'naive-ui'
-import { User } from '../../connect/cc/cc_pb.ts'
-import memberItem from './user_item.vue'
-import AddButton from '../ui/add_button.vue'
+import { Component, computed, h, useSlots } from "vue";
+import { DropdownOption, NDropdown, NText } from "naive-ui";
+import { User } from "../../connect/cc/cc_pb.ts";
+import memberItem from "./user_item.vue";
+import AddButton from "../ui/add_button.vue";
 
 interface MembersDropdownProps {
-  visible?: boolean
-  responsible?: User
-  members: User[]
-  admins: String[]
+  visible?: boolean;
+  responsible?: User;
+  members: User[];
+  admins: String[];
 }
 
-const props = defineProps<MembersDropdownProps>()
-const emits = defineEmits(['delete', 'add', 'change'])
-const slots = useSlots()
+const props = defineProps<MembersDropdownProps>();
+const emits = defineEmits(["delete", "add", "change"]);
+const slots = useSlots();
 
 const membersOptions = computed(() => {
-  const membersOptions: DropdownOption[] = []
-  
+  const membersOptions: DropdownOption[] = [];
+
   props.members.forEach((member) => {
-    if (membersOptions.find(({ key }) => key === member?.uuid)) return
+    if (membersOptions.find(({ key }) => key === member?.uuid)) return;
     membersOptions.push({
       key: member?.uuid,
       extra: member as any,
-      label: member?.title ?? 'Unknown',
-    })
-  })
+      label: member?.title ?? "Unknown",
+    });
+  });
 
-  membersOptions.push({ key: 'add', label: 'add' })
-  return membersOptions
-})
+  membersOptions.push({ key: "add", label: "add" });
+  return membersOptions;
+});
 
-const admin = computed(() => (props.responsible ?? true)
-  ? props.responsible
-  : props.members.find(({ uuid } = {} as User) => props.admins.includes(uuid))
-)
+const admin = computed(() =>
+  (props.responsible ?? true)
+    ? props.responsible
+    : props.members.find(({ uuid } = {} as User) =>
+        props.admins.includes(uuid),
+      ),
+);
 
 const renderOption = ({ option }: { option: DropdownOption }) => {
-  if (option.key === 'add') {
+  if (option.key === "add") {
     return h(
       AddButton,
-      { style: 'width: 100%', onClick: () => emits('add') },
-      () => 'Add'
-    )
+      { style: "width: 100%", onClick: () => emits("add") },
+      () => "Add",
+    );
   }
 
-  return h(memberItem as Component, {
-    user: option.extra ?? { title: 'unknown' },
-    style: ((option.key === props.responsible?.uuid)
-      ? 'background: var(--n-text-color); color: var(--n-color)'
-      : null
-    ),
-    onDelete: () => emits('delete', option.key),
-    onChange: () => emits('change', option.key),
-    action: (option.key === props.responsible?.uuid) ? 'change' : 'delete',
-    actions: true
-  }, slots)
+  return h(
+    memberItem as Component,
+    {
+      user: option.extra ?? { title: "unknown" },
+      open: true,
+      onOpen: (uuid: string) => openUser(uuid),
+      style:
+        option.key === props.responsible?.uuid
+          ? "background: var(--n-text-color); color: var(--n-color)"
+          : null,
+      onDelete: () => emits("delete", option.key),
+      onChange: () => emits("change", option.key),
+      action: option.key === props.responsible?.uuid ? "change" : "delete",
+      actions: true,
+    },
+    slots,
+  );
+};
+
+function openUser(memberId:string) {
+  const uuid = memberId;
+
+  window.top?.postMessage({ type: "open-user", value: { uuid } }, "*");
 }
 </script>

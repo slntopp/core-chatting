@@ -1,8 +1,16 @@
 <template>
   <div class="user__item">
     <div class="user__data">
-      <user-avatar class="avatar" round :avatar="user.title"/>
-      <n-text style="color: inherit">{{ user.title }}</n-text>
+      <user-avatar class="avatar" round :avatar="user.title" />
+      <n-text
+        :style="{
+          color: 'inherit',
+          cursor: open ? 'pointer' : 'default',
+          textDecoration: open ? 'underline' : 'none',
+        }"
+        @click="open ? emits('open', user.uuid) : null"
+        >{{ user.title }}</n-text
+      >
     </div>
 
     <div class="actions" v-if="actions">
@@ -15,7 +23,12 @@
         <slot name="popover-content">Do you want to do this?</slot>
       </n-popover>
 
-      <n-button v-else text style="color: inherit" @click="emits(action ?? 'delete')">
+      <n-button
+        v-else
+        text
+        style="color: inherit"
+        @click="emits(action ?? 'delete')"
+      >
         <n-icon size="20">
           <trash-icon />
         </n-icon>
@@ -25,26 +38,23 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue'
-import { NButton, NIcon, NPopover, NText } from 'naive-ui'
-import { User } from "../../connect/cc/cc_pb.ts"
-import userAvatar from '../ui/user_avatar.vue'
+import { defineAsyncComponent } from "vue";
+import { NButton, NIcon, NPopover, NText } from "naive-ui";
+import { User } from "../../connect/cc/cc_pb.ts";
+import userAvatar from "../ui/user_avatar.vue";
 
-const trashIcon = defineAsyncComponent(
-  () => import('@vicons/ionicons5/Trash')
-)
-const syncIcon = defineAsyncComponent(
-  () => import('@vicons/ionicons5/Sync')
-)
+const trashIcon = defineAsyncComponent(() => import("@vicons/ionicons5/Trash"));
+const syncIcon = defineAsyncComponent(() => import("@vicons/ionicons5/Sync"));
 
 interface UserItemProps {
-  user: User
-  actions?: boolean,
-  action?: 'delete' | 'change'
+  user: User;
+  actions?: boolean;
+  action?: "delete" | "change";
+  open?: boolean;
 }
 
-defineProps<UserItemProps>()
-const emits = defineEmits(['delete', 'change'])
+defineProps<UserItemProps>();
+const emits = defineEmits(["delete", "change", "open"]);
 </script>
 
 <style scoped lang="scss">

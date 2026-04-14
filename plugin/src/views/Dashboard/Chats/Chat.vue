@@ -180,8 +180,6 @@ function sendUser() {
       chat.value.owner;
   }
 
-  console.log(isAdmin, userUuid);
-
   window.top?.postMessage(
     {
       type: "send-user",

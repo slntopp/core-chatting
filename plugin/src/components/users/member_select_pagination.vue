@@ -81,7 +81,7 @@ async function onSearch(value?: string) {
           limit: 20,
           page: 1,
           filters: { search_param: value, exclude_uuids: [...props.value] },
-        })
+        }),
       )
     ).toJson() as any as Users;
 
@@ -103,24 +103,33 @@ function onUpdateShow() {
 
 function setOptions(users?: User[]) {
   const newOptions = options.value.filter((option) =>
-    props.value.includes(option?.value?.toString() || "")
+    props.value.includes(option?.value?.toString() || ""),
   );
 
   newOptions.push(
     ...(users || []).map((user) => ({
       label: user.title,
       value: user.uuid,
-    }))
+    })),
   );
 
   newOptions.sort((a) =>
-    props.value.includes(a.value?.toString() || "") ? 1 : -1
+    props.value.includes(a.value?.toString() || "") ? 1 : -1,
   );
+  newOptions.sort((a, b) => {
+    const aSelected = props.value.includes(a.value?.toString() || "");
+    const bSelected = props.value.includes(b.value?.toString() || "");
+    if (aSelected === bSelected) return 0;
+    return aSelected ? -1 : 1;
+  });
 
-  options.value = newOptions.filter(
-    (option, index) =>
-      newOptions.findIndex((first) => first.value == option.value) === index
-  );
+  const seen = new Set<string>();
+  options.value = newOptions.filter((option) => {
+    const key = option?.value?.toString() || "";
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 async function fetchExisted() {
@@ -148,7 +157,7 @@ async function fetchExisted() {
     await ccStore.users_c.getMembers(
       GetMembersRequest.fromJson({
         uuids: notExisted || [],
-      })
+      }),
     )
   ).toJson() as any as Users;
 
@@ -171,7 +180,7 @@ const renderTag: SelectRenderTag = ({ option, handleClose }) => {
     },
     {
       default: () => (option.value !== option.label ? option.label : "Deleted"),
-    }
+    },
   );
 };
 

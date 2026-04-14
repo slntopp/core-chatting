@@ -148,6 +148,8 @@ function setOptions(users?: User[]) {
 }
 
 async function fetchExisted() {
+  console.log(3223,props.value);
+  
   const notExisted: string[] = [];
   const inCache: User[] = [];
 
@@ -206,7 +208,7 @@ function filterOption(pattern: string, option: SelectOption) {
   );
 }
 
-watch(value, fetchExisted);
+watch(value, fetchExisted,{deep:true});
 </script>
 
 <style scoped></style>

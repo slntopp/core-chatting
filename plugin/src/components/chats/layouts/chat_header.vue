@@ -25,7 +25,7 @@
         v-if="appStore.isMobile"
         round
         style="cursor: pointer"
-        :avatar="(CogIcon as DefineComponent)"
+        :avatar="CogIcon as DefineComponent"
         @click="isSettingsVisible = !isSettingsVisible"
       />
       <user-avatar
@@ -276,13 +276,13 @@ import { useUsersStore } from "../../../store/users.ts";
 import MemberSelectPagination from "../../users/member_select_pagination.vue";
 
 const EditIcon = defineAsyncComponent(
-  () => import("@vicons/ionicons5/PencilSharp")
+  () => import("@vicons/ionicons5/PencilSharp"),
 );
 const OpenIcon = defineAsyncComponent(
-  () => import("@vicons/ionicons5/ArrowBack")
+  () => import("@vicons/ionicons5/ArrowBack"),
 );
 const CogIcon = defineAsyncComponent(
-  () => import("@vicons/ionicons5/CogOutline")
+  () => import("@vicons/ionicons5/CogOutline"),
 );
 
 interface ChatHeaderProps {
@@ -317,7 +317,7 @@ const isAddSaveLoading = ref<boolean>(false);
 const newStatus = ref();
 const isChangeStatusLoading = ref(false);
 const isSettingsVisible = ref(
-  document.documentElement.clientWidth > 768 ? true : false
+  document.documentElement.clientWidth > 768 ? true : false,
 );
 
 const members = computed(() => {
@@ -341,7 +341,7 @@ const statusesOptions = computed(() =>
     label: status.label,
     disabled: status.value == chat.value.status,
     value: status.value,
-  }))
+  })),
 );
 
 const metricsOptions = computed(() => {
@@ -353,7 +353,7 @@ const metricsOptions = computed(() => {
       metrics.value.find((metric) => metric.key === keyMetric) ?? {};
 
     const { key, value } = options?.find(
-      (option) => option.value === kind.value
+      (option) => option.value === kind.value,
     ) ?? { key: "", value: 0 };
 
     const optionsValues = options?.map(({ value }) => value) ?? [];
@@ -377,7 +377,7 @@ const changeResponsible = async (uuid: string) => {
       new Chat({
         ...chat.value,
         responsible: uuid,
-      })
+      }),
     );
 
     notification.success({ title: "Done", duration: 3000 });
@@ -394,7 +394,7 @@ const changeDepartment = async (key: string) => {
       new Chat({
         ...chat.value,
         department: key,
-      })
+      }),
     );
 
     notification.success({ title: "Done", duration: 3000 });
@@ -409,7 +409,7 @@ const adminsItems = computed(() =>
   admins.value
     .map((admin) => users.value.get(admin))
     .filter((u) => !!u)
-    .map((user) => ({ label: user!.title, value: user!.uuid }))
+    .map((user) => ({ label: user!.title, value: user!.uuid })),
 );
 
 const isVisible = ref<boolean>();
@@ -423,8 +423,9 @@ const openResponsible = async () => {
 
 const deleteMember = (uuid: string) => {
   const users = chat.value.users.filter((userId) => userId !== uuid);
+  const admins = chat.value.admins.filter((adminId) => adminId !== uuid);
 
-  store.update_chat({ ...chat.value, users } as Chat);
+  store.update_chat({ ...chat.value, users, admins } as Chat);
 };
 
 const startAddMembers = () => {
@@ -465,7 +466,7 @@ const changeStatus = async () => {
 };
 
 const gridColumns = computed(
-  () => `repeat(${chat.value?.gateways.length > 0 ? 3 : 2}, auto) 1fr auto`
+  () => `repeat(${chat.value?.gateways.length > 0 ? 3 : 2}, auto) 1fr auto`,
 );
 
 const onlyMainInfo = computed(() => appStore.isMobile || appStore.isTablet);

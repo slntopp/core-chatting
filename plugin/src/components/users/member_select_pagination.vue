@@ -53,7 +53,8 @@ function startSearch(val: string) {
 }
 
 function onUpdate(value: any) {
-  emit("update:value", value);
+  const uniq = Array.from(new Set((value || []).map((v: any) => v?.toString())));
+  emit("update:value", uniq);
 
   onSearch();
 }
@@ -102,34 +103,33 @@ function onUpdateShow() {
 }
 
 function setOptions(users?: User[]) {
-  // Keep currently-selected options (so selected tags persist)
-  const existing = options.value.filter((option) =>
-    props.value.includes(option?.value?.toString() || ""),
-  );
-
   const mapped = (users || []).map((user) => ({
     label: user.title,
     value: user.uuid?.toString(),
   }));
 
-  const newOptions = [...existing, ...mapped];
+  const byId = new Map<string, SelectOption>();
 
-  // Put selected items first
-  newOptions.sort((a, b) => {
-    const aSelected = props.value.includes(a.value?.toString() || "");
-    const bSelected = props.value.includes(b.value?.toString() || "");
-    if (aSelected === bSelected) return 0;
-    return aSelected ? -1 : 1;
-  });
+  // Preserve selected items in the order of props.value
+  for (const uuid of props.value) {
+    const key = uuid?.toString() || "";
+    if (!key) continue;
+    let opt = options.value.find((o) => o.value?.toString() === key);
+    if (!opt) opt = mapped.find((m) => m.value === key);
+    if (!opt && usersStore.users.get(key)) {
+      const u = usersStore.users.get(key) as User;
+      opt = { label: u.title, value: key } as SelectOption;
+    }
+    if (opt) byId.set(key, opt);
+  }
 
-  // Deduplicate by stringified value
-  const seen = new Set<string>();
-  options.value = newOptions.filter((option) => {
-    const key = option?.value?.toString() || "";
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  // Add fetched/mapped items after selected ones
+  for (const opt of mapped) {
+    const key = opt.value?.toString() || "";
+    if (!byId.has(key)) byId.set(key, opt);
+  }
+
+  options.value = Array.from(byId.values());
 }
 
 async function fetchExisted() {

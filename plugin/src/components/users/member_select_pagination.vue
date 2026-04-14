@@ -102,6 +102,8 @@ function onUpdateShow() {
 }
 
 function setOptions(users?: User[]) {
+  options.value = [];
+
   const newOptions = options.value.filter((option) =>
     props.value.includes(option?.value?.toString() || ""),
   );

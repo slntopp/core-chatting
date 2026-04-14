@@ -38,7 +38,9 @@ const props = defineProps<MemberSelectPaginationProps>();
 const { value } = toRefs(props);
 const internalValue = computed<string[]>({
   get() {
-    return Array.from(new Set((props.value || []).map((v: any) => v?.toString())));
+    return Array.from(
+      new Set((props.value || []).map((v: any) => v?.toString())),
+    );
   },
   set(v: any) {
     const uniq = Array.from(new Set((v || []).map((x: any) => x?.toString())));
@@ -54,24 +56,7 @@ const options = ref<SelectOption[]>([]);
 const isMembersLoading = ref(false);
 const cachedEmpty = ref<User[]>([]);
 
-// Debug helpers — enable by setting `localStorage.setItem('msp_debug','1')`
-function maskId(id?: any) {
-  try {
-    const s = id?.toString() || "";
-    if (!s) return "";
-    return s.length <= 8 ? s : `${s.slice(0, 4)}…${s.slice(-4)}`;
-  } catch (e) {
-    return "";
-  }
-}
-
-function dbg(...args: any[]) {
-    // eslint-disable-next-line no-console
-    console.debug("[member_select_pagination]", ...args);
-}
-
 onMounted(() => {
-  dbg("mounted props.value", (props.value || []).map(maskId));
   fetchExisted();
 });
 
@@ -81,9 +66,9 @@ function startSearch(val: string) {
 }
 
 function onUpdate(value: any) {
-  dbg("onUpdate incoming", (value || []).map(maskId));
-  const uniq = Array.from(new Set((value || []).map((v: any) => v?.toString())));
-  dbg("onUpdate deduped", uniq.map(maskId));
+  const uniq = Array.from(
+    new Set((value || []).map((v: any) => v?.toString())),
+  );
   emit("update:value", uniq);
 
   onSearch();
@@ -99,8 +84,6 @@ async function onSearch(value?: string) {
   }
 
   value = value.trim();
-
-  dbg("onSearch called", { value });
 
   if (value === "" && cachedEmpty.value.length !== 0) {
     isMembersLoading.value = false;
@@ -122,7 +105,6 @@ async function onSearch(value?: string) {
       cachedEmpty.value = data.users;
     }
 
-    dbg("onSearch result count", data.users?.length);
     setOptions(data.users);
   } finally {
     isMembersLoading.value = false;
@@ -131,19 +113,15 @@ async function onSearch(value?: string) {
 
 function onUpdateShow() {
   if (options.value.length === 0 || cachedEmpty.value.length === 0) {
-    dbg("onUpdateShow triggering search, options.length", options.value.length, "cachedEmpty.length", cachedEmpty.value.length);
     onSearch("");
   }
 }
 
 function setOptions(users?: User[]) {
-  dbg("setOptions start", { usersCount: (users || []).length, propsValueCount: props.value.length, optionsBefore: options.value.length });
-
   const mapped = (users || []).map((user) => ({
     label: user.title,
     value: user.uuid?.toString(),
   }));
-  dbg("mapped sample", mapped.slice(0, 5).map((m) => ({ label: m.label, value: maskId(m.value) }))); 
 
   const byId = new Map<string, SelectOption>();
 
@@ -166,18 +144,14 @@ function setOptions(users?: User[]) {
     if (!byId.has(key)) byId.set(key, opt);
   }
 
-  dbg("byId size before set", byId.size, "sample keys", Array.from(byId.keys()).slice(0, 8).map(maskId));
-
   options.value = Array.from(byId.values());
-
-  dbg("setOptions end", { optionsAfter: options.value.length, sample: options.value.slice(0, 8).map((o) => ({ label: o.label, value: maskId(o.value) })) });
 }
 
 async function fetchExisted() {
+  console.log(3223,props.value);
+  
   const notExisted: string[] = [];
   const inCache: User[] = [];
-
-  dbg("fetchExisted start props.value", (props.value || []).map(maskId));
 
   for (const uuid of props.value) {
     if (options.value.findIndex((option) => option.value === uuid) == -1) {
@@ -187,8 +161,6 @@ async function fetchExisted() {
       notExisted.push(uuid);
     }
   }
-
-  dbg("fetchExisted computed", { notExisted: notExisted.map(maskId), inCacheCount: inCache.length });
 
   if (notExisted.length === 0) {
     return;
@@ -205,8 +177,6 @@ async function fetchExisted() {
       }),
     )
   ).toJson() as any as Users;
-
-  dbg("fetchExisted remote returned", data?.users?.length);
 
   setOptions(data.users);
 }
@@ -238,7 +208,7 @@ function filterOption(pattern: string, option: SelectOption) {
   );
 }
 
-watch(value, fetchExisted);
+watch(value, fetchExisted,{deep:true});
 </script>
 
 <style scoped></style>

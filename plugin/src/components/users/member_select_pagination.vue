@@ -102,22 +102,19 @@ function onUpdateShow() {
 }
 
 function setOptions(users?: User[]) {
-  options.value = [];
-
-  const newOptions = options.value.filter((option) =>
+  // Keep currently-selected options (so selected tags persist)
+  const existing = options.value.filter((option) =>
     props.value.includes(option?.value?.toString() || ""),
   );
 
-  newOptions.push(
-    ...(users || []).map((user) => ({
-      label: user.title,
-      value: user.uuid,
-    })),
-  );
+  const mapped = (users || []).map((user) => ({
+    label: user.title,
+    value: user.uuid?.toString(),
+  }));
 
-  newOptions.sort((a) =>
-    props.value.includes(a.value?.toString() || "") ? 1 : -1,
-  );
+  const newOptions = [...existing, ...mapped];
+
+  // Put selected items first
   newOptions.sort((a, b) => {
     const aSelected = props.value.includes(a.value?.toString() || "");
     const bSelected = props.value.includes(b.value?.toString() || "");
@@ -125,6 +122,7 @@ function setOptions(users?: User[]) {
     return aSelected ? -1 : 1;
   });
 
+  // Deduplicate by stringified value
   const seen = new Set<string>();
   options.value = newOptions.filter((option) => {
     const key = option?.value?.toString() || "";

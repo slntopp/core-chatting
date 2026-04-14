@@ -176,8 +176,11 @@ function sendUser() {
   const isAdmin = chat.value.admins.includes(store.me.uuid);
   if (isAdmin) {
     userUuid =
-      chat.value.users.find((u) => u !== store.me.uuid) ?? chat.value.owner;
+      chat.value.users.find((u) => !chat.value.admins.includes(u)) ??
+      chat.value.owner;
   }
+
+  console.log(isAdmin, userUuid);
 
   window.top?.postMessage(
     {

@@ -24,6 +24,15 @@
           />
         </n-form-item>
 
+        <n-form-item label="Start message" label-align="left" label-width="100">
+          <n-input
+            v-model:value="startMessage"
+            clearable
+            type="textarea"
+            placeholder="Type your start message here..."
+          />
+        </n-form-item>
+
         <n-form-item label="Members" label-align="left" label-width="100">
           <member-select-pagination v-model:value="chat.users" />
         </n-form-item>
@@ -117,7 +126,7 @@ import {
 import { useRouter } from "vue-router";
 import { useCcStore } from "../../store/chatting.ts";
 import { useAppStore } from "../../store/app.ts";
-import { Chat, ChatMeta, Role } from "../../connect/cc/cc_pb";
+import { Chat, ChatMeta, Kind, Message, Role } from "../../connect/cc/cc_pb";
 import { ValueAtom } from "naive-ui/es/select/src/interface";
 import { Value } from "@bufbuild/protobuf";
 import { useDefaultsStore } from "../../store/defaults.ts";
@@ -133,7 +142,7 @@ interface ChatOptionsProps {
 }
 
 const CloseSharp = defineAsyncComponent(
-  () => import("@vicons/ionicons5/CloseSharp")
+  () => import("@vicons/ionicons5/CloseSharp"),
 );
 
 const props = defineProps<ChatOptionsProps>();
@@ -147,8 +156,13 @@ const appStore = useAppStore();
 const defaultsStore = useDefaultsStore();
 const usersStore = useUsersStore();
 
-const { admins, isDefaultLoading, gateways, metrics, departments } =
-  storeToRefs(defaultsStore);
+const {
+  admins,
+  isDefaultLoading,
+  gateways: defaultGateways,
+  metrics,
+  departments,
+} = storeToRefs(defaultsStore);
 const { users, isUsersLoading } = storeToRefs(usersStore);
 
 const form = ref<FormInst>();
@@ -168,8 +182,13 @@ const chat = ref<Chat>(
     admins: [],
     gateways: [],
     role: Role.OWNER,
-  })
+    meta: new ChatMeta({
+      lastMessage: new Message({}),
+    }),
+  }),
 );
+
+const startMessage = ref("");
 
 const onMessage = ({ data, origin }: any) => {
   if (origin.includes("localhost")) return;
@@ -189,15 +208,23 @@ const adminsWithoutDuplicates = computed(() =>
   admins_options.value.map((op) => {
     const disabled = !!chat.value.users.find((m) => m === op.value);
     return { ...op, disabled };
-  })
+  }),
 );
 
 const departamentsOptions = computed(() =>
   departments.value.map((departament) => ({
     label: departament.title,
     value: departament.key,
-  }))
+  })),
 );
+
+const gateways = computed(() => {
+  const items: string[] = [...defaultGateways.value];
+
+  items.push("UserApp");
+
+  return items;
+});
 
 const gateways_options = computed(() =>
   gateways.value.map((gateway) => {
@@ -205,7 +232,7 @@ const gateways_options = computed(() =>
       label: gateway,
       value: gateway,
     };
-  })
+  }),
 );
 
 const admins_options = computed(() =>
@@ -214,7 +241,7 @@ const admins_options = computed(() =>
       label: users.value.get(admin)?.title ?? "Unknown",
       value: admin,
     };
-  })
+  }),
 );
 
 onMounted(() => {
@@ -223,7 +250,7 @@ onMounted(() => {
   }
   window.top?.postMessage({ type: "get-user" }, "*");
 
-  chat.value.gateways = gateways.value;
+  chat.value.gateways = ["UserApp"];
 });
 
 function submit() {
@@ -241,7 +268,24 @@ function submit() {
 
         emit("close");
       } else {
+        setDepId();
+
+        if (chat.value.gateways.includes("UserApp")) {
+          chat.value.gateways = [];
+        }
+
         let { uuid } = await store.create_chat(chat.value as Chat);
+
+        if (startMessage.value.trim()) {
+          await store.send_message(
+            new Message({
+              chat: uuid,
+              content: startMessage.value,
+              gateways: chat.value.gateways,
+              kind: Kind.DEFAULT,
+            }),
+          );
+        }
 
         router.push({ name: "Chat", params: { uuid } });
       }
@@ -253,6 +297,21 @@ function submit() {
 
 function getMetric(key: string) {
   return chat.value.meta?.data[key]?.kind.value as ValueAtom;
+}
+
+function setDepId() {
+  if (!chat.value.meta) chat.value.meta = new ChatMeta({});
+
+  const departament = departments.value.find(
+    (departament) => departament.key === chat.value.department,
+  );
+
+  const dept_id = departament?.whmcsId || "";
+  if (!dept_id) return;
+
+  chat.value.meta.data["dept_id"] = new Value({
+    kind: { case: "stringValue", value: dept_id },
+  });
 }
 
 function setMetric(value: number, key: string) {
@@ -277,13 +336,13 @@ watch(
 
     if (chat.value.department) {
       const departament = departments.value.find(
-        (departament) => departament.key === chat.value.department
+        (departament) => departament.key === chat.value.department,
       );
       chat.value.admins = departament?.admins || [];
     } else {
       chat.value.admins = [];
     }
-  }
+  },
 );
 
 watch(gateways, () => {

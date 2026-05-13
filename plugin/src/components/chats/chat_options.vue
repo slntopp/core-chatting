@@ -16,7 +16,12 @@
       style="max-width: 800px; margin: auto; width: 100%"
     >
       <n-form :model="chat" ref="form" :rules="rules" label-placement="left">
-        <n-form-item label="Topic" label-align="left" label-width="100">
+        <n-form-item
+          label="Topic"
+          label-align="left"
+          label-width="100"
+          path="topic"
+        >
           <n-input
             v-model:value="chat.topic"
             clearable
@@ -24,7 +29,13 @@
           />
         </n-form-item>
 
-        <n-form-item label="Start message" label-align="left" label-width="100">
+        <n-form-item
+          label="Start message"
+          label-align="left"
+          label-width="100"
+          :validation-status="startMessageError ? 'error' : undefined"
+          :feedback="startMessageError"
+        >
           <n-input
             v-model:value="startMessage"
             clearable
@@ -33,11 +44,21 @@
           />
         </n-form-item>
 
-        <n-form-item label="Members" label-align="left" label-width="100">
+        <n-form-item
+          label="Members"
+          label-align="left"
+          label-width="100"
+          path="users"
+        >
           <member-select-pagination v-model:value="chat.users" />
         </n-form-item>
 
-        <n-form-item label="Departament" label-align="left" label-width="100">
+        <n-form-item
+          label="Departament"
+          label-align="left"
+          label-width="100"
+          path="department"
+        >
           <n-select
             v-model:value="chat.department"
             :options="departamentsOptions"
@@ -112,6 +133,7 @@ import {
 } from "vue";
 import {
   FormInst,
+  FormRules,
   NButton,
   NForm,
   NFormItem,
@@ -166,9 +188,23 @@ const {
 const { users, isUsersLoading } = storeToRefs(usersStore);
 
 const form = ref<FormInst>();
-const rules = {
-  members: {
+const rules: FormRules = {
+  topic: {
     required: true,
+    message: "Topic is required",
+    trigger: ["blur", "input"],
+  },
+  users: {
+    type: "array",
+    required: true,
+    min: 1,
+    message: "Members is required",
+    trigger: ["blur", "change"],
+  },
+  department: {
+    required: true,
+    message: "Department is required",
+    trigger: ["blur", "change"],
   },
 };
 
@@ -189,6 +225,7 @@ const chat = ref<Chat>(
 );
 
 const startMessage = ref("");
+const startMessageError = ref("");
 
 const onMessage = ({ data, origin }: any) => {
   if (origin.includes("localhost")) return;
@@ -254,8 +291,14 @@ onMounted(() => {
 });
 
 function submit() {
+  if (!startMessage.value.trim()) {
+    startMessageError.value = "Start message is required";
+  } else {
+    startMessageError.value = "";
+  }
+
   form.value!.validate(async (errs) => {
-    if (errs) {
+    if (errs || startMessageError.value) {
       console.error("Errors", errs);
       return;
     }
@@ -347,6 +390,12 @@ watch(
 
 watch(gateways, () => {
   chat.value.gateways = gateways.value;
+});
+
+watch(startMessage, () => {
+  if (startMessage.value.trim()) {
+    startMessageError.value = "";
+  }
 });
 </script>
 

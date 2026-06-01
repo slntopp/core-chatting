@@ -43,16 +43,16 @@
             v-else
             depth="3"
             class="sub"
-            @click.stop="openUser(chat.owner)"
+            @click.stop="openUser(owner?.uuid || '')"
           >
-            {{ allUsers.get(chat.owner)?.title }}
+            {{ owner?.title }}
           </n-text>
 
           <n-icon v-if="chat.botState.escalated" size="20" color="red">
             <escalated-icon />
           </n-icon>
 
-          <n-icon size="20" @click.stop="openChat(chat.owner)">
+          <n-icon size="20" @click.stop="openChat(owner?.uuid || '')">
             <login-icon v-if="!appStore.isMobile" />
           </n-icon>
         </n-space>
@@ -261,6 +261,25 @@ const department = computed(
 //   return "No messages yet"
 // })
 const hovered = ref(false);
+
+const owner = computed(() => {
+  let ownerUuid = "";
+  const member = chat.value.users.find(
+    (user) => !chat.value.admins.includes(user),
+  );
+
+  if (member) {
+    ownerUuid = member;
+  }
+
+  console.log(ownerUuid);
+
+  if (!chat.value.admins.includes(chat.value.owner)) {
+    ownerUuid = chat.value.owner;
+  }
+
+  return allUsers.value.get(ownerUuid);
+});
 
 if (appStore.isMobile) hovered.value = true;
 

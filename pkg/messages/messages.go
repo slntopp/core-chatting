@@ -164,7 +164,7 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 
 	if slices.Contains(chat.GetAdmins(), requestor) {
 		chat.Status = cc.Status_OPEN
-	} else {
+	} else if chat.Status != cc.Status_NEW {
 		chat.Status = cc.Status_CUSTOMER_REPLY
 	}
 

@@ -39,6 +39,10 @@
           is-edit
         />
       </n-tab-pane>
+
+      <n-tab-pane name="bot" tab="Bot">
+        <bot-channel-view />
+      </n-tab-pane>
     </n-tabs>
   </div>
 
@@ -53,6 +57,7 @@
 import { NSpin, NTabs, NTabPane, NSpace, NH3 } from "naive-ui";
 import templatesView from "../components/settings/templates.vue";
 import configView from "../components/settings/config.vue";
+import botChannelView from "../components/settings/bot_channel.vue";
 import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { MetricWithKey, useDefaultsStore } from "../store/defaults";

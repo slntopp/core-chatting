@@ -60,6 +60,8 @@
     </n-card>
   </n-modal>
 
+  <process-chat-button :chat="chat" />
+
   <n-tooltip>
     <template #trigger>
       <n-button type="success" size="small" ghost circle @click="copyLink">
@@ -172,6 +174,7 @@ import { addToClipboard } from "../../functions.ts";
 import { storeToRefs } from "pinia";
 import { useUsersStore } from "../../store/users.ts";
 import { onUnmounted } from "vue";
+import ProcessChatButton from "./process_chat_button.vue";
 
 const copyIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/CopyOutline")

@@ -63,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref } from "vue";
+import { computed, defineAsyncComponent, onMounted, ref, watch } from "vue";
 import {
   NButton,
   NEmpty,
@@ -103,30 +103,36 @@ const processed = ref(false);
 const saving = ref(false);
 const pairs = ref<QAPair[]>([]);
 
+const botAccount = ref("");
+
 const baseOptions = computed(() =>
   bases.value.map((b) => ({ label: b.name, value: b.id }))
 );
 
-// The bot participant of this chat (its account uuid). No bot -> no button.
-const botAccount = computed(
-  () =>
-    props.chat.admins.find((uuid) => usersStore.users.get(uuid)?.ccIsBot) || ""
-);
+// Ask the backend which chat participant is a core_chatting bot (checking both
+// admins and users). Sets botAccount + bases; empty account -> button hidden.
+async function resolve() {
+  botAccount.value = "";
+  bases.value = [];
+  const accounts = [...(props.chat.admins || []), ...(props.chat.users || [])];
+  if (!accounts.length) return;
+  try {
+    const r = await store.resolveBot(accounts);
+    botAccount.value = r.account;
+    bases.value = r.databases;
+  } catch {
+    // no bot / unreachable -> keep button hidden, don't spam the operator
+  }
+}
 
-async function open() {
+onMounted(resolve);
+watch(() => props.chat.uuid, resolve);
+
+function open() {
   show.value = true;
   pairs.value = [];
   processed.value = false;
-  database.value = "";
-  basesLoading.value = true;
-  try {
-    bases.value = await store.basesForBot(botAccount.value);
-    if (bases.value.length === 1) database.value = bases.value[0].id;
-  } catch (e) {
-    notification.error({ title: (e as Error).message });
-  } finally {
-    basesLoading.value = false;
-  }
+  database.value = bases.value.length === 1 ? bases.value[0].id : "";
 }
 
 function transcript() {

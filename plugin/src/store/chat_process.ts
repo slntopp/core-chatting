@@ -39,15 +39,22 @@ export const useChatProcessStore = defineStore("chat_process", () => {
     }
   }
 
-  // Knowledge bases of the bot participant (its account uuid) in the chat.
-  async function basesForBot(account: string): Promise<KnowledgeBase[]> {
-    const res = await fetch(
-      `${base()}/bot_databases?account=${encodeURIComponent(account)}`,
-      { headers: headers() },
-    );
-    await ok(res, "Failed to fetch bot databases");
-    const data = await res.json();
-    return data.databases || [];
+  // Try each chat participant against the (deployed) single-account endpoint;
+  // the one that returns 200 is the core_chatting bot. Non-bot accounts return
+  // 500 and are skipped. Empty account means no bot in the chat.
+  async function resolveBot(
+    accounts: string[],
+  ): Promise<{ account: string; databases: KnowledgeBase[] }> {
+    for (const account of accounts.filter(Boolean)) {
+      const res = await fetch(
+        `${base()}/bot_databases?account=${encodeURIComponent(account)}`,
+        { headers: headers() },
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      return { account, databases: data.databases || [] };
+    }
+    return { account: "", databases: [] };
   }
 
   async function process(
@@ -74,5 +81,5 @@ export const useChatProcessStore = defineStore("chat_process", () => {
     await ok(res, "Failed to save Q&A");
   }
 
-  return { basesForBot, process, append };
+  return { resolveBot, process, append };
 });

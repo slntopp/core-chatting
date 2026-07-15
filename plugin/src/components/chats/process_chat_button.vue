@@ -1,5 +1,5 @@
 <template>
-  <n-tooltip>
+  <n-tooltip v-if="botAccount">
     <template #trigger>
       <n-button type="warning" size="small" ghost circle @click="open">
         <template #icon><sparkles-icon /></template>
@@ -107,6 +107,12 @@ const baseOptions = computed(() =>
   bases.value.map((b) => ({ label: b.name, value: b.id }))
 );
 
+// The bot participant of this chat (its account uuid). No bot -> no button.
+const botAccount = computed(
+  () =>
+    props.chat.admins.find((uuid) => usersStore.users.get(uuid)?.ccIsBot) || ""
+);
+
 async function open() {
   show.value = true;
   pairs.value = [];
@@ -114,7 +120,7 @@ async function open() {
   database.value = "";
   basesLoading.value = true;
   try {
-    bases.value = await store.basesForChat(props.chat.admins);
+    bases.value = await store.basesForBot(botAccount.value);
     if (bases.value.length === 1) database.value = bases.value[0].id;
   } catch (e) {
     notification.error({ title: (e as Error).message });
@@ -136,7 +142,7 @@ function transcript() {
 async function runProcess() {
   processing.value = true;
   try {
-    pairs.value = await store.process(database.value, transcript());
+    pairs.value = await store.process(database.value, botAccount.value, transcript());
     processed.value = true;
   } catch (e) {
     notification.error({ title: (e as Error).message });

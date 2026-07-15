@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { useAppStore } from "./app";
+import { useCcStore } from "./chatting";
 
 // Talks directly to ai-bot-manager REST (same pattern/token as bot_channel store).
 export interface QAPair {
@@ -14,12 +15,13 @@ export interface KnowledgeBase {
 
 export const useChatProcessStore = defineStore("chat_process", () => {
   const app = useAppStore();
+  const chatting = useCcStore();
 
   function base(): string {
     const override = (import.meta as any).env?.VITE_AI_BOT_MANAGER_API as
       | string
       | undefined;
-    const b = (override || app.conf?.api || "").replace(/\/$/, "");
+    const b = (override || chatting.baseUrl || "").replace(/\/$/, "");
     return `${b}/agents/api`;
   }
 
@@ -37,33 +39,26 @@ export const useChatProcessStore = defineStore("chat_process", () => {
     }
   }
 
-  // Databases of the bot whose core_chatting channel account is a member of this chat.
-  async function basesForChat(adminUuids: string[]): Promise<KnowledgeBase[]> {
-    const res = await fetch(`${base()}/get_bots`, { headers: headers() });
-    await ok(res, "Failed to fetch bots");
+  // Knowledge bases of the bot participant (its account uuid) in the chat.
+  async function basesForBot(account: string): Promise<KnowledgeBase[]> {
+    const res = await fetch(
+      `${base()}/bot_databases?account=${encodeURIComponent(account)}`,
+      { headers: headers() },
+    );
+    await ok(res, "Failed to fetch bot databases");
     const data = await res.json();
-    for (const bot of data.bots || []) {
-      const linked = (bot.channels || []).some(
-        (c: any) =>
-          c.type === "core_chatting" && adminUuids.includes(c.external_id),
-      );
-      if (!linked) continue;
-      return (bot.databases || []).map((d: any) => ({
-        id: d.id,
-        name: d.name,
-      }));
-    }
-    return [];
+    return data.databases || [];
   }
 
   async function process(
     database: string,
+    account: string,
     messages: { author: string; text: string }[],
   ): Promise<QAPair[]> {
     const res = await fetch(`${base()}/process_chat`, {
       method: "POST",
       headers: headers(),
-      body: JSON.stringify({ database, messages }),
+      body: JSON.stringify({ database, account, messages }),
     });
     await ok(res, "Failed to process chat");
     const data = await res.json();
@@ -79,5 +74,5 @@ export const useChatProcessStore = defineStore("chat_process", () => {
     await ok(res, "Failed to save Q&A");
   }
 
-  return { basesForChat, process, append };
+  return { basesForBot, process, append };
 });

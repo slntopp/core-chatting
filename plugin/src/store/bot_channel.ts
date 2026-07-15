@@ -1,14 +1,15 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
-import { useAppStore } from "./app";
-import { useCcStore } from "./chatting";
+import {
+  aiBotManagerBase,
+  authHeaders,
+  nocloudBase,
+  throwIfNotOk,
+} from "./aiBotManager";
 
-// This store talks directly to two external services (unlike every other
-// store here, which only ever calls core-chatting's own Connect-Web API):
-// - NoCloud's own REST/gateway API (app.conf.api), to list "bots"-type instances
-// - ai-bot-manager's REST API, to link/unlink the core_chatting channel
-// Both reuse the same iframe bearer token (app.conf.token), since all three
-// services validate JWTs signed with the same shared NoCloud signing key.
+// Talks directly to the NoCloud REST gateway (list "bots" instances) and to
+// ai-bot-manager's REST API (link/unlink the core_chatting channel). See
+// ./aiBotManager for how the base URL and bearer token are shared.
 
 export interface BotsInstance {
   uuid: string;
@@ -27,38 +28,9 @@ export interface BotChannelLink {
 }
 
 export const useBotChannelStore = defineStore("bot_channel", () => {
-  const app = useAppStore();
-  const chatting = useCcStore();
-
   const instances = ref<BotsInstance[]>([]);
   const links = ref<BotChannelLink[]>([]);
   const isLoading = ref(false);
-
-  function nocloudBase(): string {
-    return (chatting?.baseUrl || "").replace(/\/$/, "");
-  }
-
-  function aiBotManagerBase(): string {
-    const override = (import.meta as any).env?.VITE_AI_BOT_MANAGER_API as
-      | string
-      | undefined;
-    const base = (override || chatting.baseUrl || "").replace(/\/$/, "");
-    return `${base}/agents/api`;
-  }
-
-  function authHeaders(): HeadersInit {
-    return {
-      Authorization: `Bearer ${app.conf?.token}`,
-      "Content-Type": "application/json",
-    };
-  }
-
-  async function throwIfNotOk(res: Response, action: string) {
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new Error(`${action} failed (${res.status}): ${text}`);
-    }
-  }
 
   async function fetchInstances() {
     const res = await fetch(
@@ -155,9 +127,9 @@ export const useBotChannelStore = defineStore("bot_channel", () => {
     await throwIfNotOk(res, "Failed to delete channel");
   }
 
-  // Edit = delete the old channel then add the new one (ai-bot-manager has
-  // no update_channel endpoint); throws before removing anything if the add
-  // payload is invalid is not possible client-side, so callers should confirm
+  // Edit = delete the old channel then re-add it (ai-bot-manager has no
+  // update_channel endpoint). Not atomic: if the re-add fails the channel is
+  // left removed, so the UI surfaces the error and the operator can retry.
   async function editLink(
     link: BotChannelLink,
     accountUuid: string,

@@ -5,57 +5,85 @@
         <template #icon><sparkles-icon /></template>
       </n-button>
     </template>
-    Обработать чат
+    Process chat
   </n-tooltip>
 
-  <n-modal v-model:show="show" preset="card" style="max-width: 640px" title="Обработать чат в базу знаний">
-    <n-space vertical :wrap-item="false">
-      <div>
-        <n-text depth="3">База знаний</n-text>
-        <n-select
-          v-model:value="database"
-          :options="baseOptions"
-          :loading="basesLoading"
-          placeholder="Выберите базу знаний бота"
-        />
-      </div>
-
+  <n-modal
+    v-model:show="show"
+    preset="card"
+    class="process-chat-modal"
+    title="Process chat into knowledge base"
+  >
+    <div class="pc-toolbar">
+      <n-select
+        v-model:value="database"
+        :options="baseOptions"
+        :loading="basesLoading"
+        placeholder="Select a knowledge base"
+        class="pc-base-select"
+      />
       <n-button
         type="info"
-        ghost
         :loading="processing"
         :disabled="!database"
         @click="runProcess"
       >
-        {{ pairs.length ? "Обработать заново" : "Обработать" }}
+        <template #icon><sparkles-icon /></template>
+        {{ pairs.length ? "Process again" : "Process" }}
       </n-button>
+    </div>
 
-      <n-empty v-if="processed && !pairs.length" description="ИИ не нашёл, что добавить" />
+    <n-spin :show="processing">
+      <n-empty
+        v-if="!pairs.length"
+        class="pc-empty"
+        :description="
+          processed ? 'Nothing worth adding was found' : 'Press “Process”'
+        "
+      />
 
-      <div v-for="(pair, i) in pairs" :key="i" class="qa-item">
-        <n-input v-model:value="pair.question" placeholder="Вопрос" />
-        <n-input
-          v-model:value="pair.answer"
-          type="textarea"
-          autosize
-          placeholder="Ответ"
-        />
-        <n-button text type="error" @click="pairs.splice(i, 1)">
-          <template #icon><delete-icon /></template>
-        </n-button>
+      <div v-else class="pc-list">
+        <div class="pc-count">
+          Pairs found: <b>{{ pairs.length }}</b>
+        </div>
+        <div v-for="(pair, i) in pairs" :key="i" class="qa-item">
+          <div class="qa-head">
+            <span class="qa-num">{{ i + 1 }}</span>
+            <n-button
+              text
+              type="error"
+              size="small"
+              title="Remove"
+              @click="pairs.splice(i, 1)"
+            >
+              <template #icon><delete-icon /></template>
+            </n-button>
+          </div>
+          <n-input
+            v-model:value="pair.question"
+            placeholder="Question"
+            class="qa-question"
+          />
+          <n-input
+            v-model:value="pair.answer"
+            type="textarea"
+            :autosize="{ minRows: 2 }"
+            placeholder="Answer"
+          />
+        </div>
       </div>
-    </n-space>
+    </n-spin>
 
     <template #footer>
       <n-space justify="end">
-        <n-button @click="show = false">Отмена</n-button>
+        <n-button @click="show = false">Cancel</n-button>
         <n-button
           type="success"
           :loading="saving"
           :disabled="!database || !pairs.length"
           @click="save"
         >
-          Добавить в базу ({{ pairs.length }})
+          Add to knowledge base ({{ pairs.length }})
         </n-button>
       </n-space>
     </template>
@@ -71,7 +99,7 @@ import {
   NModal,
   NSelect,
   NSpace,
-  NText,
+  NSpin,
   NTooltip,
   useNotification,
 } from "naive-ui";
@@ -116,12 +144,15 @@ async function resolve() {
   bases.value = [];
   const accounts = [...(props.chat.admins || []), ...(props.chat.users || [])];
   if (!accounts.length) return;
+  basesLoading.value = true;
   try {
     const r = await store.resolveBot(accounts);
     botAccount.value = r.account;
     bases.value = r.databases;
   } catch {
     // no bot / unreachable -> keep button hidden, don't spam the operator
+  } finally {
+    basesLoading.value = false;
   }
 }
 
@@ -164,7 +195,7 @@ async function save() {
       database.value,
       pairs.value.filter((p) => p.question.trim() && p.answer.trim())
     );
-    notification.success({ title: "Добавлено в базу", duration: 1500 });
+    notification.success({ title: "Added to knowledge base", duration: 1500 });
     show.value = false;
   } catch (e) {
     notification.error({ title: (e as Error).message });
@@ -175,12 +206,64 @@ async function save() {
 </script>
 
 <style scoped>
+.pc-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.pc-base-select {
+  flex: 1;
+}
+.pc-empty {
+  padding: 40px 0;
+}
+.pc-count {
+  margin-bottom: 12px;
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+.pc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
 .qa-item {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px;
+  gap: 8px;
+  padding: 14px;
   border: 1px solid rgba(128, 128, 128, 0.2);
-  border-radius: 6px;
+  border-radius: 10px;
+  background: rgba(128, 128, 128, 0.04);
+}
+.qa-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.qa-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--main-app-primary-color, #6b7280);
+  color: #fff;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qa-question :deep(input) {
+  font-weight: 600;
+}
+</style>
+
+<style>
+.process-chat-modal {
+  width: 900px;
+  max-width: 92vw;
 }
 </style>

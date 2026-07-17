@@ -1,5 +1,5 @@
 <template>
-  <div class="footer">
+  <div class="footer" @paste="handle_paste">
     <n-space
       v-if="chat?.role == Role.ADMIN"
       style="grid-column: 1 / 3; gap: 5px"
@@ -274,6 +274,38 @@ watch(
     }
   }
 );
+
+let pasteCounter = 0;
+// Paste an image straight from the clipboard: turn it into a pending upload in
+// the same fileList the paperclip uses, so handle_send_files uploads it as usual.
+function handle_paste(e: ClipboardEvent) {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  let handled = false;
+  for (const item of Array.from(items)) {
+    if (item.kind !== "file" || !item.type.startsWith("image/")) continue;
+    const file = item.getAsFile();
+    if (!file) continue;
+    handled = true;
+    pasteCounter += 1;
+    const ext = item.type.split("/")[1] || "png";
+    const name =
+      file.name && file.name !== "image.png"
+        ? file.name
+        : `pasted-${pasteCounter}.${ext}`;
+    fileList.value.push({
+      id: `paste-${pasteCounter}-${file.size}`,
+      name,
+      status: "pending",
+      file,
+      type: item.type,
+      thumbnailUrl: URL.createObjectURL(file),
+    } as FileInfo);
+  }
+  // Only swallow the paste when we actually captured an image; plain text pastes
+  // must still land in the textarea.
+  if (handled) e.preventDefault();
+}
 
 function onInput({ target }: { target: HTMLTextAreaElement }) {
   if (target.selectionStart !== target.selectionEnd) return;

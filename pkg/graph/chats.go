@@ -550,6 +550,10 @@ func (c *ChatsController) SetBotState(ctx context.Context, req *cc.SetBotStateRe
 		return err
 	}
 
+	// Reflect the new state on the passed chat so the CHAT_UPDATED event the
+	// caller publishes carries it, even when bot_state was previously nil.
+	chat.BotState = state
+
 	return nil
 }
 

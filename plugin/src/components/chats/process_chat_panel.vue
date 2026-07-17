@@ -1,19 +1,17 @@
 <template>
-  <n-tooltip v-if="botAccount">
-    <template #trigger>
-      <n-button type="warning" size="small" ghost circle @click="open">
-        <template #icon><sparkles-icon /></template>
-      </n-button>
-    </template>
-    Process chat
-  </n-tooltip>
+  <div class="pc-panel">
+    <div class="pc-title">Process chat into knowledge base</div>
 
-  <n-modal
-    v-model:show="show"
-    preset="card"
-    class="process-chat-modal"
-    title="Process chat into knowledge base"
-  >
+    <div v-if="basesLoading" class="pc-status">
+      <n-spin size="small" />
+      <span>Checking bot knowledge bases…</span>
+    </div>
+
+    <div v-else-if="!botAccount" class="pc-status pc-status--muted">
+      This chat has no bot knowledge base.
+    </div>
+
+    <template v-else>
     <div class="pc-toolbar">
       <n-select
         v-model:value="database"
@@ -29,13 +27,13 @@
         @click="runProcess"
       >
         <template #icon><sparkles-icon /></template>
-        {{ pairs.length ? "Process again" : "Process" }}
+        {{ processed ? "Process again" : "Process" }}
       </n-button>
     </div>
 
     <n-spin :show="processing">
       <n-empty
-        v-if="!pairs.length"
+        v-if="!proposals.length"
         class="pc-empty"
         :description="
           processed ? 'Nothing worth adding was found' : 'Press “Process”'
@@ -44,69 +42,82 @@
 
       <div v-else class="pc-list">
         <div class="pc-count">
-          Pairs found: <b>{{ pairs.length }}</b>
+          New: <b>{{ addCount }}</b> · Replacements: <b>{{ replaceCount }}</b>
         </div>
-        <div v-for="(pair, i) in pairs" :key="i" class="qa-item">
+        <div
+          v-for="(p, i) in proposals"
+          :key="i"
+          class="qa-item"
+          :class="p.match >= 0 ? 'qa-item--replace' : 'qa-item--add'"
+        >
           <div class="qa-head">
-            <span class="qa-num">{{ i + 1 }}</span>
+            <n-tag size="small" :type="p.match >= 0 ? 'warning' : 'success'">
+              {{ p.match >= 0 ? `Replace #${p.match + 1}` : "New" }}
+            </n-tag>
+            <n-checkbox v-model:checked="p.include">Include</n-checkbox>
             <n-button
               text
               type="error"
               size="small"
               title="Remove"
-              @click="pairs.splice(i, 1)"
+              @click="proposals.splice(i, 1)"
             >
               <template #icon><delete-icon /></template>
             </n-button>
           </div>
           <n-input
-            v-model:value="pair.question"
+            v-model:value="p.question"
             placeholder="Question"
             class="qa-question"
           />
           <n-input
-            v-model:value="pair.answer"
+            v-model:value="p.answer"
             type="textarea"
             :autosize="{ minRows: 2 }"
             placeholder="Answer"
           />
+          <div v-if="p.match >= 0 && p.old" class="qa-old">
+            <span class="qa-old-label">Was:</span>
+            <del>{{ p.old.answer }}</del>
+          </div>
         </div>
       </div>
     </n-spin>
 
-    <template #footer>
-      <n-space justify="end">
-        <n-button @click="show = false">Cancel</n-button>
-        <n-button
-          type="success"
-          :loading="saving"
-          :disabled="!database || !pairs.length"
-          @click="save"
-        >
-          Add to knowledge base ({{ pairs.length }})
-        </n-button>
-      </n-space>
+    <div v-if="proposals.length" class="pc-save">
+      <n-button
+        type="success"
+        :loading="saving"
+        :disabled="!database || !includedCount"
+        @click="save"
+      >
+        Save to knowledge base ({{ includedCount }})
+      </n-button>
+    </div>
     </template>
-  </n-modal>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, ref, watch } from "vue";
 import {
   NButton,
+  NCheckbox,
   NEmpty,
   NInput,
-  NModal,
   NSelect,
-  NSpace,
   NSpin,
-  NTooltip,
+  NTag,
   useNotification,
 } from "naive-ui";
 import { Chat, Kind } from "../../connect/cc/cc_pb";
 import { useCcStore } from "../../store/chatting";
 import { useUsersStore } from "../../store/users";
-import { QAPair, useChatProcessStore } from "../../store/chat_process";
+import { QAProposal, useChatProcessStore } from "../../store/chat_process";
+
+interface ProposalRow extends QAProposal {
+  include: boolean;
+}
 
 const sparklesIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/SparklesOutline")
@@ -122,26 +133,36 @@ const usersStore = useUsersStore();
 const store = useChatProcessStore();
 const notification = useNotification();
 
-const show = ref(false);
 const database = ref("");
 const bases = ref<{ id: string; name: string }[]>([]);
 const basesLoading = ref(false);
 const processing = ref(false);
 const processed = ref(false);
 const saving = ref(false);
-const pairs = ref<QAPair[]>([]);
-
+const proposals = ref<ProposalRow[]>([]);
 const botAccount = ref("");
 
 const baseOptions = computed(() =>
   bases.value.map((b) => ({ label: b.name, value: b.id }))
 );
+const kept = computed(() =>
+  proposals.value.filter(
+    (p) => p.include && (p.question.trim() || p.answer.trim())
+  )
+);
+const includedCount = computed(() => kept.value.length);
+const addCount = computed(() => kept.value.filter((p) => p.match < 0).length);
+const replaceCount = computed(
+  () => kept.value.filter((p) => p.match >= 0).length
+);
 
 // Ask the backend which chat participant is a core_chatting bot (checking both
-// admins and users). Sets botAccount + bases; empty account -> button hidden.
+// admins and users). Empty account -> no bot -> the panel stays hidden.
 async function resolve() {
   botAccount.value = "";
   bases.value = [];
+  proposals.value = [];
+  processed.value = false;
   const accounts = [...(props.chat.admins || []), ...(props.chat.users || [])];
   if (!accounts.length) return;
   basesLoading.value = true;
@@ -149,8 +170,9 @@ async function resolve() {
     const r = await store.resolveBot(accounts);
     botAccount.value = r.account;
     bases.value = r.databases;
+    database.value = bases.value.length === 1 ? bases.value[0].id : "";
   } catch {
-    // no bot / unreachable -> keep button hidden, don't spam the operator
+    // no bot / unreachable -> keep hidden, don't spam the operator
   } finally {
     basesLoading.value = false;
   }
@@ -158,13 +180,6 @@ async function resolve() {
 
 onMounted(resolve);
 watch(() => props.chat.uuid, resolve);
-
-function open() {
-  show.value = true;
-  pairs.value = [];
-  processed.value = false;
-  database.value = bases.value.length === 1 ? bases.value[0].id : "";
-}
 
 function transcript() {
   return ccStore
@@ -179,7 +194,12 @@ function transcript() {
 async function runProcess() {
   processing.value = true;
   try {
-    pairs.value = await store.process(database.value, botAccount.value, transcript());
+    const res = await store.process(
+      database.value,
+      botAccount.value,
+      transcript()
+    );
+    proposals.value = res.items.map((it) => ({ ...it, include: true }));
     processed.value = true;
   } catch (e) {
     notification.error({ title: (e as Error).message });
@@ -191,12 +211,17 @@ async function runProcess() {
 async function save() {
   saving.value = true;
   try {
-    await store.append(
-      database.value,
-      pairs.value.filter((p) => p.question.trim() && p.answer.trim())
-    );
-    notification.success({ title: "Added to knowledge base", duration: 1500 });
-    show.value = false;
+    // Send only the approved proposals; the backend applies them against the
+    // base (replace at match / append). The full base never leaves the server.
+    const items = kept.value.map((p) => ({
+      match: p.match,
+      question: p.question,
+      answer: p.answer,
+    }));
+    await store.save(database.value, items);
+    notification.success({ title: "Saved to knowledge base", duration: 1500 });
+    proposals.value = [];
+    processed.value = false;
   } catch (e) {
     notification.error({ title: (e as Error).message });
   } finally {
@@ -206,6 +231,23 @@ async function save() {
 </script>
 
 <style scoped>
+.pc-panel {
+  margin-top: 8px;
+}
+.pc-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.pc-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 0.9rem;
+}
+.pc-status--muted {
+  opacity: 0.6;
+}
 .pc-toolbar {
   display: flex;
   gap: 12px;
@@ -216,7 +258,7 @@ async function save() {
   flex: 1;
 }
 .pc-empty {
-  padding: 40px 0;
+  padding: 24px 0;
 }
 .pc-count {
   margin-bottom: 12px;
@@ -227,7 +269,7 @@ async function save() {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  max-height: 60vh;
+  max-height: 45vh;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -240,30 +282,34 @@ async function save() {
   border-radius: 10px;
   background: rgba(128, 128, 128, 0.04);
 }
+.qa-item--add {
+  border-left: 3px solid #18a058;
+}
+.qa-item--replace {
+  border-left: 3px solid #f0a020;
+}
 .qa-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
 }
-.qa-num {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--main-app-primary-color, #6b7280);
-  color: #fff;
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.qa-head :deep(.n-button) {
+  margin-left: auto;
+}
+.qa-old {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+.qa-old-label {
+  margin-right: 6px;
+  opacity: 0.7;
 }
 .qa-question :deep(input) {
   font-weight: 600;
 }
-</style>
-
-<style>
-.process-chat-modal {
-  width: 900px;
-  max-width: 92vw;
+.pc-save {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 </style>

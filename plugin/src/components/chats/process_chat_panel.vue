@@ -1,19 +1,17 @@
 <template>
-  <n-tooltip v-if="botAccount">
-    <template #trigger>
-      <n-button type="warning" size="small" ghost circle @click="open">
-        <template #icon><sparkles-icon /></template>
-      </n-button>
-    </template>
-    Process chat
-  </n-tooltip>
+  <div class="pc-panel">
+    <div class="pc-title">Process chat into knowledge base</div>
 
-  <n-modal
-    v-model:show="show"
-    preset="card"
-    class="process-chat-modal"
-    title="Process chat into knowledge base"
-  >
+    <div v-if="basesLoading" class="pc-status">
+      <n-spin size="small" />
+      <span>Checking bot knowledge bases…</span>
+    </div>
+
+    <div v-else-if="!botAccount" class="pc-status pc-status--muted">
+      This chat has no bot knowledge base.
+    </div>
+
+    <template v-else>
     <div class="pc-toolbar">
       <n-select
         v-model:value="database"
@@ -86,20 +84,18 @@
       </div>
     </n-spin>
 
-    <template #footer>
-      <n-space justify="end">
-        <n-button @click="show = false">Cancel</n-button>
-        <n-button
-          type="success"
-          :loading="saving"
-          :disabled="!database || !includedCount"
-          @click="save"
-        >
-          Save to knowledge base ({{ includedCount }})
-        </n-button>
-      </n-space>
+    <div v-if="proposals.length" class="pc-save">
+      <n-button
+        type="success"
+        :loading="saving"
+        :disabled="!database || !includedCount"
+        @click="save"
+      >
+        Save to knowledge base ({{ includedCount }})
+      </n-button>
+    </div>
     </template>
-  </n-modal>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -109,12 +105,9 @@ import {
   NCheckbox,
   NEmpty,
   NInput,
-  NModal,
   NSelect,
-  NSpace,
   NSpin,
   NTag,
-  NTooltip,
   useNotification,
 } from "naive-ui";
 import { Chat, Kind } from "../../connect/cc/cc_pb";
@@ -140,7 +133,6 @@ const usersStore = useUsersStore();
 const store = useChatProcessStore();
 const notification = useNotification();
 
-const show = ref(false);
 const database = ref("");
 const bases = ref<{ id: string; name: string }[]>([]);
 const basesLoading = ref(false);
@@ -148,7 +140,6 @@ const processing = ref(false);
 const processed = ref(false);
 const saving = ref(false);
 const proposals = ref<ProposalRow[]>([]);
-
 const botAccount = ref("");
 
 const baseOptions = computed(() =>
@@ -166,10 +157,12 @@ const replaceCount = computed(
 );
 
 // Ask the backend which chat participant is a core_chatting bot (checking both
-// admins and users). Sets botAccount + bases; empty account -> button hidden.
+// admins and users). Empty account -> no bot -> the panel stays hidden.
 async function resolve() {
   botAccount.value = "";
   bases.value = [];
+  proposals.value = [];
+  processed.value = false;
   const accounts = [...(props.chat.admins || []), ...(props.chat.users || [])];
   if (!accounts.length) return;
   basesLoading.value = true;
@@ -177,8 +170,9 @@ async function resolve() {
     const r = await store.resolveBot(accounts);
     botAccount.value = r.account;
     bases.value = r.databases;
+    database.value = bases.value.length === 1 ? bases.value[0].id : "";
   } catch {
-    // no bot / unreachable -> keep button hidden, don't spam the operator
+    // no bot / unreachable -> keep hidden, don't spam the operator
   } finally {
     basesLoading.value = false;
   }
@@ -186,13 +180,6 @@ async function resolve() {
 
 onMounted(resolve);
 watch(() => props.chat.uuid, resolve);
-
-function open() {
-  show.value = true;
-  proposals.value = [];
-  processed.value = false;
-  database.value = bases.value.length === 1 ? bases.value[0].id : "";
-}
 
 function transcript() {
   return ccStore
@@ -233,7 +220,8 @@ async function save() {
     }));
     await store.save(database.value, items);
     notification.success({ title: "Saved to knowledge base", duration: 1500 });
-    show.value = false;
+    proposals.value = [];
+    processed.value = false;
   } catch (e) {
     notification.error({ title: (e as Error).message });
   } finally {
@@ -243,6 +231,23 @@ async function save() {
 </script>
 
 <style scoped>
+.pc-panel {
+  margin-top: 8px;
+}
+.pc-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.pc-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 0.9rem;
+}
+.pc-status--muted {
+  opacity: 0.6;
+}
 .pc-toolbar {
   display: flex;
   gap: 12px;
@@ -253,7 +258,7 @@ async function save() {
   flex: 1;
 }
 .pc-empty {
-  padding: 40px 0;
+  padding: 24px 0;
 }
 .pc-count {
   margin-bottom: 12px;
@@ -264,7 +269,7 @@ async function save() {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  max-height: 60vh;
+  max-height: 45vh;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -302,11 +307,9 @@ async function save() {
 .qa-question :deep(input) {
   font-weight: 600;
 }
-</style>
-
-<style>
-.process-chat-modal {
-  width: 900px;
-  max-width: 92vw;
+.pc-save {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 </style>

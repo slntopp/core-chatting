@@ -21,7 +21,7 @@
       size="huge"
       role="dialog"
       aria-modal="true"
-      style="width: 500px; min-height: 300px"
+      style="width: 780px; max-width: 92vw; min-height: 300px"
     >
       <div class="bot_state_settings_field">
         <span>Bot state:</span>
@@ -57,10 +57,12 @@
           Save
         </n-button>
       </div>
+
+      <n-divider />
+
+      <process-chat-panel :chat="chat" />
     </n-card>
   </n-modal>
-
-  <process-chat-button :chat="chat" />
 
   <n-tooltip>
     <template #trigger>
@@ -159,6 +161,7 @@ import {
   NModal,
   NCard,
   NSwitch,
+  NDivider,
 } from "naive-ui";
 
 import { ConnectError } from "@connectrpc/connect";
@@ -174,7 +177,7 @@ import { addToClipboard } from "../../functions.ts";
 import { storeToRefs } from "pinia";
 import { useUsersStore } from "../../store/users.ts";
 import { onUnmounted } from "vue";
-import ProcessChatButton from "./process_chat_button.vue";
+import ProcessChatPanel from "./process_chat_panel.vue";
 
 const copyIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/CopyOutline")

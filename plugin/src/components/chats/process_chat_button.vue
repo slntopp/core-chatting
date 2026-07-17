@@ -78,9 +78,9 @@
             :autosize="{ minRows: 2 }"
             placeholder="Answer"
           />
-          <div v-if="p.match >= 0 && existing[p.match]" class="qa-old">
+          <div v-if="p.match >= 0 && p.old" class="qa-old">
             <span class="qa-old-label">Was:</span>
-            <del>{{ existing[p.match].answer }}</del>
+            <del>{{ p.old.answer }}</del>
           </div>
         </div>
       </div>
@@ -120,14 +120,9 @@ import {
 import { Chat, Kind } from "../../connect/cc/cc_pb";
 import { useCcStore } from "../../store/chatting";
 import { useUsersStore } from "../../store/users";
-import {
-  QAKnowledge,
-  QAPair,
-  useChatProcessStore,
-} from "../../store/chat_process";
+import { QAProposal, useChatProcessStore } from "../../store/chat_process";
 
-interface ProposalRow extends QAPair {
-  match: number;
+interface ProposalRow extends QAProposal {
   include: boolean;
 }
 
@@ -153,14 +148,12 @@ const processing = ref(false);
 const processed = ref(false);
 const saving = ref(false);
 const proposals = ref<ProposalRow[]>([]);
-const qaKnowledge = ref<QAKnowledge | null>(null);
 
 const botAccount = ref("");
 
 const baseOptions = computed(() =>
   bases.value.map((b) => ({ label: b.name, value: b.id }))
 );
-const existing = computed(() => qaKnowledge.value?.records || []);
 const kept = computed(() =>
   proposals.value.filter(
     (p) => p.include && (p.question.trim() || p.answer.trim())
@@ -197,7 +190,6 @@ watch(() => props.chat.uuid, resolve);
 function open() {
   show.value = true;
   proposals.value = [];
-  qaKnowledge.value = null;
   processed.value = false;
   database.value = bases.value.length === 1 ? bases.value[0].id : "";
 }
@@ -220,7 +212,6 @@ async function runProcess() {
       botAccount.value,
       transcript()
     );
-    qaKnowledge.value = res.qa_knowledge;
     proposals.value = res.items.map((it) => ({ ...it, include: true }));
     processed.value = true;
   } catch (e) {
@@ -233,18 +224,14 @@ async function runProcess() {
 async function save() {
   saving.value = true;
   try {
-    // Final record set: existing base, with approved replacements applied in
-    // place and approved new pairs appended.
-    const final: QAPair[] = existing.value.map((r) => ({
-      question: r.question,
-      answer: r.answer,
+    // Send only the approved proposals; the backend applies them against the
+    // base (replace at match / append). The full base never leaves the server.
+    const items = kept.value.map((p) => ({
+      match: p.match,
+      question: p.question,
+      answer: p.answer,
     }));
-    for (const p of kept.value) {
-      const pair = { question: p.question, answer: p.answer };
-      if (p.match >= 0 && p.match < final.length) final[p.match] = pair;
-      else final.push(pair);
-    }
-    await store.save(database.value, qaKnowledge.value, final);
+    await store.save(database.value, items);
     notification.success({ title: "Saved to knowledge base", duration: 1500 });
     show.value = false;
   } catch (e) {

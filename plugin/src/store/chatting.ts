@@ -38,12 +38,12 @@ import { MetricWithKey } from "./defaults";
 export const useCcStore = defineStore("cc", () => {
   const app = useAppStore();
 
-  let baseUrl = "/";
-  if (import.meta.env.VITE_API_URL) {
-    baseUrl = import.meta.env.VITE_API_URL;
-  } else if (import.meta.env.DEV) {
-    baseUrl = "http://localhost:8080";
-  }
+  let baseUrl = "	http://localhost:8624/https://api.nc2dev.support.by/";
+  // if (import.meta.env.VITE_API_URL) {
+  //   baseUrl = import.meta.env.VITE_API_URL;
+  // } else if (import.meta.env.DEV) {
+  //   baseUrl = "http://localhost:8080";
+  // }
 
   const transport = createGrpcWebTransport({
     baseUrl: baseUrl,
@@ -467,5 +467,6 @@ export const useCcStore = defineStore("cc", () => {
     change_department,
     change_status,
     update_bot_state,
+    
   };
 });

@@ -29,13 +29,13 @@
         @click="runProcess"
       >
         <template #icon><sparkles-icon /></template>
-        {{ pairs.length ? "Process again" : "Process" }}
+        {{ processed ? "Process again" : "Process" }}
       </n-button>
     </div>
 
     <n-spin :show="processing">
       <n-empty
-        v-if="!pairs.length"
+        v-if="!proposals.length"
         class="pc-empty"
         :description="
           processed ? 'Nothing worth adding was found' : 'Press “Process”'
@@ -44,32 +44,44 @@
 
       <div v-else class="pc-list">
         <div class="pc-count">
-          Pairs found: <b>{{ pairs.length }}</b>
+          New: <b>{{ addCount }}</b> · Replacements: <b>{{ replaceCount }}</b>
         </div>
-        <div v-for="(pair, i) in pairs" :key="i" class="qa-item">
+        <div
+          v-for="(p, i) in proposals"
+          :key="i"
+          class="qa-item"
+          :class="p.match >= 0 ? 'qa-item--replace' : 'qa-item--add'"
+        >
           <div class="qa-head">
-            <span class="qa-num">{{ i + 1 }}</span>
+            <n-tag size="small" :type="p.match >= 0 ? 'warning' : 'success'">
+              {{ p.match >= 0 ? `Replace #${p.match + 1}` : "New" }}
+            </n-tag>
+            <n-checkbox v-model:checked="p.include">Include</n-checkbox>
             <n-button
               text
               type="error"
               size="small"
               title="Remove"
-              @click="pairs.splice(i, 1)"
+              @click="proposals.splice(i, 1)"
             >
               <template #icon><delete-icon /></template>
             </n-button>
           </div>
           <n-input
-            v-model:value="pair.question"
+            v-model:value="p.question"
             placeholder="Question"
             class="qa-question"
           />
           <n-input
-            v-model:value="pair.answer"
+            v-model:value="p.answer"
             type="textarea"
             :autosize="{ minRows: 2 }"
             placeholder="Answer"
           />
+          <div v-if="p.match >= 0 && existing[p.match]" class="qa-old">
+            <span class="qa-old-label">Was:</span>
+            <del>{{ existing[p.match].answer }}</del>
+          </div>
         </div>
       </div>
     </n-spin>
@@ -80,10 +92,10 @@
         <n-button
           type="success"
           :loading="saving"
-          :disabled="!database || !pairs.length"
+          :disabled="!database || !includedCount"
           @click="save"
         >
-          Add to knowledge base ({{ pairs.length }})
+          Save to knowledge base ({{ includedCount }})
         </n-button>
       </n-space>
     </template>
@@ -94,19 +106,30 @@
 import { computed, defineAsyncComponent, onMounted, ref, watch } from "vue";
 import {
   NButton,
+  NCheckbox,
   NEmpty,
   NInput,
   NModal,
   NSelect,
   NSpace,
   NSpin,
+  NTag,
   NTooltip,
   useNotification,
 } from "naive-ui";
 import { Chat, Kind } from "../../connect/cc/cc_pb";
 import { useCcStore } from "../../store/chatting";
 import { useUsersStore } from "../../store/users";
-import { QAPair, useChatProcessStore } from "../../store/chat_process";
+import {
+  QAKnowledge,
+  QAPair,
+  useChatProcessStore,
+} from "../../store/chat_process";
+
+interface ProposalRow extends QAPair {
+  match: number;
+  include: boolean;
+}
 
 const sparklesIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/SparklesOutline")
@@ -129,12 +152,24 @@ const basesLoading = ref(false);
 const processing = ref(false);
 const processed = ref(false);
 const saving = ref(false);
-const pairs = ref<QAPair[]>([]);
+const proposals = ref<ProposalRow[]>([]);
+const qaKnowledge = ref<QAKnowledge | null>(null);
 
 const botAccount = ref("");
 
 const baseOptions = computed(() =>
   bases.value.map((b) => ({ label: b.name, value: b.id }))
+);
+const existing = computed(() => qaKnowledge.value?.records || []);
+const kept = computed(() =>
+  proposals.value.filter(
+    (p) => p.include && (p.question.trim() || p.answer.trim())
+  )
+);
+const includedCount = computed(() => kept.value.length);
+const addCount = computed(() => kept.value.filter((p) => p.match < 0).length);
+const replaceCount = computed(
+  () => kept.value.filter((p) => p.match >= 0).length
 );
 
 // Ask the backend which chat participant is a core_chatting bot (checking both
@@ -161,7 +196,8 @@ watch(() => props.chat.uuid, resolve);
 
 function open() {
   show.value = true;
-  pairs.value = [];
+  proposals.value = [];
+  qaKnowledge.value = null;
   processed.value = false;
   database.value = bases.value.length === 1 ? bases.value[0].id : "";
 }
@@ -179,7 +215,13 @@ function transcript() {
 async function runProcess() {
   processing.value = true;
   try {
-    pairs.value = await store.process(database.value, botAccount.value, transcript());
+    const res = await store.process(
+      database.value,
+      botAccount.value,
+      transcript()
+    );
+    qaKnowledge.value = res.qa_knowledge;
+    proposals.value = res.items.map((it) => ({ ...it, include: true }));
     processed.value = true;
   } catch (e) {
     notification.error({ title: (e as Error).message });
@@ -191,11 +233,19 @@ async function runProcess() {
 async function save() {
   saving.value = true;
   try {
-    await store.append(
-      database.value,
-      pairs.value.filter((p) => p.question.trim() && p.answer.trim())
-    );
-    notification.success({ title: "Added to knowledge base", duration: 1500 });
+    // Final record set: existing base, with approved replacements applied in
+    // place and approved new pairs appended.
+    const final: QAPair[] = existing.value.map((r) => ({
+      question: r.question,
+      answer: r.answer,
+    }));
+    for (const p of kept.value) {
+      const pair = { question: p.question, answer: p.answer };
+      if (p.match >= 0 && p.match < final.length) final[p.match] = pair;
+      else final.push(pair);
+    }
+    await store.save(database.value, qaKnowledge.value, final);
+    notification.success({ title: "Saved to knowledge base", duration: 1500 });
     show.value = false;
   } catch (e) {
     notification.error({ title: (e as Error).message });
@@ -240,21 +290,27 @@ async function save() {
   border-radius: 10px;
   background: rgba(128, 128, 128, 0.04);
 }
+.qa-item--add {
+  border-left: 3px solid #18a058;
+}
+.qa-item--replace {
+  border-left: 3px solid #f0a020;
+}
 .qa-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
 }
-.qa-num {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--main-app-primary-color, #6b7280);
-  color: #fff;
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.qa-head :deep(.n-button) {
+  margin-left: auto;
+}
+.qa-old {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+.qa-old-label {
+  margin-right: 6px;
+  opacity: 0.7;
 }
 .qa-question :deep(input) {
   font-weight: 600;

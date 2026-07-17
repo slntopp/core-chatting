@@ -15,6 +15,25 @@ export interface KnowledgeBase {
   name: string;
 }
 
+// One proposal from the model: match === -1 -> add new, >= 0 -> replace the
+// existing entry at that index.
+export interface QAProposal {
+  match: number;
+  question: string;
+  answer: string;
+}
+
+export interface QAKnowledge {
+  id: string;
+  database?: string;
+  records: QAPair[];
+}
+
+export interface ProcessResult {
+  qa_knowledge: QAKnowledge | null;
+  items: QAProposal[];
+}
+
 export const useChatProcessStore = defineStore("chat_process", () => {
   // Try each chat participant against the (deployed) single-account endpoint;
   // the one that returns 200 is the core_chatting bot. Non-bot accounts return
@@ -38,7 +57,7 @@ export const useChatProcessStore = defineStore("chat_process", () => {
     database: string,
     account: string,
     messages: { author: string; text: string }[],
-  ): Promise<QAPair[]> {
+  ): Promise<ProcessResult> {
     const res = await fetch(`${aiBotManagerBase()}/process_chat`, {
       method: "POST",
       headers: authHeaders(),
@@ -46,17 +65,37 @@ export const useChatProcessStore = defineStore("chat_process", () => {
     });
     await throwIfNotOk(res, "Failed to process chat");
     const data = await res.json();
-    return data.pairs || [];
+    return { qa_knowledge: data.qa_knowledge || null, items: data.items || [] };
   }
 
-  async function append(database: string, pairs: QAPair[]): Promise<void> {
+  // Persist the final record set. Reuses existing endpoints: update_knowledge
+  // replaces the whole QA base (when it already exists), append_qa creates it
+  // for a base that had no QA knowledge yet.
+  async function save(
+    database: string,
+    qaKnowledge: QAKnowledge | null,
+    records: QAPair[],
+  ): Promise<void> {
+    if (qaKnowledge?.id) {
+      const res = await fetch(`${aiBotManagerBase()}/update_knowledge`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          database,
+          type: "question_answer",
+          data: { qa_knowledge: { ...qaKnowledge, records } },
+        }),
+      });
+      await throwIfNotOk(res, "Failed to save Q&A");
+      return;
+    }
     const res = await fetch(`${aiBotManagerBase()}/append_qa`, {
       method: "POST",
       headers: authHeaders(),
-      body: JSON.stringify({ database, pairs }),
+      body: JSON.stringify({ database, pairs: records }),
     });
     await throwIfNotOk(res, "Failed to save Q&A");
   }
 
-  return { resolveBot, process, append };
+  return { resolveBot, process, save };
 });

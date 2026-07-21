@@ -84,6 +84,27 @@
 
   <n-tooltip>
     <template #trigger>
+      <n-button
+        type="default"
+        size="small"
+        ghost
+        circle
+        @click="isTracesOpen = true"
+      >
+        <template #icon> <bug-icon /> </template>
+      </n-button>
+    </template>
+    Bot debug traces
+  </n-tooltip>
+
+  <n-drawer v-model:show="isTracesOpen" :width="620" placement="right">
+    <n-drawer-content title="Bot debug traces" closable :native-scrollbar="false">
+      <trace-viewer v-if="isTracesOpen" :chat-uuid="chat.uuid" />
+    </n-drawer-content>
+  </n-drawer>
+
+  <n-tooltip>
+    <template #trigger>
       <n-popconfirm @positive-click="deleteChat">
         <template #trigger>
           <n-button type="error" size="small" ghost circle>
@@ -162,7 +183,10 @@ import {
   NCard,
   NSwitch,
   NDivider,
+  NDrawer,
+  NDrawerContent,
 } from "naive-ui";
+import TraceViewer from "./trace_viewer.vue";
 
 import { ConnectError } from "@connectrpc/connect";
 import {
@@ -191,6 +215,9 @@ const deleteIcon = defineAsyncComponent(
 );
 const listIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/ListOutline")
+);
+const bugIcon = defineAsyncComponent(
+  () => import("@vicons/ionicons5/BugOutline")
 );
 const consoleIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/TerminalOutline")
@@ -245,6 +272,7 @@ async function deleteChat() {
 const buttonTitle = ref("");
 
 const isBotSettingsOpen = ref(false);
+const isTracesOpen = ref(false);
 const isSaveBotStateLoading = ref(false);
 const botState = ref<{ [key: string]: any }>({});
 

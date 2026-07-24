@@ -77,11 +77,10 @@
                 @toggle="onStepToggle(t.id, si, $event)"
               >
                 <summary class="step__sum">
-                  <span class="node" :style="{ background: accent(s.kind) }" />
-                  <span class="step__kind" :style="{ color: accent(s.kind) }">{{ s.kind }}</span>
+                  <span class="node" :style="{ background: stepTone(s) }">{{ si + 1 }}</span>
+                  <span class="step__kind" :style="{ color: stepTone(s) }">{{ kindLabel(s) }}</span>
                   <span v-if="s.name" class="step__name">{{ s.name }}</span>
                   <span v-if="s.model" class="tag">{{ s.model }}</span>
-                  <span v-if="s.reply" class="tag tag--reply">reply</span>
                   <span v-if="(s.tool_calls || []).length" class="tag tag--tool">
                     {{ s.tool_calls!.length }}⚙
                   </span>
@@ -114,38 +113,44 @@
                     />
                   </template>
 
-                  <div v-for="(r, ri) in s.rounds || []" :key="'rnd' + ri" class="round">
-                    <div class="round__hd">
-                      <span class="round__lbl">LLM round {{ ri + 1 }}</span>
-                      <span v-if="(r.tools_requested || []).length" class="round__calls">
-                        → {{ (r.tools_requested || []).join(", ") }}
-                      </span>
-                    </div>
+                  <!-- one sequential timeline: tool calls (in call order) and the
+                       model's answers, interleaved as they actually happened -->
+                  <template v-for="ev in stepEvents(s)" :key="ev.key">
+                    <details v-if="ev.type === 'tool'" class="call" :class="{ 'call--err': !!ev.tool!.error }">
+                      <summary class="call__sum">
+                        <span class="call__ico">⚙</span>
+                        <span class="call__name">{{ ev.tool!.name }}</span>
+                        <span v-if="argPreview(ev.tool!.args)" class="call__args">{{ argPreview(ev.tool!.args) }}</span>
+                        <span class="call__spacer" />
+                        <span class="call__status" :class="ev.tool!.error ? 'is-err' : 'is-ok'">
+                          {{ ev.tool!.error ? "error" : "ok" }}
+                        </span>
+                        <svg class="chev chev--sm" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
+                          <path d="M6 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </summary>
+                      <div class="call__body">
+                        <trace-block v-if="ev.tool!.args" label="Arguments" :content="ev.tool!.args" />
+                        <trace-block
+                          :label="ev.tool!.error ? 'Error' : 'Output'"
+                          :tone="ev.tool!.error ? 'error' : 'code'"
+                          :content="ev.tool!.error || ev.tool!.output || ''"
+                        />
+                      </div>
+                    </details>
+
                     <trace-block
-                      v-if="r.reasoning"
+                      v-else-if="ev.type === 'reasoning'"
                       label="Reasoning"
                       tone="muted"
-                      :content="r.reasoning"
+                      :content="ev.text || ''"
                     />
                     <trace-block
-                      v-if="r.response"
-                      label="Response"
-                      :content="r.response"
+                      v-else-if="ev.type === 'answer'"
+                      label="Answer"
+                      :content="ev.text || ''"
                     />
-                  </div>
-
-                  <div v-for="(tool, tli) in s.tool_calls || []" :key="'tl' + tli" class="tool">
-                    <trace-block
-                      v-if="tool.args"
-                      :label="`⚙ ${tool.name} — args`"
-                      :content="tool.args"
-                    />
-                    <trace-block
-                      :label="tool.error ? `⚙ ${tool.name} — error` : `⚙ ${tool.name} — output`"
-                      :tone="tool.error ? 'error' : 'code'"
-                      :content="tool.error || tool.output || ''"
-                    />
-                  </div>
+                  </template>
 
                   <trace-block
                     v-if="hasVars(s)"
@@ -155,21 +160,19 @@
                 </div>
               </details>
 
-              <!-- routing connector on the spine -->
+              <!-- routing connector on the spine, in plain language -->
               <div v-if="s.routing" class="route">
                 <span class="route__hook">↳</span>
                 <template v-if="s.routing.stop && !s.routing.goto">
-                  <span class="route__end">turn ends</span>
+                  <span class="route__end">conversation ends here</span>
                 </template>
                 <template v-else>
-                  <template v-if="s.routing.when_var">
-                    <code class="route__var">{{ s.routing.when_var }}</code>
-                    <span class="route__eq">=</span>
-                    <code class="route__val">"{{ s.routing.value }}"</code>
-                  </template>
-                  <span v-else class="route__fall">continue</span>
+                  <span class="route__lead">next</span>
                   <span class="route__arrow">→</span>
-                  <code class="route__goto">{{ s.routing.goto || "(next)" }}</code>
+                  <code class="route__goto">{{ s.routing.goto || "(next step)" }}</code>
+                  <span v-if="s.routing.value" class="route__why">
+                    because it decided “{{ s.routing.value }}”
+                  </span>
                 </template>
               </div>
             </template>
@@ -183,8 +186,17 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { NAlert, NEmpty, NSpin } from "naive-ui";
-import { useTracesStore, type Trace, type TraceStep } from "../../store/traces";
+import { useTracesStore, type Trace, type TraceStep, type TraceToolCall } from "../../store/traces";
 import TraceBlock from "./trace_block.vue";
+
+// One step's activity, flattened into the order it actually happened: each tool
+// call (matched to the round that requested it, by order) and the model's
+// answers. Replaces the raw "LLM round N" dump - the tool calls are the story.
+type StepEvent = { key: string } & (
+  | { type: "tool"; tool: TraceToolCall }
+  | { type: "answer"; text: string }
+  | { type: "reasoning"; text: string }
+);
 
 const props = defineProps<{ chatUuid: string }>();
 
@@ -209,11 +221,11 @@ async function reload() {
   try {
     const data = await store.getChatTraces(props.chatUuid);
     traces.value = data;
-    // Steps open by default (full output); only the most recent turn expanded so
-    // the panel opens focused rather than as one long wall.
+    // Everything collapsed by default (the panel is compact and scannable);
+    // only the most recent turn is expanded, its steps still folded.
     for (const [ti, t] of data.entries()) {
       openTurns[t.id] = ti === data.length - 1;
-      t.steps.forEach((_, si) => (openSteps[stepKey(t.id, si)] = true));
+      t.steps.forEach((_, si) => (openSteps[stepKey(t.id, si)] = false));
     }
   } catch (e) {
     error.value = (e as Error).message ?? "Unknown error";
@@ -223,7 +235,7 @@ async function reload() {
 }
 
 const stepKey = (turnId: string, si: number) => `${turnId}#${si}`;
-const isStepOpen = (turnId: string, si: number) => openSteps[stepKey(turnId, si)] !== false;
+const isStepOpen = (turnId: string, si: number) => openSteps[stepKey(turnId, si)] === true;
 
 function onTurnToggle(id: string, e: Event) {
   openTurns[id] = (e.target as HTMLDetailsElement).open;
@@ -245,10 +257,19 @@ function collapseAll() {
   }
 }
 
-function accent(kind: string): string {
-  if (kind === "classifier") return "#7c5cff";
-  if (kind === "content" || kind === "single") return "#18a058";
-  return "#8a8a8a";
+// Plain-language step label + colour, by what the step actually does:
+//   decision (classifier) — picks which branch runs next   (purple)
+//   reply    — the message the customer actually receives   (green)
+//   action   — internal work: gather data, write admin note (blue)
+function kindLabel(s: TraceStep): string {
+  if (s.kind === "classifier") return "decision";
+  if (s.reply) return "reply";
+  return "action";
+}
+function stepTone(s: TraceStep): string {
+  if (s.kind === "classifier") return "#7c5cff";
+  if (s.reply) return "#18a058";
+  return "#2f6fed";
 }
 
 const turnTools = (t: Trace) =>
@@ -273,7 +294,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 function barStyle(s: TraceStep, t: Trace) {
   const total = dur(t.started_at, t.finished_at) || 1;
   const w = Math.max(3, Math.round((dur(s.started_at, s.finished_at) / total) * 100));
-  return { width: `${Math.min(w, 100)}%`, background: accent(s.kind) };
+  return { width: `${Math.min(w, 100)}%`, background: stepTone(s) };
 }
 
 function hasVars(s: TraceStep): boolean {
@@ -288,6 +309,48 @@ function varsText(s: TraceStep): string {
     if (inV[k] !== outV[k]) lines.push(`${k} → ${outV[k]}`);
   }
   return lines.join("\n");
+}
+
+// Rebuild the true chronological sequence of a step. Rounds and tool_calls are
+// both stored flat in call order; each round names the tools it requested, so
+// we consume that many from the flat tool list per round, interleaving them
+// with that round's answer text. Any tools not claimed by a round (shouldn't
+// happen) are appended so nothing is ever hidden.
+function stepEvents(s: TraceStep): StepEvent[] {
+  const events: StepEvent[] = [];
+  const tools = s.tool_calls || [];
+  let ti = 0;
+  let n = 0;
+  for (const r of s.rounds || []) {
+    if (r.reasoning) events.push({ key: `e${n++}`, type: "reasoning", text: r.reasoning });
+    const req = (r.tools_requested || []).length;
+    for (let k = 0; k < req && ti < tools.length; k++) {
+      events.push({ key: `e${n++}`, type: "tool", tool: tools[ti++] });
+    }
+    if (r.response) events.push({ key: `e${n++}`, type: "answer", text: r.response });
+  }
+  while (ti < tools.length) events.push({ key: `e${n++}`, type: "tool", tool: tools[ti++] });
+  return events;
+}
+
+// Compact one-line preview of a tool call's JSON args for the collapsed row,
+// e.g. {"action":"balance"} -> action: balance. Falls back to a trimmed string.
+function argPreview(args?: string): string {
+  if (!args) return "";
+  let obj: unknown;
+  try {
+    obj = JSON.parse(args);
+  } catch {
+    return args.length > 60 ? args.slice(0, 60) + "…" : args;
+  }
+  if (obj && typeof obj === "object" && !Array.isArray(obj)) {
+    const parts = Object.entries(obj as Record<string, unknown>).map(
+      ([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`,
+    );
+    const s = parts.join(", ");
+    return s.length > 70 ? s.slice(0, 70) + "…" : s;
+  }
+  return "";
 }
 </script>
 
@@ -436,13 +499,13 @@ function varsText(s: TraceStep): string {
 /* timeline spine */
 .steps {
   position: relative;
-  padding-left: 20px;
+  padding-left: 28px;
 }
 .steps::before {
   content: "";
   position: absolute;
-  left: 5px;
-  top: 6px;
+  left: 8px;
+  top: 8px;
   bottom: 14px;
   width: 2px;
   background: rgba(128, 128, 128, 0.2);
@@ -454,11 +517,18 @@ function varsText(s: TraceStep): string {
 }
 .node {
   position: absolute;
-  left: -18px;
-  top: 9px;
-  width: 11px;
-  height: 11px;
+  left: -28px;
+  top: 6px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
   box-shadow: 0 0 0 3px var(--node-ring, rgba(255, 255, 255, 0.9));
 }
 @media (prefers-color-scheme: dark) {
@@ -533,30 +603,81 @@ function varsText(s: TraceStep): string {
   padding: 4px 0 10px 2px;
 }
 
-.round {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+/* tool call: a compact collapsed row, name up front; expands to args+output */
+.call {
+  border: 1px solid rgba(224, 145, 47, 0.3);
+  border-radius: 7px;
+  overflow: hidden;
+  background: rgba(224, 145, 47, 0.05);
 }
-.round__hd {
+.call--err {
+  border-color: rgba(208, 48, 80, 0.4);
+  background: rgba(208, 48, 80, 0.06);
+}
+.call__sum {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.call__sum::-webkit-details-marker {
+  display: none;
+}
+.call__sum:hover {
+  background: rgba(224, 145, 47, 0.08);
+}
+.call__ico {
+  color: #e0912f;
+  font-size: 12px;
+  flex: none;
+}
+.call__name {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  flex: none;
+}
+.call__args {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  opacity: 0.6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.call__spacer {
+  flex: 1;
+}
+.call__status {
   font-family: ui-monospace, monospace;
   font-size: 10px;
-  letter-spacing: 0.05em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  opacity: 0.55;
+  padding: 1px 6px;
+  border-radius: 20px;
+  flex: none;
 }
-.round__calls {
-  color: #e0912f;
-  text-transform: none;
-  letter-spacing: 0;
+.call__status.is-ok {
+  color: #18a058;
+  background: rgba(24, 160, 88, 0.14);
 }
-.tool {
+.call__status.is-err {
+  color: #d03050;
+  background: rgba(208, 48, 80, 0.14);
+}
+.call[open] > .call__sum .chev {
+  transform: rotate(90deg);
+}
+.call__body {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
+  padding: 2px 9px 9px;
 }
 
 /* routing connector */
@@ -571,10 +692,15 @@ function varsText(s: TraceStep): string {
 }
 .route__hook {
   opacity: 0.4;
-  margin-left: -14px;
+  margin-left: -20px;
   font-size: 13px;
 }
-.route__eq,
+.route__lead {
+  opacity: 0.5;
+  text-transform: uppercase;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+}
 .route__arrow {
   opacity: 0.45;
 }
@@ -584,15 +710,13 @@ function varsText(s: TraceStep): string {
   background: rgba(128, 128, 128, 0.14);
   font-size: 11px;
 }
-.route__val {
-  color: #7c5cff;
-}
 .route__goto {
   color: #2f6fed;
   font-weight: 600;
 }
-.route__fall {
+.route__why {
   opacity: 0.55;
+  font-style: italic;
 }
 .route__end {
   color: #d03050;

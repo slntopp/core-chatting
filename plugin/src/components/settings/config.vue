@@ -171,114 +171,6 @@
         </n-space>
       </div>
 
-      <div>
-        <n-space>
-          <n-text>Bot</n-text>
-        </n-space>
-
-        <div class="bots_config_switches">
-          <div class="bots_config_switch">
-            <n-switch class="switch" v-model:value="config.bot.enable">
-              <template #checked> Active </template>
-              <template #unchecked> Disabled </template>
-            </n-switch>
-
-            <span> Enable bot in new chats. </span>
-          </div>
-
-          <div class="bots_config_switch">
-            <n-switch class="switch" v-model:value="config.bot.review">
-              <template #checked> Review </template>
-              <template #unchecked> No review </template>
-            </n-switch>
-
-            <span>
-              Enable Pre-Moderation mode. New bot messages will be visible only
-              to administrators.
-            </span>
-          </div>
-
-          <div class="bots_config_switch">
-            <n-switch class="switch" v-model:value="config.bot.initiator">
-              <template #checked> Active </template>
-              <template #unchecked> Disabled </template>
-            </n-switch>
-
-            <span>
-              Enable Hybrid-Moderation mode. The first message from the bot will
-              be published, and subsequent messages will be visible only to
-              administrators.
-            </span>
-          </div>
-
-          <div class="bots_config_switch">
-            <n-switch class="switch" v-model:value="config.bot.emergency">
-              <template #checked> Active </template>
-              <template #unchecked> Disabled </template>
-            </n-switch>
-
-            <span>
-              Enable EMERGENCY mode. The bot will respond according to the
-              instructions given to it.
-            </span>
-          </div>
-        </div>
-
-        <n-space style="margin-top: 20px">
-          <n-text>Promt</n-text>
-        </n-space>
-        <n-input
-          v-model:value="config.bot.prompt"
-          type="textarea"
-          autosize
-          placeholder="Bot Promt"
-        />
-
-        <n-space style="margin-top: 20px">
-          <n-text>Custom values</n-text>
-        </n-space>
-
-        <n-table :bordered="false" :single-line="false">
-          <thead>
-            <tr>
-              <th>Key</th>
-              <th>Value</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(value, index) in botCustomValues">
-              <td>
-                <n-input v-model:value="value.key" />
-              </td>
-              <td>
-                <n-input v-model:value="value.value" />
-              </td>
-              <td>
-                <n-button
-                  ghost
-                  @click="deleteNewBotCustomValue(index)"
-                  type="warning"
-                  >Delete</n-button
-                >
-              </td>
-            </tr>
-
-            <tr>
-              <td></td>
-              <td></td>
-              <td>
-                <n-space justify="end">
-                  <n-button ghost @click="addNewBotCustomValue" type="success"
-                    >Add</n-button
-                  >
-                </n-space>
-              </td>
-            </tr>
-          </tbody>
-        </n-table>
-      </div>
-
       <n-space justify="end" style="margin-bottom: 10px">
         <n-button :loading="isEditLoading" ghost type="info" @click="submit">
           Update
@@ -312,7 +204,6 @@ import {
 } from "vue";
 import { Value } from "naive-ui/es/select/src/interface";
 import {
-  Bot,
   Defaults,
   Department,
   Metric,
@@ -377,19 +268,16 @@ interface configType {
   gateways: string[];
   metrics: MetricWithKey[];
   templates: MessageTemplate[];
-  bot: Bot;
 }
 
 const props = defineProps<configType>();
-const { admins, departments, gateways, metrics, templates, bot } =
-  toRefs(props);
+const { admins, departments, gateways, metrics, templates } = toRefs(props);
 
 const emit = defineEmits(["refresh"]);
 
 const defaultsStore = useDefaultsStore();
 const notification = useNotification();
 
-const botCustomValues = ref<{ value: string; key: string }[]>();
 const newAdmins = ref<string[]>([]);
 const isEditLoading = ref(false);
 const inputs = reactive<inputsType>({
@@ -403,7 +291,6 @@ const config = reactive<configType>({
   gateways: [],
   metrics: [],
   templates: [],
-  bot: Bot.fromJson({}),
 });
 
 onMounted(() => {
@@ -527,13 +414,7 @@ async function submit() {
       new Defaults({
         ...config,
         admins: newAdmins.value,
-        bot: {
-          ...config.bot,
-          values: botCustomValues.value?.reduce<any>((acc, curr) => {
-            acc[curr.key] = curr.value;
-            return acc;
-          }, {}),
-        },
+        bot: defaultsStore.bot,
         metrics: config.metrics.reduce(
           (result, metric) => ({
             ...result,
@@ -567,28 +448,7 @@ function setDefaultConfig() {
   config.gateways = gateways.value;
   config.departments = departments.value;
   config.templates = templates.value;
-  config.bot = bot.value || Bot.fromJson({});
 }
-
-function addNewBotCustomValue() {
-  botCustomValues.value?.push({ key: "", value: "" });
-}
-
-function deleteNewBotCustomValue(index: number) {
-  botCustomValues.value = botCustomValues.value?.filter(
-    (_, current) => current !== index
-  );
-}
-
-watch(
-  () => config.bot.values,
-  () => {
-    botCustomValues.value = Object.keys(config.bot.values).map((key) => ({
-      key,
-      value: config.bot.values[key],
-    }));
-  }
-);
 
 newAdmins.value = admins.value.map((a) => a.uuid);
 
@@ -602,26 +462,3 @@ export default {
   name: "settings-config",
 };
 </script>
-
-<style scoped>
-.bots_config_switches {
-  display: flex;
-  flex-direction: column;
-  justify-content: baseline;
-}
-
-.bots_config_switch {
-  display: flex;
-  margin: 5px 0px;
-  align-items: center;
-}
-
-.bots_config_switch span {
-  font-size: 1.2rem;
-}
-
-.bots_config_switches .switch {
-  width: 200px;
-  justify-content: normal;
-}
-</style>

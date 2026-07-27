@@ -21,7 +21,6 @@
           :admins="admins"
           :gateways="gateways"
           :templates="templates"
-          :bot="bot as Bot"
         />
       </n-tab-pane>
       <n-tab-pane name="templates" tab="Templates">
@@ -74,7 +73,6 @@ const {
   gateways,
   metrics,
   templates,
-  bot,
 } = storeToRefs(defaultsStore);
 const { users, isUsersLoading } = storeToRefs(usersStore);
 

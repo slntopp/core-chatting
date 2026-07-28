@@ -14,6 +14,21 @@
     Bot settings
   </n-tooltip>
 
+  <n-tooltip>
+    <template #trigger>
+      <n-button
+        type="default"
+        size="small"
+        ghost
+        circle
+        @click="isTracesOpen = true"
+      >
+        <template #icon> <bug-icon /> </template>
+      </n-button>
+    </template>
+    Bot debug traces
+  </n-tooltip>
+
   <n-modal v-model:show="isBotSettingsOpen">
     <n-card
       title="Bot settings"
@@ -64,6 +79,12 @@
     </n-card>
   </n-modal>
 
+  <n-drawer v-model:show="isTracesOpen" :width="620" placement="right">
+    <n-drawer-content title="Bot debug traces" closable :native-scrollbar="false">
+      <trace-viewer v-if="isTracesOpen" :chat-uuid="chat.uuid" />
+    </n-drawer-content>
+  </n-drawer>
+
   <n-tooltip>
     <template #trigger>
       <n-button type="success" size="small" ghost circle @click="copyLink">
@@ -81,27 +102,6 @@
     </template>
     Refresh chat
   </n-tooltip>
-
-  <n-tooltip>
-    <template #trigger>
-      <n-button
-        type="default"
-        size="small"
-        ghost
-        circle
-        @click="isTracesOpen = true"
-      >
-        <template #icon> <bug-icon /> </template>
-      </n-button>
-    </template>
-    Bot debug traces
-  </n-tooltip>
-
-  <n-drawer v-model:show="isTracesOpen" :width="620" placement="right">
-    <n-drawer-content title="Bot debug traces" closable :native-scrollbar="false">
-      <trace-viewer v-if="isTracesOpen" :chat-uuid="chat.uuid" />
-    </n-drawer-content>
-  </n-drawer>
 
   <n-tooltip>
     <template #trigger>

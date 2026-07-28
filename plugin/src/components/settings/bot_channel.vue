@@ -1,6 +1,73 @@
 <template>
   <div>
-    <n-space style="padding: 6px 24px" align="center" justify="space-between">
+    <n-collapse style="padding: 6px 24px; max-width: 90%">
+      <n-collapse-item title="Bot behavior" name="bot-behavior">
+        <div class="bots_config_switches">
+          <div class="bots_config_switch">
+            <n-switch class="switch" v-model:value="botConfig.enable">
+              <template #checked> Active </template>
+              <template #unchecked> Disabled </template>
+            </n-switch>
+
+            <span> Enable bot in new chats. </span>
+          </div>
+
+          <div class="bots_config_switch">
+            <n-switch class="switch" v-model:value="botConfig.review">
+              <template #checked> Review </template>
+              <template #unchecked> No review </template>
+            </n-switch>
+
+            <span>
+              Enable Pre-Moderation mode. New bot messages will be visible
+              only to administrators.
+            </span>
+          </div>
+
+          <div class="bots_config_switch">
+            <n-switch class="switch" v-model:value="botConfig.initiator">
+              <template #checked> Active </template>
+              <template #unchecked> Disabled </template>
+            </n-switch>
+
+            <span>
+              Enable Hybrid-Moderation mode. The first message from the bot
+              will be published, and subsequent messages will be visible only
+              to administrators.
+            </span>
+          </div>
+
+          <div class="bots_config_switch">
+            <n-switch class="switch" v-model:value="botConfig.emergency">
+              <template #checked> Active </template>
+              <template #unchecked> Disabled </template>
+            </n-switch>
+
+            <span>
+              Enable EMERGENCY mode. The bot will respond according to the
+              instructions given to it.
+            </span>
+          </div>
+        </div>
+
+        <n-space justify="end" style="margin: 10px 0">
+          <n-button
+            :loading="isBotSaving"
+            ghost
+            type="info"
+            @click="submitBotConfig"
+          >
+            Update
+          </n-button>
+        </n-space>
+      </n-collapse-item>
+    </n-collapse>
+
+    <n-space
+      style="padding: 6px 24px; margin-top: 12px"
+      align="center"
+      justify="space-between"
+    >
       <n-h3>Bot channel links</n-h3>
       <n-button ghost type="success" @click="openCreate">
         <template #icon><plus-icon /></template>
@@ -115,123 +182,6 @@
         </n-space>
       </template>
     </n-modal>
-
-    <n-collapse style="padding: 6px 24px; margin-top: 24px; max-width: 90%">
-      <n-collapse-item title="Bot behavior" name="bot-behavior">
-        <div class="bots_config_switches">
-          <div class="bots_config_switch">
-            <n-switch class="switch" v-model:value="botConfig.enable">
-              <template #checked> Active </template>
-              <template #unchecked> Disabled </template>
-            </n-switch>
-
-            <span> Enable bot in new chats. </span>
-          </div>
-
-          <div class="bots_config_switch">
-            <n-switch class="switch" v-model:value="botConfig.review">
-              <template #checked> Review </template>
-              <template #unchecked> No review </template>
-            </n-switch>
-
-            <span>
-              Enable Pre-Moderation mode. New bot messages will be visible only
-              to administrators.
-            </span>
-          </div>
-
-          <div class="bots_config_switch">
-            <n-switch class="switch" v-model:value="botConfig.initiator">
-              <template #checked> Active </template>
-              <template #unchecked> Disabled </template>
-            </n-switch>
-
-            <span>
-              Enable Hybrid-Moderation mode. The first message from the bot will
-              be published, and subsequent messages will be visible only to
-              administrators.
-            </span>
-          </div>
-
-          <div class="bots_config_switch">
-            <n-switch class="switch" v-model:value="botConfig.emergency">
-              <template #checked> Active </template>
-              <template #unchecked> Disabled </template>
-            </n-switch>
-
-            <span>
-              Enable EMERGENCY mode. The bot will respond according to the
-              instructions given to it.
-            </span>
-          </div>
-        </div>
-
-        <n-space style="margin-top: 20px">
-          <n-text>Promt</n-text>
-        </n-space>
-        <n-input
-          v-model:value="botConfig.prompt"
-          type="textarea"
-          autosize
-          placeholder="Bot Promt"
-        />
-
-        <n-space style="margin-top: 20px">
-          <n-text>Custom values</n-text>
-        </n-space>
-
-        <n-table :bordered="false" :single-line="false">
-          <thead>
-            <tr>
-              <th>Key</th>
-              <th>Value</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(value, index) in botCustomValues">
-              <td>
-                <n-input v-model:value="value.key" />
-              </td>
-              <td>
-                <n-input v-model:value="value.value" />
-              </td>
-              <td>
-                <n-button
-                  ghost
-                  @click="deleteBotCustomValue(index)"
-                  type="warning"
-                  >Delete</n-button
-                >
-              </td>
-            </tr>
-
-            <tr>
-              <td></td>
-              <td></td>
-              <td>
-                <n-space justify="end">
-                  <n-button ghost @click="addBotCustomValue" type="success"
-                    >Add</n-button
-                  >
-                </n-space>
-              </td>
-            </tr>
-          </tbody>
-        </n-table>
-
-        <n-space justify="end" style="margin: 10px 0">
-          <n-button
-            :loading="isBotSaving"
-            ghost
-            type="info"
-            @click="submitBotConfig"
-          >
-            Update
-          </n-button>
-        </n-space>
-      </n-collapse-item>
-    </n-collapse>
   </div>
 </template>
 
@@ -299,30 +249,25 @@ const form = reactive({
 });
 
 const botConfig = reactive({
-  prompt: "",
   enable: false,
   review: false,
   initiator: false,
   emergency: false,
 });
-const botCustomValues = ref<{ key: string; value: string }[]>([]);
 const isBotSaving = ref(false);
 
-// core-chatting's department-wide bot config (Active/Review/Hybrid/Emergency,
-// prompt, custom values) - lives on cc.Defaults.Bot, edited here as one form.
+// core-chatting's department-wide bot config (Active/Review/Hybrid/Emergency)
+// lives on cc.Defaults.Bot, edited here. prompt/values aren't edited in this
+// UI anymore, but still get read back from the store and sent through as-is
+// on save (see submitBotConfig) so they don't get wiped.
 watch(
   () => defaultsStore.bot,
   (bot) => {
     if (!bot) return;
-    botConfig.prompt = bot.prompt;
     botConfig.enable = bot.enable;
     botConfig.review = bot.review;
     botConfig.initiator = bot.initiator;
     botConfig.emergency = bot.emergency;
-    botCustomValues.value = Object.entries(bot.values).map(([key, value]) => ({
-      key,
-      value,
-    }));
   },
   { immediate: true },
 );
@@ -395,14 +340,6 @@ async function onDelete(link: BotChannelLink) {
   }
 }
 
-function addBotCustomValue() {
-  botCustomValues.value.push({ key: "", value: "" });
-}
-
-function deleteBotCustomValue(index: number) {
-  botCustomValues.value = botCustomValues.value.filter((_, i) => i !== index);
-}
-
 async function submitBotConfig() {
   isBotSaving.value = true;
   try {
@@ -424,10 +361,8 @@ async function submitBotConfig() {
         ),
         bot: new Bot({
           ...botConfig,
-          values: botCustomValues.value.reduce<Record<string, string>>(
-            (result, { key, value }) => ({ ...result, [key]: value }),
-            {},
-          ),
+          prompt: defaultsStore.bot?.prompt ?? "",
+          values: defaultsStore.bot?.values ?? {},
         }),
       }),
     );

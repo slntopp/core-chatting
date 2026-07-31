@@ -19,6 +19,24 @@ export interface TraceToolCall {
   output?: string;
   error?: string;
 }
+export interface TraceToolDef {
+  name: string;
+  description?: string;
+  schema?: string;
+}
+export interface TraceFile {
+  name: string;
+  status?: string;
+  enabled: boolean;
+}
+export interface TraceDatabase {
+  id: string;
+  name: string;
+  simple: number;
+  files?: TraceFile[];
+  qa_pairs: number;
+  urls: number;
+}
 export interface TraceChunk {
   score: number;
   origin?: string;
@@ -42,6 +60,8 @@ export interface TraceStep {
   rag_query?: string;
   rag?: TraceChunk[];
   request?: TraceMessage[];
+  tools?: TraceToolDef[];
+  databases?: TraceDatabase[];
   rounds?: TraceLLMRound[];
   tool_calls?: TraceToolCall[];
   output?: string;

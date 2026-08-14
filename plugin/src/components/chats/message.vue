@@ -115,6 +115,9 @@ const DownloadIcon = defineAsyncComponent(
 const ClipboardOutline = defineAsyncComponent(
   () => import("@vicons/ionicons5/ClipboardOutline")
 );
+const SparklesOutline = defineAsyncComponent(
+  () => import("@vicons/ionicons5/SparklesOutline")
+);
 const PencilOutline = defineAsyncComponent(
   () => import("@vicons/ionicons5/PencilOutline")
 );
@@ -147,6 +150,17 @@ const { users } = storeToRefs(usersStore);
 
 const sender = computed(
   () => users.value.get(message.value.sender)?.title ?? "Unknown"
+);
+
+// An admin note written by the bot itself is the AI copilot answering an
+// operator, not a colleague leaving a note — same lane, very different thing,
+// so it gets its own accent. Purple matches the debug trace viewer: everything
+// that is the AI's own internals reads purple across the plugin.
+const COPILOT_COLOR = "#7c5cff";
+const is_copilot = computed(
+  () =>
+    message.value.kind == Kind.ADMIN_ONLY &&
+    !!users.value.get(message.value.sender)?.ccIsBot
 );
 
 const x = ref(0);
@@ -275,9 +289,9 @@ function avatar() {
   if (message.value.kind == Kind.ADMIN_ONLY) {
     elements.push(
       h(NIcon, {
-        color: theme.value.warningColor,
+        color: is_copilot.value ? COPILOT_COLOR : theme.value.warningColor,
         size: 24,
-        component: ClipboardOutline,
+        component: is_copilot.value ? SparklesOutline : ClipboardOutline,
       })
     );
   }
@@ -312,6 +326,12 @@ const container_style = computed(() => {
       ...style,
       backgroundColor: theme.value.infoColor + "40",
       border: `1px solid ${theme.value.infoColor}`,
+    };
+  else if (is_copilot.value)
+    style = {
+      ...style,
+      backgroundColor: COPILOT_COLOR + "2b",
+      border: `1px solid ${COPILOT_COLOR}`,
     };
   else if (message.value.kind == Kind.ADMIN_ONLY)
     style = {

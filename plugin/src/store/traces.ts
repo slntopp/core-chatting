@@ -77,13 +77,22 @@ export interface Trace {
   channel: string;
   bot_id: string;
   account: string;
-  mode: string; // "flow" | "single"
+  // "single" | "flow" — a turn with the customer; "skipped" — a customer turn
+  // that produced no reply (Error says why); "admin" — a turn with an operator
+  // in the admin-only lane (the AI copilot). Two separate conversations
+  // recorded against the same chat, never mix them in a view.
+  mode: string;
   input: string;
   steps: TraceStep[];
   error?: string;
   started_at: string;
   finished_at: string;
 }
+
+export type TraceLane = "customer" | "copilot";
+
+export const traceLane = (t: Trace): TraceLane =>
+  t.mode === "admin" ? "copilot" : "customer";
 
 export const useTracesStore = defineStore("traces", () => {
   // Fetch every turn trace for a chat. `external` is the core-chatting chat

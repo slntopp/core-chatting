@@ -10,12 +10,22 @@
     </n-alert>
 
     <n-empty
-      v-else-if="!traces.length"
+      v-else-if="!shown.length"
       class="tv__state"
-      description="No traces recorded for this chat yet"
+      :description="`No ${lane} turns recorded for this chat yet`"
     >
       <template #extra>
-        <button class="lnk" @click="reload">Refresh</button>
+        <!-- The API returns both lanes, so say which it is: nothing was
+             recorded at all, or nothing for THIS conversation. Without it an
+             empty panel reads as "tracing is broken". -->
+        <div class="tv__why">
+          <span v-if="!traces.length">The bot has not run a turn in this chat yet.</span>
+          <span v-else>
+            {{ traces.length }} turn{{ traces.length === 1 ? "" : "s" }} recorded here,
+            all in the other conversation.
+          </span>
+          <button class="lnk" @click="reload">refresh</button>
+        </div>
       </template>
     </n-empty>
 
@@ -23,7 +33,7 @@
       <!-- toolbar -->
       <div class="bar">
         <span class="bar__count">
-          <b>{{ traces.length }}</b> turn{{ traces.length === 1 ? "" : "s" }}
+          <b>{{ shown.length }}</b> turn{{ shown.length === 1 ? "" : "s" }}
           <span class="bar__dim">· {{ totalSteps }} steps · {{ totalTools }} tool calls</span>
         </span>
         <span class="bar__spacer" />
@@ -34,7 +44,7 @@
 
       <!-- one card per turn -->
       <details
-        v-for="(t, ti) in traces"
+        v-for="(t, ti) in shown"
         :key="t.id"
         class="turn"
         :open="!!openTurns[t.id]"
@@ -87,11 +97,16 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { NAlert, NEmpty, NSpin } from "naive-ui";
-import { useTracesStore, type Trace } from "../../store/traces";
+import { useTracesStore, traceLane, type Trace, type TraceLane } from "../../store/traces";
 import { durMs, fmtDur, fmtTime, shortId } from "./trace_util";
 import TraceStep from "./trace_step.vue";
 
-const props = defineProps<{ chatUuid: string }>();
+// One viewer per conversation: the customer chat and the operator's copilot
+// chat each open their own, so a trace panel only ever shows its own lane.
+const props = withDefaults(
+  defineProps<{ chatUuid: string; lane?: TraceLane }>(),
+  { lane: "customer" },
+);
 
 const store = useTracesStore();
 const traces = ref<Trace[]>([]);
@@ -103,9 +118,11 @@ const error = ref("");
 const openTurns = reactive<Record<string, boolean>>({});
 const openSteps = reactive<Record<string, boolean>>({});
 
-const totalSteps = computed(() => traces.value.reduce((n, t) => n + t.steps.length, 0));
+const shown = computed(() => traces.value.filter((t) => traceLane(t) === props.lane));
+
+const totalSteps = computed(() => shown.value.reduce((n, t) => n + t.steps.length, 0));
 const totalTools = computed(() =>
-  traces.value.reduce((n, t) => n + t.steps.reduce((m, s) => m + (s.tool_calls?.length || 0), 0), 0),
+  shown.value.reduce((n, t) => n + t.steps.reduce((m, s) => m + (s.tool_calls?.length || 0), 0), 0),
 );
 const turnTools = (t: Trace) => t.steps.reduce((m, s) => m + (s.tool_calls?.length || 0), 0);
 
@@ -117,9 +134,10 @@ async function reload() {
   try {
     const data = await store.getChatTraces(props.chatUuid);
     traces.value = data;
-    // Compact by default: only the latest turn expanded, all steps folded.
-    for (const [ti, t] of data.entries()) {
-      openTurns[t.id] = ti === data.length - 1;
+    // Compact by default: only this lane's latest turn expanded, steps folded.
+    const latest = shown.value.at(-1)?.id;
+    for (const t of data) {
+      openTurns[t.id] = t.id === latest;
       t.steps.forEach((_, si) => (openSteps[stepKey(t.id, si)] = false));
     }
   } catch (e) {
@@ -138,18 +156,14 @@ function onTurnToggle(id: string, e: Event) {
   openTurns[id] = (e.target as HTMLDetailsElement).open;
 }
 
-function expandAll() {
-  for (const t of traces.value) {
-    openTurns[t.id] = true;
-    t.steps.forEach((_, si) => (openSteps[stepKey(t.id, si)] = true));
+function setAllOpen(open: boolean) {
+  for (const t of shown.value) {
+    openTurns[t.id] = open;
+    t.steps.forEach((_, si) => (openSteps[stepKey(t.id, si)] = open));
   }
 }
-function collapseAll() {
-  for (const t of traces.value) {
-    openTurns[t.id] = false;
-    t.steps.forEach((_, si) => (openSteps[stepKey(t.id, si)] = false));
-  }
-}
+const expandAll = () => setAllOpen(true);
+const collapseAll = () => setAllOpen(false);
 
 const pad = (n: number) => String(n).padStart(2, "0");
 </script>
@@ -163,6 +177,16 @@ const pad = (n: number) => String(n).padStart(2, "0");
   display: flex;
   justify-content: center;
   padding-top: 72px;
+}
+.tv__why {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 300px;
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0.65;
 }
 
 /* toolbar */
@@ -329,6 +353,15 @@ const pad = (n: number) => String(n).padStart(2, "0");
 .chip--single {
   color: #18a058;
   background: rgba(24, 160, 88, 0.13);
+}
+.chip--admin {
+  color: #7c5cff;
+  background: rgba(124, 92, 255, 0.14);
+}
+/* A turn that produced no reply; the card's error line says why. */
+.chip--skipped {
+  color: #d03050;
+  background: rgba(208, 48, 80, 0.13);
 }
 
 @media (prefers-reduced-motion: reduce) {

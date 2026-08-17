@@ -1,55 +1,60 @@
 <template>
-  <n-text v-if="!chat">Loading...</n-text>
-  <div class="grid" v-else>
-    <n-button
-      ghost
-      v-if="appStore.displayMode === 'none'"
-      @click="appStore.displayMode = 'full'"
-    >
-      <n-icon> <open-icon /> </n-icon>
-    </n-button>
+  <!-- Sized by its OWN width, not the window's: the copilot pane takes up to
+       half the screen, and a viewport-based header keeps laying out for a width
+       it no longer has (that is what wrapped the action icons onto two rows).
 
-    <n-space class="main__info" justify="start" align="center" :size="4">
-      <n-tooltip v-if="!onlyMainInfo">
-        <template #trigger>
-          <n-tag round @click="addToClipboard(chat.uuid, notification)">
-            <code style="text-decoration: underline; cursor: pointer">
-              {{ chat.uuid.slice(0, 8).toUpperCase() }}
-            </code>
-          </n-tag>
-        </template>
-        {{ chat.uuid }}
-      </n-tooltip>
+       Nothing is dropped when there is no room - the secondary controls move
+       into the "more" popover. An operator who shrank the pane still has to be
+       able to change the department. -->
+  <div class="hdr" ref="root">
+    <n-text v-if="!chat">Loading...</n-text>
 
-      <user-avatar
-        v-if="appStore.isMobile"
-        round
-        style="cursor: pointer"
-        :avatar="CogIcon as DefineComponent"
-        @click="isSettingsVisible = !isSettingsVisible"
-      />
-      <user-avatar
-        v-else
-        round
-        :avatar="members.map((m) => m?.title ?? '').join(' ')"
-      />
-
-      <n-text class="chat__topic">{{ chat.topic ?? members }}</n-text>
-      <n-button text @click="startEditChat">
-        <n-icon size="20">
-          <edit-icon />
-        </n-icon>
+    <template v-else>
+      <n-button
+        ghost
+        size="small"
+        v-if="appStore.displayMode === 'none'"
+        @click="appStore.displayMode = 'full'"
+      >
+        <n-icon> <open-icon /> </n-icon>
       </n-button>
 
-      <template v-if="appStore.isPC || appStore.isTablet">
-        <n-divider vertical />
+      <div class="hdr__id">
+        <n-tooltip>
+          <template #trigger>
+            <n-tag round size="small" @click="addToClipboard(chat.uuid, notification)">
+              <code style="text-decoration: underline; cursor: pointer">
+                {{ chat.uuid.slice(0, 8).toUpperCase() }}
+              </code>
+            </n-tag>
+          </template>
+          {{ chat.uuid }}
+        </n-tooltip>
+
+        <user-avatar
+          round
+          style="flex: none"
+          :avatar="members.map((m) => m?.title ?? '').join(' ')"
+        />
+
+        <n-text class="chat__topic">{{ chat.topic ?? members }}</n-text>
+        <n-button text style="flex: none" @click="startEditChat">
+          <n-icon size="18">
+            <edit-icon />
+          </n-icon>
+        </n-button>
+      </div>
+
+      <!-- Inline while they fit; inside the popover otherwise. -->
+      <template v-if="!compact">
         <n-tooltip>
           <template #trigger>
             <n-select
               filterable
               ref="responsibleSelect"
               placeholder="Responsible"
-              style="min-width: 200px; width: 100%"
+              size="small"
+              class="hdr__select"
               :value="chat.responsible"
               :options="adminsItems"
               :loading="isUsersLoading"
@@ -58,10 +63,7 @@
           </template>
           Responsible
         </n-tooltip>
-      </template>
 
-      <template v-if="!appStore.isMobile">
-        <n-divider vertical />
         <n-tooltip>
           <template #trigger>
             <n-select
@@ -69,7 +71,8 @@
               label-field="title"
               value-field="key"
               placeholder="Department"
-              style="min-width: 200px; width: 100%"
+              size="small"
+              class="hdr__select"
               :value="chat.department"
               :options="departments"
               @update:value="changeDepartment"
@@ -78,108 +81,133 @@
           Department
         </n-tooltip>
       </template>
-    </n-space>
 
-    <template v-if="!appStore.isMobile">
-      <n-space
-        align="center"
-        :wrap-item="false"
-        v-if="chat.gateways.length > 0"
-      >
-        <n-divider vertical />
-        <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
-          <template #trigger>
-            <img height="24" :src="getImageUrl(gateway)" :alt="gateway" />
-          </template>
-          {{ gateway }}
-        </n-tooltip>
-      </n-space>
+      <!-- Takes the slack so the free space lands between the two groups
+           instead of inside the left one, which read as a hole in the header. -->
+      <div class="hdr__spacer"></div>
 
-      <n-space align="center" justify="end" :wrap-item="false">
+      <div class="hdr__side">
+        <template v-if="!compact && chat.gateways.length > 0">
+          <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
+            <template #trigger>
+              <img height="22" :src="getImageUrl(gateway)" :alt="gateway" />
+            </template>
+            {{ gateway }}
+          </n-tooltip>
+          <n-divider vertical />
+        </template>
+
+        <chat-status :chat="chat" />
+        <members-dropdown
+          :visible="isVisible"
+          :admins="chat.admins"
+          :members="members"
+          @add="startAddMembers"
+          @delete="deleteMember"
+          @change="openResponsible"
+        />
+
         <n-divider vertical />
-        <div>
-          <chat-status :chat="chat" />
-          <members-dropdown
-            :visible="isVisible"
-            :admins="chat.admins"
-            :members="members"
-            @add="startAddMembers"
-            @delete="deleteMember"
-            @change="openResponsible"
-          />
+
+        <!-- nowrap: eight circle buttons breaking onto a second row is what
+             made the header twice as tall and pushed the chat down. -->
+        <div class="hdr__actions">
+          <chat-actions :chat="chat" />
         </div>
 
-        <n-divider vertical />
-        <chat-actions :chat="chat" />
-      </n-space>
-    </template>
-
-    <n-space v-if="!appStore.isMobile" :wrap-item="false">
-      <n-divider vertical style="height: auto; margin: 0 8px" />
-      <chat-dates :chat="chat" />
-    </n-space>
-
-    <template v-else-if="isSettingsVisible">
-      <n-collapse class="chat__settings">
-        <n-collapse-item title="Responsible">
-          <n-select
-            filterable
-            ref="responsibleSelect"
-            placeholder="Responsible"
-            style="min-width: 200px; width: 100%"
-            :value="chat.responsible"
-            :options="adminsItems"
-            :loading="isUsersLoading"
-            @update:value="changeResponsible"
-          />
-        </n-collapse-item>
-      </n-collapse>
-
-      <n-collapse class="chat__settings">
-        <n-collapse-item :title="`Status: ${Status[chat.status]}`">
-          <div style="display: flex; gap: 5px; margin-bottom: 10px">
-            <n-select
-              v-model:value="newStatus"
-              style="width: 75%"
-              :options="statusesOptions"
-            ></n-select>
-            <n-button
-              :disabled="isNaN(newStatus) || newStatus === null"
-              ghost
-              type="warning"
-              @click="changeStatus"
-              :loading="isChangeStatusLoading"
-              >Change</n-button
-            >
-          </div>
-        </n-collapse-item>
-      </n-collapse>
-
-      <n-collapse class="chat__settings">
-        <n-collapse-item title="Dates">
+        <template v-if="!compact">
+          <n-divider vertical />
           <chat-dates :chat="chat" />
-        </n-collapse-item>
-      </n-collapse>
-    </template>
+        </template>
 
-    <n-space
-      v-if="!onlyMainInfo"
-      style="justify-self: start"
-      :wrap-item="false"
-      :style="{ gridColumn: appStore.displayMode !== 'half' ? 2 : 1 }"
-    >
-      <n-text v-for="metric in metricsOptions">
-        {{ metric.title }}:
-        <n-tag
-          round
-          size="small"
-          type="error"
-          :style="`filter: ${getTagColor(metric)}`"
-        >
-          {{ metric.key }}
-        </n-tag>
-      </n-text>
-    </n-space>
+        <n-popover v-else trigger="click" placement="bottom-end">
+          <template #trigger>
+            <n-button size="small" ghost circle>
+              <template #icon>
+                <n-icon><more-icon /></n-icon>
+              </template>
+            </n-button>
+          </template>
+
+          <div class="more">
+            <div class="more__row">
+              <span class="more__label">Responsible</span>
+              <n-select
+                filterable
+                placeholder="Responsible"
+                size="small"
+                :value="chat.responsible"
+                :options="adminsItems"
+                :loading="isUsersLoading"
+                @update:value="changeResponsible"
+              />
+            </div>
+
+            <div class="more__row">
+              <span class="more__label">Department</span>
+              <n-select
+                filterable
+                label-field="title"
+                value-field="key"
+                placeholder="Department"
+                size="small"
+                :value="chat.department"
+                :options="departments"
+                @update:value="changeDepartment"
+              />
+            </div>
+
+            <div class="more__row" v-if="chat.gateways.length > 0">
+              <span class="more__label">Channels</span>
+              <div class="more__gateways">
+                <n-tooltip v-for="gateway of chat.gateways" placement="bottom">
+                  <template #trigger>
+                    <img height="22" :src="getImageUrl(gateway)" :alt="gateway" />
+                  </template>
+                  {{ gateway }}
+                </n-tooltip>
+              </div>
+            </div>
+
+            <div class="more__row" v-if="metricsOptions.length > 0">
+              <span class="more__label">Metrics</span>
+              <div class="more__metrics">
+                <n-text v-for="metric in metricsOptions">
+                  {{ metric.title }}:
+                  <n-tag
+                    round
+                    size="small"
+                    type="error"
+                    :style="`filter: ${getTagColor(metric)}`"
+                  >
+                    {{ metric.key }}
+                  </n-tag>
+                </n-text>
+              </div>
+            </div>
+
+            <div class="more__row">
+              <span class="more__label">Dates</span>
+              <chat-dates :chat="chat" />
+            </div>
+          </div>
+        </n-popover>
+      </div>
+
+      <div v-if="!compact && metricsOptions.length > 0" class="hdr__metrics">
+        <n-text v-for="metric in metricsOptions">
+          {{ metric.title }}:
+          <n-tag
+            round
+            size="small"
+            type="error"
+            :style="`filter: ${getTagColor(metric)}`"
+          >
+            {{ metric.key }}
+          </n-tag>
+        </n-text>
+      </div>
+    </template>
   </div>
 
   <n-modal v-model:show="isEdit">
@@ -227,20 +255,19 @@
   </n-modal>
 </template>
 
-// TODO: // - [ ] Wrap Topic Around Avatar // - [ ] Make menu draggable
-(increase width)
-
 <script setup lang="ts">
 import {
-  type DefineComponent,
   computed,
   defineAsyncComponent,
   nextTick,
+  onBeforeUnmount,
+  onMounted,
   ref,
   toRefs,
 } from "vue";
 import {
   NButton,
+  NPopover,
   NCard,
   NDivider,
   NIcon,
@@ -252,21 +279,15 @@ import {
   NTooltip,
   NSelect,
   useNotification,
-  NCollapse,
-  NCollapseItem,
 } from "naive-ui";
 import { ConnectError } from "@connectrpc/connect";
-import { Chat, Status, User } from "../../../connect/cc/cc_pb";
+import { Chat, User } from "../../../connect/cc/cc_pb";
 import { useCcStore } from "../../../store/chatting.ts";
 import { useAppStore } from "../../../store/app";
 import ChatOptions from "../chat_options.vue";
 import UserAvatar from "../../ui/user_avatar.vue";
 import MembersDropdown from "../../users/members_dropdown.vue";
-import {
-  addToClipboard,
-  getImageUrl,
-  getStatusItems,
-} from "../../../functions.ts";
+import { addToClipboard, getImageUrl } from "../../../functions.ts";
 import ChatStatus from "../chat_status.vue";
 import ChatActions from "../chat_actions.vue";
 import ChatDates from "../chat_dates.vue";
@@ -281,8 +302,8 @@ const EditIcon = defineAsyncComponent(
 const OpenIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/ArrowBack"),
 );
-const CogIcon = defineAsyncComponent(
-  () => import("@vicons/ionicons5/CogOutline"),
+const MoreIcon = defineAsyncComponent(
+  () => import("@vicons/ionicons5/EllipsisHorizontal"),
 );
 
 interface ChatHeaderProps {
@@ -314,11 +335,25 @@ const isEdit = ref<boolean>(false);
 const isAddDialog = ref<boolean>(false);
 const chatWithNewMembers = ref<Chat>();
 const isAddSaveLoading = ref<boolean>(false);
-const newStatus = ref();
-const isChangeStatusLoading = ref(false);
-const isSettingsVisible = ref(
-  document.documentElement.clientWidth > 768 ? true : false,
-);
+// How much room the header itself has. 0 until the first observation, and both
+// flags read false then, so the first paint is the full layout rather than a
+// mobile one that snaps wide a frame later.
+const root = ref<HTMLElement>();
+const width = ref(0);
+// Everything laid out inline needs roughly 1240px: two selects (380), the
+// action row (270), status + members (150), dates (200) and the topic. Below
+// that the secondary half moves into the popover instead of being cut off.
+const compact = computed(() => width.value > 0 && width.value < 1240);
+
+let observer: ResizeObserver | undefined;
+onMounted(() => {
+  if (!root.value) return;
+  observer = new ResizeObserver(([entry]) => {
+    width.value = entry.contentRect.width;
+  });
+  observer.observe(root.value);
+});
+onBeforeUnmount(() => observer?.disconnect());
 
 const members = computed(() => {
   const uuids = new Set([
@@ -335,14 +370,6 @@ const members = computed(() => {
 
   return result;
 });
-
-const statusesOptions = computed(() =>
-  getStatusItems().map((status) => ({
-    label: status.label,
-    disabled: status.value == chat.value.status,
-    value: status.value,
-  })),
-);
 
 const metricsOptions = computed(() => {
   const metricsEntries = Object.entries(chat.value.meta?.data ?? {});
@@ -447,68 +474,96 @@ const saveMembers = async () => {
   }
 };
 
-const changeStatus = async () => {
-  isChangeStatusLoading.value = true;
 
-  try {
-    const data = { ...chat.value, status: newStatus.value } as Chat;
-    await store.change_status(data);
-
-    store.chats.set(chat.value.uuid, data);
-    newStatus.value = undefined;
-  } catch (error) {
-    notification.error({
-      title: (error as ConnectError).message,
-    });
-  } finally {
-    isChangeStatusLoading.value = false;
-  }
-};
-
-const gridColumns = computed(
-  () => `repeat(${chat.value?.gateways.length > 0 ? 3 : 2}, auto) 1fr auto`,
-);
-
-const onlyMainInfo = computed(() => appStore.isMobile || appStore.isTablet);
 </script>
 
 <style scoped lang="scss">
-.grid {
-  display: grid;
-  grid-template-columns: v-bind("gridColumns");
+.hdr {
+  display: flex;
   align-items: center;
-  gap: 10px;
-
-  @media only screen and (max-width: 900px) {
-    display: flex;
-    align-items: start;
-    gap: 0px;
-    flex-wrap: wrap;
-  }
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  /* The pane only pads its left edge; without this the last control sits flush
+     against the copilot divider and looks clipped. */
+  padding-right: 12px;
 }
 
-.main__info {
-  @media only screen and (max-width: 900px) {
-    display: grid !important;
-    width: calc(100% - 60px);
-    margin-left: 10px;
-    grid-template-columns: 40px auto 25px;
-  }
+.hdr__id {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  /* Shrinks but never grows: growing put the slack between the topic and the
+     selects, which is the gap in the middle of the header. */
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.hdr__spacer {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.hdr__select {
+  flex: 0 1 190px;
+  min-width: 120px;
+}
+
+.hdr__side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.hdr__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.hdr__metrics {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-basis: 100%;
 }
 
 .chat__topic {
-  display: inline-block;
-  max-width: 200px;
+  flex: 0 1 auto;
+  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.chat__settings.n-collapse:deep(
-    .n-collapse-item
-      .n-collapse-item__content-wrapper
-      .n-collapse-item__content-inner
-  ) {
-  padding: 4px 0 0 12px;
+.more {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 260px;
+}
+.more__row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.more__label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.55;
+}
+.more__gateways {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.more__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 </style>

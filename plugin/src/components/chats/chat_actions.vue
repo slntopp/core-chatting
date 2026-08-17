@@ -17,6 +17,21 @@
   <n-tooltip>
     <template #trigger>
       <n-button
+        size="small"
+        ghost
+        circle
+        :color="appStore.isCopilotOpen ? COPILOT_COLOR : undefined"
+        @click="appStore.isCopilotOpen = !appStore.isCopilotOpen"
+      >
+        <template #icon> <sparkles-icon /> </template>
+      </n-button>
+    </template>
+    Ask the bot about this chat
+  </n-tooltip>
+
+  <n-tooltip>
+    <template #trigger>
+      <n-button
         type="default"
         size="small"
         ghost
@@ -81,7 +96,7 @@
 
   <n-drawer v-model:show="isTracesOpen" :width="620" placement="right">
     <n-drawer-content title="Bot debug traces" closable :native-scrollbar="false">
-      <trace-viewer v-if="isTracesOpen" :chat-uuid="chat.uuid" />
+      <trace-viewer v-if="isTracesOpen" :chat-uuid="chat.uuid" lane="customer" />
     </n-drawer-content>
   </n-drawer>
 
@@ -216,6 +231,11 @@ const deleteIcon = defineAsyncComponent(
 const listIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/ListOutline")
 );
+const sparklesIcon = defineAsyncComponent(
+  () => import("@vicons/ionicons5/SparklesOutline")
+);
+// Same purple as the copilot panel and the trace viewer.
+const COPILOT_COLOR = "#7c5cff";
 const bugIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/BugOutline")
 );

@@ -1,12 +1,27 @@
 <template>
-  <n-list class="chat">
+  <!-- Two conversations over one core-chatting chat: the customer thread and
+       the operator's own thread with the bot. While the copilot is closed the
+       second pane is zero-width and the drag handle is gone, so the ordinary
+       chat looks and behaves exactly as before. -->
+  <n-split
+    class="split"
+    direction="horizontal"
+    :size="appStore.isCopilotOpen ? appStore.copilotSplit : 1"
+    :min="0.3"
+    :max="0.8"
+    :disabled="!appStore.isCopilotOpen"
+    :resize-trigger-size="appStore.isCopilotOpen ? 3 : 0"
+    @update:size="(v) => (appStore.copilotSplit = Number(v))"
+  >
+    <template #1>
+      <n-list class="chat">
     <template #header>
       <chat-header :chat="chat" />
     </template>
 
     <n-scrollbar
       ref="scrollbar"
-      style="max-height: calc(100dvh - 66px - 77px); margin-bottom: auto"
+      class="chat__scroll"
       v-if="isMessageLoading || messages.length > 0"
     >
       <template v-if="isMessageLoading">
@@ -35,7 +50,8 @@
 
     <n-space
       v-else
-      style="height: 90vh; width: 100%"
+      class="chat__scroll"
+      style="width: 100%"
       justify="center"
       align="center"
     >
@@ -47,7 +63,33 @@
     <template #footer>
       <chat-footer ref="footer" :chat="chat!" :messages="messages" />
     </template>
-  </n-list>
+      </n-list>
+    </template>
+
+    <template #2>
+      <!-- Side by side only where there is room for it. On a narrow layout the
+           split would leave both panes unusable, so the copilot becomes a
+           full-width drawer instead (below) and this pane stays empty. -->
+      <copilot-panel
+        v-if="appStore.isCopilotOpen && chat && !appStore.isMobile"
+        :chat="chat as Chat"
+      />
+    </template>
+  </n-split>
+
+  <!-- Narrow layout: same panel, shown over the chat. Without this the admin
+       lane is unreachable below 900px - the notes exist but nothing renders or
+       composes them. -->
+  <n-drawer
+    v-if="appStore.isMobile"
+    v-model:show="appStore.isCopilotOpen"
+    placement="right"
+    width="100%"
+  >
+    <n-drawer-content :native-scrollbar="false" body-content-style="padding: 0">
+      <copilot-panel v-if="chat" :chat="chat as Chat" />
+    </n-drawer-content>
+  </n-drawer>
 </template>
 
 <script setup lang="ts">
@@ -59,16 +101,27 @@ import {
   ref,
   watch,
 } from "vue";
-import { NAlert, NList, NListItem, NScrollbar, NSpace } from "naive-ui";
+import {
+  NAlert,
+  NDrawer,
+  NDrawerContent,
+  NList,
+  NListItem,
+  NScrollbar,
+  NSpace,
+  NSplit,
+} from "naive-ui";
 import { useRoute, useRouter } from "vue-router";
 
 import { useAppStore } from "../../../store/app";
 import { useCcStore } from "../../../store/chatting";
-import { Chat, Kind, Message } from "../../../connect/cc/cc_pb";
+import { Chat, Message } from "../../../connect/cc/cc_pb";
+import { splitChatMessages } from "../../../functions";
 
 import ChatHeader from "../../../components/chats/layouts/chat_header.vue";
 import ChatFooter from "../../../components/chats/layouts/chat_footer.vue";
 import MockMessage from "../../../components/chats/mock_message.vue";
+import CopilotPanel from "../../../components/chats/copilot_panel.vue";
 
 const MessageView = defineAsyncComponent(
   () => import("../../../components/chats/message.vue"),
@@ -85,12 +138,20 @@ const isMessageLoading = ref(false);
 const chatUuid = computed(() => route.params.uuid);
 const chat = computed(() => (store.currentChat as Chat) ?? null);
 
-const messages = computed(() => {
-  const chatMessages = store.chat_messages(chat.value! as Chat);
-
-  chatMessages.sort((a, b) => Number(a.sent - b.sent));
-  return chatMessages;
-});
+// The customer thread only. Admin notes are the copilot conversation and are
+// rendered in the side pane instead, so the two never interleave.
+//
+// Superseded drafts go with them. The bot can revise a pending reply several
+// times before anyone approves it; showing every attempt in the customer thread
+// makes it read as a wall of things the customer supposedly received, when in
+// fact only one of them is a candidate to send. The newest unapproved reply
+// stays here - that is the one waiting for Approve - and the earlier ones move
+// to the copilot pane, where they belong as working history.
+const messages = computed(() =>
+  chat.value
+    ? splitChatMessages(store.chat_messages(chat.value as Chat)).customer
+    : [],
+);
 
 async function handle_approve(msg: Message, approve: boolean) {
   msg.underReview = !approve;
@@ -127,13 +188,22 @@ async function load_chat() {
 }
 
 watch(chat, load_chat);
+// Unread counts every inbound message, admin notes included, but `messages` is
+// now the customer thread alone - so watching it left the open chat showing
+// unread badges that only a customer message could ever clear. Watch the full
+// thread for the reset, and keep scrolling tied to what this pane renders.
 watch(
-  messages,
+  () => (chat.value ? store.chat_messages(chat.value as Chat).length : 0),
   () => {
     if (chat.value?.meta) {
       chat.value.meta.unread = 0;
     }
-
+  },
+  { immediate: true },
+);
+watch(
+  messages,
+  () => {
     if (scrollbar.value) scrollToBottom();
   },
   { deep: true },
@@ -150,8 +220,6 @@ function handle_edit(message: Message) {
 
   if (message.underReview) {
     footer.value.sendMode = "approve";
-  } else if (message.kind === Kind.ADMIN_ONLY) {
-    footer.value.sendMode = "admin";
   }
 }
 
@@ -201,10 +269,24 @@ watch(chatUuid, fetchChat);
 </script>
 
 <style scoped>
+/* The panes are 100dvh tall; pinning the container stops a dragged split from
+   pushing the page into a horizontal scroll. */
+.split {
+  height: 100dvh;
+  overflow: hidden;
+}
+
 .chat {
   display: flex;
   flex-direction: column;
   height: 100dvh;
   padding-left: v-bind("chatPaddingLeft");
+}
+
+/* min-height:0 is what actually lets a flex child scroll instead of growing
+   the column past the viewport. */
+.chat__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>

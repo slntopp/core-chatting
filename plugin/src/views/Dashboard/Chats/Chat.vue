@@ -115,7 +115,8 @@ import { useRoute, useRouter } from "vue-router";
 
 import { useAppStore } from "../../../store/app";
 import { useCcStore } from "../../../store/chatting";
-import { Chat, Kind, Message } from "../../../connect/cc/cc_pb";
+import { Chat, Message } from "../../../connect/cc/cc_pb";
+import { splitChatMessages } from "../../../functions";
 
 import ChatHeader from "../../../components/chats/layouts/chat_header.vue";
 import ChatFooter from "../../../components/chats/layouts/chat_footer.vue";
@@ -139,14 +140,18 @@ const chat = computed(() => (store.currentChat as Chat) ?? null);
 
 // The customer thread only. Admin notes are the copilot conversation and are
 // rendered in the side pane instead, so the two never interleave.
-const messages = computed(() => {
-  const chatMessages = store
-    .chat_messages(chat.value! as Chat)
-    .filter((m) => m.kind !== Kind.ADMIN_ONLY);
-
-  chatMessages.sort((a, b) => Number(a.sent - b.sent));
-  return chatMessages;
-});
+//
+// Superseded drafts go with them. The bot can revise a pending reply several
+// times before anyone approves it; showing every attempt in the customer thread
+// makes it read as a wall of things the customer supposedly received, when in
+// fact only one of them is a candidate to send. The newest unapproved reply
+// stays here - that is the one waiting for Approve - and the earlier ones move
+// to the copilot pane, where they belong as working history.
+const messages = computed(() =>
+  chat.value
+    ? splitChatMessages(store.chat_messages(chat.value as Chat)).customer
+    : [],
+);
 
 async function handle_approve(msg: Message, approve: boolean) {
   msg.underReview = !approve;

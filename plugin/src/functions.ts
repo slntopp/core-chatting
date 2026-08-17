@@ -1,5 +1,5 @@
 import { NotificationApi } from "naive-ui";
-import { Status } from "./connect/cc/cc_pb";
+import { Kind, Message, Status } from "./connect/cc/cc_pb";
 
 export function addToClipboard(text: string, notification?: NotificationApi) {
   if (navigator?.clipboard) {
@@ -116,4 +116,38 @@ export function cleanObject(object: any) {
     }
   });
   return object;
+}
+
+/**
+ * Splits a chat's messages into the two panes of the operator UI.
+ *
+ * `customer` is the conversation as the customer will see it: their messages,
+ * approved replies, and at most ONE pending draft - the newest, the one the
+ * Approve button acts on. `copilot` is the operator's own lane: admin-only
+ * notes plus every draft that a later revision has already superseded. Those
+ * earlier drafts are working history, not messages anyone received, and leaving
+ * them in the customer thread makes it read as a pile of duplicate answers.
+ *
+ * Lives here rather than in either component so the two can never disagree
+ * about which draft is still live and show it twice, or not at all.
+ */
+export function splitChatMessages(all: Message[]) {
+  const sorted = [...all].sort((a, b) => Number(a.sent - b.sent));
+
+  let livePending = "";
+  for (let i = sorted.length - 1; i >= 0; i--) {
+    if (sorted[i].kind !== Kind.ADMIN_ONLY && sorted[i].underReview) {
+      livePending = sorted[i].uuid;
+      break;
+    }
+  }
+
+  const customer: Message[] = [];
+  const copilot: Message[] = [];
+  for (const m of sorted) {
+    if (m.kind === Kind.ADMIN_ONLY) copilot.push(m);
+    else if (m.underReview && m.uuid !== livePending) copilot.push(m);
+    else customer.push(m);
+  }
+  return { customer, copilot };
 }

@@ -148,6 +148,7 @@ import {
 } from "naive-ui";
 
 import { Chat, Kind, Message } from "../../connect/cc/cc_pb";
+import { splitChatMessages } from "../../functions";
 import { useCcStore } from "../../store/chatting";
 import { useAppStore } from "../../store/app";
 import TraceViewer from "./trace_viewer.vue";
@@ -178,12 +179,10 @@ const sending = ref(false);
 const isTracesOpen = ref(false);
 const scrollbar = ref();
 
-// The admin lane of this chat; the main chat renders the complement.
-const messages = computed(() =>
-  store
-    .chat_messages(props.chat)
-    .filter((m) => m.kind === Kind.ADMIN_ONLY)
-    .sort((a, b) => Number(a.sent - b.sent)),
+// The operator's lane: notes, plus the bot's superseded drafts. The main chat
+// renders the exact complement - see splitChatMessages.
+const messages = computed(
+  () => splitChatMessages(store.chat_messages(props.chat)).copilot,
 );
 
 // The note currently being edited, or null when composing a new one. Local to

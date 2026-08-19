@@ -45,6 +45,7 @@ export const Kind = /*@__PURE__*/ proto3.makeEnum(
     {no: 0, name: "DEFAULT"},
     {no: 1, name: "ADMIN_ONLY"},
     {no: 2, name: "FOR_BOT"},
+    {no: 3, name: "COPILOT"},
   ],
 );
 

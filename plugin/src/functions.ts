@@ -122,21 +122,39 @@ export function cleanObject(object: any) {
  * Splits a chat's messages into the two panes of the operator UI.
  *
  * `customer` is the conversation as the customer will see it: their messages,
- * approved replies, and at most ONE pending draft - the newest, the one the
- * Approve button acts on. `copilot` is the operator's own lane: admin-only
- * notes plus every draft that a later revision has already superseded. Those
- * earlier drafts are working history, not messages anyone received, and leaving
- * them in the customer thread makes it read as a pile of duplicate answers.
+ * approved replies, admin-only notes, and at most ONE pending draft - the
+ * newest, the one the Approve button acts on. `copilot` is the conversation
+ * with the AI assistant plus every draft that a later revision has already
+ * superseded. Those earlier drafts are working history, not messages anyone
+ * received, and leaving them in the customer thread makes it read as a pile of
+ * duplicate answers.
+ *
+ * Admin notes belong in the main thread. They are what operators write to each
+ * other about this chat, in its own timeline - the customer cannot see them
+ * either way, and filing them under the copilot mixed two unrelated things:
+ * a note left for a colleague kept waking the bot, and the bot's answers
+ * buried the notes.
  *
  * Lives here rather than in either component so the two can never disagree
  * about which draft is still live and show it twice, or not at all.
  */
+/**
+ * Kinds the customer never receives: notes operators leave for each other, and
+ * the operator's conversation with the AI. Mirrors cc.OperatorOnlyKinds on the
+ * server - anything deciding "is this part of the customer conversation" must
+ * ask this and not compare against one kind, which is how a second hidden lane
+ * would leak the first time someone forgot a branch.
+ */
+export function isOperatorOnly(kind: Kind) {
+  return kind === Kind.ADMIN_ONLY || kind === Kind.COPILOT;
+}
+
 export function splitChatMessages(all: Message[]) {
   const sorted = [...all].sort((a, b) => Number(a.sent - b.sent));
 
   let livePending = "";
   for (let i = sorted.length - 1; i >= 0; i--) {
-    if (sorted[i].kind !== Kind.ADMIN_ONLY && sorted[i].underReview) {
+    if (sorted[i].kind !== Kind.COPILOT && sorted[i].underReview) {
       livePending = sorted[i].uuid;
       break;
     }
@@ -145,7 +163,7 @@ export function splitChatMessages(all: Message[]) {
   const customer: Message[] = [];
   const copilot: Message[] = [];
   for (const m of sorted) {
-    if (m.kind === Kind.ADMIN_ONLY) copilot.push(m);
+    if (m.kind === Kind.COPILOT) copilot.push(m);
     else if (m.underReview && m.uuid !== livePending) copilot.push(m);
     else customer.push(m);
   }

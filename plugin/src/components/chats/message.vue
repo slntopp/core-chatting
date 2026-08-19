@@ -152,15 +152,26 @@ const sender = computed(
   () => users.value.get(message.value.sender)?.title ?? "Unknown"
 );
 
-// An admin note written by the bot itself is the AI copilot answering an
-// operator, not a colleague leaving a note — same lane, very different thing,
-// so it gets its own accent. Purple matches the debug trace viewer: everything
-// that is the AI's own internals reads purple across the plugin.
-const COPILOT_COLOR = "#7c5cff";
-const is_copilot = computed(
-  () =>
-    message.value.kind == Kind.ADMIN_ONLY &&
-    !!users.value.get(message.value.sender)?.ccIsBot
+// The copilot lane has its own kind now, so this is no longer guessed from
+// "an admin note the bot happened to write" - an operator's own question to the
+// assistant belongs to it just as much as the answer.
+//
+// Inside that lane the two speakers get different colours. Blue is the
+// assistant; yellow is a human, the same yellow an admin note carries elsewhere,
+// so "a person wrote this" reads the same everywhere in the plugin. Without the
+// split both sides of the conversation looked alike and the pane read as one
+// voice talking to itself.
+const COPILOT_BOT_COLOR = "#4b8bf5";
+const is_copilot = computed(() => message.value.kind == Kind.COPILOT);
+const is_bot_sender = computed(
+  () => !!users.value.get(message.value.sender)?.ccIsBot
+);
+// The accent for anything in an operator-only lane: the assistant's blue, or a
+// human's yellow.
+const lane_color = computed(() =>
+  is_copilot.value && is_bot_sender.value
+    ? COPILOT_BOT_COLOR
+    : theme.value.warningColor
 );
 
 const x = ref(0);
@@ -286,12 +297,18 @@ function avatar() {
     h(UserAvatar, { round: true, size: 64, avatar: sender.value }),
   ];
 
-  if (message.value.kind == Kind.ADMIN_ONLY) {
+  if (message.value.kind == Kind.ADMIN_ONLY || is_copilot.value) {
     elements.push(
       h(NIcon, {
-        color: is_copilot.value ? COPILOT_COLOR : theme.value.warningColor,
+        color: lane_color.value,
         size: 24,
-        component: is_copilot.value ? SparklesOutline : ClipboardOutline,
+        // Sparkles only where the assistant actually spoke: an operator asking it
+        // a question is still a person, and marking them with the AI badge is how
+        // the pane stopped showing who said what.
+        component:
+          is_copilot.value && is_bot_sender.value
+            ? SparklesOutline
+            : ClipboardOutline,
       })
     );
   }
@@ -327,17 +344,11 @@ const container_style = computed(() => {
       backgroundColor: theme.value.infoColor + "40",
       border: `1px solid ${theme.value.infoColor}`,
     };
-  else if (is_copilot.value)
+  else if (is_copilot.value || message.value.kind == Kind.ADMIN_ONLY)
     style = {
       ...style,
-      backgroundColor: COPILOT_COLOR + "2b",
-      border: `1px solid ${COPILOT_COLOR}`,
-    };
-  else if (message.value.kind == Kind.ADMIN_ONLY)
-    style = {
-      ...style,
-      backgroundColor: theme.value.warningColor + "40",
-      border: `1px solid ${theme.value.warningColor}`,
+      backgroundColor: lane_color.value + "40",
+      border: `1px solid ${lane_color.value}`,
     };
 
   return style;

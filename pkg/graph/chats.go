@@ -141,7 +141,7 @@ FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_ac
 	LET messages = (
          FOR m in @@messages 
          FILTER m.chat == c._key 
-		 FILTER m.kind != @admin_only || role == 3
+		 FILTER m.kind NOT IN @operator_only || role == 3
          FILTER !m.under_review || role == 3
          SORT m.sent ASC RETURN m
     )
@@ -177,7 +177,7 @@ func (c *ChatsController) List(ctx context.Context, requester string, req *cc.Li
 		"requestor":     requester,
 		"root_account":  schema.ROOT_ACCOUNT_KEY,
 		"closed_status": cc.Status_CLOSE,
-		"admin_only":    cc.Kind_ADMIN_ONLY,
+		"operator_only": cc.OperatorOnlyKinds,
 	}
 	filters := ""
 	if req.GetFilters() != nil {
@@ -403,8 +403,8 @@ func (c *ChatsController) GetMessages(ctx context.Context, chat *cc.Chat, is_adm
 
 	extra_filter := ""
 	if !is_admin {
-		extra_filter = "FILTER m.kind != @admin_only\nFILTER !m.under_review"
-		bind_vars["admin_only"] = cc.Kind_ADMIN_ONLY
+		extra_filter = "FILTER m.kind NOT IN @operator_only\nFILTER !m.under_review"
+		bind_vars["operator_only"] = cc.OperatorOnlyKinds
 	}
 
 	query := fmt.Sprintf(getChatMessages, extra_filter)

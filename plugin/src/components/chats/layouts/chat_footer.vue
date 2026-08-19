@@ -10,6 +10,20 @@
           <n-button
             ghost
             size="small"
+            :type="sendMode === 'admin' ? 'warning' : undefined"
+            @click="sendMode = sendMode === 'admin' ? 'default' : 'admin'"
+          >
+            Notes
+          </n-button>
+        </template>
+        Sent message as an Admin Note.
+      </n-tooltip>
+
+      <n-tooltip placement="top-start">
+        <template #trigger>
+          <n-button
+            ghost
+            size="small"
             :type="sendMode === 'approve' ? 'info' : undefined"
             @click="sendMode = sendMode === 'approve' ? 'default' : 'approve'"
           >
@@ -64,12 +78,20 @@
               @blur="check_mentioned"
               @keypress.prevent.enter.exact="handle_new_line"
               @keyup.prevent.ctrl.enter.exact="handle_send"
+              @keyup.prevent.ctrl.shift.enter.exact="
+                sendMode = 'admin';
+                handle_send();
+              "
               @keyup.prevent.ctrl.up.exact="handle_begin_edit"
             />
           </template>
 
           <ul v-if="!appStore.isMobile" style="padding: 0 0 0 10px">
             <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to send message</li>
+            <li v-if="chat?.role == Role.ADMIN">
+              <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Enter</kbd> to send
+              message as Admin Note
+            </li>
             <li><kbd>Ctrl</kbd> + <kbd>↑</kbd> to edit last message</li>
           </ul>
         </n-tooltip>
@@ -203,6 +225,8 @@ const textareaColors = computed(() => {
 
 const colorBySendMode = computed(() => {
   switch (sendMode.value) {
+    case "admin":
+      return "#f2c97d";
     case "approve":
       return "#70c0e8";
     default:
@@ -322,6 +346,9 @@ async function handle_send() {
   }
 
   switch (sendMode.value) {
+    case "admin":
+      await store.handle_send(props.chat?.uuid ?? "", Kind.ADMIN_ONLY);
+      break;
     case "approve":
       await store.handle_send(props.chat?.uuid ?? "", Kind.DEFAULT, true);
       break;

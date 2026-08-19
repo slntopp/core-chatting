@@ -110,7 +110,8 @@ import {
   NTag,
   useNotification,
 } from "naive-ui";
-import { Chat, Kind } from "../../connect/cc/cc_pb";
+import { Chat } from "../../connect/cc/cc_pb";
+import { isOperatorOnly } from "../../functions";
 import { useCcStore } from "../../store/chatting";
 import { useUsersStore } from "../../store/users";
 import { QAProposal, useChatProcessStore } from "../../store/chat_process";
@@ -184,7 +185,7 @@ watch(() => props.chat.uuid, resolve);
 function transcript() {
   return ccStore
     .chat_messages(props.chat)
-    .filter((m) => !m.underReview && m.kind !== Kind.ADMIN_ONLY && m.content)
+    .filter((m) => !m.underReview && !isOperatorOnly(m.kind) && m.content)
     .map((m) => ({
       author: usersStore.users.get(m.sender)?.title || "User",
       text: m.content,

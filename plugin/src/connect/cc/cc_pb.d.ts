@@ -91,6 +91,9 @@ export declare enum Kind {
   DEFAULT = 0,
 
   /**
+   * ADMIN_ONLY is a note humans leave for each other about the chat. The
+   * customer never sees it; nothing answers it.
+   *
    * @generated from enum value: ADMIN_ONLY = 1;
    */
   ADMIN_ONLY = 1,
@@ -99,6 +102,16 @@ export declare enum Kind {
    * @generated from enum value: FOR_BOT = 2;
    */
   FOR_BOT = 2,
+
+  /**
+   * COPILOT is the operator's conversation WITH the AI assistant about this
+   * chat. Same visibility as ADMIN_ONLY - admins only - but a separate lane,
+   * because the two were one and the notes operators wrote to each other kept
+   * waking the bot, while the bot's answers filled the notes.
+   *
+   * @generated from enum value: COPILOT = 3;
+   */
+  COPILOT = 3,
 }
 
 /**

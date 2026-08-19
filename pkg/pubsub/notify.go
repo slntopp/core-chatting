@@ -36,10 +36,13 @@ func HandleSpecialNotify(ctx context.Context, log *zap.Logger, ps *PubSub, msg *
 		msg.Meta["approved"] = structpb.NewBoolValue(true)
 	}
 
-	deleteEvent := (diffKinds && msg.GetKind() == cc.Kind_ADMIN_ONLY) ||
+	// A message that turned operator-only was visible to the customer a moment
+	// ago, so their client has to be told to drop it - the copilot lane needs this
+	// exactly as much as a note does.
+	deleteEvent := (diffKinds && cc.IsOperatorOnly(msg.GetKind())) ||
 		(diffReviews && msg.GetUnderReview())
 
-	skip := msg.GetKind() == cc.Kind_DEFAULT && oldMsg.GetKind() == cc.Kind_ADMIN_ONLY && msg.GetUnderReview() && !oldMsg.GetUnderReview()
+	skip := msg.GetKind() == cc.Kind_DEFAULT && cc.IsOperatorOnly(oldMsg.GetKind()) && msg.GetUnderReview() && !oldMsg.GetUnderReview()
 
 	if sendEvent {
 		userEvent.Type = cc.EventType_MESSAGE_SENT

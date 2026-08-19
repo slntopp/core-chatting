@@ -116,7 +116,7 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 
 	msg.Sender = requestor
 
-	if (msg.Kind == cc.Kind_ADMIN_ONLY || msg.UnderReview) && chat.Role != cc.Role_ADMIN {
+	if (cc.IsOperatorOnly(msg.Kind) || msg.UnderReview) && chat.Role != cc.Role_ADMIN {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("can't send admin only message"))
 	}
 
@@ -194,7 +194,7 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
 	}
 
-	if req.Msg.Kind == cc.Kind_ADMIN_ONLY && chat.Role != cc.Role_ADMIN {
+	if cc.IsOperatorOnly(req.Msg.Kind) && chat.Role != cc.Role_ADMIN {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("can't send admin only message"))
 	}
 

@@ -152,16 +152,12 @@ const sender = computed(
   () => users.value.get(message.value.sender)?.title ?? "Unknown"
 );
 
-// An admin note written by the bot itself is the AI copilot answering an
-// operator, not a colleague leaving a note — same lane, very different thing,
-// so it gets its own accent. Purple matches the debug trace viewer: everything
-// that is the AI's own internals reads purple across the plugin.
+// The copilot lane has its own kind now, so this is no longer guessed from
+// "an admin note the bot happened to write" - an operator's own question to the
+// assistant belongs to it just as much as the answer. Purple matches the debug
+// trace viewer: everything that is the AI's own internals reads purple.
 const COPILOT_COLOR = "#7c5cff";
-const is_copilot = computed(
-  () =>
-    message.value.kind == Kind.ADMIN_ONLY &&
-    !!users.value.get(message.value.sender)?.ccIsBot
-);
+const is_copilot = computed(() => message.value.kind == Kind.COPILOT);
 
 const x = ref(0);
 const y = ref(0);
@@ -286,7 +282,7 @@ function avatar() {
     h(UserAvatar, { round: true, size: 64, avatar: sender.value }),
   ];
 
-  if (message.value.kind == Kind.ADMIN_ONLY) {
+  if (message.value.kind == Kind.ADMIN_ONLY || is_copilot.value) {
     elements.push(
       h(NIcon, {
         color: is_copilot.value ? COPILOT_COLOR : theme.value.warningColor,

@@ -212,7 +212,7 @@ async function send() {
       editing.value = null;
     } else {
       await store.send_message(
-        new Message({ content, kind: Kind.ADMIN_ONLY, chat: props.chat.uuid }),
+        new Message({ content, kind: Kind.COPILOT, chat: props.chat.uuid }),
       );
     }
     draft.value = "";

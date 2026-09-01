@@ -147,7 +147,7 @@ import {
 } from "naive-ui";
 import { computed, reactive, ref, toRefs, watch } from "vue";
 import { Bot, Defaults, Department, User } from "../../connect/cc/cc_pb";
-import { MetricWithKey, useDefaultsStore } from "../../store/defaults.ts";
+import { useDefaultsStore } from "../../store/defaults.ts";
 
 interface AutoTicketsProps {
   admins: User[];
@@ -307,14 +307,11 @@ async function submit() {
         departments: defaultsStore.departments,
         gateways: defaultsStore.gateways,
         metrics: defaultsStore.metrics.reduce(
-          (result: Record<string, MetricWithKey>, metric) => ({
-            ...result,
-            [metric.key]: metric,
-          }),
+          (result, metric) => ({ ...result, [metric.key]: metric }),
           {}
         ),
         templates: defaultsStore.templates.reduce(
-          (result: Record<string, string>, template) => ({
+          (result, template) => ({
             ...result,
             [template.name]: template.content,
           }),

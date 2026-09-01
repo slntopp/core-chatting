@@ -69,6 +69,21 @@
       </n-table>
       <n-button ghost type="success" @click="addDelayRule">Add period</n-button>
 
+      <n-text>Excluded price models</n-text>
+      <n-select
+        v-model:value="autoTicket.excludedPlans"
+        multiple
+        filterable
+        tag
+        clearable
+        placeholder="Paste price model UUID and press Enter"
+        :options="excludedPlanOptions"
+      />
+      <n-text depth="3">
+        Overdue tickets will not be created for instances on these price
+        models. Copy UUID from Admin → Plans.
+      </n-text>
+
       <n-text>Department</n-text>
       <n-select
         v-model:value="autoTicket.department"
@@ -175,6 +190,7 @@ const AUTO_TICKET_KEYS = {
   responsible: "auto_ticket.responsible",
   delayHours: "auto_ticket.delay_hours",
   delays: "auto_ticket.delays",
+  excludedPlans: "auto_ticket.excluded_plans",
 };
 
 const PERIOD_OPTIONS = [
@@ -236,6 +252,10 @@ function parseAutoTicket(values: Record<string, string> | undefined) {
         ? delayHoursRaw
         : 24,
     delays,
+    excludedPlans: (src[AUTO_TICKET_KEYS.excludedPlans] ?? "")
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean),
   };
 }
 
@@ -249,6 +269,7 @@ function serializeAutoTicket(ticket: {
   message: string;
   defaultDelayHours: number;
   delays: { period: number; hours: number }[];
+  excludedPlans: string[];
 }) {
   const delays = (ticket.delays ?? [])
     .map((row) => ({
@@ -272,11 +293,22 @@ function serializeAutoTicket(ticket: {
     [AUTO_TICKET_KEYS.message]: ticket.message ?? "",
     [AUTO_TICKET_KEYS.delayHours]: String(ticket.defaultDelayHours ?? 24),
     [AUTO_TICKET_KEYS.delays]: JSON.stringify(delays),
+    [AUTO_TICKET_KEYS.excludedPlans]: (ticket.excludedPlans ?? [])
+      .map((v) => String(v).trim())
+      .filter(Boolean)
+      .join(","),
   };
 }
 
 const autoTicket = reactive(parseAutoTicket(defaultsStore.bot?.values));
 const periodOptions = PERIOD_OPTIONS;
+
+const excludedPlanOptions = computed(() =>
+  (autoTicket.excludedPlans || []).map((uuid: string) => ({
+    label: uuid,
+    value: uuid,
+  }))
+);
 
 const departmentSelectOptions = computed(() =>
   (departments.value || []).map((dep) => ({

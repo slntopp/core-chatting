@@ -3,7 +3,7 @@ FROM node:18 AS app-builder
 ADD plugin /app
 WORKDIR /app
 
-RUN npm i -g pnpm
+RUN npm i -g pnpm@9
 RUN pnpm i && pnpm build
 
 FROM golang:1.21-alpine AS server-builder

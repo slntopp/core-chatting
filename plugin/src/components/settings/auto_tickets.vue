@@ -7,8 +7,10 @@
     <n-space vertical style="padding: 0 24px; max-width: 720px">
       <n-text depth="3" style="display: block; margin-bottom: 12px">
         Creates a support ticket after the instance payment date plus the delay
-        for that billing period. Placeholders: {CLIENT_NAME}, {INSTANCE},
-        {PRODUCT}, {IPS}, {SERVICE_DETAILS}, {SERVICE}
+        for that billing period. Applies only to services that can be
+        auto-suspended by billing (not domains / one-time products).
+        Placeholders: {CLIENT_NAME}, {INSTANCE}, {PRODUCT}, {IPS},
+        {SERVICE_DETAILS}, {SERVICE}
       </n-text>
 
       <div class="bots_config_switch">

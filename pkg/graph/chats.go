@@ -42,7 +42,13 @@ func (c *ChatsController) Create(ctx context.Context, chat *cc.Chat) (*cc.Chat, 
 	log.Debug("Req received")
 
 	chat.Created = time.Now().UnixMilli()
-	chat.Status = cc.Status_NEW
+	// A chat starts NEW, with one exception: an outreach ticket asks for
+	// ONBOARDING and keeps it. Anything else in the field is ignored rather
+	// than trusted — whoever opens a chat has no business deciding it is
+	// already resolved.
+	if chat.GetStatus() != cc.Status_ONBOARDING {
+		chat.Status = cc.Status_NEW
+	}
 
 	if chat.Responsible != nil {
 		if !slices.Contains(chat.GetAdmins(), chat.GetResponsible()) {

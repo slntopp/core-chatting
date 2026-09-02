@@ -74,13 +74,17 @@ export function getStatusColor(status: Status) {
       return "#ff8300";
     case Status.CLOSE:
       return "#e23535";
+    // Outreach tickets: deliberately grey. They are ours, not a customer's
+    // request, and nothing about them is urgent.
+    case Status.ONBOARDING:
+      return "#8f8f8f";
     default:
       return undefined;
   }
 }
 
 export function getStatusItems() {
-  const allowedStatuses = [0, 1, 8, 5, 4, 7, 3];
+  const allowedStatuses = [0, 1, 8, 5, 4, 7, 3, 9];
 
   return allowedStatuses.map((status) => ({
     label: Status[status].replace("_", " "),

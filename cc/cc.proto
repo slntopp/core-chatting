@@ -31,6 +31,12 @@ enum Status {
   WAITING_FOR_REPLY = 6;
   ON_HOLD = 7;
   IN_PROGRESS = 8;
+  // ONBOARDING is an outreach ticket: we wrote first, nobody asked. It is the
+  // one status a message does not change (see MessagesAPI.Send), so a campaign
+  // of thousands does not walk through the operators' status board on its way
+  // to being closed. Set only at creation, and only deliberately; it leaves
+  // the ticket the way any other does, by someone closing it.
+  ONBOARDING = 9;
 }
 
 message Chat {

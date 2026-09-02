@@ -162,10 +162,16 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 		})
 	}
 
-	if slices.Contains(chat.GetAdmins(), requestor) {
-		chat.Status = cc.Status_OPEN
-	} else if chat.Status != cc.Status_NEW {
-		chat.Status = cc.Status_CUSTOMER_REPLY
+	// An onboarding ticket keeps its status through the whole conversation.
+	// We started it, not the customer, and a campaign of thousands moving
+	// through OPEN and CUSTOMER_REPLY would bury the tickets people actually
+	// opened themselves. It leaves this status only when someone closes it.
+	if chat.GetStatus() != cc.Status_ONBOARDING {
+		if slices.Contains(chat.GetAdmins(), requestor) {
+			chat.Status = cc.Status_OPEN
+		} else if chat.Status != cc.Status_NEW {
+			chat.Status = cc.Status_CUSTOMER_REPLY
+		}
 	}
 
 	update, err := s.chatCtrl.Update(ctx, chat)

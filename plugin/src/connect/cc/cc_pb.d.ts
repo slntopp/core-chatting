@@ -79,6 +79,17 @@ export declare enum Status {
    * @generated from enum value: IN_PROGRESS = 8;
    */
   IN_PROGRESS = 8,
+
+  /**
+   * ONBOARDING is an outreach ticket: we wrote first, nobody asked. It is the
+   * one status a message does not change (see MessagesAPI.Send), so a campaign
+   * of thousands does not walk through the operators' status board on its way
+   * to being closed. Set only at creation, and only deliberately; it leaves
+   * the ticket the way any other does, by someone closing it.
+   *
+   * @generated from enum value: ONBOARDING = 9;
+   */
+  ONBOARDING = 9,
 }
 
 /**

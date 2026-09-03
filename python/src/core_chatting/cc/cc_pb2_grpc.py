@@ -491,6 +491,11 @@ class MessagesAPIStub(object):
                 request_serializer=cc_dot_cc__pb2.Message.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Message.FromString,
                 )
+        self.Vote = channel.unary_unary(
+                '/cc.MessagesAPI/Vote',
+                request_serializer=cc_dot_cc__pb2.VoteRequest.SerializeToString,
+                response_deserializer=cc_dot_cc__pb2.Message.FromString,
+                )
         self.List = channel.unary_unary(
                 '/cc.MessagesAPI/List',
                 request_serializer=cc_dot_cc__pb2.MessagesListRequest.SerializeToString,
@@ -525,6 +530,14 @@ class MessagesAPIServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Vote(self, request, context):
+        """Vote answers the poll on a message. Anyone with access to the chat may
+        answer, once — voting again replaces the previous answer.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def List(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -552,6 +565,11 @@ def add_MessagesAPIServicer_to_server(servicer, server):
             'Delete': grpc.unary_unary_rpc_method_handler(
                     servicer.Delete,
                     request_deserializer=cc_dot_cc__pb2.Message.FromString,
+                    response_serializer=cc_dot_cc__pb2.Message.SerializeToString,
+            ),
+            'Vote': grpc.unary_unary_rpc_method_handler(
+                    servicer.Vote,
+                    request_deserializer=cc_dot_cc__pb2.VoteRequest.FromString,
                     response_serializer=cc_dot_cc__pb2.Message.SerializeToString,
             ),
             'List': grpc.unary_unary_rpc_method_handler(
@@ -633,6 +651,23 @@ class MessagesAPI(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/cc.MessagesAPI/Delete',
             cc_dot_cc__pb2.Message.SerializeToString,
+            cc_dot_cc__pb2.Message.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Vote(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cc.MessagesAPI/Vote',
+            cc_dot_cc__pb2.VoteRequest.SerializeToString,
             cc_dot_cc__pb2.Message.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

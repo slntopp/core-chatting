@@ -74,6 +74,8 @@ const (
 	MessagesAPIUpdateProcedure = "/cc.MessagesAPI/Update"
 	// MessagesAPIDeleteProcedure is the fully-qualified name of the MessagesAPI's Delete RPC.
 	MessagesAPIDeleteProcedure = "/cc.MessagesAPI/Delete"
+	// MessagesAPIVoteProcedure is the fully-qualified name of the MessagesAPI's Vote RPC.
+	MessagesAPIVoteProcedure = "/cc.MessagesAPI/Vote"
 	// MessagesAPIListProcedure is the fully-qualified name of the MessagesAPI's List RPC.
 	MessagesAPIListProcedure = "/cc.MessagesAPI/List"
 	// UsersAPIMeProcedure is the fully-qualified name of the UsersAPI's Me RPC.
@@ -113,6 +115,7 @@ var (
 	messagesAPISendMethodDescriptor          = messagesAPIServiceDescriptor.Methods().ByName("Send")
 	messagesAPIUpdateMethodDescriptor        = messagesAPIServiceDescriptor.Methods().ByName("Update")
 	messagesAPIDeleteMethodDescriptor        = messagesAPIServiceDescriptor.Methods().ByName("Delete")
+	messagesAPIVoteMethodDescriptor          = messagesAPIServiceDescriptor.Methods().ByName("Vote")
 	messagesAPIListMethodDescriptor          = messagesAPIServiceDescriptor.Methods().ByName("List")
 	usersAPIServiceDescriptor                = cc.File_cc_cc_proto.Services().ByName("UsersAPI")
 	usersAPIMeMethodDescriptor               = usersAPIServiceDescriptor.Methods().ByName("Me")
@@ -511,6 +514,9 @@ type MessagesAPIClient interface {
 	Send(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Update(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Delete(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
+	// Vote answers the poll on a message. Anyone with access to the chat may
+	// answer, once — voting again replaces the previous answer.
+	Vote(context.Context, *connect.Request[cc.VoteRequest]) (*connect.Response[cc.Message], error)
 	List(context.Context, *connect.Request[cc.MessagesListRequest]) (*connect.Response[cc.Messages], error)
 }
 
@@ -548,6 +554,12 @@ func NewMessagesAPIClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(messagesAPIDeleteMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		vote: connect.NewClient[cc.VoteRequest, cc.Message](
+			httpClient,
+			baseURL+MessagesAPIVoteProcedure,
+			connect.WithSchema(messagesAPIVoteMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 		list: connect.NewClient[cc.MessagesListRequest, cc.Messages](
 			httpClient,
 			baseURL+MessagesAPIListProcedure,
@@ -563,6 +575,7 @@ type messagesAPIClient struct {
 	send   *connect.Client[cc.Message, cc.Message]
 	update *connect.Client[cc.Message, cc.Message]
 	delete *connect.Client[cc.Message, cc.Message]
+	vote   *connect.Client[cc.VoteRequest, cc.Message]
 	list   *connect.Client[cc.MessagesListRequest, cc.Messages]
 }
 
@@ -586,6 +599,11 @@ func (c *messagesAPIClient) Delete(ctx context.Context, req *connect.Request[cc.
 	return c.delete.CallUnary(ctx, req)
 }
 
+// Vote calls cc.MessagesAPI.Vote.
+func (c *messagesAPIClient) Vote(ctx context.Context, req *connect.Request[cc.VoteRequest]) (*connect.Response[cc.Message], error) {
+	return c.vote.CallUnary(ctx, req)
+}
+
 // List calls cc.MessagesAPI.List.
 func (c *messagesAPIClient) List(ctx context.Context, req *connect.Request[cc.MessagesListRequest]) (*connect.Response[cc.Messages], error) {
 	return c.list.CallUnary(ctx, req)
@@ -597,6 +615,9 @@ type MessagesAPIHandler interface {
 	Send(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Update(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Delete(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
+	// Vote answers the poll on a message. Anyone with access to the chat may
+	// answer, once — voting again replaces the previous answer.
+	Vote(context.Context, *connect.Request[cc.VoteRequest]) (*connect.Response[cc.Message], error)
 	List(context.Context, *connect.Request[cc.MessagesListRequest]) (*connect.Response[cc.Messages], error)
 }
 
@@ -630,6 +651,12 @@ func NewMessagesAPIHandler(svc MessagesAPIHandler, opts ...connect.HandlerOption
 		connect.WithSchema(messagesAPIDeleteMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	messagesAPIVoteHandler := connect.NewUnaryHandler(
+		MessagesAPIVoteProcedure,
+		svc.Vote,
+		connect.WithSchema(messagesAPIVoteMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	messagesAPIListHandler := connect.NewUnaryHandler(
 		MessagesAPIListProcedure,
 		svc.List,
@@ -646,6 +673,8 @@ func NewMessagesAPIHandler(svc MessagesAPIHandler, opts ...connect.HandlerOption
 			messagesAPIUpdateHandler.ServeHTTP(w, r)
 		case MessagesAPIDeleteProcedure:
 			messagesAPIDeleteHandler.ServeHTTP(w, r)
+		case MessagesAPIVoteProcedure:
+			messagesAPIVoteHandler.ServeHTTP(w, r)
 		case MessagesAPIListProcedure:
 			messagesAPIListHandler.ServeHTTP(w, r)
 		default:
@@ -671,6 +700,10 @@ func (UnimplementedMessagesAPIHandler) Update(context.Context, *connect.Request[
 
 func (UnimplementedMessagesAPIHandler) Delete(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.MessagesAPI.Delete is not implemented"))
+}
+
+func (UnimplementedMessagesAPIHandler) Vote(context.Context, *connect.Request[cc.VoteRequest]) (*connect.Response[cc.Message], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.MessagesAPI.Vote is not implemented"))
 }
 
 func (UnimplementedMessagesAPIHandler) List(context.Context, *connect.Request[cc.MessagesListRequest]) (*connect.Response[cc.Messages], error) {

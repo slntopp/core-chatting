@@ -159,6 +159,49 @@ func (c *MessagesController) Delete(ctx context.Context, msg *cc.Message) (*cc.M
 	return msg, nil
 }
 
+const voteQuery = `
+LET msg = DOCUMENT(@@messages, @message)
+FILTER msg != null
+UPDATE msg WITH { poll: { votes: { (@account): @vote } } } IN @@messages
+	OPTIONS { keepNull: false, mergeObjects: true }
+RETURN NEW
+`
+
+// Vote records one person's answer to a poll, or removes it when vote is nil.
+//
+// One statement on one document: an answer is a merge into the votes map, so
+// two people answering at the same time cannot overwrite each other and there
+// is nothing to lock. keepNull: false is what makes a nil vote a retraction
+// rather than an empty answer.
+func (c *MessagesController) Vote(ctx context.Context, message, account string, vote *cc.PollVote) (*cc.Message, error) {
+	log := c.log.Named("Vote")
+	log.Debug("Req received", zap.String("message", message), zap.String("account", account))
+
+	var value interface{}
+	if vote != nil {
+		// Written as a plain map: the driver marshals proto messages by their
+		// Go field names, which is not what the rest of the document uses.
+		value = map[string]interface{}{"options": vote.GetOptions(), "ts": vote.GetTs()}
+	}
+
+	cur, err := c.db.Query(ctx, voteQuery, map[string]interface{}{
+		"@messages": MESSAGES_COLLECTION,
+		"message":   message,
+		"account":   account,
+		"vote":      value,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close()
+
+	var updated cc.Message
+	if _, err = cur.ReadDocument(ctx, &updated); err != nil {
+		return nil, err
+	}
+	return &updated, nil
+}
+
 func (c *MessagesController) Get(ctx context.Context, uuid string) (*cc.Message, error) {
 	log := c.log.Named("Get")
 	log.Debug("Req received")

@@ -96,6 +96,40 @@ func (s *MessagesServer) List(ctx context.Context, req *connect.Request[cc.Messa
 	return resp, nil
 }
 
+// pollLimit is how many answers one question may offer. Past a dozen nobody
+// picks, they type.
+const pollLimit = 12
+
+// validatePoll checks a poll on its way in. The votes map is never accepted
+// from a client: answers are recorded by Vote, and a sender who could preseed
+// them could invent them.
+func validatePoll(poll *cc.Poll) error {
+	if poll == nil {
+		return nil
+	}
+	if len(poll.GetOptions()) < 2 {
+		return errors.New("a poll needs at least two options")
+	}
+	if len(poll.GetOptions()) > pollLimit {
+		return fmt.Errorf("a poll takes at most %d options", pollLimit)
+	}
+
+	seen := map[string]bool{}
+	for _, option := range poll.GetOptions() {
+		if option.GetId() == "" || option.GetLabel() == "" {
+			return errors.New("every poll option needs an id and a label")
+		}
+		if seen[option.GetId()] {
+			return fmt.Errorf("duplicate poll option id %q", option.GetId())
+		}
+		seen[option.GetId()] = true
+	}
+
+	poll.Votes = nil
+	poll.Closed = false
+	return nil
+}
+
 func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Message]) (*connect.Response[cc.Message], error) {
 	log := s.log.Named("Send")
 	log.Debug("Request received", zap.Any("req", req.Msg))
@@ -115,6 +149,10 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 	}
 
 	msg.Sender = requestor
+
+	if err = validatePoll(msg.GetPoll()); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
 
 	if (cc.IsOperatorOnly(msg.Kind) || msg.UnderReview) && chat.Role != cc.Role_ADMIN {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("can't send admin only message"))
@@ -183,6 +221,71 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 	resp := connect.NewResponse[cc.Message](message)
 
 	return resp, nil
+}
+
+// Vote answers the poll on a message.
+//
+// Answering again replaces the previous answer, and an empty list retracts it:
+// a person who clicked the wrong button should be able to fix it, and the
+// answer we act on is the last one they gave.
+//
+// The answer is not published to WHMCS. A vote is not an edit of the message,
+// and the client that voted sends the choice as an ordinary message right
+// after — that is what reaches the gateways, the WHMCS sync, the unread
+// counter and the operator, through the paths that already exist.
+func (s *MessagesServer) Vote(ctx context.Context, req *connect.Request[cc.VoteRequest]) (*connect.Response[cc.Message], error) {
+	log := s.log.Named("Vote")
+	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	msg, err := s.msgCtrl.Get(ctx, req.Msg.GetMessage())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("message not found"))
+	}
+
+	chat, err := s.chatCtrl.Get(ctx, msg.GetChat(), requestor)
+	if err != nil {
+		return nil, err
+	}
+	if chat.Role < cc.Role_USER {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
+	}
+
+	poll := msg.GetPoll()
+	if poll == nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("this message has no poll"))
+	}
+	if poll.GetClosed() {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("this poll is closed"))
+	}
+
+	chosen := req.Msg.GetOptions()
+	if len(chosen) > 1 && !poll.GetMultiple() {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("this poll takes one answer"))
+	}
+	for _, id := range chosen {
+		if !slices.ContainsFunc(poll.GetOptions(), func(o *cc.PollOption) bool { return o.GetId() == id }) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no such option %q", id))
+		}
+	}
+
+	var vote *cc.PollVote
+	if len(chosen) > 0 {
+		vote = &cc.PollVote{Options: chosen, Ts: time.Now().UnixMilli()}
+	}
+
+	updated, err := s.msgCtrl.Vote(ctx, msg.GetUuid(), requestor, vote)
+	if err != nil {
+		log.Error("Failed to record the vote", zap.Error(err))
+		return nil, err
+	}
+
+	go pubsub.HandleNotifyMessage(ctx, log, s.ps, updated, chat, cc.EventType_MESSAGE_UPDATED)
+
+	log.Info("Poll answered", zap.String("message", msg.GetUuid()),
+		zap.String("account", requestor), zap.Strings("options", chosen))
+	return connect.NewResponse[cc.Message](updated), nil
 }
 
 func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Message]) (*connect.Response[cc.Message], error) {

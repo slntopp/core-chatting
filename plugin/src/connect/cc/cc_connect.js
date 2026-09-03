@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, CountChatsRequest, CountChatsResponse, Defaults, Empty, Event, FetchDefaultsRequest, GetMembersRequest, ListChatsRequest, ListChatsResponse, Merge, Message, Messages, MessagesListRequest, SetBotStateRequest, StreamRequest, User, Users } from "./cc_pb.js";
+import { Chat, CountChatsRequest, CountChatsResponse, Defaults, Empty, Event, FetchDefaultsRequest, GetMembersRequest, ListChatsRequest, ListChatsResponse, Merge, Message, Messages, MessagesListRequest, SetBotStateRequest, StreamRequest, User, Users, VoteRequest } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -171,6 +171,18 @@ export const MessagesAPI = {
     delete: {
       name: "Delete",
       I: Message,
+      O: Message,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Vote answers the poll on a message. Anyone with access to the chat may
+     * answer, once — voting again replaces the previous answer.
+     *
+     * @generated from rpc cc.MessagesAPI.Vote
+     */
+    vote: {
+      name: "Vote",
+      I: VoteRequest,
       O: Message,
       kind: MethodKind.Unary,
     },

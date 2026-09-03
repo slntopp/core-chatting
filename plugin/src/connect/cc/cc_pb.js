@@ -204,6 +204,74 @@ export const Attachment = /*@__PURE__*/ proto3.makeMessageType(
 );
 
 /**
+ * PollOption is one answer to pick.
+ *
+ * The id is what a vote refers to, never the label or the position: editing
+ * the wording of an option afterwards must not silently move everybody who
+ * already answered onto a different answer.
+ *
+ * @generated from message cc.PollOption
+ */
+export const PollOption = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.PollOption",
+  () => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ],
+);
+
+/**
+ * PollVote is one person's answer.
+ *
+ * @generated from message cc.PollVote
+ */
+export const PollVote = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.PollVote",
+  () => [
+    { no: 1, name: "options", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 2, name: "ts", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+  ],
+);
+
+/**
+ * Poll turns a message into a question with answers to click, instead of a
+ * list of options typed into the text and an answer typed back.
+ *
+ * It is a field of an ordinary message, not a kind of its own: everything that
+ * already carries a message — the event stream, the gateways, the WHMCS sync,
+ * read receipts — carries a poll without knowing anything about polls. A
+ * client that has not been taught about them shows the question and nothing
+ * else, which is why gateway and WHMCS events get the options appended to
+ * their text copy (see pkg/pubsub): a person on telegram or email still sees
+ * what there was to answer and can reply in words.
+ *
+ * @generated from message cc.Poll
+ */
+export const Poll = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.Poll",
+  () => [
+    { no: 1, name: "question", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "options", kind: "message", T: PollOption, repeated: true },
+    { no: 3, name: "multiple", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "closed", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 5, name: "votes", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: PollVote} },
+  ],
+);
+
+/**
+ * VoteRequest answers a poll. An empty options list retracts the answer.
+ *
+ * @generated from message cc.VoteRequest
+ */
+export const VoteRequest = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.VoteRequest",
+  () => [
+    { no: 1, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "options", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ],
+);
+
+/**
  * @generated from message cc.Message
  */
 export const Message = /*@__PURE__*/ proto3.makeMessageType(
@@ -222,6 +290,7 @@ export const Message = /*@__PURE__*/ proto3.makeMessageType(
     { no: 11, name: "readers", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 12, name: "meta", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
     { no: 13, name: "mentioned", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 14, name: "poll", kind: "message", T: Poll, opt: true },
   ],
 );
 

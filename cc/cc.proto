@@ -137,6 +137,53 @@ message Attachment {
   bytes content = 2;
 }
 
+// PollOption is one answer to pick.
+//
+// The id is what a vote refers to, never the label or the position: editing
+// the wording of an option afterwards must not silently move everybody who
+// already answered onto a different answer.
+message PollOption {
+  string id = 1;
+  string label = 2;
+}
+
+// PollVote is one person's answer.
+message PollVote {
+  repeated string options = 1; // option ids
+  int64 ts = 2;
+}
+
+// Poll turns a message into a question with answers to click, instead of a
+// list of options typed into the text and an answer typed back.
+//
+// It is a field of an ordinary message, not a kind of its own: everything that
+// already carries a message — the event stream, the gateways, the WHMCS sync,
+// read receipts — carries a poll without knowing anything about polls. A
+// client that has not been taught about them shows the question and nothing
+// else, which is why gateway and WHMCS events get the options appended to
+// their text copy (see pkg/pubsub): a person on telegram or email still sees
+// what there was to answer and can reply in words.
+message Poll {
+  // question is optional: usually the message text is the question, and this
+  // is left empty.
+  string question = 1;
+  repeated PollOption options = 2;
+  // multiple allows more than one answer at a time.
+  bool multiple = 3;
+  // closed stops accepting answers. The answers already given stay visible.
+  bool closed = 4;
+  // votes is keyed by account uuid. A ticket has one customer, so this is
+  // normally a single entry — the point is knowing *who* answered *what*, not
+  // a tally.
+  map<string, PollVote> votes = 5;
+}
+
+// VoteRequest answers a poll. An empty options list retracts the answer.
+message VoteRequest {
+  string message = 1;
+  repeated string options = 2; // option ids
+}
+
 message Message {
   string uuid = 1;
   Kind kind = 2;
@@ -157,6 +204,9 @@ message Message {
   map<string, google.protobuf.Value> meta = 12;
 
   repeated string mentioned = 13;
+
+  // poll is set on the few messages that ask something with buttons.
+  optional Poll poll = 14;
 }
 message Messages {
   repeated Message messages = 1;
@@ -171,6 +221,10 @@ service MessagesAPI {
   rpc Update(Message) returns (Message);
 
   rpc Delete(Message) returns (Message);
+
+  // Vote answers the poll on a message. Anyone with access to the chat may
+  // answer, once — voting again replaces the previous answer.
+  rpc Vote(VoteRequest) returns (Message);
 
   rpc List(MessagesListRequest) returns (Messages);
 }

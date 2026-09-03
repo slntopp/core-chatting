@@ -151,6 +151,13 @@ message PollOption {
 message PollVote {
   repeated string options = 1; // option ids
   int64 ts = 2;
+  // message is the ordinary chat message that states this answer in words.
+  //
+  // Kept here so that changing an answer edits that message instead of posting
+  // another one: a poll answered four times would otherwise read as four
+  // replies, and an operator would have to work out which one still counts.
+  // Empty for answers recorded before this was kept.
+  string message = 3;
 }
 
 // Poll turns a message into a question with answers to click, instead of a

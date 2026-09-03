@@ -626,6 +626,18 @@ export declare class PollVote extends Message$1<PollVote> {
    */
   ts: bigint;
 
+  /**
+   * message is the ordinary chat message that states this answer in words.
+   *
+   * Kept here so that changing an answer edits that message instead of posting
+   * another one: a poll answered four times would otherwise read as four
+   * replies, and an operator would have to work out which one still counts.
+   * Empty for answers recorded before this was kept.
+   *
+   * @generated from field: string message = 3;
+   */
+  message: string;
+
   constructor(data?: PartialMessage<PollVote>);
 
   static readonly runtime: typeof proto3;

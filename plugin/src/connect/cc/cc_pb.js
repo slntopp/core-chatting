@@ -230,6 +230,7 @@ export const PollVote = /*@__PURE__*/ proto3.makeMessageType(
   () => [
     { no: 1, name: "options", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 2, name: "ts", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 3, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ],
 );
 

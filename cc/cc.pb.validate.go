@@ -1709,6 +1709,8 @@ func (m *PollVote) validate(all bool) error {
 
 	// no validation rules for Ts
 
+	// no validation rules for Message
+
 	if len(errors) > 0 {
 		return PollVoteMultiError(errors)
 	}

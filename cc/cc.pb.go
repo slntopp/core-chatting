@@ -1015,9 +1015,16 @@ func (x *PollOption) GetLabel() string {
 
 // PollVote is one person's answer.
 type PollVote struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Options       []string               `protobuf:"bytes,1,rep,name=options,proto3" json:"options,omitempty"` // option ids
-	Ts            int64                  `protobuf:"varint,2,opt,name=ts,proto3" json:"ts,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Options []string               `protobuf:"bytes,1,rep,name=options,proto3" json:"options,omitempty"` // option ids
+	Ts      int64                  `protobuf:"varint,2,opt,name=ts,proto3" json:"ts,omitempty"`
+	// message is the ordinary chat message that states this answer in words.
+	//
+	// Kept here so that changing an answer edits that message instead of posting
+	// another one: a poll answered four times would otherwise read as four
+	// replies, and an operator would have to work out which one still counts.
+	// Empty for answers recorded before this was kept.
+	Message       string `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1064,6 +1071,13 @@ func (x *PollVote) GetTs() int64 {
 		return x.Ts
 	}
 	return 0
+}
+
+func (x *PollVote) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
 }
 
 // Poll turns a message into a question with answers to click, instead of a
@@ -2331,10 +2345,11 @@ const file_cc_cc_proto_rawDesc = "" +
 	"\n" +
 	"PollOption\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05label\x18\x02 \x01(\tR\x05label\"4\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\"N\n" +
 	"\bPollVote\x12\x18\n" +
 	"\aoptions\x18\x01 \x03(\tR\aoptions\x12\x0e\n" +
-	"\x02ts\x18\x02 \x01(\x03R\x02ts\"\xf3\x01\n" +
+	"\x02ts\x18\x02 \x01(\x03R\x02ts\x12\x18\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"\xf3\x01\n" +
 	"\x04Poll\x12\x1a\n" +
 	"\bquestion\x18\x01 \x01(\tR\bquestion\x12(\n" +
 	"\aoptions\x18\x02 \x03(\v2\x0e.cc.PollOptionR\aoptions\x12\x1a\n" +

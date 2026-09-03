@@ -137,22 +137,11 @@ function toggle(id: string, on: boolean) {
 async function answer(options: string[]) {
   busy.value = poll.value.multiple ? MULTI : options[0] ?? "retract";
   try {
-    // Two calls on purpose: the vote is the structured answer, countable
-    // later, and the message is how that answer reaches everything that
-    // already carries messages — the operator's unread counter, the gateways,
-    // the WHMCS sync. Retracting sends no message.
+    // One call: the ticket service records the answer and keeps the single
+    // message that states it in words — posting it, editing it when the
+    // answer changes, removing it when the answer is retracted. Doing that
+    // here is what turned four clicks into four replies in the chat.
     await messages.vote(new VoteRequest({ message: message.value.uuid, options }));
-
-    if (options.length) {
-      const labels = poll.value.options
-        .filter((o) => options.includes(o.id))
-        .map((o) => o.label)
-        .join(", ");
-      await store.send_message(
-        new Message({ chat: message.value.chat, content: labels })
-      );
-    }
-
     picked.value = [...options];
   } catch (e: any) {
     notification.error({ content: e.message ?? String(e), duration: 5000 });

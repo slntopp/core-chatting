@@ -178,11 +178,15 @@ func (c *MessagesController) Vote(ctx context.Context, message, account string, 
 	log := c.log.Named("Vote")
 	log.Debug("Req received", zap.String("message", message), zap.String("account", account))
 
+	// The vote goes in whole, not field by field. A hand-written map here was
+	// one forgotten field away from dropping data silently, and did exactly
+	// that: it kept the options and the timestamp and quietly lost which
+	// message states the answer, so every change of answer posted another one.
+	// The generated json tags carry the proto field names, so this is the same
+	// document shape.
 	var value interface{}
 	if vote != nil {
-		// Written as a plain map: the driver marshals proto messages by their
-		// Go field names, which is not what the rest of the document uses.
-		value = map[string]interface{}{"options": vote.GetOptions(), "ts": vote.GetTs()}
+		value = vote
 	}
 
 	cur, err := c.db.Query(ctx, voteQuery, map[string]interface{}{

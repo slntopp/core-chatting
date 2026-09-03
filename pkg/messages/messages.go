@@ -7,6 +7,7 @@ import (
 	"github.com/slntopp/nocloud/pkg/nocloud/schema"
 	"reflect"
 	"slices"
+	"strings"
 	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
@@ -223,6 +224,89 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 	return resp, nil
 }
 
+// answerLabels is the answer in words, in the order the poll lists it — the
+// order people read, not the order they happened to tick.
+func answerLabels(poll *cc.Poll, chosen []string) string {
+	labels := make([]string, 0, len(chosen))
+	for _, option := range poll.GetOptions() {
+		if slices.Contains(chosen, option.GetId()) {
+			labels = append(labels, option.GetLabel())
+		}
+	}
+	return strings.Join(labels, ", ")
+}
+
+// answerMessage keeps exactly one ordinary message per person's answer: it
+// posts one on the first answer, edits it when the answer changes, and removes
+// it when the answer is retracted. Returns the uuid to remember on the vote.
+//
+// Why a message at all: it is what makes an answer reach everything that
+// already carries messages — the operator's unread counter, the gateways, the
+// WHMCS sync. Why exactly one: a poll answered four times would otherwise read
+// as four replies, and nobody could tell which one still counts.
+func (s *MessagesServer) answerMessage(ctx context.Context, log *zap.Logger, chat *cc.Chat,
+	poll *cc.Poll, requestor string, chosen []string, prev *cc.PollVote) (string, error) {
+	existing := prev.GetMessage()
+
+	// Retracted: the message goes with the answer.
+	if len(chosen) == 0 {
+		if existing == "" {
+			return "", nil
+		}
+		msg, err := s.msgCtrl.Get(ctx, existing)
+		if err != nil {
+			// Already gone; nothing to take back.
+			return "", nil
+		}
+		if _, err = s.msgCtrl.Delete(ctx, msg); err != nil {
+			return "", err
+		}
+		go pubsub.HandleNotifyMessage(ctx, log, s.ps, msg, chat, cc.EventType_MESSAGE_DELETED)
+		return "", nil
+	}
+
+	content := answerLabels(poll, chosen)
+
+	if existing != "" {
+		msg, err := s.msgCtrl.Get(ctx, existing)
+		if err == nil {
+			msg.Content = content
+			msg.Edited = time.Now().UnixMilli()
+
+			updated, err := s.msgCtrl.Update(ctx, msg)
+			if err != nil {
+				return "", err
+			}
+			go pubsub.HandleNotifyMessage(ctx, log, s.ps, updated, chat, cc.EventType_MESSAGE_UPDATED)
+			return existing, nil
+		}
+		// The message was deleted by hand; fall through and post a new one.
+		log.Warn("The answer message is gone, posting a new one",
+			zap.String("message", existing), zap.Error(err))
+	}
+
+	uuid := chat.GetUuid()
+	sent, err := s.msgCtrl.Send(ctx, &cc.Message{
+		Chat:    &uuid,
+		Sender:  requestor,
+		Content: content,
+		Kind:    cc.Kind_DEFAULT,
+		Sent:    time.Now().UnixMilli(),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	go pubsub.HandleNotifyMessage(ctx, log, s.ps, sent, chat, cc.EventType_MESSAGE_SENT)
+	if s.whmcsTickets && chat.GetDepartment() != "openai" {
+		go s.ps.PubWhmcs(ctx, &cc.Event{
+			Type: cc.EventType_MESSAGE_SENT,
+			Item: &cc.Event_Msg{Msg: sent},
+		})
+	}
+	return sent.GetUuid(), nil
+}
+
 // Vote answers the poll on a message.
 //
 // Answering again replaces the previous answer, and an empty list retracts it:
@@ -270,9 +354,19 @@ func (s *MessagesServer) Vote(ctx context.Context, req *connect.Request[cc.VoteR
 		}
 	}
 
+	// The message that states the answer is dealt with first, so its uuid can
+	// be recorded together with the answer itself: a vote saved without it
+	// would post a second message the next time the answer changed, which is
+	// the whole thing this avoids.
+	answer, err := s.answerMessage(ctx, log, chat, poll, requestor, chosen, poll.GetVotes()[requestor])
+	if err != nil {
+		log.Error("Failed to keep the answer message", zap.Error(err))
+		return nil, err
+	}
+
 	var vote *cc.PollVote
 	if len(chosen) > 0 {
-		vote = &cc.PollVote{Options: chosen, Ts: time.Now().UnixMilli()}
+		vote = &cc.PollVote{Options: chosen, Ts: time.Now().UnixMilli(), Message: answer}
 	}
 
 	updated, err := s.msgCtrl.Vote(ctx, msg.GetUuid(), requestor, vote)
@@ -281,10 +375,24 @@ func (s *MessagesServer) Vote(ctx context.Context, req *connect.Request[cc.VoteR
 		return nil, err
 	}
 
+	// A customer answering is a reply, so the chat says so — under the same
+	// rule Send follows, and with the same exception for a status that is not
+	// ours to move.
+	if !slices.Contains(chat.GetAdmins(), requestor) &&
+		chat.GetStatus() != cc.Status_NEW && chat.GetStatus() != cc.Status_ONBOARDING {
+		chat.Status = cc.Status_CUSTOMER_REPLY
+		if _, err = s.chatCtrl.Update(ctx, chat); err != nil {
+			log.Error("Failed to update the chat status", zap.Error(err))
+		} else {
+			go pubsub.HandleNotifyChat(ctx, log, s.ps, chat, cc.EventType_CHAT_STATUS_CHANGED)
+		}
+	}
+
 	go pubsub.HandleNotifyMessage(ctx, log, s.ps, updated, chat, cc.EventType_MESSAGE_UPDATED)
 
 	log.Info("Poll answered", zap.String("message", msg.GetUuid()),
-		zap.String("account", requestor), zap.Strings("options", chosen))
+		zap.String("account", requestor), zap.Strings("options", chosen),
+		zap.String("answer_message", answer))
 	return connect.NewResponse[cc.Message](updated), nil
 }
 

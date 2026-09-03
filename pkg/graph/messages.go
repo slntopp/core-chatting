@@ -163,7 +163,7 @@ func (c *MessagesController) Delete(ctx context.Context, msg *cc.Message) (*cc.M
 const voteQuery = `
 LET msg = DOCUMENT(@@messages, @message)
 FILTER msg != null
-UPDATE msg WITH { poll: { votes: { (@account): @vote } } } IN @@messages
+UPDATE msg WITH { poll: { votes: { [@account]: @vote } } } IN @@messages
 	OPTIONS { keepNull: false, mergeObjects: true }
 RETURN NEW
 `

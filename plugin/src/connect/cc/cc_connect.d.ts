@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, CountChatsRequest, CountChatsResponse, Defaults, Empty, Event, FetchDefaultsRequest, GetMembersRequest, ListChatsRequest, ListChatsResponse, Merge, Message, Messages, MessagesListRequest, SetBotStateRequest, StreamRequest, User, Users, VoteRequest } from "./cc_pb.js";
+import { Chat, CountChatsRequest, CountChatsResponse, Defaults, Empty, Event, FetchDefaultsRequest, GetMembersRequest, ListChatsRequest, ListChatsResponse, Merge, Message, Messages, MessagesListRequest, PollsRequest, SetBotStateRequest, StreamRequest, User, Users, VoteRequest } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -184,6 +184,24 @@ export declare const MessagesAPI: {
       readonly name: "Vote",
       readonly I: typeof VoteRequest,
       readonly O: typeof Message,
+      readonly kind: MethodKind.Unary,
+    },
+    /**
+     * Polls returns the given messages, for reading the answers off their polls.
+     *
+     * Get would do as well if it were not for its side effects: it marks every
+     * message read for the caller and publishes CHAT_READ, which is right for a
+     * person opening a chat and wrong for a service collecting answers in the
+     * background — it would quietly clear the operators' unread counters. This
+     * one reads and nothing else. Access is checked per message, so it returns
+     * only what the caller could have opened anyway.
+     *
+     * @generated from rpc cc.MessagesAPI.Polls
+     */
+    readonly polls: {
+      readonly name: "Polls",
+      readonly I: typeof PollsRequest,
+      readonly O: typeof Messages,
       readonly kind: MethodKind.Unary,
     },
     /**

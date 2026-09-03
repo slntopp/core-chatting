@@ -214,6 +214,12 @@ message Messages {
 
 message MessagesListRequest{}
 
+// PollsRequest asks for specific messages by uuid, to read the answers off
+// their polls.
+message PollsRequest {
+  repeated string messages = 1;
+}
+
 service MessagesAPI {
   rpc Get(Chat) returns (Messages);
 
@@ -225,6 +231,16 @@ service MessagesAPI {
   // Vote answers the poll on a message. Anyone with access to the chat may
   // answer, once — voting again replaces the previous answer.
   rpc Vote(VoteRequest) returns (Message);
+
+  // Polls returns the given messages, for reading the answers off their polls.
+  //
+  // Get would do as well if it were not for its side effects: it marks every
+  // message read for the caller and publishes CHAT_READ, which is right for a
+  // person opening a chat and wrong for a service collecting answers in the
+  // background — it would quietly clear the operators' unread counters. This
+  // one reads and nothing else. Access is checked per message, so it returns
+  // only what the caller could have opened anyway.
+  rpc Polls(PollsRequest) returns (Messages);
 
   rpc List(MessagesListRequest) returns (Messages);
 }

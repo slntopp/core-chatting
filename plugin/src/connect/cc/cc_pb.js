@@ -313,6 +313,19 @@ export const MessagesListRequest = /*@__PURE__*/ proto3.makeMessageType(
 );
 
 /**
+ * PollsRequest asks for specific messages by uuid, to read the answers off
+ * their polls.
+ *
+ * @generated from message cc.PollsRequest
+ */
+export const PollsRequest = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.PollsRequest",
+  () => [
+    { no: 1, name: "messages", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ],
+);
+
+/**
  * @generated from message cc.User
  */
 export const User = /*@__PURE__*/ proto3.makeMessageType(

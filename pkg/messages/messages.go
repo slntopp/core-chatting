@@ -288,6 +288,38 @@ func (s *MessagesServer) Vote(ctx context.Context, req *connect.Request[cc.VoteR
 	return connect.NewResponse[cc.Message](updated), nil
 }
 
+// pollsLimit caps one batch. A campaign asking for its answers pages through
+// its own journal; an unbounded list would be a way to ask for the whole
+// collection at once.
+const pollsLimit = 500
+
+// Polls returns the given messages, for reading the answers off their polls,
+// and touches nothing: no read receipts, no events. See the RPC comment in
+// cc.proto for why this is not Get.
+func (s *MessagesServer) Polls(ctx context.Context, req *connect.Request[cc.PollsRequest]) (*connect.Response[cc.Messages], error) {
+	log := s.log.Named("Polls")
+	log.Debug("Request received", zap.Int("messages", len(req.Msg.GetMessages())))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
+
+	messages := req.Msg.GetMessages()
+	if len(messages) == 0 {
+		return connect.NewResponse[cc.Messages](&cc.Messages{}), nil
+	}
+	if len(messages) > pollsLimit {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			fmt.Errorf("at most %d messages at a time", pollsLimit))
+	}
+
+	found, err := s.msgCtrl.Polls(ctx, requestor, messages)
+	if err != nil {
+		log.Error("Failed to read messages", zap.Error(err))
+		return nil, err
+	}
+
+	return connect.NewResponse[cc.Messages](&cc.Messages{Messages: found}), nil
+}
+
 func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Message]) (*connect.Response[cc.Message], error) {
 	log := s.log.Named("Update")
 	log.Debug("Request received", zap.Any("req", req.Msg))

@@ -877,6 +877,33 @@ export declare class MessagesListRequest extends Message$1<MessagesListRequest> 
 }
 
 /**
+ * PollsRequest asks for specific messages by uuid, to read the answers off
+ * their polls.
+ *
+ * @generated from message cc.PollsRequest
+ */
+export declare class PollsRequest extends Message$1<PollsRequest> {
+  /**
+   * @generated from field: repeated string messages = 1;
+   */
+  messages: string[];
+
+  constructor(data?: PartialMessage<PollsRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.PollsRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PollsRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PollsRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PollsRequest;
+
+  static equals(a: PollsRequest | PlainMessage<PollsRequest> | undefined, b: PollsRequest | PlainMessage<PollsRequest> | undefined): boolean;
+}
+
+/**
  * @generated from message cc.User
  */
 export declare class User extends Message$1<User> {

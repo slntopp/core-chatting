@@ -496,6 +496,11 @@ class MessagesAPIStub(object):
                 request_serializer=cc_dot_cc__pb2.VoteRequest.SerializeToString,
                 response_deserializer=cc_dot_cc__pb2.Message.FromString,
                 )
+        self.Polls = channel.unary_unary(
+                '/cc.MessagesAPI/Polls',
+                request_serializer=cc_dot_cc__pb2.PollsRequest.SerializeToString,
+                response_deserializer=cc_dot_cc__pb2.Messages.FromString,
+                )
         self.List = channel.unary_unary(
                 '/cc.MessagesAPI/List',
                 request_serializer=cc_dot_cc__pb2.MessagesListRequest.SerializeToString,
@@ -538,6 +543,20 @@ class MessagesAPIServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Polls(self, request, context):
+        """Polls returns the given messages, for reading the answers off their polls.
+
+        Get would do as well if it were not for its side effects: it marks every
+        message read for the caller and publishes CHAT_READ, which is right for a
+        person opening a chat and wrong for a service collecting answers in the
+        background — it would quietly clear the operators' unread counters. This
+        one reads and nothing else. Access is checked per message, so it returns
+        only what the caller could have opened anyway.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def List(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -571,6 +590,11 @@ def add_MessagesAPIServicer_to_server(servicer, server):
                     servicer.Vote,
                     request_deserializer=cc_dot_cc__pb2.VoteRequest.FromString,
                     response_serializer=cc_dot_cc__pb2.Message.SerializeToString,
+            ),
+            'Polls': grpc.unary_unary_rpc_method_handler(
+                    servicer.Polls,
+                    request_deserializer=cc_dot_cc__pb2.PollsRequest.FromString,
+                    response_serializer=cc_dot_cc__pb2.Messages.SerializeToString,
             ),
             'List': grpc.unary_unary_rpc_method_handler(
                     servicer.List,
@@ -669,6 +693,23 @@ class MessagesAPI(object):
         return grpc.experimental.unary_unary(request, target, '/cc.MessagesAPI/Vote',
             cc_dot_cc__pb2.VoteRequest.SerializeToString,
             cc_dot_cc__pb2.Message.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Polls(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cc.MessagesAPI/Polls',
+            cc_dot_cc__pb2.PollsRequest.SerializeToString,
+            cc_dot_cc__pb2.Messages.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

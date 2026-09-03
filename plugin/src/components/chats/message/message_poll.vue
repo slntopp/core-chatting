@@ -44,12 +44,14 @@
       {{ answered.length ? "Change answer" : "Answer" }}
     </n-button>
 
+    <!-- No way to take an answer back: picking another one replaces it, which
+         is the only thing anybody wanted from that. -->
     <div class="poll__foot">
       <!-- The operator's side of a poll is the one line that matters: what the
            customer picked. Everything else about it they can already read. -->
       <n-text v-if="others.length" depth="3">{{ others.join(" · ") }}</n-text>
       <n-text v-else-if="answered.length" depth="3">
-        Your answer · <n-button text type="primary" @click="answer([])">retract</n-button>
+        Your answer is saved, you can change it
       </n-text>
       <n-text v-else-if="poll.closed" depth="3">This poll is closed</n-text>
       <n-text v-else depth="3">Pick an answer</n-text>
@@ -135,7 +137,7 @@ function toggle(id: string, on: boolean) {
 }
 
 async function answer(options: string[]) {
-  busy.value = poll.value.multiple ? MULTI : options[0] ?? "retract";
+  busy.value = poll.value.multiple ? MULTI : options[0];
   try {
     // One call: the ticket service records the answer and keeps the single
     // message that states it in words — posting it, editing it when the

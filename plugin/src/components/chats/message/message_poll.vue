@@ -60,7 +60,10 @@
 <script setup lang="ts">
 import { computed, ref, toRefs } from "vue";
 import { NButton, NCheckbox, NText, useNotification } from "naive-ui";
-import { Message } from "../../../connect/cc/cc_pb";
+import { createPromiseClient } from "@connectrpc/connect";
+import { createGrpcWebTransport } from "@connectrpc/connect-web";
+import { Message, VoteRequest } from "../../../connect/cc/cc_pb";
+import { MessagesAPI } from "../../../connect/cc/cc_connect";
 import { useCcStore } from "../../../store/chatting";
 import { useAppStore } from "../../../store/app";
 
@@ -73,6 +76,26 @@ const notification = useNotification();
 
 const MULTI = "__multi__";
 const busy = ref("");
+
+// The client is built here rather than taken from the chat store, which keeps
+// its own. Reason: pinia 2.1.6 — the version this image is built with — loses
+// the inferred action types of that store as soon as one more member is added
+// to it, and the build fails on an unrelated line. Not worth reshaping a store
+// this size over one call.
+//
+// ponytail: fold this back into the store once pinia is upgraded (the lockfile
+// bump to 3.x is already in the tree).
+const transport = createGrpcWebTransport({
+  baseUrl: import.meta.env.VITE_API_URL || "/",
+  useBinaryFormat: true,
+  interceptors: [
+    (next) => async (req) => {
+      req.header.set("Authorization", `Bearer ${appStore.conf?.token}`);
+      return next(req);
+    },
+  ],
+});
+const messages = createPromiseClient(MessagesAPI, transport);
 
 const poll = computed(() => message.value.poll!);
 
@@ -114,9 +137,22 @@ function toggle(id: string, on: boolean) {
 async function answer(options: string[]) {
   busy.value = poll.value.multiple ? MULTI : options[0] ?? "retract";
   try {
-    // The store both records the vote and posts the choice as a message; the
-    // updated message comes back over the event stream.
-    await store.vote(message.value, options);
+    // Two calls on purpose: the vote is the structured answer, countable
+    // later, and the message is how that answer reaches everything that
+    // already carries messages — the operator's unread counter, the gateways,
+    // the WHMCS sync. Retracting sends no message.
+    await messages.vote(new VoteRequest({ message: message.value.uuid, options }));
+
+    if (options.length) {
+      const labels = poll.value.options
+        .filter((o) => options.includes(o.id))
+        .map((o) => o.label)
+        .join(", ");
+      await store.send_message(
+        new Message({ chat: message.value.chat, content: labels })
+      );
+    }
+
     picked.value = [...options];
   } catch (e: any) {
     notification.error({ content: e.message ?? String(e), duration: 5000 });

@@ -29,7 +29,7 @@ func (s *PubSub) PubGateway(ctx context.Context, event *cc.Event, gateways []str
 			return
 		}
 
-		marshal, err := proto.Marshal(event)
+		marshal, err := proto.Marshal(withPollText(event))
 		if err != nil {
 			log.Error("Failed to marshal event", zap.Error(err))
 			return

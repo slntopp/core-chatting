@@ -27,7 +27,7 @@ func (s *PubSub) PubWhmcs(ctx context.Context, event *cc.Event) {
 		return
 	}
 
-	marshal, err := proto.Marshal(event)
+	marshal, err := proto.Marshal(withPollText(event))
 	if err != nil {
 		log.Error("Failed to marshal event", zap.Error(err))
 		return

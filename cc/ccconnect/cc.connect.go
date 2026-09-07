@@ -74,6 +74,10 @@ const (
 	MessagesAPIUpdateProcedure = "/cc.MessagesAPI/Update"
 	// MessagesAPIDeleteProcedure is the fully-qualified name of the MessagesAPI's Delete RPC.
 	MessagesAPIDeleteProcedure = "/cc.MessagesAPI/Delete"
+	// MessagesAPIVoteProcedure is the fully-qualified name of the MessagesAPI's Vote RPC.
+	MessagesAPIVoteProcedure = "/cc.MessagesAPI/Vote"
+	// MessagesAPIPollsProcedure is the fully-qualified name of the MessagesAPI's Polls RPC.
+	MessagesAPIPollsProcedure = "/cc.MessagesAPI/Polls"
 	// MessagesAPIListProcedure is the fully-qualified name of the MessagesAPI's List RPC.
 	MessagesAPIListProcedure = "/cc.MessagesAPI/List"
 	// UsersAPIMeProcedure is the fully-qualified name of the UsersAPI's Me RPC.
@@ -113,6 +117,8 @@ var (
 	messagesAPISendMethodDescriptor          = messagesAPIServiceDescriptor.Methods().ByName("Send")
 	messagesAPIUpdateMethodDescriptor        = messagesAPIServiceDescriptor.Methods().ByName("Update")
 	messagesAPIDeleteMethodDescriptor        = messagesAPIServiceDescriptor.Methods().ByName("Delete")
+	messagesAPIVoteMethodDescriptor          = messagesAPIServiceDescriptor.Methods().ByName("Vote")
+	messagesAPIPollsMethodDescriptor         = messagesAPIServiceDescriptor.Methods().ByName("Polls")
 	messagesAPIListMethodDescriptor          = messagesAPIServiceDescriptor.Methods().ByName("List")
 	usersAPIServiceDescriptor                = cc.File_cc_cc_proto.Services().ByName("UsersAPI")
 	usersAPIMeMethodDescriptor               = usersAPIServiceDescriptor.Methods().ByName("Me")
@@ -511,6 +517,18 @@ type MessagesAPIClient interface {
 	Send(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Update(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Delete(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
+	// Vote answers the poll on a message. Anyone with access to the chat may
+	// answer, once — voting again replaces the previous answer.
+	Vote(context.Context, *connect.Request[cc.VoteRequest]) (*connect.Response[cc.Message], error)
+	// Polls returns the given messages, for reading the answers off their polls.
+	//
+	// Get would do as well if it were not for its side effects: it marks every
+	// message read for the caller and publishes CHAT_READ, which is right for a
+	// person opening a chat and wrong for a service collecting answers in the
+	// background — it would quietly clear the operators' unread counters. This
+	// one reads and nothing else. Access is checked per message, so it returns
+	// only what the caller could have opened anyway.
+	Polls(context.Context, *connect.Request[cc.PollsRequest]) (*connect.Response[cc.Messages], error)
 	List(context.Context, *connect.Request[cc.MessagesListRequest]) (*connect.Response[cc.Messages], error)
 }
 
@@ -548,6 +566,18 @@ func NewMessagesAPIClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(messagesAPIDeleteMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		vote: connect.NewClient[cc.VoteRequest, cc.Message](
+			httpClient,
+			baseURL+MessagesAPIVoteProcedure,
+			connect.WithSchema(messagesAPIVoteMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		polls: connect.NewClient[cc.PollsRequest, cc.Messages](
+			httpClient,
+			baseURL+MessagesAPIPollsProcedure,
+			connect.WithSchema(messagesAPIPollsMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 		list: connect.NewClient[cc.MessagesListRequest, cc.Messages](
 			httpClient,
 			baseURL+MessagesAPIListProcedure,
@@ -563,6 +593,8 @@ type messagesAPIClient struct {
 	send   *connect.Client[cc.Message, cc.Message]
 	update *connect.Client[cc.Message, cc.Message]
 	delete *connect.Client[cc.Message, cc.Message]
+	vote   *connect.Client[cc.VoteRequest, cc.Message]
+	polls  *connect.Client[cc.PollsRequest, cc.Messages]
 	list   *connect.Client[cc.MessagesListRequest, cc.Messages]
 }
 
@@ -586,6 +618,16 @@ func (c *messagesAPIClient) Delete(ctx context.Context, req *connect.Request[cc.
 	return c.delete.CallUnary(ctx, req)
 }
 
+// Vote calls cc.MessagesAPI.Vote.
+func (c *messagesAPIClient) Vote(ctx context.Context, req *connect.Request[cc.VoteRequest]) (*connect.Response[cc.Message], error) {
+	return c.vote.CallUnary(ctx, req)
+}
+
+// Polls calls cc.MessagesAPI.Polls.
+func (c *messagesAPIClient) Polls(ctx context.Context, req *connect.Request[cc.PollsRequest]) (*connect.Response[cc.Messages], error) {
+	return c.polls.CallUnary(ctx, req)
+}
+
 // List calls cc.MessagesAPI.List.
 func (c *messagesAPIClient) List(ctx context.Context, req *connect.Request[cc.MessagesListRequest]) (*connect.Response[cc.Messages], error) {
 	return c.list.CallUnary(ctx, req)
@@ -597,6 +639,18 @@ type MessagesAPIHandler interface {
 	Send(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Update(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
 	Delete(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error)
+	// Vote answers the poll on a message. Anyone with access to the chat may
+	// answer, once — voting again replaces the previous answer.
+	Vote(context.Context, *connect.Request[cc.VoteRequest]) (*connect.Response[cc.Message], error)
+	// Polls returns the given messages, for reading the answers off their polls.
+	//
+	// Get would do as well if it were not for its side effects: it marks every
+	// message read for the caller and publishes CHAT_READ, which is right for a
+	// person opening a chat and wrong for a service collecting answers in the
+	// background — it would quietly clear the operators' unread counters. This
+	// one reads and nothing else. Access is checked per message, so it returns
+	// only what the caller could have opened anyway.
+	Polls(context.Context, *connect.Request[cc.PollsRequest]) (*connect.Response[cc.Messages], error)
 	List(context.Context, *connect.Request[cc.MessagesListRequest]) (*connect.Response[cc.Messages], error)
 }
 
@@ -630,6 +684,18 @@ func NewMessagesAPIHandler(svc MessagesAPIHandler, opts ...connect.HandlerOption
 		connect.WithSchema(messagesAPIDeleteMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	messagesAPIVoteHandler := connect.NewUnaryHandler(
+		MessagesAPIVoteProcedure,
+		svc.Vote,
+		connect.WithSchema(messagesAPIVoteMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	messagesAPIPollsHandler := connect.NewUnaryHandler(
+		MessagesAPIPollsProcedure,
+		svc.Polls,
+		connect.WithSchema(messagesAPIPollsMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	messagesAPIListHandler := connect.NewUnaryHandler(
 		MessagesAPIListProcedure,
 		svc.List,
@@ -646,6 +712,10 @@ func NewMessagesAPIHandler(svc MessagesAPIHandler, opts ...connect.HandlerOption
 			messagesAPIUpdateHandler.ServeHTTP(w, r)
 		case MessagesAPIDeleteProcedure:
 			messagesAPIDeleteHandler.ServeHTTP(w, r)
+		case MessagesAPIVoteProcedure:
+			messagesAPIVoteHandler.ServeHTTP(w, r)
+		case MessagesAPIPollsProcedure:
+			messagesAPIPollsHandler.ServeHTTP(w, r)
 		case MessagesAPIListProcedure:
 			messagesAPIListHandler.ServeHTTP(w, r)
 		default:
@@ -671,6 +741,14 @@ func (UnimplementedMessagesAPIHandler) Update(context.Context, *connect.Request[
 
 func (UnimplementedMessagesAPIHandler) Delete(context.Context, *connect.Request[cc.Message]) (*connect.Response[cc.Message], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.MessagesAPI.Delete is not implemented"))
+}
+
+func (UnimplementedMessagesAPIHandler) Vote(context.Context, *connect.Request[cc.VoteRequest]) (*connect.Response[cc.Message], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.MessagesAPI.Vote is not implemented"))
+}
+
+func (UnimplementedMessagesAPIHandler) Polls(context.Context, *connect.Request[cc.PollsRequest]) (*connect.Response[cc.Messages], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cc.MessagesAPI.Polls is not implemented"))
 }
 
 func (UnimplementedMessagesAPIHandler) List(context.Context, *connect.Request[cc.MessagesListRequest]) (*connect.Response[cc.Messages], error) {

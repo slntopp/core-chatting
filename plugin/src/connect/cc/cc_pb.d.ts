@@ -574,6 +574,185 @@ export declare class Attachment extends Message$1<Attachment> {
 }
 
 /**
+ * PollOption is one answer to pick.
+ *
+ * The id is what a vote refers to, never the label or the position: editing
+ * the wording of an option afterwards must not silently move everybody who
+ * already answered onto a different answer.
+ *
+ * @generated from message cc.PollOption
+ */
+export declare class PollOption extends Message$1<PollOption> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string label = 2;
+   */
+  label: string;
+
+  constructor(data?: PartialMessage<PollOption>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.PollOption";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PollOption;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PollOption;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PollOption;
+
+  static equals(a: PollOption | PlainMessage<PollOption> | undefined, b: PollOption | PlainMessage<PollOption> | undefined): boolean;
+}
+
+/**
+ * PollVote is one person's answer.
+ *
+ * @generated from message cc.PollVote
+ */
+export declare class PollVote extends Message$1<PollVote> {
+  /**
+   * option ids
+   *
+   * @generated from field: repeated string options = 1;
+   */
+  options: string[];
+
+  /**
+   * @generated from field: int64 ts = 2;
+   */
+  ts: bigint;
+
+  /**
+   * message is the ordinary chat message that states this answer in words.
+   *
+   * Kept here so that changing an answer edits that message instead of posting
+   * another one: a poll answered four times would otherwise read as four
+   * replies, and an operator would have to work out which one still counts.
+   * Empty for answers recorded before this was kept.
+   *
+   * @generated from field: string message = 3;
+   */
+  message: string;
+
+  constructor(data?: PartialMessage<PollVote>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.PollVote";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PollVote;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PollVote;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PollVote;
+
+  static equals(a: PollVote | PlainMessage<PollVote> | undefined, b: PollVote | PlainMessage<PollVote> | undefined): boolean;
+}
+
+/**
+ * Poll turns a message into a question with answers to click, instead of a
+ * list of options typed into the text and an answer typed back.
+ *
+ * It is a field of an ordinary message, not a kind of its own: everything that
+ * already carries a message — the event stream, the gateways, the WHMCS sync,
+ * read receipts — carries a poll without knowing anything about polls. A
+ * client that has not been taught about them shows the question and nothing
+ * else, which is why gateway and WHMCS events get the options appended to
+ * their text copy (see pkg/pubsub): a person on telegram or email still sees
+ * what there was to answer and can reply in words.
+ *
+ * @generated from message cc.Poll
+ */
+export declare class Poll extends Message$1<Poll> {
+  /**
+   * question is optional: usually the message text is the question, and this
+   * is left empty.
+   *
+   * @generated from field: string question = 1;
+   */
+  question: string;
+
+  /**
+   * @generated from field: repeated cc.PollOption options = 2;
+   */
+  options: PollOption[];
+
+  /**
+   * multiple allows more than one answer at a time.
+   *
+   * @generated from field: bool multiple = 3;
+   */
+  multiple: boolean;
+
+  /**
+   * closed stops accepting answers. The answers already given stay visible.
+   *
+   * @generated from field: bool closed = 4;
+   */
+  closed: boolean;
+
+  /**
+   * votes is keyed by account uuid. A ticket has one customer, so this is
+   * normally a single entry — the point is knowing *who* answered *what*, not
+   * a tally.
+   *
+   * @generated from field: map<string, cc.PollVote> votes = 5;
+   */
+  votes: { [key: string]: PollVote };
+
+  constructor(data?: PartialMessage<Poll>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.Poll";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Poll;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Poll;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Poll;
+
+  static equals(a: Poll | PlainMessage<Poll> | undefined, b: Poll | PlainMessage<Poll> | undefined): boolean;
+}
+
+/**
+ * VoteRequest answers a poll. An empty options list retracts the answer.
+ *
+ * @generated from message cc.VoteRequest
+ */
+export declare class VoteRequest extends Message$1<VoteRequest> {
+  /**
+   * @generated from field: string message = 1;
+   */
+  message: string;
+
+  /**
+   * option ids
+   *
+   * @generated from field: repeated string options = 2;
+   */
+  options: string[];
+
+  constructor(data?: PartialMessage<VoteRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.VoteRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): VoteRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): VoteRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): VoteRequest;
+
+  static equals(a: VoteRequest | PlainMessage<VoteRequest> | undefined, b: VoteRequest | PlainMessage<VoteRequest> | undefined): boolean;
+}
+
+/**
  * @generated from message cc.Message
  */
 export declare class Message extends Message$1<Message> {
@@ -644,6 +823,13 @@ export declare class Message extends Message$1<Message> {
    */
   mentioned: string[];
 
+  /**
+   * poll is set on the few messages that ask something with buttons.
+   *
+   * @generated from field: optional cc.Poll poll = 14;
+   */
+  poll?: Poll;
+
   constructor(data?: PartialMessage<Message>);
 
   static readonly runtime: typeof proto3;
@@ -700,6 +886,33 @@ export declare class MessagesListRequest extends Message$1<MessagesListRequest> 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MessagesListRequest;
 
   static equals(a: MessagesListRequest | PlainMessage<MessagesListRequest> | undefined, b: MessagesListRequest | PlainMessage<MessagesListRequest> | undefined): boolean;
+}
+
+/**
+ * PollsRequest asks for specific messages by uuid, to read the answers off
+ * their polls.
+ *
+ * @generated from message cc.PollsRequest
+ */
+export declare class PollsRequest extends Message$1<PollsRequest> {
+  /**
+   * @generated from field: repeated string messages = 1;
+   */
+  messages: string[];
+
+  constructor(data?: PartialMessage<PollsRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.PollsRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PollsRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PollsRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PollsRequest;
+
+  static equals(a: PollsRequest | PlainMessage<PollsRequest> | undefined, b: PollsRequest | PlainMessage<PollsRequest> | undefined): boolean;
 }
 
 /**

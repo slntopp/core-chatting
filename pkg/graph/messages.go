@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/slntopp/core-chatting/cc"
+	"github.com/slntopp/nocloud/pkg/nocloud/schema"
 
 	"github.com/arangodb/go-driver"
 	"go.uber.org/zap"
@@ -157,6 +158,97 @@ func (c *MessagesController) Delete(ctx context.Context, msg *cc.Message) (*cc.M
 	}
 
 	return msg, nil
+}
+
+const voteQuery = `
+LET msg = DOCUMENT(@@messages, @message)
+FILTER msg != null
+UPDATE msg WITH { poll: { votes: { [@account]: @vote } } } IN @@messages
+	OPTIONS { keepNull: false, mergeObjects: true }
+RETURN NEW
+`
+
+// Vote records one person's answer to a poll, or removes it when vote is nil.
+//
+// One statement on one document: an answer is a merge into the votes map, so
+// two people answering at the same time cannot overwrite each other and there
+// is nothing to lock. keepNull: false is what makes a nil vote a retraction
+// rather than an empty answer.
+func (c *MessagesController) Vote(ctx context.Context, message, account string, vote *cc.PollVote) (*cc.Message, error) {
+	log := c.log.Named("Vote")
+	log.Debug("Req received", zap.String("message", message), zap.String("account", account))
+
+	// The vote goes in whole, not field by field. A hand-written map here was
+	// one forgotten field away from dropping data silently, and did exactly
+	// that: it kept the options and the timestamp and quietly lost which
+	// message states the answer, so every change of answer posted another one.
+	// The generated json tags carry the proto field names, so this is the same
+	// document shape.
+	var value interface{}
+	if vote != nil {
+		value = vote
+	}
+
+	cur, err := c.db.Query(ctx, voteQuery, map[string]interface{}{
+		"@messages": MESSAGES_COLLECTION,
+		"message":   message,
+		"account":   account,
+		"vote":      value,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close()
+
+	var updated cc.Message
+	if _, err = cur.ReadDocument(ctx, &updated); err != nil {
+		return nil, err
+	}
+	return &updated, nil
+}
+
+const pollMessagesQuery = `
+FOR m IN @@messages
+	FILTER m._key IN @messages
+	LET chat = DOCUMENT(@@chats, m.chat)
+	FILTER chat != null
+	// The same access rule the rest of the service uses, applied per message:
+	// this returns only what the caller could have opened by hand.
+	FILTER @requestor IN chat.admins OR chat.owner == @requestor
+	    OR @requestor IN chat.users OR @requestor == @root_account
+	RETURN m
+`
+
+// Polls returns the given messages without touching them.
+//
+// Deliberately not built on Get: that one marks messages read for the caller,
+// which is right for someone opening a chat and wrong for a service reading
+// answers in the background.
+func (c *MessagesController) Polls(ctx context.Context, requestor string, messages []string) ([]*cc.Message, error) {
+	log := c.log.Named("Polls")
+	log.Debug("Req received", zap.Int("messages", len(messages)))
+
+	cur, err := c.db.Query(ctx, pollMessagesQuery, map[string]interface{}{
+		"@messages":    MESSAGES_COLLECTION,
+		"@chats":       CHATS_COLLECTION,
+		"messages":     messages,
+		"requestor":    requestor,
+		"root_account": schema.ROOT_ACCOUNT_KEY,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close()
+
+	var out []*cc.Message
+	for cur.HasMore() {
+		var msg cc.Message
+		if _, err = cur.ReadDocument(ctx, &msg); err != nil {
+			return nil, err
+		}
+		out = append(out, &msg)
+	}
+	return out, nil
 }
 
 func (c *MessagesController) Get(ctx context.Context, uuid string) (*cc.Message, error) {

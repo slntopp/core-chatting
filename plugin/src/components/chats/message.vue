@@ -10,6 +10,10 @@
       @click:file="onFileClick"
     />
 
+    <!-- A poll rides along with the text: the message says what is being
+         asked, the card is what you answer with. -->
+    <message-poll v-if="message.poll" :message="message" />
+
     <div v-if="attachFiles?.length" class="chat__files">
       <div
         @click="() => onFileClick(file)"
@@ -84,6 +88,7 @@ import {
   useThemeVars,
 } from "naive-ui";
 import messageContent from "./message/message_content.vue";
+import messagePoll from "./message/message_poll.vue";
 
 import { Kind, Message, Role, User } from "../../connect/cc/cc_pb";
 import { useCcStore } from "../../store/chatting";

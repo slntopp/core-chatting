@@ -5,6 +5,8 @@
     </n-space>
 
     <n-space vertical style="padding: 0 24px; max-width: 720px">
+      <n-tabs default-value="overdue" type="line">
+        <n-tab-pane name="overdue" tab="Overdue">
       <n-text depth="3" style="display: block; margin-bottom: 12px">
         Creates a support ticket after the instance payment date plus the delay
         for that billing period. Applies only to services that can be
@@ -139,6 +141,85 @@
         :autosize="{ minRows: 8, maxRows: 16 }"
         placeholder="First message"
       />
+        </n-tab-pane>
+
+        <n-tab-pane name="ip-pool" tab="IP pool">
+          <n-text depth="3" style="display: block; margin-bottom: 12px">
+            Creates a support ticket when a Proxmox server cannot be created
+            because the IP pool is empty. After addresses are added, creation
+            resumes on the next Monitoring tick. One ticket per incident.
+            Placeholders: {CLIENT_NAME}, {INSTANCE}, {PRODUCT}, {IPS},
+            {SERVICE_DETAILS}, {SERVICE}, {ERROR}
+          </n-text>
+
+          <div class="bots_config_switch">
+            <n-switch class="switch" v-model:value="ipPoolTicket.enabled">
+              <template #checked> Active </template>
+              <template #unchecked> Disabled </template>
+            </n-switch>
+            <span> Enable automatic IP pool tickets. </span>
+          </div>
+
+          <n-text>Department</n-text>
+          <n-select
+            v-model:value="ipPoolTicket.department"
+            clearable
+            filterable
+            placeholder="Department"
+            label-field="title"
+            value-field="key"
+            :options="departmentSelectOptions"
+          />
+
+          <n-text>Assignees</n-text>
+          <n-select
+            v-model:value="ipPoolTicket.admins"
+            multiple
+            clearable
+            filterable
+            placeholder="Extra assignees (in addition to department admins)"
+            label-field="title"
+            value-field="uuid"
+            :options="adminSelectOptions"
+          />
+
+          <n-text>Responsible</n-text>
+          <n-select
+            v-model:value="ipPoolTicket.responsible"
+            clearable
+            filterable
+            placeholder="Responsible"
+            label-field="title"
+            value-field="uuid"
+            :options="adminSelectOptions"
+          />
+
+          <n-text>Sender (WHMCS staff)</n-text>
+          <n-select
+            v-model:value="ipPoolTicket.senderUuid"
+            clearable
+            filterable
+            placeholder="Staff UUID used to open the ticket"
+            label-field="title"
+            value-field="uuid"
+            :options="adminSelectOptions"
+          />
+
+          <n-text>Topic</n-text>
+          <n-input
+            v-model:value="ipPoolTicket.topic"
+            placeholder="Ticket topic"
+          />
+
+          <n-text>Message</n-text>
+          <n-input
+            v-model:value="ipPoolTicket.message"
+            type="textarea"
+            :autosize="{ minRows: 8, maxRows: 16 }"
+            placeholder="First message"
+          />
+        </n-tab-pane>
+      </n-tabs>
 
       <n-space justify="end" style="margin: 10px 0 20px">
         <n-button :loading="isSaving" ghost type="info" @click="submit">
@@ -160,6 +241,8 @@ import {
   NSpace,
   NText,
   NH3,
+  NTabs,
+  NTabPane,
   useNotification,
 } from "naive-ui";
 import { computed, reactive, ref, toRefs, watch } from "vue";
@@ -193,6 +276,16 @@ const AUTO_TICKET_KEYS = {
   excludedPlans: "auto_ticket.excluded_plans",
 };
 
+const IP_POOL_TICKET_KEYS = {
+  enabled: "ip_pool_ticket.enabled",
+  department: "ip_pool_ticket.department",
+  topic: "ip_pool_ticket.topic",
+  message: "ip_pool_ticket.message",
+  senderUuid: "ip_pool_ticket.sender_uuid",
+  admins: "ip_pool_ticket.admins",
+  responsible: "ip_pool_ticket.responsible",
+};
+
 const PERIOD_OPTIONS = [
   { label: "Hourly — 3600s", value: 3600 },
   { label: "Daily — 86400s", value: 86400 },
@@ -205,6 +298,15 @@ const PERIOD_OPTIONS = [
 
 const DEFAULT_AUTO_TICKET_TOPIC =
   "Уведомление об удалении услуги: {INSTANCE}";
+const DEFAULT_IP_POOL_TICKET_TOPIC = "Нет свободных IP: {INSTANCE}";
+const DEFAULT_IP_POOL_TICKET_MESSAGE = `Здравствуйте.
+
+Услуга "{SERVICE_DETAILS}" (клиент {CLIENT_NAME}) не создана: в пуле закончились свободные IP-адреса.
+Ошибка: {ERROR}
+
+После пополнения пула создание возобновится автоматически.
+
+С уважением, служба поддержки.`;
 const DEFAULT_AUTO_TICKET_MESSAGE = `Здравствуйте.
 
 Уважаемый {CLIENT_NAME}, сообщаем, что оказание услуги: "{SERVICE_DETAILS}" приостановлено в связи с истечением срока оплаты.
@@ -259,6 +361,51 @@ function parseAutoTicket(values: Record<string, string> | undefined) {
   };
 }
 
+function parseEnabled(raw: string | undefined, fallback = true) {
+  const value = (raw ?? (fallback ? "true" : "false")).toLowerCase();
+  return value !== "false" && value !== "0" && value !== "no";
+}
+
+function parseCsv(raw: string | undefined) {
+  return (raw ?? "")
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
+function parseIpPoolTicket(values: Record<string, string> | undefined) {
+  const src = values ?? {};
+  return {
+    enabled: parseEnabled(src[IP_POOL_TICKET_KEYS.enabled], true),
+    department: src[IP_POOL_TICKET_KEYS.department] ?? "",
+    admins: parseCsv(src[IP_POOL_TICKET_KEYS.admins]),
+    responsible: src[IP_POOL_TICKET_KEYS.responsible] || null,
+    senderUuid: src[IP_POOL_TICKET_KEYS.senderUuid] || null,
+    topic: src[IP_POOL_TICKET_KEYS.topic] || DEFAULT_IP_POOL_TICKET_TOPIC,
+    message: src[IP_POOL_TICKET_KEYS.message] || DEFAULT_IP_POOL_TICKET_MESSAGE,
+  };
+}
+
+function serializeIpPoolTicket(ticket: {
+  enabled: boolean;
+  department: string;
+  admins: string[];
+  responsible: string | null;
+  senderUuid: string | null;
+  topic: string;
+  message: string;
+}) {
+  return {
+    [IP_POOL_TICKET_KEYS.enabled]: ticket.enabled ? "true" : "false",
+    [IP_POOL_TICKET_KEYS.department]: ticket.department ?? "",
+    [IP_POOL_TICKET_KEYS.admins]: (ticket.admins ?? []).join(","),
+    [IP_POOL_TICKET_KEYS.responsible]: ticket.responsible ?? "",
+    [IP_POOL_TICKET_KEYS.senderUuid]: ticket.senderUuid ?? "",
+    [IP_POOL_TICKET_KEYS.topic]: ticket.topic ?? "",
+    [IP_POOL_TICKET_KEYS.message]: ticket.message ?? "",
+  };
+}
+
 function serializeAutoTicket(ticket: {
   enabled: boolean;
   department: string;
@@ -301,6 +448,7 @@ function serializeAutoTicket(ticket: {
 }
 
 const autoTicket = reactive(parseAutoTicket(defaultsStore.bot?.values));
+const ipPoolTicket = reactive(parseIpPoolTicket(defaultsStore.bot?.values));
 const periodOptions = PERIOD_OPTIONS;
 
 const excludedPlanOptions = computed(() =>
@@ -360,6 +508,7 @@ async function submit() {
           values: {
             ...(bot?.values ?? {}),
             ...serializeAutoTicket(autoTicket),
+            ...serializeIpPoolTicket(ipPoolTicket),
           },
         }),
       })
@@ -377,6 +526,7 @@ watch(
   () => defaultsStore.bot,
   (bot) => {
     Object.assign(autoTicket, parseAutoTicket(bot?.values));
+    Object.assign(ipPoolTicket, parseIpPoolTicket(bot?.values));
   }
 );
 </script>

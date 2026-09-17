@@ -44,6 +44,21 @@
     Bot debug traces
   </n-tooltip>
 
+  <n-tooltip>
+    <template #trigger>
+      <n-button
+        type="warning"
+        size="small"
+        ghost
+        circle
+        @click="isLearnOpen = true"
+      >
+        <template #icon> <bulb-icon /> </template>
+      </n-button>
+    </template>
+    Learn from this chat
+  </n-tooltip>
+
   <n-modal v-model:show="isBotSettingsOpen">
     <n-card
       title="Bot settings"
@@ -97,6 +112,12 @@
   <n-drawer v-model:show="isTracesOpen" :width="620" placement="right">
     <n-drawer-content title="Bot debug traces" closable :native-scrollbar="false">
       <trace-viewer v-if="isTracesOpen" :chat-uuid="chat.uuid" lane="customer" />
+    </n-drawer-content>
+  </n-drawer>
+
+  <n-drawer v-model:show="isLearnOpen" :width="620" placement="right">
+    <n-drawer-content title="Learn from this chat" closable :native-scrollbar="false">
+      <learn-panel v-if="isLearnOpen" :chat-uuid="chat.uuid" />
     </n-drawer-content>
   </n-drawer>
 
@@ -202,6 +223,7 @@ import {
   NDrawerContent,
 } from "naive-ui";
 import TraceViewer from "./trace_viewer.vue";
+import LearnPanel from "./learn_panel.vue";
 
 import { ConnectError } from "@connectrpc/connect";
 import {
@@ -238,6 +260,9 @@ const sparklesIcon = defineAsyncComponent(
 const COPILOT_COLOR = "#7c5cff";
 const bugIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/BugOutline")
+);
+const bulbIcon = defineAsyncComponent(
+  () => import("@vicons/ionicons5/BulbOutline")
 );
 const consoleIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/TerminalOutline")
@@ -293,6 +318,7 @@ const buttonTitle = ref("");
 
 const isBotSettingsOpen = ref(false);
 const isTracesOpen = ref(false);
+const isLearnOpen = ref(false);
 const isSaveBotStateLoading = ref(false);
 const botState = ref<{ [key: string]: any }>({});
 

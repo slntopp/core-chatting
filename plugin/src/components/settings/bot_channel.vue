@@ -48,6 +48,22 @@
               instructions given to it.
             </span>
           </div>
+
+          <div class="otus_mode">
+            <n-text strong>Otus</n-text>
+            <n-radio-group v-model:value="otusMode" name="otus-mode">
+              <n-space>
+                <n-radio
+                  v-for="option in OTUS_MODES"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </n-radio>
+              </n-space>
+            </n-radio-group>
+            <n-text depth="3">{{ otusHint }}</n-text>
+          </div>
         </div>
 
         <n-space justify="end" style="margin: 10px 0">
@@ -201,6 +217,8 @@ import {
   NInput,
   NModal,
   NPopconfirm,
+  NRadio,
+  NRadioGroup,
   NSelect,
   NSpace,
   NSwitch,
@@ -256,6 +274,33 @@ const botConfig = reactive({
 });
 const isBotSaving = ref(false);
 
+// Otus is a separate process; it pulls Defaults before every ticket run and
+// reads its mode out of Bot.values, the same freeform bag auto_ticket.* uses.
+// The operator picks how Otus may write; the client never sees this control.
+const OTUS_MODE_KEY = "otus.mode";
+const OTUS_MODES = [
+  {
+    value: "copilot_mode",
+    label: "Hints",
+    hint: "Answers the operator in the copilot lane. Writes to the client only when the operator asked it to.",
+  },
+  {
+    value: "self_mode",
+    label: "Writes itself",
+    hint: "May write to the client. Still asks in the copilot lane when a person has to decide.",
+  },
+  {
+    value: "god_mode",
+    label: "Full",
+    hint: "Same as \"Writes itself\", and may change the ticket status.",
+  },
+];
+
+const otusMode = ref(OTUS_MODES[0].value);
+const otusHint = computed(
+  () => OTUS_MODES.find((option) => option.value === otusMode.value)?.hint ?? "",
+);
+
 // core-chatting's department-wide bot config (Active/Review/Hybrid/Emergency)
 // lives on cc.Defaults.Bot, edited here. prompt/values aren't edited in this
 // UI anymore, but still get read back from the store and sent through as-is
@@ -268,6 +313,7 @@ watch(
     botConfig.review = bot.review;
     botConfig.initiator = bot.initiator;
     botConfig.emergency = bot.emergency;
+    otusMode.value = bot.values[OTUS_MODE_KEY] || OTUS_MODES[0].value;
   },
   { immediate: true },
 );
@@ -362,7 +408,10 @@ async function submitBotConfig() {
         bot: new Bot({
           ...botConfig,
           prompt: defaultsStore.bot?.prompt ?? "",
-          values: defaultsStore.bot?.values ?? {},
+          values: {
+            ...(defaultsStore.bot?.values ?? {}),
+            [OTUS_MODE_KEY]: otusMode.value,
+          },
         }),
       }),
     );
@@ -392,6 +441,13 @@ export default {
   display: flex;
   margin: 5px 0px;
   align-items: center;
+}
+
+.otus_mode {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 14px 0px 5px;
 }
 
 .bots_config_switch span {

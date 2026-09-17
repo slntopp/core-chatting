@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/slntopp/core-chatting/pkg/notifications"
+	"github.com/slntopp/core-chatting/pkg/otus"
 	http_server "github.com/slntopp/nocloud/pkg/nocloud/http"
 	"github.com/slntopp/nocloud/pkg/nocloud/rabbitmq"
 	"github.com/slntopp/nocloud/pkg/nocloud/schema"
@@ -67,6 +68,8 @@ var (
 	bannedRoutineDepartments []string
 
 	monitoringLogsFile string
+
+	otusAdminUrl, otusAdminToken string
 )
 
 func init() {
@@ -119,6 +122,13 @@ func init() {
 
 	viper.SetDefault("MONITORING_LOGS_FILE", "./monitoring.log")
 	monitoringLogsFile = viper.GetString("MONITORING_LOGS_FILE")
+
+	// Empty by default: an install without Otus keeps working, and its Learn
+	// routes answer 501 instead of proxying nowhere.
+	viper.SetDefault("OTUS_ADMIN_URL", "")
+	viper.SetDefault("OTUS_ADMIN_TOKEN", "")
+	otusAdminUrl = viper.GetString("OTUS_ADMIN_URL")
+	otusAdminToken = viper.GetString("OTUS_ADMIN_TOKEN")
 }
 
 func main() {
@@ -208,6 +218,9 @@ func main() {
 
 	attServer := attachments.NewAttacmentsServer(log, attachmentsCtrl, s3host, s3port, s3bucket, s3AccKey, s3SecKey)
 	attServer.Hander(router)
+
+	otusServer := otus.NewLearnServer(log, chatCtrl, otusAdminUrl, otusAdminToken, SIGNING_KEY)
+	otusServer.Hander(router)
 
 	host := fmt.Sprintf("0.0.0.0:%s", port)
 

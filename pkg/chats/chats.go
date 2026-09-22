@@ -19,6 +19,12 @@ import (
 	"go.uber.org/zap"
 )
 
+// OtusModeStateKey is this chat's own Otus mode, inside bot_state next to
+// disabled/skip_review/escalated. Absent or empty means the chat follows the
+// install-wide switch in Defaults.Bot.values. ai-bot-manager reads it off the
+// chat and hands it to Otus per turn; nothing here interprets the value.
+const OtusModeStateKey = "otus.mode"
+
 type ChatsServer struct {
 	log  *zap.Logger
 	conn *amqp091.Connection
@@ -266,6 +272,14 @@ func (s *ChatsServer) SetBotState(ctx context.Context, req *connect.Request[cc.S
 
 	if chat.Role < cc.Role_OWNER {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("no access to chat"))
+	}
+
+	// The owner of a chat is its customer, which is fine for muting their own
+	// bot but not for the mode: that key decides whether the bot may write to
+	// them on its own and whether it may run mutate actions, so it belongs to
+	// the operators of the chat alone.
+	if _, ok := req.Msg.GetState()[OtusModeStateKey]; ok && chat.Role < cc.Role_ADMIN {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("only a chat admin may set the bot mode"))
 	}
 
 	err = s.ctrl.SetBotState(ctx, req.Msg, chat)

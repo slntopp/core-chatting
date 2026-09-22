@@ -231,6 +231,7 @@ import AccountSelectSingle from "../users/account_select_single.vue";
 import { BotChannelLink, useBotChannelStore } from "../../store/bot_channel";
 import { Bot, Defaults } from "../../connect/cc/cc_pb";
 import { useDefaultsStore } from "../../store/defaults";
+import { OTUS_MODE_KEY, OTUS_MODES } from "../../otus";
 
 const plusIcon = defineAsyncComponent(() => import("@vicons/ionicons5/Add"));
 const saveIcon = defineAsyncComponent(
@@ -277,25 +278,8 @@ const isBotSaving = ref(false);
 // Otus is a separate process; it pulls Defaults before every ticket run and
 // reads its mode out of Bot.values, the same freeform bag auto_ticket.* uses.
 // The operator picks how Otus may write; the client never sees this control.
-const OTUS_MODE_KEY = "otus.mode";
-const OTUS_MODES = [
-  {
-    value: "copilot_mode",
-    label: "Hints",
-    hint: "Answers the operator in the copilot lane. Writes to the client only when the operator asked it to.",
-  },
-  {
-    value: "self_mode",
-    label: "Writes itself",
-    hint: "May write to the client. Still asks in the copilot lane when a person has to decide.",
-  },
-  {
-    value: "god_mode",
-    label: "Full",
-    hint: "Same as \"Writes itself\", and may change the ticket status.",
-  },
-];
-
+// This is the install-wide value: a single chat may be set apart from it in its
+// own Bot settings dialog, and that one wins for that chat.
 const otusMode = ref(OTUS_MODES[0].value);
 const otusHint = computed(
   () => OTUS_MODES.find((option) => option.value === otusMode.value)?.hint ?? "",

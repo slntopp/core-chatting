@@ -84,6 +84,32 @@
         </n-switch>
       </div>
 
+      <!-- Operators only: this rung decides whether the bot may write to the
+           client on its own, so the chat's owner - the client - must not see
+           or reach it. The server refuses them the key as well. -->
+      <div v-if="isChatAdmin" class="bot_state_settings_field bot_state_otus">
+        <span>Otus mode:</span>
+        <div>
+          <n-radio-group v-model:value="otusMode" name="chat-otus-mode">
+            <n-space>
+              <n-radio
+                v-for="option in OTUS_CHAT_MODES"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </n-radio>
+            </n-space>
+          </n-radio-group>
+          <n-text depth="3" tag="div" style="margin-top: 4px">
+            {{ otusHint }}
+          </n-text>
+          <n-text depth="3" tag="div">
+            Install-wide now: {{ installOtusModeLabel }}.
+          </n-text>
+        </div>
+      </div>
+
       <div class="bot_state_settings_actions">
         <n-button
           style="margin-right: 15px"
@@ -221,6 +247,10 @@ import {
   NDivider,
   NDrawer,
   NDrawerContent,
+  NRadio,
+  NRadioGroup,
+  NSpace,
+  NText,
 } from "naive-ui";
 import TraceViewer from "./trace_viewer.vue";
 import LearnPanel from "./learn_panel.vue";
@@ -230,6 +260,7 @@ import {
   Chat,
   Kind,
   Message,
+  Role,
   SetBotStateRequest,
 } from "../../connect/cc/cc_pb";
 import { useAppStore } from "../../store/app.ts";
@@ -239,6 +270,13 @@ import { storeToRefs } from "pinia";
 import { useUsersStore } from "../../store/users.ts";
 import { onUnmounted } from "vue";
 import ProcessChatPanel from "./process_chat_panel.vue";
+import { useDefaultsStore } from "../../store/defaults.ts";
+import {
+  OTUS_CHAT_MODES,
+  OTUS_CHAT_MODE_INHERIT,
+  OTUS_MODE_KEY,
+  otusModeLabel,
+} from "../../otus.ts";
 
 const copyIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/CopyOutline")
@@ -275,6 +313,7 @@ interface ChatActionsProps {
 const appStore = useAppStore();
 const store = useCcStore();
 const usersStore = useUsersStore();
+const defaultsStore = useDefaultsStore();
 const notification = useNotification();
 
 const { currentChat } = storeToRefs(store);
@@ -321,6 +360,19 @@ const isTracesOpen = ref(false);
 const isLearnOpen = ref(false);
 const isSaveBotStateLoading = ref(false);
 const botState = ref<{ [key: string]: any }>({});
+const otusMode = ref(OTUS_CHAT_MODE_INHERIT);
+
+// Role.ADMIN is an operator of this chat; its OWNER is the client it is about.
+const isChatAdmin = computed(() => currentChat.value?.role === Role.ADMIN);
+const otusHint = computed(
+  () =>
+    OTUS_CHAT_MODES.find((option) => option.value === otusMode.value)?.hint ?? ""
+);
+// What this chat falls back to. An override means nothing to an operator who
+// cannot see what it overrides.
+const installOtusModeLabel = computed(() =>
+  otusModeLabel(defaultsStore.bot?.values[OTUS_MODE_KEY])
+);
 
 const onMessage = ({ data, origin }: any) => {
   if (origin.includes("localhost:8081")) return;
@@ -393,17 +445,27 @@ function setBotState() {
   botState.value = (currentChat.value?.toJson() as any as Chat).botState;
   botState.value.enabled = !botState.value.disabled;
   botState.value.review = !botState.value.skip_review;
+  otusMode.value = botState.value[OTUS_MODE_KEY] || OTUS_CHAT_MODE_INHERIT;
 }
 
 async function saveBotState() {
   try {
     isSaveBotStateLoading.value = true;
 
+    // The mode is sent only when it actually moved. The server refuses the key
+    // to anyone below Role.ADMIN, and a client muting their own bot must not be
+    // refused over a value they never touched. The rest of bot_state - the
+    // escalated flag the bot writes on a handoff - survives either way: the
+    // server merges what arrives into what the chat already holds.
+    const stored = botState.value[OTUS_MODE_KEY] || OTUS_CHAT_MODE_INHERIT;
+    const modeChanged = otusMode.value !== stored;
+
     await store.update_bot_state(
       SetBotStateRequest.fromJson({
         chat: currentChat.value!.uuid,
         disabled: !botState.value.enabled,
         skipReview: !botState.value.review,
+        ...(modeChanged ? { state: { [OTUS_MODE_KEY]: otusMode.value } } : {}),
       })
     );
 
@@ -425,6 +487,10 @@ watch(currentChat, () => {
 </script>
 
 <style scoped>
+.bot_state_otus {
+  align-items: flex-start;
+}
+
 .bot_state_settings_field {
   display: flex;
   justify-content: space-between;

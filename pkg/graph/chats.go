@@ -515,6 +515,32 @@ func (c *ChatsController) DeleteGateways(ctx context.Context, fields map[string]
 	return nil
 }
 
+// MergeBotState folds a SetBotState request into the state a chat already holds,
+// never replacing it: the keys have different owners and different lifetimes -
+// an operator sets otus.mode from the UI while the bot writes disabled and
+// escalated on a handoff - so a caller that knows about one key must not drop
+// the others. The named fields win over the same key inside state, because they
+// are the typed way to say it.
+func MergeBotState(current map[string]*structpb.Value, req *cc.SetBotStateRequest) map[string]*structpb.Value {
+	state := current
+	if state == nil {
+		state = map[string]*structpb.Value{}
+	}
+	for key, value := range req.GetState() {
+		state[key] = value
+	}
+	if req.Disabled != nil {
+		state["disabled"] = structpb.NewBoolValue(req.GetDisabled())
+	}
+	if req.SkipReview != nil {
+		state["skip_review"] = structpb.NewBoolValue(req.GetSkipReview())
+	}
+	if req.Escalated != nil {
+		state["escalated"] = structpb.NewBoolValue(req.GetEscalated())
+	}
+	return state
+}
+
 func (c *ChatsController) SetBotState(ctx context.Context, req *cc.SetBotStateRequest, chat *cc.Chat) error {
 	log := c.log.Named("Set state")
 	log.Debug("Req received")
@@ -528,22 +554,7 @@ func (c *ChatsController) SetBotState(ctx context.Context, req *cc.SetBotStateRe
 		return err
 	}
 
-	state := req.State
-	if state == nil {
-		state = chat.BotState
-		if state == nil {
-			state = map[string]*structpb.Value{}
-		}
-	}
-	if req.Disabled != nil {
-		state["disabled"] = structpb.NewBoolValue(req.GetDisabled())
-	}
-	if req.SkipReview != nil {
-		state["skip_review"] = structpb.NewBoolValue(req.GetSkipReview())
-	}
-	if req.Escalated != nil {
-		state["escalated"] = structpb.NewBoolValue(req.GetEscalated())
-	}
+	state := MergeBotState(chat.GetBotState(), req)
 
 	_, err = c.col.Database().Query(ctx, setState, map[string]interface{}{
 		"key":       driver.NewDocumentID(CHATS_COLLECTION, req.GetChat()),

@@ -201,16 +201,17 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 		})
 	}
 
-	// An onboarding ticket keeps its status through the whole conversation.
-	// We started it, not the customer, and a campaign of thousands moving
-	// through OPEN and CUSTOMER_REPLY would bury the tickets people actually
-	// opened themselves. It leaves this status only when someone closes it.
-	if chat.GetStatus() != cc.Status_ONBOARDING {
-		if slices.Contains(chat.GetAdmins(), requestor) {
+	// An onboarding ticket is one we opened, not the customer, so our own
+	// messages leave it where it is - a campaign of thousands must not walk
+	// through the operators' status board before anyone answers. The
+	// customer's first reply ends that: from there it is an ordinary chat,
+	// and it never returns to ONBOARDING.
+	if slices.Contains(chat.GetAdmins(), requestor) {
+		if chat.GetStatus() != cc.Status_ONBOARDING {
 			chat.Status = cc.Status_OPEN
-		} else if chat.Status != cc.Status_NEW {
-			chat.Status = cc.Status_CUSTOMER_REPLY
 		}
+	} else if chat.Status != cc.Status_NEW {
+		chat.Status = cc.Status_CUSTOMER_REPLY
 	}
 
 	update, err := s.chatCtrl.Update(ctx, chat)
@@ -375,11 +376,11 @@ func (s *MessagesServer) Vote(ctx context.Context, req *connect.Request[cc.VoteR
 		return nil, err
 	}
 
-	// A customer answering is a reply, so the chat says so — under the same
-	// rule Send follows, and with the same exception for a status that is not
-	// ours to move.
+	// A customer answering is a reply, so the chat says so - under the same
+	// rule Send follows, ONBOARDING included: the customer speaking is what
+	// takes an outreach ticket into the ordinary cycle.
 	if !slices.Contains(chat.GetAdmins(), requestor) &&
-		chat.GetStatus() != cc.Status_NEW && chat.GetStatus() != cc.Status_ONBOARDING {
+		chat.GetStatus() != cc.Status_NEW {
 		chat.Status = cc.Status_CUSTOMER_REPLY
 		if _, err = s.chatCtrl.Update(ctx, chat); err != nil {
 			log.Error("Failed to update the chat status", zap.Error(err))

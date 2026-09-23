@@ -61,7 +61,7 @@
 
   <n-modal v-model:show="isBotSettingsOpen">
     <n-card
-      title="Bot settings"
+      title="Otus settings"
       :bordered="false"
       size="huge"
       role="dialog"
@@ -69,13 +69,14 @@
       style="width: 780px; max-width: 92vw; min-height: 300px"
     >
       <div class="bot_state_settings_field">
-        <span>Bot state:</span>
+        <span>Otus state:</span>
         <n-switch v-model:value="botState.enabled">
           <template #checked> active </template>
           <template #unchecked> disabled (no bot) </template>
         </n-switch>
       </div>
 
+      <!-- hidden: review toggle (value still round-trips through save)
       <div class="bot_state_settings_field">
         <span>Review:</span>
         <n-switch v-model:value="botState.review">
@@ -83,6 +84,7 @@
           <template #checked> review mode </template>
         </n-switch>
       </div>
+      -->
 
       <!-- Operators only: this rung decides whether the bot may write to the
            client on its own, so the chat's owner - the client - must not see
@@ -93,7 +95,7 @@
           <n-radio-group v-model:value="otusMode" name="chat-otus-mode">
             <n-space>
               <n-radio
-                v-for="option in OTUS_CHAT_MODES"
+                v-for="option in OTUS_MODES"
                 :key="option.value"
                 :value="option.value"
               >
@@ -129,9 +131,11 @@
         </n-button>
       </div>
 
+      <!-- hidden: knowledge-base panel, not relevant anymore
       <n-divider />
 
       <process-chat-panel :chat="chat" />
+      -->
     </n-card>
   </n-modal>
 
@@ -244,7 +248,7 @@ import {
   NModal,
   NCard,
   NSwitch,
-  NDivider,
+  // NDivider, // hidden with the knowledge-base panel
   NDrawer,
   NDrawerContent,
   NRadio,
@@ -269,10 +273,10 @@ import { addToClipboard } from "../../functions.ts";
 import { storeToRefs } from "pinia";
 import { useUsersStore } from "../../store/users.ts";
 import { onUnmounted } from "vue";
-import ProcessChatPanel from "./process_chat_panel.vue";
+// import ProcessChatPanel from "./process_chat_panel.vue"; // hidden, see template
 import { useDefaultsStore } from "../../store/defaults.ts";
 import {
-  OTUS_CHAT_MODES,
+  OTUS_MODES,
   OTUS_CHAT_MODE_INHERIT,
   OTUS_MODE_KEY,
   otusModeLabel,
@@ -366,7 +370,7 @@ const otusMode = ref(OTUS_CHAT_MODE_INHERIT);
 const isChatAdmin = computed(() => currentChat.value?.role === Role.ADMIN);
 const otusHint = computed(
   () =>
-    OTUS_CHAT_MODES.find((option) => option.value === otusMode.value)?.hint ?? ""
+    OTUS_MODES.find((option) => option.value === otusMode.value)?.hint ?? ""
 );
 // What this chat falls back to. An override means nothing to an operator who
 // cannot see what it overrides.
@@ -445,7 +449,10 @@ function setBotState() {
   botState.value = (currentChat.value?.toJson() as any as Chat).botState;
   botState.value.enabled = !botState.value.disabled;
   botState.value.review = !botState.value.skip_review;
-  otusMode.value = botState.value[OTUS_MODE_KEY] || OTUS_CHAT_MODE_INHERIT;
+  otusMode.value =
+    botState.value[OTUS_MODE_KEY] ||
+    defaultsStore.bot?.values[OTUS_MODE_KEY] ||
+    OTUS_MODES[0].value;
 }
 
 async function saveBotState() {

@@ -17,33 +17,24 @@ export interface OtusModeOption {
 export const OTUS_MODES: OtusModeOption[] = [
   {
     value: "copilot_mode",
-    label: "Hints",
+    label: "copilot_mode",
     hint: "Answers the operator in the copilot lane. Writes to the client only when the operator asked it to.",
   },
   {
     value: "self_mode",
-    label: "Writes itself",
+    label: "self_mode",
     hint: "May write to the client. Still asks in the copilot lane when a person has to decide.",
   },
   {
     value: "god_mode",
-    label: "Full",
-    hint: 'Same as "Writes itself", and may change the ticket status.',
+    label: "god_mode",
+    hint: "Same as self_mode, and may change the ticket status.",
   },
 ];
 
-// The per-chat control has a fourth rung the install switch cannot have: no
-// override at all. It is the default, and an empty value is what clears one.
+// A chat with no override of its own stores an empty string; the picker has no
+// rung for it, so opening the dialog preselects the install-wide mode instead.
 export const OTUS_CHAT_MODE_INHERIT = "";
-
-export const OTUS_CHAT_MODES: OtusModeOption[] = [
-  {
-    value: OTUS_CHAT_MODE_INHERIT,
-    label: "As in settings",
-    hint: "This chat follows the install-wide switch on the Bot settings page.",
-  },
-  ...OTUS_MODES,
-];
 
 export function otusModeLabel(value: string | undefined): string {
   return OTUS_MODES.find((option) => option.value === value)?.label ?? "not set";

@@ -1,7 +1,7 @@
 <template>
   <div>
     <n-collapse style="padding: 6px 24px; max-width: 90%">
-      <n-collapse-item title="Bot behavior" name="bot-behavior">
+      <n-collapse-item title="Otus State" name="bot-behavior">
         <div class="bots_config_switches">
           <div class="bots_config_switch">
             <n-switch class="switch" v-model:value="botConfig.enable">
@@ -12,6 +12,7 @@
             <span> Enable bot in new chats. </span>
           </div>
 
+          <!-- hidden: review toggle (value still saved as-is)
           <div class="bots_config_switch">
             <n-switch class="switch" v-model:value="botConfig.review">
               <template #checked> Review </template>
@@ -23,6 +24,7 @@
               only to administrators.
             </span>
           </div>
+          -->
 
           <div class="bots_config_switch">
             <n-switch class="switch" v-model:value="botConfig.initiator">

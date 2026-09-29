@@ -28,13 +28,34 @@ type MessagesServer struct {
 	chatCtrl        *graph.ChatsController
 	msgCtrl         *graph.MessagesController
 	attachmentsCtrl *graph.AttachmentsController
+	usersCtrl       *graph.UsersController
 	ps              *pubsub.PubSub
 
 	whmcsTickets bool
 }
 
-func NewMessagesServer(logger *zap.Logger, chatCtrl *graph.ChatsController, msgCtrl *graph.MessagesController, attachmentsCtrl *graph.AttachmentsController, ps *pubsub.PubSub, whmcsTickets bool) *MessagesServer {
-	return &MessagesServer{log: logger.Named("MessagesServer"), chatCtrl: chatCtrl, msgCtrl: msgCtrl, attachmentsCtrl: attachmentsCtrl, ps: ps, whmcsTickets: whmcsTickets}
+func NewMessagesServer(logger *zap.Logger, chatCtrl *graph.ChatsController, msgCtrl *graph.MessagesController, attachmentsCtrl *graph.AttachmentsController, usersCtrl *graph.UsersController, ps *pubsub.PubSub, whmcsTickets bool) *MessagesServer {
+	return &MessagesServer{log: logger.Named("MessagesServer"), chatCtrl: chatCtrl, msgCtrl: msgCtrl, attachmentsCtrl: attachmentsCtrl, usersCtrl: usersCtrl, ps: ps, whmcsTickets: whmcsTickets}
+}
+
+// takesResponsibility says whether this sender writing this message should pick
+// up a chat nobody is responsible for. A bot must not: it answers every free
+// ticket within seconds, and the ticket then reads as handled while no human has
+// seen it. Drafts never take it either - an unapproved message is not an answer.
+//
+// ponytail: one Resolve per send; cache it if the write path ever gets hot.
+func (s *MessagesServer) takesResponsibility(ctx context.Context, chat *cc.Chat, sender string, underReview bool) bool {
+	if chat.GetResponsible() != "" || underReview || !slices.Contains(chat.GetAdmins(), sender) {
+		return false
+	}
+	users, err := s.usersCtrl.Resolve(ctx, []string{sender})
+	if err != nil || len(users) == 0 {
+		// Unresolvable sender: keep the old behaviour rather than silently
+		// leaving every ticket unowned.
+		s.log.Warn("Failed to resolve sender while assigning responsible", zap.String("sender", sender), zap.Error(err))
+		return true
+	}
+	return !users[0].GetCcIsBot()
 }
 
 func (s *MessagesServer) Get(ctx context.Context, req *connect.Request[cc.Chat]) (*connect.Response[cc.Messages], error) {
@@ -183,7 +204,7 @@ func (s *MessagesServer) Send(ctx context.Context, req *connect.Request[cc.Messa
 
 	log.Info("Sending result message", zap.Any("message", message))
 
-	if chat.GetResponsible() == "" && slices.Contains(chat.GetAdmins(), requestor) && !msg.GetUnderReview() {
+	if s.takesResponsibility(ctx, chat, requestor, msg.GetUnderReview()) {
 		chat.Responsible = &requestor
 		chat, err = s.chatCtrl.Update(ctx, chat)
 		if err != nil {
@@ -485,7 +506,7 @@ func (s *MessagesServer) Update(ctx context.Context, req *connect.Request[cc.Mes
 	if oldMessage.GetKind() != message.GetKind() || oldMessage.GetUnderReview() != message.GetUnderReview() {
 		go pubsub.HandleSpecialNotify(ctx, log, s.ps, message, oldMessage, chat)
 		sender := message.GetSender()
-		if chat.GetResponsible() == "" && slices.Contains(chat.GetAdmins(), sender) && !message.GetUnderReview() {
+		if s.takesResponsibility(ctx, chat, sender, message.GetUnderReview()) {
 			chat.Responsible = &sender
 			chat, err = s.chatCtrl.Update(ctx, chat)
 			if err != nil {

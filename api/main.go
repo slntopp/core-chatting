@@ -204,7 +204,7 @@ func main() {
 	go chatServer.SLAViolationRoutine(ctx, bannedRoutineDepartments, worker(workers))
 	go chatServer.EmergencyRoutine(ctx, monitoringLogsFile, worker(workers))
 
-	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrl, attachmentsCtrl, ps, whmcsTickets)
+	messagesServer := messages.NewMessagesServer(log, chatCtrl, msgCtrl, attachmentsCtrl, usersCtrl, ps, whmcsTickets)
 	path, handler = cc.NewMessagesAPIHandler(messagesServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 

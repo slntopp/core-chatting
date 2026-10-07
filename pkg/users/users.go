@@ -3,6 +3,7 @@ package users
 import (
 	"connectrpc.com/connect"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
@@ -63,10 +64,23 @@ func (s *UsersServer) SetConfig(ctx context.Context, req *connect.Request[cc.Def
 
 	requestor := ctx.Value(core.ChatAccount).(string)
 
+	// A bot account sits in chat admins to answer tickets, and its token lives in
+	// ai-bot-manager. If it ever lands in the global admins too, that token must
+	// still not be able to rewrite who the admins are.
+	if requestor != core.ROOT_ADMIN {
+		users, err := s.ctrl.Resolve(ctx, []string{requestor})
+		if err != nil || len(users) == 0 || users[0].GetCcIsBot() {
+			return nil, connect.NewError(connect.CodePermissionDenied, core.ErrNotConfigAdmin)
+		}
+	}
+
 	defaults, err := core.SetConfig(requestor, req.Msg)
+	if errors.Is(err, core.ErrNotConfigAdmin) {
+		return nil, connect.NewError(connect.CodePermissionDenied, err)
+	}
 	if err != nil {
 		s.log.Error("Failed set config", zap.Error(err))
-		return nil, fmt.Errorf("failed to fetch defaults: %w", err)
+		return nil, fmt.Errorf("failed to save defaults: %w", err)
 	}
 
 	resp := connect.NewResponse[cc.Defaults](defaults)

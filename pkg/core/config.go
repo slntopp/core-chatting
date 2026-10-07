@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/spf13/viper"
@@ -41,9 +42,35 @@ func Config() (*cc.Defaults, error) {
 	return &config, err
 }
 
+// ErrNotConfigAdmin is returned to anyone who may not rewrite the defaults.
+var ErrNotConfigAdmin = errors.New("only the root account or a chatting admin may change the settings")
+
+// CanSetConfig says whether requestor may rewrite the defaults: the root account,
+// or one of the global admins already listed in them. A NoCloud admin who is not
+// root was refused before, which left the Bot tab usable by one person only.
+// Membership is read from the current file, never from the request, so nobody
+// can list themselves in the same call that is being checked.
+func CanSetConfig(requestor string) (bool, error) {
+	if requestor == "" {
+		return false, nil
+	}
+	if requestor == ROOT_ADMIN {
+		return true, nil
+	}
+	current, err := Config()
+	if err != nil {
+		return false, err
+	}
+	return slices.Contains(current.GetAdmins(), requestor), nil
+}
+
 func SetConfig(requestor string, defaults *cc.Defaults) (*cc.Defaults, error) {
-	if requestor != ROOT_ADMIN {
-		return nil, errors.New("not root account")
+	allowed, err := CanSetConfig(requestor)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
+		return nil, ErrNotConfigAdmin
 	}
 
 	marshal, err := yaml.Marshal(defaults)

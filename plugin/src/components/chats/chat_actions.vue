@@ -6,7 +6,7 @@
         size="small"
         ghost
         circle
-        @click="isBotSettingsOpen = true"
+        @click="openBotSettings"
       >
         <template #icon> <bot-icon /> </template>
       </n-button>
@@ -86,10 +86,11 @@
       </div>
       -->
 
-      <!-- Operators only: this rung decides whether the bot may write to the
-           client on its own, so the chat's owner - the client - must not see
-           or reach it. The server refuses them the key as well. -->
-      <div v-if="isChatAdmin" class="bot_state_settings_field bot_state_otus">
+      <!-- Shown to everyone who opens this dialog: only operators do. Gating it
+           on currentChat.role hid it at random, because a chat event carries the
+           role of whoever caused it, not of the viewer. The server still refuses
+           the key below Role.ADMIN. -->
+      <div class="bot_state_settings_field bot_state_otus">
         <span>Otus mode:</span>
         <div>
           <n-radio-group v-model:value="otusMode" name="chat-otus-mode">
@@ -235,7 +236,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, ref, watch } from "vue";
+import { computed, defineAsyncComponent, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import {
   NButton,
@@ -264,7 +265,6 @@ import {
   Chat,
   Kind,
   Message,
-  Role,
   SetBotStateRequest,
 } from "../../connect/cc/cc_pb";
 import { useAppStore } from "../../store/app.ts";
@@ -365,9 +365,11 @@ const isLearnOpen = ref(false);
 const isSaveBotStateLoading = ref(false);
 const botState = ref<{ [key: string]: any }>({});
 const otusMode = ref(OTUS_CHAT_MODE_INHERIT);
-
-// Role.ADMIN is an operator of this chat; its OWNER is the client it is about.
-const isChatAdmin = computed(() => currentChat.value?.role === Role.ADMIN);
+// The mode the dialog preselected when it opened. Save compares against this,
+// not against what the chat stores: the picker has no "inherit" rung, so it
+// always shows a concrete mode, and comparing that to an empty stored value
+// wrote the install mode onto every chat whose dialog was merely saved.
+const shownOtusMode = ref(OTUS_CHAT_MODE_INHERIT);
 const otusHint = computed(
   () =>
     OTUS_MODES.find((option) => option.value === otusMode.value)?.hint ?? ""
@@ -445,14 +447,26 @@ async function sendCommand(content: string) {
   }
 }
 
+// Read when the dialog opens, not on every change of currentChat: by then the
+// defaults are loaded (so the preselect is not a stale copilot_mode), and a chat
+// event arriving while the dialog is open no longer resets what was picked. A
+// chat with no bot_state at all has none in its JSON.
 function setBotState() {
-  botState.value = (currentChat.value?.toJson() as any as Chat).botState;
+  botState.value = {
+    ...((currentChat.value?.toJson() as any as Chat | undefined)?.botState ?? {}),
+  };
   botState.value.enabled = !botState.value.disabled;
   botState.value.review = !botState.value.skip_review;
   otusMode.value =
     botState.value[OTUS_MODE_KEY] ||
     defaultsStore.bot?.values[OTUS_MODE_KEY] ||
     OTUS_MODES[0].value;
+  shownOtusMode.value = otusMode.value;
+}
+
+function openBotSettings() {
+  setBotState();
+  isBotSettingsOpen.value = true;
 }
 
 async function saveBotState() {
@@ -464,8 +478,7 @@ async function saveBotState() {
     // refused over a value they never touched. The rest of bot_state - the
     // escalated flag the bot writes on a handoff - survives either way: the
     // server merges what arrives into what the chat already holds.
-    const stored = botState.value[OTUS_MODE_KEY] || OTUS_CHAT_MODE_INHERIT;
-    const modeChanged = otusMode.value !== stored;
+    const modeChanged = otusMode.value !== shownOtusMode.value;
 
     await store.update_bot_state(
       SetBotStateRequest.fromJson({
@@ -486,11 +499,6 @@ async function saveBotState() {
   }
 }
 
-setBotState();
-
-watch(currentChat, () => {
-  setBotState();
-});
 </script>
 
 <style scoped>

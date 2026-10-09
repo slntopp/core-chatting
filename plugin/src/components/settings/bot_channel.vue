@@ -99,7 +99,6 @@
           <th>Bot</th>
           <th>Linked account</th>
           <th>Custom name</th>
-          <th>Skip review</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -108,7 +107,6 @@
           <td>{{ link.botName }}</td>
           <td>{{ link.accountUuid }}</td>
           <td>{{ link.customName || "-" }}</td>
-          <td>{{ link.skipReview ? "Yes" : "No" }}</td>
           <td>
             <n-space :wrap-item="false">
               <n-button ghost text type="info" @click="openEdit(link)">
@@ -172,17 +170,6 @@
         <div>
           <n-text depth="3">Custom name</n-text>
           <n-input v-model:value="form.customName" placeholder="e.g. Kirill" />
-        </div>
-
-        <div class="skip-review-row">
-          <n-switch v-model:value="form.skipReview">
-            <template #checked>Skip review</template>
-            <template #unchecked>Requires review</template>
-          </n-switch>
-          <span style="max-width: 60%">
-            When disabled, every bot reply must be approved by a human operator
-            in core-chatting before the client sees it.
-          </span>
         </div>
       </n-space>
 
@@ -266,7 +253,6 @@ const form = reactive({
   botId: "",
   accountUuid: "",
   customName: "",
-  skipReview: false,
 });
 
 const botConfig = reactive({
@@ -318,7 +304,6 @@ function openCreate() {
   form.botId = "";
   form.accountUuid = "";
   form.customName = "";
-  form.skipReview = false;
   showForm.value = true;
 }
 
@@ -327,7 +312,6 @@ function openEdit(link: BotChannelLink) {
   form.botId = link.botId;
   form.accountUuid = link.accountUuid;
   form.customName = link.customName;
-  form.skipReview = link.skipReview;
   showForm.value = true;
 }
 
@@ -339,14 +323,12 @@ async function submit() {
         editingLink.value,
         form.accountUuid,
         form.customName,
-        form.skipReview,
       );
     } else {
       await store.addLink(
         form.botId,
         form.accountUuid,
         form.customName,
-        form.skipReview,
       );
     }
     notification.success({ title: "Done", duration: 1500 });
@@ -443,16 +425,5 @@ export default {
 .bots_config_switches .switch {
   width: 200px;
   justify-content: normal;
-}
-
-.skip-review-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.skip-review-row span {
-  font-size: 0.9rem;
-  opacity: 0.8;
 }
 </style>

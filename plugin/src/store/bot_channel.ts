@@ -24,7 +24,6 @@ export interface BotChannelLink {
   channelId: string;
   accountUuid: string; // NoCloud/core-chatting account acting as the bot's identity
   customName: string;
-  skipReview: boolean;
 }
 
 export const useBotChannelStore = defineStore("bot_channel", () => {
@@ -83,7 +82,6 @@ export const useBotChannelStore = defineStore("bot_channel", () => {
           channelId: channel.id,
           accountUuid: channel.data?.bot_uuid || "",
           customName: channel.metadata?.custom_name || "",
-          skipReview: !!channel.data?.skip_review,
         });
       }
     }
@@ -103,7 +101,6 @@ export const useBotChannelStore = defineStore("bot_channel", () => {
     botId: string,
     accountUuid: string,
     customName: string,
-    skipReview: boolean,
   ) {
     const res = await fetch(`${aiBotManagerBase()}/add_channel`, {
       method: "POST",
@@ -111,7 +108,7 @@ export const useBotChannelStore = defineStore("bot_channel", () => {
       body: JSON.stringify({
         bot: botId,
         type: "core_chatting",
-        data: { bot_uuid: accountUuid, skip_review: skipReview },
+        data: { bot_uuid: accountUuid },
         custom_name: customName,
       }),
     });
@@ -134,10 +131,9 @@ export const useBotChannelStore = defineStore("bot_channel", () => {
     link: BotChannelLink,
     accountUuid: string,
     customName: string,
-    skipReview: boolean,
   ) {
     await removeLink(link.botId, link.channelId);
-    await addLink(link.botId, accountUuid, customName, skipReview);
+    await addLink(link.botId, accountUuid, customName);
   }
 
   return {

@@ -11,6 +11,12 @@ export interface LearnTake {
   answer: string;
 }
 
+export interface LearnFile {
+  path: string;
+  additions: number;
+  deletions: number;
+}
+
 export interface LearnAnswer {
   ok: boolean;
   why: string;
@@ -18,6 +24,10 @@ export interface LearnAnswer {
   takes?: LearnTake[];
   summary?: string;
   prUrl?: string;
+  head?: string;
+  base?: string;
+  files?: LearnFile[];
+  patch?: string;
 }
 
 // Propose and Save run a model over the whole ticket. Nothing here times out

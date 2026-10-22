@@ -44,20 +44,22 @@
     Bot debug traces
   </n-tooltip>
 
-  <n-tooltip v-if="isChatAdmin">
-    <template #trigger>
-      <n-button
-        type="warning"
-        size="small"
-        ghost
-        circle
-        @click="isLearnOpen = true"
-      >
-        <template #icon> <bulb-icon /> </template>
-      </n-button>
-    </template>
-    Learn from this chat
-  </n-tooltip>
+  <div v-if="isChatAdmin" class="learn-slot">
+    <n-tooltip>
+      <template #trigger>
+        <n-button
+          type="warning"
+          size="small"
+          ghost
+          circle
+          @click="isLearnOpen = true"
+        >
+          <template #icon> <bulb-icon /> </template>
+        </n-button>
+      </template>
+      Learn from this chat
+    </n-tooltip>
+  </div>
 
   <n-modal v-model:show="isBotSettingsOpen">
     <n-card
@@ -145,11 +147,13 @@
     </n-drawer-content>
   </n-drawer>
 
-  <n-drawer v-if="isChatAdmin" v-model:show="isLearnOpen" :width="860" placement="right">
-    <n-drawer-content title="Learn from this chat" closable :native-scrollbar="false">
-      <learn-panel v-if="isLearnOpen" :chat-uuid="chat.uuid" />
-    </n-drawer-content>
-  </n-drawer>
+  <div v-if="isChatAdmin">
+    <n-drawer v-model:show="isLearnOpen" :width="860" placement="right">
+      <n-drawer-content title="Learn from this chat" closable :native-scrollbar="false">
+        <learn-panel v-if="isLearnOpen" :chat-uuid="chat.uuid" />
+      </n-drawer-content>
+    </n-drawer>
+  </div>
 
   <n-tooltip>
     <template #trigger>
@@ -510,5 +514,9 @@ watch(currentChat, () => {
   justify-content: end;
   align-items: center;
   margin-top: 30px;
+}
+
+.learn-slot {
+  display: contents;
 }
 </style>

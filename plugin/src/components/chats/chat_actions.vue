@@ -1,4 +1,8 @@
 <template>
+  <!-- One root. vue-tsc 1.8 typechecks a fragment root's v-if against props
+       only, so isChatAdmin on a root node does not exist. display:contents
+       keeps the buttons in the header row. -->
+  <div class="chat-actions">
   <n-tooltip>
     <template #trigger>
       <n-button
@@ -236,6 +240,7 @@
       </n-list-item>
     </n-list>
   </n-popover>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -516,6 +521,7 @@ watch(currentChat, () => {
   margin-top: 30px;
 }
 
+.chat-actions,
 .learn-slot {
   display: contents;
 }

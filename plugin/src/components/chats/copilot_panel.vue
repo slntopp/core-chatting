@@ -11,6 +11,15 @@
           <div class="head__sub">Operator-only — the customer never sees this</div>
         </div>
 
+        <n-tooltip v-if="isChatAdmin">
+          <template #trigger>
+            <n-button type="warning" size="small" ghost circle @click="isLearnOpen = true">
+              <template #icon><bulb-icon /></template>
+            </n-button>
+          </template>
+          Learn from this chat
+        </n-tooltip>
+
         <n-tooltip>
           <template #trigger>
             <n-button type="default" size="small" ghost circle @click="isTracesOpen = true">
@@ -127,6 +136,12 @@
         <trace-viewer v-if="isTracesOpen" :chat-uuid="chat.uuid" lane="copilot" />
       </n-drawer-content>
     </n-drawer>
+
+    <n-drawer v-if="isChatAdmin" v-model:show="isLearnOpen" :width="860" placement="right">
+      <n-drawer-content title="Learn from this chat" closable :native-scrollbar="false">
+        <learn-panel v-if="isLearnOpen" :chat-uuid="chat.uuid" />
+      </n-drawer-content>
+    </n-drawer>
   </n-list>
 </template>
 
@@ -147,17 +162,20 @@ import {
   useNotification,
 } from "naive-ui";
 
-import { Chat, Kind, Message } from "../../connect/cc/cc_pb";
+import { storeToRefs } from "pinia";
+import { Chat, Kind, Message, Role } from "../../connect/cc/cc_pb";
 import { splitChatMessages } from "../../functions";
 import { useCcStore } from "../../store/chatting";
 import { useAppStore } from "../../store/app";
 import TraceViewer from "./trace_viewer.vue";
+import LearnPanel from "./learn_panel.vue";
 
 const MessageView = defineAsyncComponent(() => import("./message.vue"));
 const SendIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/SendOutline"),
 );
 const BugIcon = defineAsyncComponent(() => import("@vicons/ionicons5/BugOutline"));
+const BulbIcon = defineAsyncComponent(() => import("@vicons/ionicons5/BulbOutline"));
 const CloseIcon = defineAsyncComponent(() => import("@vicons/ionicons5/Close"));
 const SparklesIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/SparklesOutline"),
@@ -171,12 +189,18 @@ const props = defineProps<{ chat: Chat }>();
 const store = useCcStore();
 const appStore = useAppStore();
 const notification = useNotification();
+const { currentChat } = storeToRefs(store);
+
+// The customer of this chat is its owner. Learn writes the knowledge the next
+// ticket will follow, so only an operator of this chat gets the button.
+const isChatAdmin = computed(() => currentChat.value?.role === Role.ADMIN);
 
 // Its own draft: sharing store.current_message with the main composer would
 // make text typed in one appear in the other.
 const draft = ref("");
 const sending = ref(false);
 const isTracesOpen = ref(false);
+const isLearnOpen = ref(false);
 const scrollbar = ref();
 
 // The operator's lane: notes, plus the bot's superseded drafts. The main chat

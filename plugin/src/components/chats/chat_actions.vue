@@ -44,7 +44,7 @@
     Bot debug traces
   </n-tooltip>
 
-  <n-tooltip>
+  <n-tooltip v-if="isChatAdmin">
     <template #trigger>
       <n-button
         type="warning"
@@ -145,7 +145,7 @@
     </n-drawer-content>
   </n-drawer>
 
-  <n-drawer v-model:show="isLearnOpen" :width="620" placement="right">
+  <n-drawer v-if="isChatAdmin" v-model:show="isLearnOpen" :width="860" placement="right">
     <n-drawer-content title="Learn from this chat" closable :native-scrollbar="false">
       <learn-panel v-if="isLearnOpen" :chat-uuid="chat.uuid" />
     </n-drawer-content>

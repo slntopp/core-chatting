@@ -8,6 +8,7 @@ import (
 	"github.com/slntopp/core-chatting/cc"
 	"github.com/slntopp/core-chatting/pkg/core"
 	"github.com/slntopp/core-chatting/pkg/graph"
+	settingspb "github.com/slntopp/nocloud-proto/settings"
 	"go.uber.org/zap"
 )
 
@@ -15,10 +16,16 @@ type UsersServer struct {
 	log *zap.Logger
 
 	ctrl *graph.UsersController
+
+	// settings reads the "account-grades" setting; settingsCtx carries the
+	// service's root token.
+	settings    settingspb.SettingsServiceClient
+	settingsCtx context.Context
+	gradesCache gradesCache
 }
 
-func NewUsersServer(logger *zap.Logger, ctrl *graph.UsersController) *UsersServer {
-	return &UsersServer{log: logger.Named("UsersServer"), ctrl: ctrl}
+func NewUsersServer(logger *zap.Logger, ctrl *graph.UsersController, settings settingspb.SettingsServiceClient, settingsCtx context.Context) *UsersServer {
+	return &UsersServer{log: logger.Named("UsersServer"), ctrl: ctrl, settings: settings, settingsCtx: settingsCtx}
 }
 
 func (s *UsersServer) FetchDefaults(ctx context.Context, req *connect.Request[cc.FetchDefaultsRequest]) (
@@ -111,6 +118,7 @@ func (s *UsersServer) Resolve(ctx context.Context, req *connect.Request[cc.Users
 	if err != nil {
 		return nil, err
 	}
+	s.attachGrades(ctx, log, requestor, res)
 
 	resp := connect.NewResponse[cc.Users](&cc.Users{
 		Users: res,
@@ -131,6 +139,7 @@ func (s *UsersServer) Me(ctx context.Context, req *connect.Request[cc.Empty]) (*
 
 	for _, user := range res {
 		if user.Uuid == requestor {
+			user.Grade = nil
 			resp := connect.NewResponse[cc.User](user)
 			return resp, nil
 		}
@@ -140,13 +149,16 @@ func (s *UsersServer) Me(ctx context.Context, req *connect.Request[cc.Empty]) (*
 }
 
 func (s *UsersServer) GetMembers(ctx context.Context, req *connect.Request[cc.GetMembersRequest]) (*connect.Response[cc.Users], error) {
-	log := s.log.Named("Me")
+	log := s.log.Named("GetMembers")
 	log.Debug("Request received", zap.Any("req", req.Msg))
+
+	requestor := ctx.Value(core.ChatAccount).(string)
 
 	members, total, err := s.ctrl.GetMembers(ctx, req.Msg)
 	if err != nil {
 		return nil, err
 	}
+	s.attachGrades(ctx, log, requestor, members)
 
 	resp := connect.NewResponse[cc.Users](&cc.Users{
 		Users: members,

@@ -338,6 +338,25 @@ export const User = /*@__PURE__*/ proto3.makeMessageType(
     { no: 4, name: "cc_is_bot", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 5, name: "cc_username", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "cc_commands", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
+    { no: 7, name: "grade", kind: "message", T: UserGrade, opt: true },
+  ],
+);
+
+/**
+ * UserGrade is derived from the "account-grades" NoCloud setting and the
+ * account's average real money paid per month.
+ *
+ * @generated from message cc.UserGrade
+ */
+export const UserGrade = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.UserGrade",
+  () => [
+    { no: 1, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "color", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "manual", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "amount", kind: "scalar", T: 1 /* ScalarType.DOUBLE */, opt: true },
+    { no: 5, name: "currency", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "period_days", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
   ],
 );
 

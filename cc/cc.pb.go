@@ -86,11 +86,12 @@ const (
 	Status_WAITING_FOR_REPLY Status = 6
 	Status_ON_HOLD           Status = 7
 	Status_IN_PROGRESS       Status = 8
-	// ONBOARDING is an outreach ticket: we wrote first, nobody asked. It is the
-	// one status a message does not change (see MessagesAPI.Send), so a campaign
-	// of thousands does not walk through the operators' status board on its way
-	// to being closed. Set only at creation, and only deliberately; it leaves
-	// the ticket the way any other does, by someone closing it.
+	// ONBOARDING is an outreach ticket: we wrote first, nobody asked. Our own
+	// messages do not move it (see MessagesAPI.Send), so a campaign of thousands
+	// does not walk through the operators' status board while it waits. The
+	// customer's first reply takes it to CUSTOMER_REPLY and the ordinary cycle
+	// resumes; nothing puts it back. Set only at creation, and only
+	// deliberately.
 	Status_ONBOARDING Status = 9
 )
 
@@ -1502,13 +1503,16 @@ func (x *PollsRequest) GetMessages() []string {
 }
 
 type User struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Uuid          string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Data          *structpb.Struct       `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
-	CcIsBot       bool                   `protobuf:"varint,4,opt,name=cc_is_bot,json=ccIsBot,proto3" json:"cc_is_bot,omitempty"`
-	CcUsername    string                 `protobuf:"bytes,5,opt,name=cc_username,json=ccUsername,proto3" json:"cc_username,omitempty"`
-	CcCommands    map[string]string      `protobuf:"bytes,6,rep,name=cc_commands,json=ccCommands,proto3" json:"cc_commands,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Uuid       string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Title      string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Data       *structpb.Struct       `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	CcIsBot    bool                   `protobuf:"varint,4,opt,name=cc_is_bot,json=ccIsBot,proto3" json:"cc_is_bot,omitempty"`
+	CcUsername string                 `protobuf:"bytes,5,opt,name=cc_username,json=ccUsername,proto3" json:"cc_username,omitempty"`
+	CcCommands map[string]string      `protobuf:"bytes,6,rep,name=cc_commands,json=ccCommands,proto3" json:"cc_commands,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Client grade from NoCloud billing. Set only for operators (global and
+	// department admins), never for clients.
+	Grade         *UserGrade `protobuf:"bytes,7,opt,name=grade,proto3,oneof" json:"grade,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1585,6 +1589,99 @@ func (x *User) GetCcCommands() map[string]string {
 	return nil
 }
 
+func (x *User) GetGrade() *UserGrade {
+	if x != nil {
+		return x.Grade
+	}
+	return nil
+}
+
+// UserGrade is derived from the "account-grades" NoCloud setting and the
+// account's average real money paid per month.
+type UserGrade struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Color         string                 `protobuf:"bytes,2,opt,name=color,proto3" json:"color,omitempty"`
+	Manual        bool                   `protobuf:"varint,3,opt,name=manual,proto3" json:"manual,omitempty"`                           // set by an admin, not by spending
+	Amount        *float64               `protobuf:"fixed64,4,opt,name=amount,proto3,oneof" json:"amount,omitempty"`                    // average paid per month
+	Currency      string                 `protobuf:"bytes,5,opt,name=currency,proto3" json:"currency,omitempty"`                        // currency code of amount
+	PeriodDays    int32                  `protobuf:"varint,6,opt,name=period_days,json=periodDays,proto3" json:"period_days,omitempty"` // window the average is taken over
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserGrade) Reset() {
+	*x = UserGrade{}
+	mi := &file_cc_cc_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserGrade) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserGrade) ProtoMessage() {}
+
+func (x *UserGrade) ProtoReflect() protoreflect.Message {
+	mi := &file_cc_cc_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserGrade.ProtoReflect.Descriptor instead.
+func (*UserGrade) Descriptor() ([]byte, []int) {
+	return file_cc_cc_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *UserGrade) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *UserGrade) GetColor() string {
+	if x != nil {
+		return x.Color
+	}
+	return ""
+}
+
+func (x *UserGrade) GetManual() bool {
+	if x != nil {
+		return x.Manual
+	}
+	return false
+}
+
+func (x *UserGrade) GetAmount() float64 {
+	if x != nil && x.Amount != nil {
+		return *x.Amount
+	}
+	return 0
+}
+
+func (x *UserGrade) GetCurrency() string {
+	if x != nil {
+		return x.Currency
+	}
+	return ""
+}
+
+func (x *UserGrade) GetPeriodDays() int32 {
+	if x != nil {
+		return x.PeriodDays
+	}
+	return 0
+}
+
 type Department struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
@@ -1599,7 +1696,7 @@ type Department struct {
 
 func (x *Department) Reset() {
 	*x = Department{}
-	mi := &file_cc_cc_proto_msgTypes[20]
+	mi := &file_cc_cc_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1611,7 +1708,7 @@ func (x *Department) String() string {
 func (*Department) ProtoMessage() {}
 
 func (x *Department) ProtoReflect() protoreflect.Message {
-	mi := &file_cc_cc_proto_msgTypes[20]
+	mi := &file_cc_cc_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1624,7 +1721,7 @@ func (x *Department) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Department.ProtoReflect.Descriptor instead.
 func (*Department) Descriptor() ([]byte, []int) {
-	return file_cc_cc_proto_rawDescGZIP(), []int{20}
+	return file_cc_cc_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *Department) GetKey() string {
@@ -1679,7 +1776,7 @@ type Option struct {
 
 func (x *Option) Reset() {
 	*x = Option{}
-	mi := &file_cc_cc_proto_msgTypes[21]
+	mi := &file_cc_cc_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1691,7 +1788,7 @@ func (x *Option) String() string {
 func (*Option) ProtoMessage() {}
 
 func (x *Option) ProtoReflect() protoreflect.Message {
-	mi := &file_cc_cc_proto_msgTypes[21]
+	mi := &file_cc_cc_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1704,7 +1801,7 @@ func (x *Option) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Option.ProtoReflect.Descriptor instead.
 func (*Option) Descriptor() ([]byte, []int) {
-	return file_cc_cc_proto_rawDescGZIP(), []int{21}
+	return file_cc_cc_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *Option) GetKey() string {
@@ -1731,7 +1828,7 @@ type Metric struct {
 
 func (x *Metric) Reset() {
 	*x = Metric{}
-	mi := &file_cc_cc_proto_msgTypes[22]
+	mi := &file_cc_cc_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1743,7 +1840,7 @@ func (x *Metric) String() string {
 func (*Metric) ProtoMessage() {}
 
 func (x *Metric) ProtoReflect() protoreflect.Message {
-	mi := &file_cc_cc_proto_msgTypes[22]
+	mi := &file_cc_cc_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1756,7 +1853,7 @@ func (x *Metric) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Metric.ProtoReflect.Descriptor instead.
 func (*Metric) Descriptor() ([]byte, []int) {
-	return file_cc_cc_proto_rawDescGZIP(), []int{22}
+	return file_cc_cc_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *Metric) GetTitle() string {
@@ -1787,7 +1884,7 @@ type Defaults struct {
 
 func (x *Defaults) Reset() {
 	*x = Defaults{}
-	mi := &file_cc_cc_proto_msgTypes[23]
+	mi := &file_cc_cc_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1799,7 +1896,7 @@ func (x *Defaults) String() string {
 func (*Defaults) ProtoMessage() {}
 
 func (x *Defaults) ProtoReflect() protoreflect.Message {
-	mi := &file_cc_cc_proto_msgTypes[23]
+	mi := &file_cc_cc_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1812,7 +1909,7 @@ func (x *Defaults) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Defaults.ProtoReflect.Descriptor instead.
 func (*Defaults) Descriptor() ([]byte, []int) {
-	return file_cc_cc_proto_rawDescGZIP(), []int{23}
+	return file_cc_cc_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *Defaults) GetGateways() []string {
@@ -1871,7 +1968,7 @@ type Bot struct {
 
 func (x *Bot) Reset() {
 	*x = Bot{}
-	mi := &file_cc_cc_proto_msgTypes[24]
+	mi := &file_cc_cc_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1883,7 +1980,7 @@ func (x *Bot) String() string {
 func (*Bot) ProtoMessage() {}
 
 func (x *Bot) ProtoReflect() protoreflect.Message {
-	mi := &file_cc_cc_proto_msgTypes[24]
+	mi := &file_cc_cc_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1896,7 +1993,7 @@ func (x *Bot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Bot.ProtoReflect.Descriptor instead.
 func (*Bot) Descriptor() ([]byte, []int) {
-	return file_cc_cc_proto_rawDescGZIP(), []int{24}
+	return file_cc_cc_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *Bot) GetPrompt() string {
@@ -1951,7 +2048,7 @@ type Users struct {
 
 func (x *Users) Reset() {
 	*x = Users{}
-	mi := &file_cc_cc_proto_msgTypes[25]
+	mi := &file_cc_cc_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1963,7 +2060,7 @@ func (x *Users) String() string {
 func (*Users) ProtoMessage() {}
 
 func (x *Users) ProtoReflect() protoreflect.Message {
-	mi := &file_cc_cc_proto_msgTypes[25]
+	mi := &file_cc_cc_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1976,7 +2073,7 @@ func (x *Users) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Users.ProtoReflect.Descriptor instead.
 func (*Users) Descriptor() ([]byte, []int) {
-	return file_cc_cc_proto_rawDescGZIP(), []int{25}
+	return file_cc_cc_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *Users) GetUsers() []*User {
@@ -2002,7 +2099,7 @@ type FetchDefaultsRequest struct {
 
 func (x *FetchDefaultsRequest) Reset() {
 	*x = FetchDefaultsRequest{}
-	mi := &file_cc_cc_proto_msgTypes[26]
+	mi := &file_cc_cc_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2014,7 +2111,7 @@ func (x *FetchDefaultsRequest) String() string {
 func (*FetchDefaultsRequest) ProtoMessage() {}
 
 func (x *FetchDefaultsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cc_cc_proto_msgTypes[26]
+	mi := &file_cc_cc_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2027,7 +2124,7 @@ func (x *FetchDefaultsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FetchDefaultsRequest.ProtoReflect.Descriptor instead.
 func (*FetchDefaultsRequest) Descriptor() ([]byte, []int) {
-	return file_cc_cc_proto_rawDescGZIP(), []int{26}
+	return file_cc_cc_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *FetchDefaultsRequest) GetFetchTemplates() bool {
@@ -2051,7 +2148,7 @@ type GetMembersRequest struct {
 
 func (x *GetMembersRequest) Reset() {
 	*x = GetMembersRequest{}
-	mi := &file_cc_cc_proto_msgTypes[27]
+	mi := &file_cc_cc_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2063,7 +2160,7 @@ func (x *GetMembersRequest) String() string {
 func (*GetMembersRequest) ProtoMessage() {}
 
 func (x *GetMembersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cc_cc_proto_msgTypes[27]
+	mi := &file_cc_cc_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2076,7 +2173,7 @@ func (x *GetMembersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMembersRequest.ProtoReflect.Descriptor instead.
 func (*GetMembersRequest) Descriptor() ([]byte, []int) {
-	return file_cc_cc_proto_rawDescGZIP(), []int{27}
+	return file_cc_cc_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *GetMembersRequest) GetUuids() []string {
@@ -2135,7 +2232,7 @@ type Event struct {
 
 func (x *Event) Reset() {
 	*x = Event{}
-	mi := &file_cc_cc_proto_msgTypes[28]
+	mi := &file_cc_cc_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2147,7 +2244,7 @@ func (x *Event) String() string {
 func (*Event) ProtoMessage() {}
 
 func (x *Event) ProtoReflect() protoreflect.Message {
-	mi := &file_cc_cc_proto_msgTypes[28]
+	mi := &file_cc_cc_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2160,7 +2257,7 @@ func (x *Event) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Event.ProtoReflect.Descriptor instead.
 func (*Event) Descriptor() ([]byte, []int) {
-	return file_cc_cc_proto_rawDescGZIP(), []int{28}
+	return file_cc_cc_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *Event) GetType() EventType {
@@ -2220,7 +2317,7 @@ type StreamRequest struct {
 
 func (x *StreamRequest) Reset() {
 	*x = StreamRequest{}
-	mi := &file_cc_cc_proto_msgTypes[29]
+	mi := &file_cc_cc_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2232,7 +2329,7 @@ func (x *StreamRequest) String() string {
 func (*StreamRequest) ProtoMessage() {}
 
 func (x *StreamRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cc_cc_proto_msgTypes[29]
+	mi := &file_cc_cc_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2245,7 +2342,7 @@ func (x *StreamRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamRequest.ProtoReflect.Descriptor instead.
 func (*StreamRequest) Descriptor() ([]byte, []int) {
-	return file_cc_cc_proto_rawDescGZIP(), []int{29}
+	return file_cc_cc_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *StreamRequest) GetCommands() map[string]string {
@@ -2388,7 +2485,7 @@ const file_cc_cc_proto_rawDesc = "" +
 	"\bmessages\x18\x01 \x03(\v2\v.cc.MessageR\bmessages\"\x15\n" +
 	"\x13MessagesListRequest\"*\n" +
 	"\fPollsRequest\x12\x1a\n" +
-	"\bmessages\x18\x01 \x03(\tR\bmessages\"\x94\x02\n" +
+	"\bmessages\x18\x01 \x03(\tR\bmessages\"\xc8\x02\n" +
 	"\x04User\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12+\n" +
@@ -2397,10 +2494,21 @@ const file_cc_cc_proto_rawDesc = "" +
 	"\vcc_username\x18\x05 \x01(\tR\n" +
 	"ccUsername\x129\n" +
 	"\vcc_commands\x18\x06 \x03(\v2\x18.cc.User.CcCommandsEntryR\n" +
-	"ccCommands\x1a=\n" +
+	"ccCommands\x12(\n" +
+	"\x05grade\x18\a \x01(\v2\r.cc.UserGradeH\x00R\x05grade\x88\x01\x01\x1a=\n" +
 	"\x0fCcCommandsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb3\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\b\n" +
+	"\x06_grade\"\xb4\x01\n" +
+	"\tUserGrade\x12\x14\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12\x14\n" +
+	"\x05color\x18\x02 \x01(\tR\x05color\x12\x16\n" +
+	"\x06manual\x18\x03 \x01(\bR\x06manual\x12\x1b\n" +
+	"\x06amount\x18\x04 \x01(\x01H\x00R\x06amount\x88\x01\x01\x12\x1a\n" +
+	"\bcurrency\x18\x05 \x01(\tR\bcurrency\x12\x1f\n" +
+	"\vperiod_days\x18\x06 \x01(\x05R\n" +
+	"periodDaysB\t\n" +
+	"\a_amount\"\xb3\x01\n" +
 	"\n" +
 	"Department\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -2553,7 +2661,7 @@ func file_cc_cc_proto_rawDescGZIP() []byte {
 }
 
 var file_cc_cc_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_cc_cc_proto_msgTypes = make([]protoimpl.MessageInfo, 44)
+var file_cc_cc_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
 var file_cc_cc_proto_goTypes = []any{
 	(Role)(0),                    // 0: cc.Role
 	(Status)(0),                  // 1: cc.Status
@@ -2579,135 +2687,137 @@ var file_cc_cc_proto_goTypes = []any{
 	(*MessagesListRequest)(nil),  // 21: cc.MessagesListRequest
 	(*PollsRequest)(nil),         // 22: cc.PollsRequest
 	(*User)(nil),                 // 23: cc.User
-	(*Department)(nil),           // 24: cc.Department
-	(*Option)(nil),               // 25: cc.Option
-	(*Metric)(nil),               // 26: cc.Metric
-	(*Defaults)(nil),             // 27: cc.Defaults
-	(*Bot)(nil),                  // 28: cc.Bot
-	(*Users)(nil),                // 29: cc.Users
-	(*FetchDefaultsRequest)(nil), // 30: cc.FetchDefaultsRequest
-	(*GetMembersRequest)(nil),    // 31: cc.GetMembersRequest
-	(*Event)(nil),                // 32: cc.Event
-	(*StreamRequest)(nil),        // 33: cc.StreamRequest
-	nil,                          // 34: cc.ChatMeta.DataEntry
-	nil,                          // 35: cc.Chat.BotStateEntry
-	nil,                          // 36: cc.ListChatsRequest.FiltersEntry
-	nil,                          // 37: cc.SetBotStateRequest.StateEntry
-	nil,                          // 38: cc.CountChatsRequest.FiltersEntry
-	nil,                          // 39: cc.CountChatsResponse.StatusesEntry
-	nil,                          // 40: cc.Poll.VotesEntry
-	nil,                          // 41: cc.Message.MetaEntry
-	nil,                          // 42: cc.User.CcCommandsEntry
-	nil,                          // 43: cc.Defaults.MetricsEntry
-	nil,                          // 44: cc.Defaults.TemplatesEntry
-	nil,                          // 45: cc.Bot.ValuesEntry
-	nil,                          // 46: cc.GetMembersRequest.FiltersEntry
-	nil,                          // 47: cc.StreamRequest.CommandsEntry
-	(*structpb.Struct)(nil),      // 48: google.protobuf.Struct
-	(*structpb.Value)(nil),       // 49: google.protobuf.Value
+	(*UserGrade)(nil),            // 24: cc.UserGrade
+	(*Department)(nil),           // 25: cc.Department
+	(*Option)(nil),               // 26: cc.Option
+	(*Metric)(nil),               // 27: cc.Metric
+	(*Defaults)(nil),             // 28: cc.Defaults
+	(*Bot)(nil),                  // 29: cc.Bot
+	(*Users)(nil),                // 30: cc.Users
+	(*FetchDefaultsRequest)(nil), // 31: cc.FetchDefaultsRequest
+	(*GetMembersRequest)(nil),    // 32: cc.GetMembersRequest
+	(*Event)(nil),                // 33: cc.Event
+	(*StreamRequest)(nil),        // 34: cc.StreamRequest
+	nil,                          // 35: cc.ChatMeta.DataEntry
+	nil,                          // 36: cc.Chat.BotStateEntry
+	nil,                          // 37: cc.ListChatsRequest.FiltersEntry
+	nil,                          // 38: cc.SetBotStateRequest.StateEntry
+	nil,                          // 39: cc.CountChatsRequest.FiltersEntry
+	nil,                          // 40: cc.CountChatsResponse.StatusesEntry
+	nil,                          // 41: cc.Poll.VotesEntry
+	nil,                          // 42: cc.Message.MetaEntry
+	nil,                          // 43: cc.User.CcCommandsEntry
+	nil,                          // 44: cc.Defaults.MetricsEntry
+	nil,                          // 45: cc.Defaults.TemplatesEntry
+	nil,                          // 46: cc.Bot.ValuesEntry
+	nil,                          // 47: cc.GetMembersRequest.FiltersEntry
+	nil,                          // 48: cc.StreamRequest.CommandsEntry
+	(*structpb.Struct)(nil),      // 49: google.protobuf.Struct
+	(*structpb.Value)(nil),       // 50: google.protobuf.Value
 }
 var file_cc_cc_proto_depIdxs = []int32{
 	19, // 0: cc.ChatMeta.first_message:type_name -> cc.Message
 	19, // 1: cc.ChatMeta.last_message:type_name -> cc.Message
-	34, // 2: cc.ChatMeta.data:type_name -> cc.ChatMeta.DataEntry
+	35, // 2: cc.ChatMeta.data:type_name -> cc.ChatMeta.DataEntry
 	0,  // 3: cc.Chat.role:type_name -> cc.Role
 	5,  // 4: cc.Chat.meta:type_name -> cc.ChatMeta
 	1,  // 5: cc.Chat.status:type_name -> cc.Status
-	35, // 6: cc.Chat.bot_state:type_name -> cc.Chat.BotStateEntry
+	36, // 6: cc.Chat.bot_state:type_name -> cc.Chat.BotStateEntry
 	6,  // 7: cc.Chats.chats:type_name -> cc.Chat
-	36, // 8: cc.ListChatsRequest.filters:type_name -> cc.ListChatsRequest.FiltersEntry
-	37, // 9: cc.SetBotStateRequest.state:type_name -> cc.SetBotStateRequest.StateEntry
+	37, // 8: cc.ListChatsRequest.filters:type_name -> cc.ListChatsRequest.FiltersEntry
+	38, // 9: cc.SetBotStateRequest.state:type_name -> cc.SetBotStateRequest.StateEntry
 	6,  // 10: cc.ListChatsResponse.pool:type_name -> cc.Chat
-	38, // 11: cc.CountChatsRequest.filters:type_name -> cc.CountChatsRequest.FiltersEntry
-	39, // 12: cc.CountChatsResponse.statuses:type_name -> cc.CountChatsResponse.StatusesEntry
+	39, // 11: cc.CountChatsRequest.filters:type_name -> cc.CountChatsRequest.FiltersEntry
+	40, // 12: cc.CountChatsResponse.statuses:type_name -> cc.CountChatsResponse.StatusesEntry
 	15, // 13: cc.Poll.options:type_name -> cc.PollOption
-	40, // 14: cc.Poll.votes:type_name -> cc.Poll.VotesEntry
+	41, // 14: cc.Poll.votes:type_name -> cc.Poll.VotesEntry
 	2,  // 15: cc.Message.kind:type_name -> cc.Kind
-	41, // 16: cc.Message.meta:type_name -> cc.Message.MetaEntry
+	42, // 16: cc.Message.meta:type_name -> cc.Message.MetaEntry
 	17, // 17: cc.Message.poll:type_name -> cc.Poll
 	19, // 18: cc.Messages.messages:type_name -> cc.Message
-	48, // 19: cc.User.data:type_name -> google.protobuf.Struct
-	42, // 20: cc.User.cc_commands:type_name -> cc.User.CcCommandsEntry
-	25, // 21: cc.Metric.options:type_name -> cc.Option
-	24, // 22: cc.Defaults.departments:type_name -> cc.Department
-	43, // 23: cc.Defaults.metrics:type_name -> cc.Defaults.MetricsEntry
-	44, // 24: cc.Defaults.templates:type_name -> cc.Defaults.TemplatesEntry
-	28, // 25: cc.Defaults.bot:type_name -> cc.Bot
-	45, // 26: cc.Bot.values:type_name -> cc.Bot.ValuesEntry
-	23, // 27: cc.Users.users:type_name -> cc.User
-	46, // 28: cc.GetMembersRequest.filters:type_name -> cc.GetMembersRequest.FiltersEntry
-	3,  // 29: cc.Event.type:type_name -> cc.EventType
-	6,  // 30: cc.Event.chat:type_name -> cc.Chat
-	19, // 31: cc.Event.msg:type_name -> cc.Message
-	47, // 32: cc.StreamRequest.commands:type_name -> cc.StreamRequest.CommandsEntry
-	49, // 33: cc.ChatMeta.DataEntry.value:type_name -> google.protobuf.Value
-	49, // 34: cc.Chat.BotStateEntry.value:type_name -> google.protobuf.Value
-	49, // 35: cc.ListChatsRequest.FiltersEntry.value:type_name -> google.protobuf.Value
-	49, // 36: cc.SetBotStateRequest.StateEntry.value:type_name -> google.protobuf.Value
-	49, // 37: cc.CountChatsRequest.FiltersEntry.value:type_name -> google.protobuf.Value
-	16, // 38: cc.Poll.VotesEntry.value:type_name -> cc.PollVote
-	49, // 39: cc.Message.MetaEntry.value:type_name -> google.protobuf.Value
-	26, // 40: cc.Defaults.MetricsEntry.value:type_name -> cc.Metric
-	49, // 41: cc.GetMembersRequest.FiltersEntry.value:type_name -> google.protobuf.Value
-	6,  // 42: cc.ChatsAPI.Create:input_type -> cc.Chat
-	6,  // 43: cc.ChatsAPI.Update:input_type -> cc.Chat
-	6,  // 44: cc.ChatsAPI.Get:input_type -> cc.Chat
-	9,  // 45: cc.ChatsAPI.List:input_type -> cc.ListChatsRequest
-	12, // 46: cc.ChatsAPI.Count:input_type -> cc.CountChatsRequest
-	6,  // 47: cc.ChatsAPI.Delete:input_type -> cc.Chat
-	10, // 48: cc.ChatsAPI.SetBotState:input_type -> cc.SetBotStateRequest
-	6,  // 49: cc.ChatsAPI.GetBotState:input_type -> cc.Chat
-	6,  // 50: cc.ChatsAPI.ChangeDepartment:input_type -> cc.Chat
-	6,  // 51: cc.ChatsAPI.ChangeGateway:input_type -> cc.Chat
-	6,  // 52: cc.ChatsAPI.ChangeStatus:input_type -> cc.Chat
-	8,  // 53: cc.ChatsAPI.MergeChats:input_type -> cc.Merge
-	4,  // 54: cc.ChatsAPI.SyncChats:input_type -> cc.Empty
-	6,  // 55: cc.MessagesAPI.Get:input_type -> cc.Chat
-	19, // 56: cc.MessagesAPI.Send:input_type -> cc.Message
-	19, // 57: cc.MessagesAPI.Update:input_type -> cc.Message
-	19, // 58: cc.MessagesAPI.Delete:input_type -> cc.Message
-	18, // 59: cc.MessagesAPI.Vote:input_type -> cc.VoteRequest
-	22, // 60: cc.MessagesAPI.Polls:input_type -> cc.PollsRequest
-	21, // 61: cc.MessagesAPI.List:input_type -> cc.MessagesListRequest
-	4,  // 62: cc.UsersAPI.Me:input_type -> cc.Empty
-	30, // 63: cc.UsersAPI.FetchDefaults:input_type -> cc.FetchDefaultsRequest
-	4,  // 64: cc.UsersAPI.GetConfig:input_type -> cc.Empty
-	27, // 65: cc.UsersAPI.SetConfig:input_type -> cc.Defaults
-	29, // 66: cc.UsersAPI.Resolve:input_type -> cc.Users
-	31, // 67: cc.UsersAPI.GetMembers:input_type -> cc.GetMembersRequest
-	33, // 68: cc.StreamService.Stream:input_type -> cc.StreamRequest
-	6,  // 69: cc.ChatsAPI.Create:output_type -> cc.Chat
-	6,  // 70: cc.ChatsAPI.Update:output_type -> cc.Chat
-	6,  // 71: cc.ChatsAPI.Get:output_type -> cc.Chat
-	11, // 72: cc.ChatsAPI.List:output_type -> cc.ListChatsResponse
-	13, // 73: cc.ChatsAPI.Count:output_type -> cc.CountChatsResponse
-	6,  // 74: cc.ChatsAPI.Delete:output_type -> cc.Chat
-	6,  // 75: cc.ChatsAPI.SetBotState:output_type -> cc.Chat
-	6,  // 76: cc.ChatsAPI.GetBotState:output_type -> cc.Chat
-	6,  // 77: cc.ChatsAPI.ChangeDepartment:output_type -> cc.Chat
-	6,  // 78: cc.ChatsAPI.ChangeGateway:output_type -> cc.Chat
-	6,  // 79: cc.ChatsAPI.ChangeStatus:output_type -> cc.Chat
-	6,  // 80: cc.ChatsAPI.MergeChats:output_type -> cc.Chat
-	4,  // 81: cc.ChatsAPI.SyncChats:output_type -> cc.Empty
-	20, // 82: cc.MessagesAPI.Get:output_type -> cc.Messages
-	19, // 83: cc.MessagesAPI.Send:output_type -> cc.Message
-	19, // 84: cc.MessagesAPI.Update:output_type -> cc.Message
-	19, // 85: cc.MessagesAPI.Delete:output_type -> cc.Message
-	19, // 86: cc.MessagesAPI.Vote:output_type -> cc.Message
-	20, // 87: cc.MessagesAPI.Polls:output_type -> cc.Messages
-	20, // 88: cc.MessagesAPI.List:output_type -> cc.Messages
-	23, // 89: cc.UsersAPI.Me:output_type -> cc.User
-	27, // 90: cc.UsersAPI.FetchDefaults:output_type -> cc.Defaults
-	27, // 91: cc.UsersAPI.GetConfig:output_type -> cc.Defaults
-	27, // 92: cc.UsersAPI.SetConfig:output_type -> cc.Defaults
-	29, // 93: cc.UsersAPI.Resolve:output_type -> cc.Users
-	29, // 94: cc.UsersAPI.GetMembers:output_type -> cc.Users
-	32, // 95: cc.StreamService.Stream:output_type -> cc.Event
-	69, // [69:96] is the sub-list for method output_type
-	42, // [42:69] is the sub-list for method input_type
-	42, // [42:42] is the sub-list for extension type_name
-	42, // [42:42] is the sub-list for extension extendee
-	0,  // [0:42] is the sub-list for field type_name
+	49, // 19: cc.User.data:type_name -> google.protobuf.Struct
+	43, // 20: cc.User.cc_commands:type_name -> cc.User.CcCommandsEntry
+	24, // 21: cc.User.grade:type_name -> cc.UserGrade
+	26, // 22: cc.Metric.options:type_name -> cc.Option
+	25, // 23: cc.Defaults.departments:type_name -> cc.Department
+	44, // 24: cc.Defaults.metrics:type_name -> cc.Defaults.MetricsEntry
+	45, // 25: cc.Defaults.templates:type_name -> cc.Defaults.TemplatesEntry
+	29, // 26: cc.Defaults.bot:type_name -> cc.Bot
+	46, // 27: cc.Bot.values:type_name -> cc.Bot.ValuesEntry
+	23, // 28: cc.Users.users:type_name -> cc.User
+	47, // 29: cc.GetMembersRequest.filters:type_name -> cc.GetMembersRequest.FiltersEntry
+	3,  // 30: cc.Event.type:type_name -> cc.EventType
+	6,  // 31: cc.Event.chat:type_name -> cc.Chat
+	19, // 32: cc.Event.msg:type_name -> cc.Message
+	48, // 33: cc.StreamRequest.commands:type_name -> cc.StreamRequest.CommandsEntry
+	50, // 34: cc.ChatMeta.DataEntry.value:type_name -> google.protobuf.Value
+	50, // 35: cc.Chat.BotStateEntry.value:type_name -> google.protobuf.Value
+	50, // 36: cc.ListChatsRequest.FiltersEntry.value:type_name -> google.protobuf.Value
+	50, // 37: cc.SetBotStateRequest.StateEntry.value:type_name -> google.protobuf.Value
+	50, // 38: cc.CountChatsRequest.FiltersEntry.value:type_name -> google.protobuf.Value
+	16, // 39: cc.Poll.VotesEntry.value:type_name -> cc.PollVote
+	50, // 40: cc.Message.MetaEntry.value:type_name -> google.protobuf.Value
+	27, // 41: cc.Defaults.MetricsEntry.value:type_name -> cc.Metric
+	50, // 42: cc.GetMembersRequest.FiltersEntry.value:type_name -> google.protobuf.Value
+	6,  // 43: cc.ChatsAPI.Create:input_type -> cc.Chat
+	6,  // 44: cc.ChatsAPI.Update:input_type -> cc.Chat
+	6,  // 45: cc.ChatsAPI.Get:input_type -> cc.Chat
+	9,  // 46: cc.ChatsAPI.List:input_type -> cc.ListChatsRequest
+	12, // 47: cc.ChatsAPI.Count:input_type -> cc.CountChatsRequest
+	6,  // 48: cc.ChatsAPI.Delete:input_type -> cc.Chat
+	10, // 49: cc.ChatsAPI.SetBotState:input_type -> cc.SetBotStateRequest
+	6,  // 50: cc.ChatsAPI.GetBotState:input_type -> cc.Chat
+	6,  // 51: cc.ChatsAPI.ChangeDepartment:input_type -> cc.Chat
+	6,  // 52: cc.ChatsAPI.ChangeGateway:input_type -> cc.Chat
+	6,  // 53: cc.ChatsAPI.ChangeStatus:input_type -> cc.Chat
+	8,  // 54: cc.ChatsAPI.MergeChats:input_type -> cc.Merge
+	4,  // 55: cc.ChatsAPI.SyncChats:input_type -> cc.Empty
+	6,  // 56: cc.MessagesAPI.Get:input_type -> cc.Chat
+	19, // 57: cc.MessagesAPI.Send:input_type -> cc.Message
+	19, // 58: cc.MessagesAPI.Update:input_type -> cc.Message
+	19, // 59: cc.MessagesAPI.Delete:input_type -> cc.Message
+	18, // 60: cc.MessagesAPI.Vote:input_type -> cc.VoteRequest
+	22, // 61: cc.MessagesAPI.Polls:input_type -> cc.PollsRequest
+	21, // 62: cc.MessagesAPI.List:input_type -> cc.MessagesListRequest
+	4,  // 63: cc.UsersAPI.Me:input_type -> cc.Empty
+	31, // 64: cc.UsersAPI.FetchDefaults:input_type -> cc.FetchDefaultsRequest
+	4,  // 65: cc.UsersAPI.GetConfig:input_type -> cc.Empty
+	28, // 66: cc.UsersAPI.SetConfig:input_type -> cc.Defaults
+	30, // 67: cc.UsersAPI.Resolve:input_type -> cc.Users
+	32, // 68: cc.UsersAPI.GetMembers:input_type -> cc.GetMembersRequest
+	34, // 69: cc.StreamService.Stream:input_type -> cc.StreamRequest
+	6,  // 70: cc.ChatsAPI.Create:output_type -> cc.Chat
+	6,  // 71: cc.ChatsAPI.Update:output_type -> cc.Chat
+	6,  // 72: cc.ChatsAPI.Get:output_type -> cc.Chat
+	11, // 73: cc.ChatsAPI.List:output_type -> cc.ListChatsResponse
+	13, // 74: cc.ChatsAPI.Count:output_type -> cc.CountChatsResponse
+	6,  // 75: cc.ChatsAPI.Delete:output_type -> cc.Chat
+	6,  // 76: cc.ChatsAPI.SetBotState:output_type -> cc.Chat
+	6,  // 77: cc.ChatsAPI.GetBotState:output_type -> cc.Chat
+	6,  // 78: cc.ChatsAPI.ChangeDepartment:output_type -> cc.Chat
+	6,  // 79: cc.ChatsAPI.ChangeGateway:output_type -> cc.Chat
+	6,  // 80: cc.ChatsAPI.ChangeStatus:output_type -> cc.Chat
+	6,  // 81: cc.ChatsAPI.MergeChats:output_type -> cc.Chat
+	4,  // 82: cc.ChatsAPI.SyncChats:output_type -> cc.Empty
+	20, // 83: cc.MessagesAPI.Get:output_type -> cc.Messages
+	19, // 84: cc.MessagesAPI.Send:output_type -> cc.Message
+	19, // 85: cc.MessagesAPI.Update:output_type -> cc.Message
+	19, // 86: cc.MessagesAPI.Delete:output_type -> cc.Message
+	19, // 87: cc.MessagesAPI.Vote:output_type -> cc.Message
+	20, // 88: cc.MessagesAPI.Polls:output_type -> cc.Messages
+	20, // 89: cc.MessagesAPI.List:output_type -> cc.Messages
+	23, // 90: cc.UsersAPI.Me:output_type -> cc.User
+	28, // 91: cc.UsersAPI.FetchDefaults:output_type -> cc.Defaults
+	28, // 92: cc.UsersAPI.GetConfig:output_type -> cc.Defaults
+	28, // 93: cc.UsersAPI.SetConfig:output_type -> cc.Defaults
+	30, // 94: cc.UsersAPI.Resolve:output_type -> cc.Users
+	30, // 95: cc.UsersAPI.GetMembers:output_type -> cc.Users
+	33, // 96: cc.StreamService.Stream:output_type -> cc.Event
+	70, // [70:97] is the sub-list for method output_type
+	43, // [43:70] is the sub-list for method input_type
+	43, // [43:43] is the sub-list for extension type_name
+	43, // [43:43] is the sub-list for extension extendee
+	0,  // [0:43] is the sub-list for field type_name
 }
 
 func init() { file_cc_cc_proto_init() }
@@ -2719,9 +2829,11 @@ func file_cc_cc_proto_init() {
 	file_cc_cc_proto_msgTypes[5].OneofWrappers = []any{}
 	file_cc_cc_proto_msgTypes[6].OneofWrappers = []any{}
 	file_cc_cc_proto_msgTypes[15].OneofWrappers = []any{}
+	file_cc_cc_proto_msgTypes[19].OneofWrappers = []any{}
 	file_cc_cc_proto_msgTypes[20].OneofWrappers = []any{}
-	file_cc_cc_proto_msgTypes[27].OneofWrappers = []any{}
-	file_cc_cc_proto_msgTypes[28].OneofWrappers = []any{
+	file_cc_cc_proto_msgTypes[21].OneofWrappers = []any{}
+	file_cc_cc_proto_msgTypes[28].OneofWrappers = []any{}
+	file_cc_cc_proto_msgTypes[29].OneofWrappers = []any{
 		(*Event_Chat)(nil),
 		(*Event_Msg)(nil),
 	}
@@ -2731,7 +2843,7 @@ func file_cc_cc_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cc_cc_proto_rawDesc), len(file_cc_cc_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   44,
+			NumMessages:   45,
 			NumExtensions: 0,
 			NumServices:   4,
 		},

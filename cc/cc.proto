@@ -261,6 +261,21 @@ message User {
   bool cc_is_bot = 4;
   string cc_username = 5;
   map<string, string> cc_commands = 6;
+
+  // Client grade from NoCloud billing. Set only for operators (global and
+  // department admins), never for clients.
+  optional UserGrade grade = 7;
+}
+
+// UserGrade is derived from the "account-grades" NoCloud setting and the
+// account's average real money paid per month.
+message UserGrade {
+  string title = 1;
+  string color = 2;
+  bool manual = 3;              // set by an admin, not by spending
+  optional double amount = 4;   // average paid per month
+  string currency = 5;          // currency code of amount
+  int32 period_days = 6;        // window the average is taken over
 }
 
 message Department {

@@ -208,7 +208,7 @@ func main() {
 	path, handler = cc.NewMessagesAPIHandler(messagesServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 
-	usersServer := users.NewUsersServer(log, usersCtrl)
+	usersServer := users.NewUsersServer(log, usersCtrl, settingsClient, ctx)
 	path, handler = cc.NewUsersAPIHandler(usersServer, interceptors)
 	router.PathPrefix(path).Handler(handler)
 

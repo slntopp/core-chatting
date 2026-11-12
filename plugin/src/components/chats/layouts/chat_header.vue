@@ -38,6 +38,7 @@
         />
 
         <n-text class="chat__topic">{{ chat.topic ?? members }}</n-text>
+        <account-grade v-for="client of clients" :key="client.uuid" :user="client" />
         <n-button text style="flex: none" @click="startEditChat">
           <n-icon size="18">
             <edit-icon />
@@ -286,6 +287,7 @@ import { useCcStore } from "../../../store/chatting.ts";
 import { useAppStore } from "../../../store/app";
 import ChatOptions from "../chat_options.vue";
 import UserAvatar from "../../ui/user_avatar.vue";
+import AccountGrade from "../../ui/account_grade.vue";
 import MembersDropdown from "../../users/members_dropdown.vue";
 import { addToClipboard, getImageUrl } from "../../../functions.ts";
 import ChatStatus from "../chat_status.vue";
@@ -354,6 +356,14 @@ onMounted(() => {
   observer.observe(root.value);
 });
 onBeforeUnmount(() => observer?.disconnect());
+
+// Chat members who are not operators: the clients whose grade is shown.
+const clients = computed(() =>
+  chat.value.users
+    .filter((uuid) => !chat.value.admins.includes(uuid))
+    .map((uuid) => users.value.get(uuid))
+    .filter((u): u is User => !!u),
+);
 
 const members = computed(() => {
   const uuids = new Set([

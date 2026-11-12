@@ -81,11 +81,12 @@ export declare enum Status {
   IN_PROGRESS = 8,
 
   /**
-   * ONBOARDING is an outreach ticket: we wrote first, nobody asked. It is the
-   * one status a message does not change (see MessagesAPI.Send), so a campaign
-   * of thousands does not walk through the operators' status board on its way
-   * to being closed. Set only at creation, and only deliberately; it leaves
-   * the ticket the way any other does, by someone closing it.
+   * ONBOARDING is an outreach ticket: we wrote first, nobody asked. Our own
+   * messages do not move it (see MessagesAPI.Send), so a campaign of thousands
+   * does not walk through the operators' status board while it waits. The
+   * customer's first reply takes it to CUSTOMER_REPLY and the ordinary cycle
+   * resumes; nothing puts it back. Set only at creation, and only
+   * deliberately.
    *
    * @generated from enum value: ONBOARDING = 9;
    */
@@ -949,6 +950,14 @@ export declare class User extends Message$1<User> {
    */
   ccCommands: { [key: string]: string };
 
+  /**
+   * Client grade from NoCloud billing. Set only for operators (global and
+   * department admins), never for clients.
+   *
+   * @generated from field: optional cc.UserGrade grade = 7;
+   */
+  grade?: UserGrade;
+
   constructor(data?: PartialMessage<User>);
 
   static readonly runtime: typeof proto3;
@@ -962,6 +971,66 @@ export declare class User extends Message$1<User> {
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): User;
 
   static equals(a: User | PlainMessage<User> | undefined, b: User | PlainMessage<User> | undefined): boolean;
+}
+
+/**
+ * UserGrade is derived from the "account-grades" NoCloud setting and the
+ * account's average real money paid per month.
+ *
+ * @generated from message cc.UserGrade
+ */
+export declare class UserGrade extends Message$1<UserGrade> {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string color = 2;
+   */
+  color: string;
+
+  /**
+   * set by an admin, not by spending
+   *
+   * @generated from field: bool manual = 3;
+   */
+  manual: boolean;
+
+  /**
+   * average paid per month
+   *
+   * @generated from field: optional double amount = 4;
+   */
+  amount?: number;
+
+  /**
+   * currency code of amount
+   *
+   * @generated from field: string currency = 5;
+   */
+  currency: string;
+
+  /**
+   * window the average is taken over
+   *
+   * @generated from field: int32 period_days = 6;
+   */
+  periodDays: number;
+
+  constructor(data?: PartialMessage<UserGrade>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "cc.UserGrade";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UserGrade;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UserGrade;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UserGrade;
+
+  static equals(a: UserGrade | PlainMessage<UserGrade> | undefined, b: UserGrade | PlainMessage<UserGrade> | undefined): boolean;
 }
 
 /**

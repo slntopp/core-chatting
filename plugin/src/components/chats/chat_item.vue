@@ -47,6 +47,7 @@
           >
             {{ owner?.title }}
           </n-text>
+          <account-grade v-if="!isUsersLoading" :user="owner" />
 
           <n-icon v-if="chat.botState.escalated" size="20" color="red">
             <escalated-icon />
@@ -199,6 +200,7 @@ import {
   getRelativeTime,
 } from "../../functions.ts";
 import UserAvatar from "../ui/user_avatar.vue";
+import AccountGrade from "../ui/account_grade.vue";
 import ChatStatus from "./chat_status.vue";
 import { useAppStore } from "../../store/app.ts";
 import { useUsersStore } from "../../store/users.ts";

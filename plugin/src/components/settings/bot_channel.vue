@@ -65,6 +65,9 @@
               </n-space>
             </n-radio-group>
             <n-text depth="3">{{ otusHint }}</n-text>
+            <n-text depth="3" style="display: block; margin-top: 8px">
+              Telegram, Bitrix, веб-виджет и звонки всегда работают в режиме «Отвечает и правит». Этот переключатель их не меняет.
+            </n-text>
           </div>
         </div>
 

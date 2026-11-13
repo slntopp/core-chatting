@@ -67,7 +67,7 @@
       size="huge"
       role="dialog"
       aria-modal="true"
-      style="width: 780px; max-width: 92vw; min-height: 300px"
+      style="width: 780px; max-width: 92vw; min-height: 330px"
     >
       <div class="bot_state_settings_field">
         <span>Otus state:</span>
@@ -93,25 +93,23 @@
            the key below Role.ADMIN. -->
       <div class="bot_state_settings_field bot_state_otus">
         <span>Otus mode:</span>
-        <div>
-          <n-radio-group v-model:value="otusMode" name="chat-otus-mode">
-            <n-space>
-              <n-radio
-                v-for="option in OTUS_MODES"
-                :key="option.value"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </n-radio>
-            </n-space>
-          </n-radio-group>
-          <n-text depth="3" tag="div" style="margin-top: 4px">
-            {{ otusHint }}
-          </n-text>
-          <n-text depth="3" tag="div">
-            Install-wide now: {{ installOtusModeLabel }}.
-          </n-text>
-        </div>
+        <n-radio-group v-model:value="otusMode" name="chat-otus-mode">
+          <n-space>
+            <n-radio
+              v-for="option in OTUS_MODES"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </n-radio>
+          </n-space>
+        </n-radio-group>
+      </div>
+
+      <div v-if="isChatAdmin" class="otus_description">
+        <n-text depth="3" tag="div">
+          {{ otusHint }}
+        </n-text>
       </div>
 
       <div class="bot_state_settings_actions">
@@ -268,6 +266,7 @@ import {
   Kind,
   Message,
   SetBotStateRequest,
+  Role,
 } from "../../connect/cc/cc_pb";
 import { useAppStore } from "../../store/app.ts";
 import { useCcStore } from "../../store/chatting.ts";
@@ -281,7 +280,6 @@ import {
   OTUS_MODES,
   OTUS_CHAT_MODE_INHERIT,
   OTUS_MODE_KEY,
-  otusModeLabel,
 } from "../../otus.ts";
 
 const copyIcon = defineAsyncComponent(
@@ -372,14 +370,12 @@ const otusMode = ref(OTUS_CHAT_MODE_INHERIT);
 // always shows a concrete mode, and comparing that to an empty stored value
 // wrote the install mode onto every chat whose dialog was merely saved.
 const shownOtusMode = ref(OTUS_CHAT_MODE_INHERIT);
+
+// Role.ADMIN is an operator of this chat; its OWNER is the client it is about.
+const isChatAdmin = computed(() => currentChat.value?.role === Role.ADMIN);
 const otusHint = computed(
   () =>
     OTUS_MODES.find((option) => option.value === otusMode.value)?.hint ?? ""
-);
-// What this chat falls back to. An override means nothing to an operator who
-// cannot see what it overrides.
-const installOtusModeLabel = computed(() =>
-  otusModeLabel(defaultsStore.bot?.values[OTUS_MODE_KEY])
 );
 
 const onMessage = ({ data, origin }: any) => {
@@ -504,6 +500,29 @@ async function saveBotState() {
 </script>
 
 <style scoped>
+.bot_state_otus {
+  align-items: flex-start;
+}
+
+.otus_modes_container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.otus_hints {
+  width: 100%;
+  min-height: 60px;
+  text-align: center;
+}
+
+.otus_description {
+  margin-left: auto;
+  margin-right: 0;
+  text-align: center;
+  padding: 0 16px;
+}
+
 .bot_state_otus {
   align-items: flex-start;
 }

@@ -17,18 +17,18 @@ export interface OtusModeOption {
 export const OTUS_MODES: OtusModeOption[] = [
   {
     value: "copilot_mode",
-    label: "copilot_mode",
-    hint: "Answers the operator in the copilot lane. Writes to the client only when the operator asked it to.",
+    label: "Только операторам",
+    hint: "Пишет в чат, который видят только операторы. Клиенту отвечает только если оператор попросил. Сервер только смотрит. Статус тикета не меняет.",
   },
   {
     value: "self_mode",
-    label: "self_mode",
-    hint: "May write to the client. Still asks in the copilot lane when a person has to decide.",
+    label: "Отвечает сам",
+    hint: "Отвечает клиенту сам. Сервер только смотрит. Статус тикета не меняет.",
   },
   {
     value: "god_mode",
-    label: "god_mode",
-    hint: "Same as self_mode, and may change the ticket status.",
+    label: "Отвечает и правит",
+    hint: "Отвечает клиенту сам. Сервер может менять, только если клиент или оператор разрешили этот шаг. Может перевести тикет в другой рабочий статус, но не закрывает и не ставит «решён».",
   },
 ];
 

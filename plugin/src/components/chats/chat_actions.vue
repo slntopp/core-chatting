@@ -190,8 +190,6 @@ import TraceViewer from "./trace_viewer.vue";
 import { ConnectError } from "@connectrpc/connect";
 import {
   Chat,
-  Kind,
-  Message,
   SetBotStateRequest,
   Role,
 } from "../../connect/cc/cc_pb";
@@ -199,7 +197,6 @@ import { useAppStore } from "../../store/app.ts";
 import { useCcStore } from "../../store/chatting.ts";
 import { addToClipboard } from "../../functions.ts";
 import { storeToRefs } from "pinia";
-import { useUsersStore } from "../../store/users.ts";
 import { onUnmounted } from "vue";
 // import ProcessChatPanel from "./process_chat_panel.vue"; // hidden, see template
 import { useDefaultsStore } from "../../store/defaults.ts";
@@ -234,12 +231,10 @@ interface ChatActionsProps {
 
 const appStore = useAppStore();
 const store = useCcStore();
-const usersStore = useUsersStore();
 const defaultsStore = useDefaultsStore();
 const notification = useNotification();
 
 const { currentChat } = storeToRefs(store);
-const { users } = storeToRefs(usersStore);
 
 const props = defineProps<ChatActionsProps>();
 const router = useRouter();
@@ -308,56 +303,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener("message", onMessage);
 });
-
-const hoverInstancesButton = (event: MouseEvent) => {
-  const button = (event.target as HTMLElement).closest(
-    ".n-button"
-  ) as HTMLButtonElement;
-
-  window.top?.postMessage(
-    {
-      type: "click-on-button",
-      value: { x: button?.offsetLeft, y: button?.offsetTop },
-    },
-    "*"
-  );
-};
-
-interface commandType {
-  key: string;
-  description: string;
-}
-
-const commands = computed(() => {
-  const result: commandType[] = [];
-
-  props.chat.admins.forEach((uuid) => {
-    const bot = users.value.get(uuid);
-
-    if (!bot?.ccIsBot) return;
-    Object.entries(bot.ccCommands || {}).forEach(([key, description]) => {
-      result.push({ key: `/${key}`, description });
-    });
-  });
-
-  return result;
-});
-
-async function sendCommand(content: string) {
-  try {
-    await store.send_message(
-      new Message({
-        content,
-        kind: Kind.FOR_BOT,
-        chat: router.currentRoute.value.params.uuid as string,
-      })
-    );
-  } catch (error) {
-    notification.error({
-      title: (error as ConnectError).message ?? "[Error]: Unknown",
-    });
-  }
-}
 
 // Read when the dialog opens, not on every change of currentChat: by then the
 // defaults are loaded (so the preselect is not a stale copilot_mode), and a chat

@@ -5,6 +5,12 @@
        chat looks and behaves exactly as before. -->
   <n-split
     class="split"
+    :class="{ 'split--keyboard': keyboardOpen }"
+    :style="
+      keyboardOpen
+        ? { top: vvTop + 'px', height: vvHeight + 'px' }
+        : undefined
+    "
     direction="horizontal"
     :size="appStore.isCopilotOpen ? appStore.copilotSplit : 1"
     :min="0.3"
@@ -97,6 +103,7 @@ import {
   computed,
   defineAsyncComponent,
   nextTick,
+  onBeforeUnmount,
   onMounted,
   ref,
   watch,
@@ -225,6 +232,44 @@ function handle_edit(message: Message) {
 
 const chatPaddingLeft = computed(() => (appStore.isMobile ? "12px" : "16px"));
 
+const vvTop = ref(0);
+const vvHeight = ref(0);
+const keyboardOpen = ref(false);
+
+function syncVisualViewport() {
+  const vv = window.visualViewport;
+  if (!appStore.isMobile || !vv) return;
+  vvTop.value = vv.offsetTop;
+  vvHeight.value = vv.height;
+  const open = window.innerHeight - vv.height > 150;
+  if (open === keyboardOpen.value) return;
+  keyboardOpen.value = open;
+  if (open) scrollToBottom();
+}
+
+function onComposerFocus(event: FocusEvent) {
+  const target = event.target as HTMLElement | null;
+  if (!appStore.isMobile || !target) return;
+  if (target.tagName !== "TEXTAREA" && target.tagName !== "INPUT") return;
+  scrollToBottom();
+}
+
+onMounted(() => {
+  window.addEventListener("focusin", onComposerFocus);
+  const vv = window.visualViewport;
+  if (!vv) return;
+  vv.addEventListener("resize", syncVisualViewport);
+  vv.addEventListener("scroll", syncVisualViewport);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("focusin", onComposerFocus);
+  const vv = window.visualViewport;
+  if (!vv) return;
+  vv.removeEventListener("resize", syncVisualViewport);
+  vv.removeEventListener("scroll", syncVisualViewport);
+});
+
 const fetchChat = async () => {
   try {
     await store.get_chat(route.params.uuid as string);
@@ -290,5 +335,26 @@ watch(chatUuid, fetchChat);
 .chat__scroll {
   flex: 1 1 auto;
   min-height: 0;
+}
+
+.split--keyboard {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 5;
+}
+
+.split--keyboard .chat {
+  height: 100%;
+}
+
+@media (max-width: 900px) {
+  .chat__scroll :deep(.n-scrollbar-content) {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
 }
 </style>

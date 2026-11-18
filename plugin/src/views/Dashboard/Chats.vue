@@ -950,6 +950,12 @@ watch(page, () => {
   .chats__filters {
     min-width: 0;
     width: min(92vw, 420px);
+    max-height: calc(100dvh - 150px);
+  }
+
+  .chats__filters > .n-scrollbar,
+  .chats__filters > .n-scrollbar > .n-scrollbar-container {
+    max-height: calc(100dvh - 150px);
   }
 
   .list-toolbar {

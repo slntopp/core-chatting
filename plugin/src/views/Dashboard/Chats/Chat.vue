@@ -280,7 +280,9 @@ watch(chatUuid, fetchChat);
   display: flex;
   flex-direction: column;
   height: 100dvh;
+  min-height: 0;
   padding-left: v-bind("chatPaddingLeft");
+  padding-right: v-bind("chatPaddingLeft");
 }
 
 /* min-height:0 is what actually lets a flex child scroll instead of growing

@@ -3,22 +3,7 @@
   <n-tooltip>
     <template #trigger>
       <n-button
-        type="info"
-        size="small"
-        ghost
-        circle
-        @click="openBotSettings"
-      >
-        <template #icon> <bot-icon /> </template>
-      </n-button>
-    </template>
-    Bot settings
-  </n-tooltip>
-
-  <n-tooltip>
-    <template #trigger>
-      <n-button
-        size="small"
+        :size="appStore.isMobile ? 'medium' : 'small'"
         ghost
         circle
         :color="appStore.isCopilotOpen ? COPILOT_COLOR : undefined"
@@ -28,36 +13,6 @@
       </n-button>
     </template>
     Ask the bot about this chat
-  </n-tooltip>
-
-  <n-tooltip>
-    <template #trigger>
-      <n-button
-        type="default"
-        size="small"
-        ghost
-        circle
-        @click="isTracesOpen = true"
-      >
-        <template #icon> <bug-icon /> </template>
-      </n-button>
-    </template>
-    Bot debug traces
-  </n-tooltip>
-
-  <n-tooltip>
-    <template #trigger>
-      <n-button
-        type="warning"
-        size="small"
-        ghost
-        circle
-        @click="isLearnOpen = true"
-      >
-        <template #icon> <bulb-icon /> </template>
-      </n-button>
-    </template>
-    Learn from this chat
   </n-tooltip>
 
   <n-modal v-model:show="isBotSettingsOpen">
@@ -139,17 +94,42 @@
     </n-card>
   </n-modal>
 
-  <n-drawer v-model:show="isTracesOpen" :width="620" placement="right">
+  <n-drawer v-model:show="isTracesOpen" :width="appStore.isMobile ? '100%' : 620" placement="right">
     <n-drawer-content title="Bot debug traces" closable :native-scrollbar="false">
       <trace-viewer v-if="isTracesOpen" :chat-uuid="chat.uuid" lane="customer" />
     </n-drawer-content>
   </n-drawer>
 
-  <n-drawer v-model:show="isLearnOpen" :width="860" placement="right">
-    <n-drawer-content title="Learn from this chat" closable :native-scrollbar="false">
-      <learn-panel v-if="isLearnOpen" :chat-uuid="chat.uuid" />
-    </n-drawer-content>
-  </n-drawer>
+  <template v-if="!appStore.isMobile">
+  <n-tooltip>
+    <template #trigger>
+      <n-button
+        type="info"
+        size="small"
+        ghost
+        circle
+        @click="openBotSettings"
+      >
+        <template #icon> <bot-icon /> </template>
+      </n-button>
+    </template>
+    Bot settings
+  </n-tooltip>
+
+  <n-tooltip>
+    <template #trigger>
+      <n-button
+        type="default"
+        size="small"
+        ghost
+        circle
+        @click="isTracesOpen = true"
+      >
+        <template #icon> <bug-icon /> </template>
+      </n-button>
+    </template>
+    Bot debug traces
+  </n-tooltip>
 
   <n-tooltip>
     <template #trigger>
@@ -182,56 +162,7 @@
     </template>
     Delete chat
   </n-tooltip>
-
-  <n-tooltip v-if="buttonTitle">
-    <template #trigger>
-      <n-button
-        ghost
-        circle
-        type="warning"
-        size="small"
-        @mouseenter="hoverInstancesButton"
-      >
-        <template #icon> <list-icon /> </template>
-      </n-button>
-    </template>
-    Instances list
-  </n-tooltip>
-
-  <n-popover
-    scrollable
-    trigger="click"
-    placement="bottom"
-    content-style="padding: 0"
-    v-if="commands.length > 0"
-  >
-    <template #trigger>
-      <n-tooltip>
-        <template #trigger>
-          <n-button
-            ref="commandsButton"
-            type="success"
-            size="small"
-            ghost
-            circle
-          >
-            <template #icon> <console-icon /> </template>
-          </n-button>
-        </template>
-        Commands
-      </n-tooltip>
-    </template>
-
-    <n-list hoverable clickable>
-      <n-list-item
-        v-for="command of commands"
-        :key="command.key"
-        @click="sendCommand(command.key)"
-      >
-        {{ command.key }} ({{ command.description }})
-      </n-list-item>
-    </n-list>
-  </n-popover>
+  </template>
   </div>
 </template>
 
@@ -240,9 +171,6 @@ import { computed, defineAsyncComponent, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import {
   NButton,
-  NList,
-  NListItem,
-  NPopover,
   NTooltip,
   NPopconfirm,
   useNotification,
@@ -258,13 +186,10 @@ import {
   NText,
 } from "naive-ui";
 import TraceViewer from "./trace_viewer.vue";
-import LearnPanel from "./learn_panel.vue";
 
 import { ConnectError } from "@connectrpc/connect";
 import {
   Chat,
-  Kind,
-  Message,
   SetBotStateRequest,
   Role,
 } from "../../connect/cc/cc_pb";
@@ -272,7 +197,6 @@ import { useAppStore } from "../../store/app.ts";
 import { useCcStore } from "../../store/chatting.ts";
 import { addToClipboard } from "../../functions.ts";
 import { storeToRefs } from "pinia";
-import { useUsersStore } from "../../store/users.ts";
 import { onUnmounted } from "vue";
 // import ProcessChatPanel from "./process_chat_panel.vue"; // hidden, see template
 import { useDefaultsStore } from "../../store/defaults.ts";
@@ -292,9 +216,6 @@ const botIcon = defineAsyncComponent(() => import("@vicons/fa/Robot"));
 const deleteIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/TrashBinOutline")
 );
-const listIcon = defineAsyncComponent(
-  () => import("@vicons/ionicons5/ListOutline")
-);
 const sparklesIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/SparklesOutline")
 );
@@ -303,12 +224,6 @@ const COPILOT_COLOR = "#7c5cff";
 const bugIcon = defineAsyncComponent(
   () => import("@vicons/ionicons5/BugOutline")
 );
-const bulbIcon = defineAsyncComponent(
-  () => import("@vicons/ionicons5/BulbOutline")
-);
-const consoleIcon = defineAsyncComponent(
-  () => import("@vicons/ionicons5/TerminalOutline")
-);
 
 interface ChatActionsProps {
   chat: Chat;
@@ -316,12 +231,10 @@ interface ChatActionsProps {
 
 const appStore = useAppStore();
 const store = useCcStore();
-const usersStore = useUsersStore();
 const defaultsStore = useDefaultsStore();
 const notification = useNotification();
 
 const { currentChat } = storeToRefs(store);
-const { users } = storeToRefs(usersStore);
 
 const props = defineProps<ChatActionsProps>();
 const router = useRouter();
@@ -361,7 +274,6 @@ const buttonTitle = ref("");
 
 const isBotSettingsOpen = ref(false);
 const isTracesOpen = ref(false);
-const isLearnOpen = ref(false);
 const isSaveBotStateLoading = ref(false);
 const botState = ref<{ [key: string]: any }>({});
 const otusMode = ref(OTUS_CHAT_MODE_INHERIT);
@@ -392,59 +304,6 @@ onUnmounted(() => {
   window.removeEventListener("message", onMessage);
 });
 
-const hoverInstancesButton = (event: MouseEvent) => {
-  const button = (event.target as HTMLElement).closest(
-    ".n-button"
-  ) as HTMLButtonElement;
-
-  window.top?.postMessage(
-    {
-      type: "click-on-button",
-      value: { x: button?.offsetLeft, y: button?.offsetTop },
-    },
-    "*"
-  );
-};
-
-interface commandType {
-  key: string;
-  description: string;
-}
-
-const commandsButton = ref();
-
-const commands = computed(() => {
-  const result: commandType[] = [];
-
-  props.chat.admins.forEach((uuid) => {
-    const bot = users.value.get(uuid);
-
-    if (!bot?.ccIsBot) return;
-    Object.entries(bot.ccCommands || {}).forEach(([key, description]) => {
-      result.push({ key: `/${key}`, description });
-    });
-  });
-
-  return result;
-});
-
-async function sendCommand(content: string) {
-  try {
-    await store.send_message(
-      new Message({
-        content,
-        kind: Kind.FOR_BOT,
-        chat: router.currentRoute.value.params.uuid as string,
-      })
-    );
-    commandsButton.value.onClick();
-  } catch (error) {
-    notification.error({
-      title: (error as ConnectError).message ?? "[Error]: Unknown",
-    });
-  }
-}
-
 // Read when the dialog opens, not on every change of currentChat: by then the
 // defaults are loaded (so the preselect is not a stale copilot_mode), and a chat
 // event arriving while the dialog is open no longer resets what was picked. A
@@ -466,6 +325,12 @@ function openBotSettings() {
   setBotState();
   isBotSettingsOpen.value = true;
 }
+
+function openTraces() {
+  isTracesOpen.value = true;
+}
+
+defineExpose({ openBotSettings, openTraces, copyLink, refresh, deleteChat });
 
 async function saveBotState() {
   try {

@@ -22,7 +22,13 @@
 
         <n-tooltip>
           <template #trigger>
-            <n-button type="default" size="small" ghost circle @click="isTracesOpen = true">
+            <n-button
+              size="small"
+              ghost
+              circle
+              :color="COPILOT_COLOR"
+              @click="isTracesOpen = true"
+            >
               <template #icon><bug-icon /></template>
             </n-button>
           </template>
@@ -74,9 +80,7 @@
       justify="center"
       align="center"
     >
-      <n-alert type="info" title="No Notes yet">
-        Ask the bot about this chat, or leave a note for the team.
-      </n-alert>
+      <n-alert type="info" title="No notes yet" />
     </n-space>
 
     <template #footer>
@@ -97,13 +101,11 @@
                 type="textarea"
                 size="small"
                 style="width: 100%"
-                :placeholder="
-                  editing
-                    ? 'Edit the note'
-                    : 'Note for the team — or ask the bot about this chat'
-                "
-                :autosize="{ minRows: 3, maxRows: 15 }"
+                :placeholder="editing ? 'Edit the note' : 'Ask or leave a note'"
+                :autosize="{ minRows: editing || composerFocused ? 3 : 1, maxRows: 15 }"
                 :disabled="sending"
+                @focus="composerFocused = true"
+                @blur="composerFocused = false"
                 @keyup.prevent.ctrl.enter.exact="send"
               />
             </template>
@@ -199,6 +201,7 @@ const isChatAdmin = computed(() => currentChat.value?.role === Role.ADMIN);
 // make text typed in one appear in the other.
 const draft = ref("");
 const sending = ref(false);
+const composerFocused = ref(false);
 const isTracesOpen = ref(false);
 const isLearnOpen = ref(false);
 const scrollbar = ref();

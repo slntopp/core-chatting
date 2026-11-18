@@ -12,7 +12,7 @@
     <template v-else>
       <n-button
         ghost
-        size="small"
+        :size="appStore.isMobile ? 'medium' : 'small'"
         v-if="appStore.displayMode === 'none'"
         @click="appStore.displayMode = 'full'"
       >
@@ -20,7 +20,7 @@
       </n-button>
 
       <div class="hdr__id">
-        <n-tooltip>
+        <n-tooltip v-if="!appStore.isMobile">
           <template #trigger>
             <n-tag round size="small" @click="addToClipboard(chat.uuid, notification)">
               <code style="text-decoration: underline; cursor: pointer">
@@ -32,14 +32,21 @@
         </n-tooltip>
 
         <user-avatar
+          v-if="!appStore.isMobile"
           round
           style="flex: none"
           :avatar="members.map((m) => m?.title ?? '').join(' ')"
         />
 
         <n-text class="chat__topic">{{ chat.topic ?? members }}</n-text>
-        <account-grade v-for="client of clients" :key="client.uuid" :user="client" />
-        <n-button text style="flex: none" @click="startEditChat">
+        <template v-if="!appStore.isMobile">
+          <account-grade
+            v-for="client of clients"
+            :key="client.uuid"
+            :user="client"
+          />
+        </template>
+        <n-button v-if="!appStore.isMobile" text style="flex: none" @click="startEditChat">
           <n-icon size="18">
             <edit-icon />
           </n-icon>
@@ -100,6 +107,7 @@
 
         <chat-status :chat="chat" />
         <members-dropdown
+          v-if="!appStore.isMobile"
           :visible="isVisible"
           :admins="chat.admins"
           :members="members"
@@ -112,8 +120,8 @@
 
         <!-- nowrap: eight circle buttons breaking onto a second row is what
              made the header twice as tall and pushed the chat down. -->
-        <div class="hdr__actions">
-          <chat-actions :chat="chat" />
+          <div class="hdr__actions">
+          <chat-actions ref="actions" :chat="chat" />
         </div>
 
         <template v-if="!compact">
@@ -123,7 +131,7 @@
 
         <n-popover v-else trigger="click" placement="bottom-end">
           <template #trigger>
-            <n-button size="small" ghost circle>
+            <n-button :size="appStore.isMobile ? 'medium' : 'small'" ghost circle>
               <template #icon>
                 <n-icon><more-icon /></n-icon>
               </template>
@@ -131,6 +139,37 @@
           </template>
 
           <div class="more">
+            <template v-if="appStore.isMobile">
+              <div class="more__row">
+                <n-button @click="actions?.openBotSettings()">Bot settings</n-button>
+                <n-button @click="actions?.openTraces()">Debug traces</n-button>
+              </div>
+              <div class="more__row">
+                <n-button @click="actions?.copyLink()">Copy link</n-button>
+                <n-button @click="actions?.refresh()">Refresh</n-button>
+              </div>
+              <div class="more__row">
+                <n-button @click="startEditChat">Rename</n-button>
+                <n-popconfirm @positive-click="actions?.deleteChat()">
+                  <template #trigger>
+                    <n-button type="error" ghost>Delete chat</n-button>
+                  </template>
+                  Delete this chat?
+                </n-popconfirm>
+              </div>
+              <div class="more__row">
+                <span class="more__label">People</span>
+                <members-dropdown
+                  trigger="click"
+                  :visible="isVisible"
+                  :admins="chat.admins"
+                  :members="members"
+                  @add="startAddMembers"
+                  @delete="deleteMember"
+                  @change="openResponsible"
+                />
+              </div>
+            </template>
             <div class="more__row">
               <span class="more__label">Responsible</span>
               <n-select
@@ -268,6 +307,7 @@ import {
 } from "vue";
 import {
   NButton,
+  NPopconfirm,
   NPopover,
   NCard,
   NDivider,
@@ -342,10 +382,12 @@ const isAddSaveLoading = ref<boolean>(false);
 // mobile one that snaps wide a frame later.
 const root = ref<HTMLElement>();
 const width = ref(0);
-// Everything laid out inline needs roughly 1240px: two selects (380), the
-// action row (270), status + members (150), dates (200) and the topic. Below
-// that the secondary half moves into the popover instead of being cut off.
-const compact = computed(() => width.value > 0 && width.value < 1240);
+const actions = ref<InstanceType<typeof ChatActions>>();
+// Inline layout is the topic, two selects, status, four action buttons and one
+// date. Below this the selects and the date move into the popover.
+const compact = computed(
+  () => appStore.isMobile || (width.value > 0 && width.value < 1080)
+);
 
 let observer: ResizeObserver | undefined;
 onMounted(() => {
@@ -491,7 +533,7 @@ const saveMembers = async () => {
 .hdr {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   min-width: 0;
   /* The pane only pads its left edge; without this the last control sits flush
@@ -503,9 +545,9 @@ const saveMembers = async () => {
   display: flex;
   align-items: center;
   gap: 6px;
-  /* Shrinks but never grows: growing put the slack between the topic and the
-     selects, which is the gap in the middle of the header. */
-  flex: 0 1 auto;
+  /* Takes leftover width and gives it up first, so opening the copilot pane
+     shortens the title instead of wrapping the header onto a second row. */
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -515,8 +557,8 @@ const saveMembers = async () => {
 }
 
 .hdr__select {
-  flex: 0 1 190px;
-  min-width: 120px;
+  flex: 0 1 160px;
+  min-width: 96px;
 }
 
 .hdr__side {
@@ -542,11 +584,32 @@ const saveMembers = async () => {
 }
 
 .chat__topic {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+@media (max-width: 900px) {
+  .hdr {
+    gap: 6px;
+    padding-left: 8px;
+  }
+
+  .hdr__side {
+    min-width: 0;
+  }
+
+  .hdr__side :deep(.status) {
+    max-width: 92px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .more {
@@ -554,6 +617,17 @@ const saveMembers = async () => {
   flex-direction: column;
   gap: 12px;
   width: 260px;
+}
+@media (max-width: 900px) {
+  .more {
+    width: min(260px, 78vw);
+    max-height: 70dvh;
+    overflow: auto;
+  }
+  .more__row:has(> .n-button) {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
 }
 .more__row {
   display: flex;

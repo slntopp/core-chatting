@@ -283,8 +283,6 @@ const owner = computed(() => {
   return allUsers.value.get(ownerUuid);
 });
 
-if (appStore.isMobile) hovered.value = true;
-
 const chatTopic = computed(() => {
   const topic = chat.value.topic ?? members.value.join(", ");
   const words = topic.split(" ");
@@ -345,12 +343,12 @@ const chatRightColumn = computed(() =>
   appStore.displayMode === "full" ? 6 : 3,
 );
 const avatarScale = computed(() => {
-  if (appStore.isMobile) return 0;
+  if (appStore.isMobile) return 1;
 
   return props.selected.includes(chat.value.uuid) ? 0.5 : 1;
 });
 
-const chatAvatarWidth = computed(() => (appStore.isMobile ? "15px" : null));
+const chatAvatarWidth = computed(() => (appStore.isMobile ? "44px" : null));
 
 const onlyMainInfo = computed(
   () => appStore.isMobile || appStore.displayMode === "half",
@@ -405,6 +403,24 @@ function openChat(user: string) {
     padding: 12px 10px;
   }
 
+  @media (max-width: 900px) {
+    &.n-list-item {
+      padding: 14px 12px;
+      min-height: 72px;
+    }
+
+    :deep(.n-list-item__main) {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      column-gap: 10px;
+      align-items: start;
+    }
+
+    :deep(.n-list-item__main > .n-space) {
+      display: contents !important;
+    }
+  }
+
   .preview {
     display: grid;
     grid-template-columns: v-bind(previewColumns);
@@ -419,6 +435,13 @@ function openChat(user: string) {
       gap: 0px;
     }
 
+    @media only screen and (max-width: 900px) {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
     .sub {
       display: block;
       display: -webkit-box;
@@ -428,6 +451,7 @@ function openChat(user: string) {
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: calc(100% - 50px);
+      font-size: 15px;
 
       &:hover {
         text-decoration: v-bind(subDecoration);
@@ -443,6 +467,7 @@ function openChat(user: string) {
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: calc(100% - 75px);
+      font-size: 15px;
     }
 
     .responsible {
@@ -492,6 +517,39 @@ function openChat(user: string) {
   flex-direction: column;
   code {
     font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .chat .mobile_right {
+    position: static;
+    right: 12px;
+    top: 14px;
+    gap: 4px;
+    max-width: none;
+    text-align: right;
+    white-space: nowrap;
+    code {
+      font-size: 0.85rem;
+    }
+  }
+
+  .chat .preview .sub {
+    max-width: 100%;
+  }
+
+  .chat .preview .topic {
+    word-break: normal;
+    overflow-wrap: break-word;
+    width: 100%;
+    max-width: 100%;
+    text-overflow: unset;
+  }
+}
+
+@media (max-width: 900px) {
+  .chat__avatar-wrapper:hover .chat__avatar {
+    transform: none;
   }
 }
 </style>

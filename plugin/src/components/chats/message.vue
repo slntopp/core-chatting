@@ -495,6 +495,7 @@ function render(props: RenderProps, { slots }: any) {
         NText,
         {
           class: "sub",
+          style: "font-size: 16px; font-weight: 600; line-height: 1.3",
           onClick() {
             const uuid = message.value.sender;
 

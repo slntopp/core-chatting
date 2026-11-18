@@ -133,44 +133,63 @@ func (c *ChatsController) Get(ctx context.Context, uuid, requestor string) (*cc.
 	return &chat, nil
 }
 
+// listChatsQuery still has to look at every chat the caller can see, because
+// the page is sorted by last message or unread and the total is the full
+// match count. It must not load every message of every chat to do that:
+// first and last are one document each, and unread is a count. Both ride the
+// msg_chat_sent index (FILTER m.chat, SORT m.sent, LIMIT 1).
 const listChatsQuery = `
-LET chats = ( FOR c in @@chats
-FILTER @requestor in c.admins || @requestor in c.users || @requestor == @root_account
-	LET role = (
-     @requestor in c.admins or @requestor == @root_account ? 3 : (
-      c.owner == @requestor ? 2 : (
-       @requestor in c.users ? 1 : 0
-      )
-     )
-    )
-    %s
-	LET messages = (
-         FOR m in @@messages 
-         FILTER m.chat == c._key 
-		 FILTER m.kind NOT IN @operator_only || role == 3
-         FILTER !m.under_review || role == 3
-         SORT m.sent ASC RETURN m
-    )
-	LET first_message = FIRST(messages)
-	LET last_message = LAST(messages)
-	LET unread = c.status == @closed_status ? 0 : LENGTH(
-		FOR m in messages
-			FILTER @requestor not in m.readers
-			FILTER m.sender != @requestor
-			RETURN true
+LET chats = (
+	FOR c IN @@chats
+		FILTER @requestor IN c.admins || @requestor IN c.users || @requestor == @root_account
+		LET role = (
+			@requestor IN c.admins OR @requestor == @root_account ? 3 : (
+				c.owner == @requestor ? 2 : (
+					@requestor IN c.users ? 1 : 0
+				)
+			)
 		)
-    %s
-	RETURN MERGE(c, {
-	  role: role,
-      meta: {
-		unread: unread,
-		last_message: last_message,
-		first_message: first_message,
-		data: c.meta.data
-	  }
-	}))
+		%s
+		LET first_message = FIRST(
+			FOR m IN @@messages
+				FILTER m.chat == c._key
+				FILTER m.kind NOT IN @operator_only || role == 3
+				FILTER !m.under_review || role == 3
+				SORT m.sent ASC, m._key ASC
+				LIMIT 1
+				RETURN m
+		)
+		LET last_message = FIRST(
+			FOR m IN @@messages
+				FILTER m.chat == c._key
+				FILTER m.kind NOT IN @operator_only || role == 3
+				FILTER !m.under_review || role == 3
+				SORT m.sent DESC, m._key DESC
+				LIMIT 1
+				RETURN m
+		)
+		LET unread = c.status == @closed_status ? 0 : LENGTH(
+			FOR m IN @@messages
+				FILTER m.chat == c._key
+				FILTER m.kind NOT IN @operator_only || role == 3
+				FILTER !m.under_review || role == 3
+				FILTER @requestor NOT IN m.readers
+				FILTER m.sender != @requestor
+				RETURN 1
+		)
+		%s
+		RETURN MERGE(c, {
+			role: role,
+			meta: {
+				unread: unread,
+				last_message: last_message,
+				first_message: first_message,
+				data: c.meta.data
+			}
+		})
+)
 LET total = LENGTH(chats)
-RETURN { pool: @count>0 ? SLICE(chats, @offset, @count) : chats, total: total }
+RETURN { pool: @count > 0 ? SLICE(chats, @offset, @count) : chats, total: total }
 `
 
 func (c *ChatsController) List(ctx context.Context, requester string, req *cc.ListChatsRequest) ([]*cc.Chat, int64, error) {

@@ -1,6 +1,6 @@
 <template>
   <n-dropdown
-    trigger="hover"
+    :trigger="trigger"
     :render-option="renderOption"
     :options="membersOptions"
     :show="visible"
@@ -21,12 +21,15 @@ import AddButton from "../ui/add_button.vue";
 
 interface MembersDropdownProps {
   visible?: boolean;
+  trigger?: "hover" | "click";
   responsible?: User;
   members: User[];
   admins: String[];
 }
 
-const props = defineProps<MembersDropdownProps>();
+const props = withDefaults(defineProps<MembersDropdownProps>(), {
+  trigger: "hover",
+});
 const emits = defineEmits(["delete", "add", "change"]);
 const slots = useSlots();
 

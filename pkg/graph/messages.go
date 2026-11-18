@@ -26,6 +26,7 @@ func NewMessagesController(logger *zap.Logger, db driver.Database) *MessagesCont
 	ctx := context.TODO()
 
 	col := GetEnsureCollection(log, ctx, db, MESSAGES_COLLECTION)
+	ensureMessagesListIndex(log, ctx, col)
 
 	return &MessagesController{
 		log: log,

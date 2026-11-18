@@ -124,6 +124,20 @@ func GraphGetEdgeEnsure(logger *zap.Logger, ctx context.Context, graph driver.Gr
 	return col
 }
 
+// ensureMessagesListIndex backs the chat list. List asks, per chat, for the
+// earliest message, the latest message and an unread count, all filtered by
+// m.chat. Without this index each of those is a full scan of CC_Messages,
+// repeated for every chat the caller can see.
+func ensureMessagesListIndex(log *zap.Logger, ctx context.Context, col driver.Collection) {
+	_, _, err := col.EnsurePersistentIndex(ctx, []string{"chat", "sent"}, &driver.EnsurePersistentIndexOptions{
+		Name:         "msg_chat_sent",
+		InBackground: true,
+	})
+	if err != nil {
+		log.Error("Failed to ensure messages list index", zap.Error(err))
+	}
+}
+
 func GetEnsureCollection(log *zap.Logger, ctx context.Context, db driver.Database, name string) driver.Collection {
 	exists, err := db.CollectionExists(ctx, name)
 	if err != nil {

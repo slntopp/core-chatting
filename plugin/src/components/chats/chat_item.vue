@@ -428,6 +428,7 @@ function openChat(user: string) {
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: calc(100% - 50px);
+      font-size: 15px;
 
       &:hover {
         text-decoration: v-bind(subDecoration);
@@ -443,6 +444,7 @@ function openChat(user: string) {
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: calc(100% - 75px);
+      font-size: 15px;
     }
 
     .responsible {

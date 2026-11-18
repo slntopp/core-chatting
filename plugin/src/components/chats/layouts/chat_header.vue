@@ -342,10 +342,9 @@ const isAddSaveLoading = ref<boolean>(false);
 // mobile one that snaps wide a frame later.
 const root = ref<HTMLElement>();
 const width = ref(0);
-// Everything laid out inline needs roughly 1240px: two selects (380), the
-// action row (270), status + members (150), dates (200) and the topic. Below
-// that the secondary half moves into the popover instead of being cut off.
-const compact = computed(() => width.value > 0 && width.value < 1240);
+// Inline layout is the topic, two selects, status, four action buttons and one
+// date. Below this the selects and the date move into the popover.
+const compact = computed(() => width.value > 0 && width.value < 1080);
 
 let observer: ResizeObserver | undefined;
 onMounted(() => {
@@ -491,7 +490,7 @@ const saveMembers = async () => {
 .hdr {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   min-width: 0;
   /* The pane only pads its left edge; without this the last control sits flush
@@ -503,9 +502,9 @@ const saveMembers = async () => {
   display: flex;
   align-items: center;
   gap: 6px;
-  /* Shrinks but never grows: growing put the slack between the topic and the
-     selects, which is the gap in the middle of the header. */
-  flex: 0 1 auto;
+  /* Takes leftover width and gives it up first, so opening the copilot pane
+     shortens the title instead of wrapping the header onto a second row. */
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -515,8 +514,8 @@ const saveMembers = async () => {
 }
 
 .hdr__select {
-  flex: 0 1 190px;
-  min-width: 120px;
+  flex: 0 1 160px;
+  min-width: 96px;
 }
 
 .hdr__side {
@@ -542,11 +541,14 @@ const saveMembers = async () => {
 }
 
 .chat__topic {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .more {

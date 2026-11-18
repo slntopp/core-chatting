@@ -1,50 +1,22 @@
 <template>
-  <n-space
-    vertical
-    :wrap-item="false"
-    :style="{ gap: 0, whiteSpace: 'nowrap', paddingRight: '18px' }"
-  >
-    <n-text>
-      Created:
-      <n-tooltip>
-        <template #trigger>
-          <code style="text-decoration: underline">
-            {{ getRelativeTime(Number(chat.created), now) }}
-          </code>
-        </template>
-        {{ new Date(Number(chat.created)).toLocaleString() }}
-      </n-tooltip>
-    </n-text>
-
-    <n-text>
-      Last update:
-      <n-tooltip>
-        <template #trigger>
-          <code style="text-decoration: underline">
-            {{ getRelativeTime(lastUpdate, now) }}
-          </code>
-        </template>
-        {{ new Date(lastUpdate).toLocaleString() }}
-      </n-tooltip>
-    </n-text>
-
-    <n-text>
-      Lifetime:
-      <n-tooltip>
-        <template #trigger>
-          <code style="text-decoration: underline">
-            {{ getRelativeTime(Number(chat.created), now, true) }}
-          </code>
-        </template>
-        {{ new Date(Number(chat.created)).toLocaleString() }}
-      </n-tooltip>
-    </n-text>
-  </n-space>
+  <n-tooltip>
+    <template #trigger>
+      <n-text class="when">
+        Updated
+        <code>{{ updatedLabel }}</code>
+      </n-text>
+    </template>
+    <div class="when__tip">
+      <div>Created: {{ createdAbsolute }}</div>
+      <div>Last update: {{ updatedAbsolute }}</div>
+      <div>Lifetime: {{ lifetimeLabel }}</div>
+    </div>
+  </n-tooltip>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import { NSpace, NText, NTooltip } from "naive-ui";
+import { NText, NTooltip } from "naive-ui";
 import { Chat } from "../../connect/cc/cc_pb";
 import { getRelativeTime } from "../../functions";
 
@@ -56,10 +28,25 @@ const props = defineProps<ChatDatesProps>();
 const now = ref(Date.now());
 const interval = ref<number>();
 
+const created = computed(() => Number(props.chat.created));
 const lastUpdate = computed(() =>
   Number(
     props.chat.meta?.lastMessage?.edited || props.chat.meta?.lastMessage?.sent
   )
+);
+const updatedAt = computed(() => lastUpdate.value || created.value);
+
+const updatedLabel = computed(() =>
+  getRelativeTime(updatedAt.value, now.value)
+);
+const lifetimeLabel = computed(() =>
+  getRelativeTime(created.value, now.value, true)
+);
+const createdAbsolute = computed(() =>
+  new Date(created.value).toLocaleString()
+);
+const updatedAbsolute = computed(() =>
+  updatedAt.value ? new Date(updatedAt.value).toLocaleString() : "—"
 );
 
 onMounted(() => {
@@ -70,3 +57,17 @@ onUnmounted(() => {
   clearInterval(interval.value);
 });
 </script>
+
+<style scoped>
+.when {
+  white-space: nowrap;
+}
+.when code {
+  text-decoration: underline;
+}
+.when__tip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+</style>

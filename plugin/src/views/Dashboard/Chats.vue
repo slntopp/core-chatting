@@ -9,12 +9,18 @@
       collapse-mode="transform"
       :collapsed="!isChatPanelOpen"
     >
+      <div :class="{ 'list-toolbar': appStore.isMobile && !isSelectedChats }">
       <n-space
         align="center"
+        :size="appStore.isMobile && !isSelectedChats ? 0 : appStore.isMobile ? 4 : 'medium'"
         :wrap="appStore.isMobile ? false : true"
         :wrap-item="false"
         :justify="
-          isChatPanelOpen || appStore.isMobile ? 'space-between' : 'center'
+          appStore.isMobile
+            ? 'start'
+            : isChatPanelOpen
+              ? 'space-between'
+              : 'center'
         "
         :class="{ chat__actions: true, hide: !isChatPanelOpen }"
       >
@@ -24,7 +30,10 @@
           </n-button>
           <n-button ghost type="success" @click="startChat">
             <n-icon :component="ChatbubbleEllipsesOutline" />
-            <span v-if="isChatPanelOpen" style="margin-left: 5px">
+            <span
+              v-if="isChatPanelOpen && !appStore.isMobile"
+              style="margin-left: 5px"
+            >
               Start Chat
             </span>
           </n-button>
@@ -71,6 +80,10 @@
             v-else
             clearable
             placeholder="Status"
+            :consistent-menu-width="!appStore.isMobile"
+            :menu-props="
+              appStore.isMobile ? { style: 'min-width: 168px' } : undefined
+            "
             :value="selectedStatus"
             :options="
               Object.values(chatsCountByStatus).map(({ count, status }) => ({
@@ -180,12 +193,14 @@
       <n-space
         class="search"
         align="center"
-        justify="space-between"
+        :justify="appStore.isMobile ? 'start' : 'space-between'"
         v-if="isChatPanelOpen"
+        :size="appStore.isMobile && !isSelectedChats ? 0 : 'medium'"
         :wrap="false"
       >
         <n-checkbox
-          :style="appStore.isMobile ? undefined : 'padding-left: 10px'"
+          v-if="!appStore.isMobile"
+          style="padding-left: 10px"
           v-model:checked="isAllChatsSelected"
         />
 
@@ -226,6 +241,7 @@
           />
         </n-popover>
       </n-space>
+      </div>
 
       <n-scrollbar
         ref="scrollbar"
@@ -274,7 +290,8 @@
           v-model:page="page"
           v-model:page-size="pageSize"
           :page-count="pageCount"
-          show-size-picker
+          :show-size-picker="!appStore.isMobile"
+          :page-slot="appStore.isMobile ? 5 : 9"
           :page-sizes="[10, 20, 30, 50]"
         />
       </div>
@@ -920,6 +937,114 @@ watch(page, () => {
   min-width: 450px;
   width: 450px;
   transition: 0.4s;
+}
+
+@media (max-width: 900px) {
+  .chats__panel,
+  .chats__panel.closed,
+  .chat__item {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .chats__filters {
+    min-width: 0;
+    width: min(92vw, 420px);
+  }
+
+  .list-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 10px 20px;
+  }
+
+  /* The two groups disappear as boxes, so the button, status, search and
+     filter share one row and one gap. */
+  .chats__panel .list-toolbar .chat__actions,
+  .chats__panel .list-toolbar .search {
+    display: contents !important;
+  }
+
+  .list-toolbar .n-button {
+    flex: none;
+  }
+
+  .list-toolbar .n-select {
+    flex: 0 0 132px;
+    width: 132px;
+    min-width: 132px;
+  }
+
+  .chats__panel .list-toolbar .n-input {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .chats__panel .list-toolbar .search div:nth-child(2),
+  .chats__panel .list-toolbar .n-popover,
+  .chats__panel .list-toolbar .n-icon {
+    flex: 0 0 auto;
+    width: auto;
+  }
+
+  .chats__panel {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    height: auto !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .list-toolbar,
+  .chats_pagination {
+    flex: none;
+  }
+
+  .chats__panel .n-layout-sider {
+    flex: 1 1 auto;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    margin-bottom: 0 !important;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chats__panel .n-layout-sider-scroll-container {
+    flex: 1 1 auto !important;
+    flex-shrink: 1 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 100%;
+    margin-bottom: 0 !important;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chats__panel .scrollBarOpened,
+  .chats__panel .scrollBarClosed {
+    flex: 1 1 auto;
+    height: auto !important;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .chats__panel .n-list {
+    margin-bottom: 0 !important;
+  }
+
+  .chats_pagination {
+    flex: none;
+    margin-top: 0;
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+    overflow-x: auto;
+  }
 }
 
 .chats__panel.closed {

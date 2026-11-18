@@ -116,4 +116,14 @@ watch(() => store.conf?.fullscreen, setDevice);
 :root {
   --main-app-primary-color: #ff00ff;
 }
+
+@media (max-width: 900px) {
+  html,
+  body,
+  #app,
+  #app > div {
+    height: 100%;
+    overflow: hidden;
+  }
+}
 </style>

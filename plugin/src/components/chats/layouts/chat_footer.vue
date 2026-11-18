@@ -2,7 +2,9 @@
   <div class="footer" @paste="handle_paste">
     <n-space
       v-if="chat?.role == Role.ADMIN"
+      class="modes"
       style="grid-column: 1 / 3; gap: 5px"
+      :wrap="!appStore.isMobile"
       :wrap-item="false"
     >
       <n-tooltip placement="top-start">
@@ -55,7 +57,7 @@
           closable
           type="info"
           title="Editing"
-          style="min-width: 50vw"
+          :style="appStore.isMobile ? 'width: 100%' : 'min-width: 50vw'"
           v-if="store.updating"
           @close="handle_stop_edit"
         />
@@ -71,7 +73,10 @@
               style="width: 100%"
               placeholder="Type your message"
               v-model:value="store.current_message.content"
-              :autosize="{ minRows: 3, maxRows: 15 }"
+              :autosize="{
+                minRows: appStore.isMobile ? 2 : 3,
+                maxRows: appStore.isMobile ? 6 : 15,
+              }"
               :options="mentionsOptions"
               :prefix="isMentionVisible ? '@' : ' @'"
               @input="onInput"
@@ -99,7 +104,13 @@
 
       <n-space class="actions" style="flex-flow: nowrap">
         <n-upload-trigger abstract #="{ handleClick }">
-          <n-button ghost circle size="small" type="info" @click="handleClick">
+          <n-button
+            ghost
+            circle
+            :size="appStore.isMobile ? 'medium' : 'small'"
+            type="info"
+            @click="handleClick"
+          >
             <template #icon>
               <n-icon :component="DownloadIcon" />
             </template>
@@ -109,7 +120,7 @@
         <n-button
           ghost
           circle
-          size="small"
+          :size="appStore.isMobile ? 'medium' : 'small'"
           type="success"
           :color="(colorBySendMode as string)"
           @click="handle_send"
@@ -124,7 +135,13 @@
     </n-upload>
 
     <n-modal v-model:show="isTemplatesOpen">
-      <n-card style="max-width: 60vw; width: 60vw; min-height: 80vh">
+      <n-card
+        :style="
+          appStore.isMobile
+            ? 'width: 100vw; max-width: 100vw; min-height: 100dvh'
+            : 'max-width: 60vw; width: 60vw; min-height: 80vh'
+        "
+      >
         <templates-view
           @select="handle_select_template"
           v-bind="templatesOptions"
@@ -498,14 +515,25 @@ textarea {
     display: v-bind("deleteIconDisplayStyle");
   }
 
-  @media (max-width: 600px) {
-    flex-wrap: wrap;
+  @media (max-width: 900px) {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 8px calc(8px + env(safe-area-inset-bottom));
+    gap: 8px;
+
     .textarea {
       width: 100%;
     }
+
     .actions {
       display: flex;
-      flex-direction: column !important;
+      flex-direction: row !important;
+      gap: 8px;
+    }
+
+    .modes {
+      overflow-x: auto;
+      flex-wrap: nowrap;
     }
   }
 }

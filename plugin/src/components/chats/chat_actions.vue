@@ -3,7 +3,7 @@
   <n-tooltip>
     <template #trigger>
       <n-button
-        size="small"
+        :size="appStore.isMobile ? 'medium' : 'small'"
         ghost
         circle
         :color="appStore.isCopilotOpen ? COPILOT_COLOR : undefined"
@@ -13,36 +13,6 @@
       </n-button>
     </template>
     Ask the bot about this chat
-  </n-tooltip>
-
-  <n-tooltip>
-    <template #trigger>
-      <n-button
-        type="info"
-        size="small"
-        ghost
-        circle
-        @click="openBotSettings"
-      >
-        <template #icon> <bot-icon /> </template>
-      </n-button>
-    </template>
-    Bot settings
-  </n-tooltip>
-
-  <n-tooltip>
-    <template #trigger>
-      <n-button
-        type="default"
-        size="small"
-        ghost
-        circle
-        @click="isTracesOpen = true"
-      >
-        <template #icon> <bug-icon /> </template>
-      </n-button>
-    </template>
-    Bot debug traces
   </n-tooltip>
 
   <n-modal v-model:show="isBotSettingsOpen">
@@ -124,11 +94,42 @@
     </n-card>
   </n-modal>
 
-  <n-drawer v-model:show="isTracesOpen" :width="620" placement="right">
+  <n-drawer v-model:show="isTracesOpen" :width="appStore.isMobile ? '100%' : 620" placement="right">
     <n-drawer-content title="Bot debug traces" closable :native-scrollbar="false">
       <trace-viewer v-if="isTracesOpen" :chat-uuid="chat.uuid" lane="customer" />
     </n-drawer-content>
   </n-drawer>
+
+  <template v-if="!appStore.isMobile">
+  <n-tooltip>
+    <template #trigger>
+      <n-button
+        type="info"
+        size="small"
+        ghost
+        circle
+        @click="openBotSettings"
+      >
+        <template #icon> <bot-icon /> </template>
+      </n-button>
+    </template>
+    Bot settings
+  </n-tooltip>
+
+  <n-tooltip>
+    <template #trigger>
+      <n-button
+        type="default"
+        size="small"
+        ghost
+        circle
+        @click="isTracesOpen = true"
+      >
+        <template #icon> <bug-icon /> </template>
+      </n-button>
+    </template>
+    Bot debug traces
+  </n-tooltip>
 
   <n-tooltip>
     <template #trigger>
@@ -161,6 +162,7 @@
     </template>
     Delete chat
   </n-tooltip>
+  </template>
   </div>
 </template>
 
@@ -378,6 +380,12 @@ function openBotSettings() {
   setBotState();
   isBotSettingsOpen.value = true;
 }
+
+function openTraces() {
+  isTracesOpen.value = true;
+}
+
+defineExpose({ openBotSettings, openTraces, copyLink, refresh, deleteChat });
 
 async function saveBotState() {
   try {
